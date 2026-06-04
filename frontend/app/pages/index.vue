@@ -292,6 +292,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
                 <!-- Download Button -->
                 <button
+                  aria-label="Download audio"
                   class="tts-audio__download-btn"
                   @click="handleDownload"
                 >

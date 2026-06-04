@@ -34,4 +34,16 @@ describe('ToastNotification', () => {
     // Toast should be hidden again
     expect(toast.value.visible).toBe(false)
   })
+
+  describe('Issue 21: aria-labels on icon buttons', () => {
+    it('close button has aria-label="Close notification"', async () => {
+      const toast = useToast()
+      showToast('Test message')
+
+      const wrapper = mount(ToastNotification)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.tts-toast__close').attributes('aria-label')).toBe('Close notification')
+    })
+  })
 })

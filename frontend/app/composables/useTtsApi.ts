@@ -2,7 +2,7 @@
 
 export interface SynthesisRequest {
   text: string
-  voice?: 'female' | 'male'
+  speaker?: 'female' | 'male'
   speed?: number
 }
 
@@ -36,7 +36,7 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
         },
         body: JSON.stringify({
           text: request.text,
-          voice: request.voice || 'female',
+          speaker: request.speaker || 'default',
           speed: request.speed || 1.0,
           language: 'ar'
         })
@@ -49,6 +49,7 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
       const arabicMessages: Record<number, string> = {
         400: 'نص غير صالح للتوليد',
         503: 'الخادم غير متاح حالياً',
+        500: 'حدث خطأ في الخادم',
       }
 
       const errorData = await response.json().catch(() => ({}))

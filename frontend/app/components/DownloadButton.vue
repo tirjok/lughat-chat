@@ -8,6 +8,7 @@ defineProps<Props>()
 
 <template>
   <button
+    aria-label="Download audio"
     class="tts-audio__download-btn"
     @click="onClick"
   >

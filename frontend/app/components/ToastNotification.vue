@@ -18,6 +18,7 @@ const toast = useToast()
         {{ toast.message }}
       </p>
       <button
+        aria-label="Close notification"
         class="tts-toast__close"
         @click="toast.visible = false"
       >
