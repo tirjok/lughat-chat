@@ -662,18 +662,6 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 /* ===================================
-   Loading Spinner (tts-spinner)
-   =================================== */
-@keyframes tts-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-.tts-spinner {
-  animation: tts-spin 1s linear infinite;
-}
-
-/* ===================================
    Transition Animations (tts-transition)
    =================================== */
 .tts-fade-enter-active,
