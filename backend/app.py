@@ -1,0 +1,324 @@
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from contextlib import asynccontextmanager
+import os
+import uuid
+import shutil
+import subprocess
+import threading
+import wave
+from typing import Optional
+
+# Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
+# This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
+import os as _os
+_torchcodec_env = "0"
+for _env_key in ["TORCHAUDIO_USE_TORCHCODEC", "TORCHCODEC_ENABLED"]:
+    _os.environ.setdefault(_env_key, _torchcodec_env)
+
+# Compatibility shim: isin_mps_friendly was removed in newer transformers
+import torch
+import transformers.pytorch_utils as _pytorch_utils
+if not hasattr(_pytorch_utils, 'isin_mps_friendly'):
+    def _isin_mps_friendly(elements, test_elements, **kwargs):
+        return torch.isin(elements, test_elements)
+    _pytorch_utils.isin_mps_friendly = _isin_mps_friendly
+
+# Patch torch.ops.load_library to suppress missing NVIDIA library errors
+# This prevents torchcodec (a TTS dependency) from crashing on CPU-only servers.
+# The TORCHAUDIO_USE_TORCHCODEC=0 env var above prevents torchaudio from
+# trying to import torchcodec at all, making this a safety net only.
+_original_load_library = None
+
+def _patched_load_library(path):
+    try:
+        return _original_load_library(path)
+    except OSError as e:
+        error_str = str(e)
+        # Suppress missing CUDA/NVIDIA shared libraries on CPU servers
+        if "libnvrtc" in error_str or "libcuda" in error_str:
+            return None
+        # Suppress all libtorchcodec loading errors (video processing, not needed for TTS)
+        if "libtorchcodec" in path or "libtorchcodec" in error_str:
+            return None
+        raise
+
+# Minimum reference audio duration for XTTS-v2 voice cloning (seconds)
+XTTS_MIN_REFERENCE_DURATION = 0.33
+
+
+def _validate_speaker_wav(wav_path: str) -> None:
+    """Validate that a speaker WAV file meets XTTS-v2 minimum duration requirement."""
+    try:
+        with wave.open(wav_path) as wf:
+            frames = wf.getnframes()
+            rate = wf.getframerate()
+            duration = frames / rate
+        if duration < XTTS_MIN_REFERENCE_DURATION:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    f"Speaker WAV file '{wav_path}' is too short ({duration:.2f}s). "
+                    f"XTTS-v2 requires at least {XTTS_MIN_REFERENCE_DURATION}s of reference audio. "
+                    f"Regenerate speaker_wavs/{os.path.basename(wav_path)} with longer text."
+                ),
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to validate speaker WAV file '{wav_path}': {e}",
+        )
+
+
+def _patch_torch():
+    global _original_load_library
+    import torch.ops  # noqa: F401
+    if hasattr(torch.ops, 'load_library'):
+        _original_load_library = torch.ops.load_library
+        torch.ops.load_library = _patched_load_library
+
+_patch_torch()
+
+# Coqui TTS imports
+from TTS.api import TTS
+
+# Configuration
+AUDIO_DIR = os.path.join(os.path.dirname(__file__), "downloads")
+MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
+SPEAKER_WAV_DIR = os.path.join(os.path.dirname(__file__), "speaker_wavs")
+
+# Create directories if writable (skip on read-only filesystems like Docker host mounts)
+for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
+    try:
+        os.makedirs(dir_path, exist_ok=True)
+    except OSError:
+        pass  # Read-only filesystem — acceptable in test/local environments
+
+# Global TTS model instance and state
+tts_model = None
+model_load_status = "loading"  # loading | ready | error
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Load TTS model in background so server starts immediately."""
+    global tts_model, model_load_status
+
+    def load_model():
+        """Load TTS model in a background thread."""
+        global tts_model, model_load_status
+        print("Loading XTTS-v2 model...")
+        try:
+            os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
+            tts_model = TTS("tts_models/multilingual/xtts_v2")
+            model_load_status = "ready"
+            print("XTTS-v2 model loaded successfully!")
+        except Exception as e:
+            model_load_status = "error"
+            print(f"Error loading TTS model: {e}")
+            tts_model = None
+
+    # Start model loading in background thread
+    load_thread = threading.Thread(target=load_model, daemon=True)
+    load_thread.start()
+
+    yield
+
+    print("Shutting down TTS backend...")
+
+
+app = FastAPI(
+    title="Lughat Chat TTS API",
+    description="Text-to-Speech API with XTTS-v2 (Arabic & English)",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# CORS middleware - allow frontend container to call API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, restrict to frontend container IP
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Serve downloads and speaker_wavs directories statically
+app.mount("/downloads", StaticFiles(directory=AUDIO_DIR), name="downloads")
+try:
+    os.makedirs(SPEAKER_WAV_DIR, exist_ok=True)
+except OSError:
+    pass  # Read-only filesystem
+app.mount("/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker_wavs")
+
+
+# Request/Response models
+class SynthesisRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=3000)
+    language: str = Field(default="ar", pattern="^(ar|en)$")
+    voice: Optional[str] = Field(default=None, pattern="^(female|male|default)$")
+    speaker: Optional[str] = None  # Alias for voice (accepts "default", "female", "male")
+    speed: float = Field(default=1.0, ge=0.5, le=2.0)
+    pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
+    seed: Optional[int] = Field(default=None, ge=0)  # Deterministic seed (optional, defaults to fixed per voice)
+
+
+class SynthesisResponse(BaseModel):
+    audio_url: str
+    filename: str
+    duration_seconds: float
+
+
+class HealthResponse(BaseModel):
+    status: str  # loading | ready | error
+    model_loaded: bool
+
+
+# Voice presets
+VOICES = [
+    {"id": "female", "name": "Female Voice", "language": "multilingual"},
+    {"id": "male", "name": "Male Voice", "language": "multilingual"},
+]
+
+
+@app.get("/health", response_model=HealthResponse)
+async def health():
+    """Health check endpoint - returns model load status."""
+    return {
+        "status": model_load_status,
+        "model_loaded": tts_model is not None and model_load_status == "ready"
+    }
+
+
+@app.get("/api/voices")
+async def list_voices():
+    """List available voices."""
+    return VOICES
+
+
+@app.post("/api/generate")
+async def generate_speech(request: SynthesisRequest):
+    """Generate speech from text and return MP3 audio blob."""
+    if tts_model is None or model_load_status != "ready":
+        raise HTTPException(status_code=503, detail="TTS model not ready")
+
+    try:
+        # Generate unique filename
+        timestamp = uuid.uuid4().hex[:8]
+        lang_code = request.language
+
+        # Resolve voice: accept both "voice" and "speaker" fields, map "default" to "female"
+        voice = request.speaker if request.speaker else (request.voice or "female")
+        if voice == "default":
+            voice = "female"
+
+        filename = f"{lang_code}_{voice}_{timestamp}.mp3"
+        wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
+        mp3_path = os.path.join(AUDIO_DIR, filename)
+
+        # Generate WAV first (XTTS native format)
+        print(f"Generating speech: {request.text[:50]}...")
+
+        # Map voice preset to speaker_wav file
+        speaker_wavs = {
+            "female": os.path.join(SPEAKER_WAV_DIR, "female.wav"),
+            "male": os.path.join(SPEAKER_WAV_DIR, "male.wav"),
+        }
+        speaker_wav = speaker_wavs.get(voice)
+
+        if not speaker_wav or not os.path.exists(speaker_wav):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Speaker WAV file not found for voice '{voice}'. Please add {speaker_wav}"
+            )
+
+        # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
+        _validate_speaker_wav(speaker_wav)
+
+        # Generate audio with speaker reference for voice cloning
+        # Use deterministic seed per voice preset for consistent voice output
+        voice_seeds = {"female": 42, "male": 123}
+        seed = request.seed if request.seed is not None else voice_seeds.get(voice, 42)
+
+        # Set PyTorch random seed for deterministic XTTS generation.
+        # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
+        # seeding must be done at the PyTorch level before inference.
+        torch.manual_seed(seed)
+
+        tts_model.tts_to_file(
+            text=request.text,
+            speaker_wav=speaker_wav,
+            language=request.language,
+            file_path=wav_path,
+            temperature=0.4,  # Low temperature for consistent, deterministic voice output
+        )
+
+        if not os.path.exists(wav_path):
+            raise HTTPException(status_code=500, detail="Failed to generate audio")
+
+        # Convert WAV to MP3 using ffmpeg
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg", "-y",
+                    "-i", wav_path,
+                    "-filter:a", f"atempo={request.speed}",
+                    "-b:a", "192k",
+                    mp3_path
+                ],
+                check=True,
+                capture_output=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"FFmpeg error: {e.stderr}")
+            # Fallback: just use WAV if MP3 conversion fails
+            shutil.copy2(wav_path, mp3_path)
+
+        # Return MP3 file as binary response
+        return FileResponse(
+            path=mp3_path,
+            media_type="audio/mpeg",
+            filename=filename
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error generating speech: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/history")
+async def get_history():
+    """Get list of previously generated audio files."""
+    try:
+        items = []
+        for filename in sorted(os.listdir(AUDIO_DIR), reverse=True):
+            if filename.endswith(('.mp3', '.wav')):
+                filepath = os.path.join(AUDIO_DIR, filename)
+                stat = os.stat(filepath)
+
+                # Parse metadata from filename if possible
+                parts = filename.split('_')
+                language = parts[0] if len(parts) > 0 else "unknown"
+                voice = parts[1] if len(parts) > 1 else "default"
+
+                items.append({
+                    "filename": filename,
+                    "text": "",  # We don't store the original text in this simple version
+                    "language": language,
+                    "voice": voice,
+                    "speed": 1.0,
+                    "pitch": 0.0,
+                    "created_at": str(int(stat.st_mtime))
+                })
+
+        return items
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

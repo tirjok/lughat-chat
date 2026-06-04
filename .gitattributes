@@ -1,0 +1,30 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Explicitly mark config/text files as text
+*.py    text diff=python
+*.js    text
+*.ts    text
+*.json  text
+*.html  text
+*.css   text
+*.scss  text
+*.vue   text
+*.md    text
+*.yml   text
+*.yaml  text
+*.toml  text
+*.ini   text
+*.cfg   text
+*.conf  text
+*.sh    text
+*.dockerfile text
+
+# Binary files - mark as such to prevent line-ending normalization
+*.safetensors binary
+*.bin     binary
+*.wav     binary
+*.mp3     binary
+*.flac    binary
+*.ogg     binary
+*.wasm    binary

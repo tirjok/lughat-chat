@@ -1,0 +1,17 @@
+# Model weights (large binary files)
+models/
+*.safetensors
+*.bin
+
+# Audio outputs
+output_*.wav
+downloads/
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment
+.env
+.env.*

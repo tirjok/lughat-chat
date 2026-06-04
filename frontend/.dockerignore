@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output (already built in Stage 1)
+.output/
+
+# Nuxt build cache
+.nuxt/
+
+# IDE files
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment files (not needed in image)
+.env
+.env.*

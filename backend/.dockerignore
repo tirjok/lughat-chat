@@ -1,0 +1,25 @@
+# Virtual environments
+.venv
+venv
+env
+
+# IDE files
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Build artifacts
+__pycache__
+*.pyc
+dist
+build
+
+# Logs
+logs

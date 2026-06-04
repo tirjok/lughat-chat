@@ -1,0 +1,52 @@
+services:
+  # Backend service - FastAPI + XTTS-v2 (CPU-only)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lughat-backend
+    ports:
+      - "8000:8000"  # Only for debugging; frontend proxies through Nginx
+    volumes:
+      # Persist model cache across restarts (avoids re-downloading)
+      - tts-model-cache:/root/.local/share/tts
+      # Persist generated audio files
+      - tts-audio-cache:/app/downloads
+    environment:
+      - TZ=UTC
+      - TTS_MODEL_CACHE=/app/.cache/tts
+      - COQUI_TOS_AGREED=1
+      - LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/x86_64-linux-gnu
+    restart: unless-stopped
+    networks:
+      - lughat-network
+    # Health check - verifies server is running; model_loaded checked via /health endpoint
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 200
+      start_period: 120s
+
+  # Frontend service - Nuxt.js + Nginx (reverse proxy to backend)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lughat-frontend
+    ports:
+      - "80:80"  # Single port for everything!
+    depends_on:
+      backend:
+        condition: service_healthy  # Wait until backend is ready (or at least started)
+    restart: unless-stopped
+    networks:
+      - lughat-network
+
+networks:
+  lughat-network:
+    driver: bridge
+
+volumes:
+  tts-model-cache:     # Persists TTS model (2GB, downloaded once)
+  tts-audio-cache:     # Persists generated audio files

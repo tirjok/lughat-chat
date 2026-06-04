@@ -1,0 +1,6 @@
+{  
+  "skills": ["!**/.output/**"],  
+  "extensions": ["!**/.output/**"],  
+  "prompts": ["!**/.output/**"],  
+  "themes": ["!**/.output/**"]  
+}

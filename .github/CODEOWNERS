@@ -1,0 +1,14 @@
+# Code owners for Lughat Chat
+# Each line: <path> <owner>
+
+# Frontend (Nuxt/Vue)
+frontend/ @tirjok
+
+# Backend (FastAPI/Python)
+backend/ @tirjok
+
+# Docker & deployment
+docker-compose.yml nginx/ scripts/ @tirjok
+
+# Documentation
+*.md docs/ @tirjok

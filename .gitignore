@@ -1,0 +1,38 @@
+# Nuxt dev/build outputs
+frontend/.output
+frontend/.data
+frontend/.nuxt
+frontend/.nitro
+frontend/.cache
+frontend/dist
+
+# Node dependencies
+frontend/node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Backend models (large binary files)
+backend/models/
+backend/*.safetensors
+backend/*.bin
+
+# Backend audio outputs
+backend/downloads/
+backend/output_*.wav
+
+# Python cache
+backend/__pycache__/
+backend/*.pyc
+backend/.pytest_cache/
