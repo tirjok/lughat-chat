@@ -245,7 +245,7 @@ function handleKeyDown(event: KeyboardEvent) {
               class="i-lucide-mic tts-btn-generate__icon"
             />
             <span>
-              {{ isGenerating ? 'Generating...' : modelStatus === 'loading' ? 'Loading...' : 'Generate Speech' }}
+              {{ isGenerating ? 'Generating…' : modelStatus === 'loading' ? 'Loading…' : 'Generate Speech' }}
             </span>
           </div>
         </button>
