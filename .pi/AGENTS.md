@@ -85,6 +85,11 @@ pnpm test          # → vitest run
 npx vitest --config vitest.component.config.ts
 ```
 
+**Run all tests (backend + frontend) from project root:**
+```bash
+./run-tests.sh     # Runs pytest (backend) then pnpm test (frontend)
+```
+
 **Test files location:** `frontend/tests/`
 - Naming: `<name>.test.ts`
 - Also has inline `.test.ts` files inside `app/composables/`
@@ -123,6 +128,11 @@ npx vitest --config vitest.component.config.ts
 ```bash
 # Run backend tests
 cd backend && pytest
+```
+
+**Run all tests (backend + frontend) from project root:**
+```bash
+./run-tests.sh     # Runs pytest (backend) then pnpm test (frontend)
 ```
 
 **Test files:** `backend/tests/`
@@ -196,3 +206,4 @@ When the user asks about building features, modifying existing code, or understa
 5. When modifying composables, read the existing one in `app/composables/` for patterns first
 6. Frontend work: run from `frontend/` directory using pnpm commands
 7. Backend work: run from `backend/` directory using pip/pytest
+8. Running all tests: use `./run-tests.sh` from the project root to run both backend and frontend tests

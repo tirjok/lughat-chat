@@ -6,7 +6,7 @@ from app import app
 def _mock_tts_model():
     """Create a mock TTS model that returns without error."""
     class MockTTS:
-        def tts_to_file(self, text, language=None, file_path=None, speaker_wav=None):
+        def tts_to_file(self, text, language=None, file_path=None, speaker_wav=None, temperature=None):
             # Create a minimal valid WAV-like file for testing
             import wave
             import struct
@@ -66,7 +66,7 @@ def test_generate_speech_rejects_text_too_long():
     from fastapi.testclient import TestClient
     client = TestClient(app)
 
-    long_text = "x" * 501
+    long_text = "x" * 3001
     response = client.post("/api/generate", json={"text": long_text})
 
     assert response.status_code == 422

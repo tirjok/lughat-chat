@@ -5,16 +5,18 @@ const props = withDefaults(defineProps<{
   modelValue?: string
   placeholder?: string
   maxLength?: number
+  id?: string
 }>(), {
   modelValue: '',
   maxLength: 2000,
+  id: 'arabic-textarea',
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const defaultPlaceholder = 'اكتب النص العربي هنا... مثال: السلام عليكم ورحمة الله وبركته'
+const defaultPlaceholder = 'Type text here... Example:  السلام عليكم ورحمة الله وبركته'
 
 const charCount = computed(() => props.modelValue.length)
 const ringColorClass = computed(() => {
@@ -56,11 +58,18 @@ const dashOffset = computed(() => {
           stroke-width="3"
           :stroke-dasharray="circumference"
           :stroke-dashoffset="dashOffset"
-          class="tts-input__ring-fill transition-all"
+          class="tts-input__ring-fill"
           :class="ringColorClass"
         />
       </svg>
+      <label
+        :for="id"
+        class="tts-section__label"
+      >
+        Enter Arabic text to convert to speech
+      </label>
       <textarea
+        :id="id"
         :value="modelValue"
         :placeholder="placeholder ?? defaultPlaceholder"
         dir="auto"
@@ -89,7 +98,7 @@ const dashOffset = computed(() => {
     </div>
     <div class="tts-input__meta">
       <span :class="ringColorClass">
-        {{ charCount }}/{{ maxLength }} حرف
+        {{ charCount }}/{{ maxLength }} characters
       </span>
     </div>
   </div>
@@ -108,7 +117,7 @@ const dashOffset = computed(() => {
   }
 
   &-fill {
-    @apply transition-all;
+    transition: stroke 0.3s ease;
   }
 }
 
@@ -116,7 +125,7 @@ const dashOffset = computed(() => {
   @apply flex justify-between text-xs text-gray-500 dark:text-gray-400;
 }
 
-textarea:focus {
+textarea:focus-visible {
   outline: none;
   border-color: #60a5fa;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -129,7 +138,7 @@ textarea:focus {
     color: #f3f4f6;
   }
 
-  textarea:focus {
+  textarea:focus-visible {
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }

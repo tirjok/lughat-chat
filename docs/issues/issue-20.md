@@ -6,10 +6,10 @@ Generate button that connects all inputs — validates text, checks model status
 
 - [ ] Generate button is disabled when text input is empty
 - [ ] Generate button is disabled while model is still loading (health check shows `loading`)
-- [ ] On click, button shows "جاري التوليد..." loading state with spinner icon
+- [ ] On click, button shows "Generating..." loading state with spinner icon
 - [ ] Sends POST request to `/api/generate` with text, speed value, and speaker selection
 - [ ] On success: loads returned MP3 blob into audio player and auto-plays
-- [ ] On failure: shows Arabic error toast via composable from Issue 19
+- [ ] On failure: shows English error toast via composable from Issue 19
 - [ ] Button returns to normal state after generation completes (success or error)
 - [ ] Ctrl+Enter keyboard shortcut triggers same generate flow
 

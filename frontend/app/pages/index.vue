@@ -65,7 +65,7 @@ async function handleSynthesize() {
 
   // Validate input (composable handles text + model status)
   if (!isValid.value) {
-    showToast(validationError.value ?? 'نص غير صالح')
+    showToast(validationError.value ?? 'Invalid text')
     return
   }
 
@@ -88,11 +88,11 @@ async function handleSynthesize() {
       await play()
     }
   } catch (err) {
-    // Handle error — show Arabic message in toast
+    // Handle error — show error message in toast
     if (err instanceof Error) {
       showToast(err.message)
     } else {
-      showToast('حدث خطأ غير متوقع أثناء التوليد')
+      showToast('An unexpected error occurred during generation')
     }
   } finally {
     // Reset loading state
@@ -118,7 +118,7 @@ function handleKeyDown(event: KeyboardEvent) {
 <template>
   <div
     class="tts-page"
-    dir="rtl"
+    dir="ltr"
     @keydown="handleKeyDown"
   >
     <!-- Subtle background gradient -->
@@ -130,16 +130,16 @@ function handleKeyDown(event: KeyboardEvent) {
         <div class="tts-header__content">
           <!-- Small icon with subtle glow -->
           <div class="tts-header__icon">
-            <span class="i-lucide-volume-2" />
+            <span aria-hidden="true" class="i-lucide-volume-2" />
           </div>
 
           <!-- Title and description -->
           <div class="tts-header__text">
             <h1 class="tts-header__title">
-              لغات شات
+              Lughat Chat
             </h1>
             <p class="tts-header__subtitle">
-              حوّل النص العربي إلى كلام فوري
+              Instant Arabic Text-to-Speech
             </p>
           </div>
         </div>
@@ -149,10 +149,10 @@ function handleKeyDown(event: KeyboardEvent) {
 
         <!-- Keyboard shortcut hint -->
         <p class="tts-header__shortcut">
-          اضغط
+          Press
           <kbd class="tts-header__kbd">Ctrl</kbd> +
           <kbd class="tts-header__kbd">Enter</kbd>
-          للتوليد السريع
+          for quick generation
         </p>
       </header>
 
@@ -172,14 +172,15 @@ function handleKeyDown(event: KeyboardEvent) {
               for="speaker-select"
               class="tts-control-group__label"
             >
-              <span class="i-lucide-user" />
-              الصوت
+              <span aria-hidden="true" class="i-lucide-user" />
+              Voice
             </label>
             <div class="tts-select-wrapper">
               <select
                 id="speaker-select"
                 v-model="selectedSpeaker"
                 class="tts-select"
+                autocomplete="off"
               >
                 <option
                   v-for="speaker in speakers"
@@ -189,7 +190,7 @@ function handleKeyDown(event: KeyboardEvent) {
                   {{ speaker.label }}
                 </option>
               </select>
-              <span class="i-lucide-chevron-down tts-select__arrow" />
+              <span aria-hidden="true" class="i-lucide-chevron-down tts-select__arrow" />
             </div>
           </div>
 
@@ -199,8 +200,8 @@ function handleKeyDown(event: KeyboardEvent) {
               for="speed-slider"
               class="tts-control-group__label"
             >
-              <span class="i-lucide-gauge" />
-              سرعة الكلام
+              <span aria-hidden="true" class="i-lucide-gauge" />
+              Speech Speed
             </label>
             <div class="tts-speed-control">
               <input
@@ -211,6 +212,7 @@ function handleKeyDown(event: KeyboardEvent) {
                 max="2.0"
                 step="0.1"
                 class="tts-range"
+                autocomplete="off"
               >
               <div class="tts-speed-value">
                 {{ speedValue }}x
@@ -228,19 +230,22 @@ function handleKeyDown(event: KeyboardEvent) {
         >
           <div class="tts-btn-generate__content">
             <span
+              aria-hidden="true"
               v-if="isGenerating"
               class="i-lucide-loader tts-btn-generate__icon"
             />
             <span
+              aria-hidden="true"
               v-else-if="modelStatus === 'loading'"
               class="i-lucide-loader animate-spin tts-btn-generate__icon"
             />
             <span
+              aria-hidden="true"
               v-else
               class="i-lucide-mic tts-btn-generate__icon"
             />
             <span>
-              {{ isGenerating ? 'جاري التوليد...' : modelStatus === 'loading' ? 'جاري التحميل...' : 'توليد الكلام' }}
+              {{ isGenerating ? 'Generating…' : modelStatus === 'loading' ? 'Loading…' : 'Generate Speech' }}
             </span>
           </div>
         </button>
@@ -253,8 +258,8 @@ function handleKeyDown(event: KeyboardEvent) {
           >
             <div class="tts-audio__header">
               <h3 class="tts-audio__title">
-                <span class="i-lucide-headphones" />
-                النتيجة
+                <span aria-hidden="true" class="i-lucide-headphones" />
+                Result
               </h3>
               <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
             </div>
@@ -292,10 +297,11 @@ function handleKeyDown(event: KeyboardEvent) {
 
                 <!-- Download Button -->
                 <button
+                  aria-label="Download audio"
                   class="tts-audio__download-btn"
                   @click="handleDownload"
                 >
-                  <span class="i-lucide-download" />
+                  <span aria-hidden="true" class="i-lucide-download" />
                 </button>
               </div>
             </div>
@@ -305,9 +311,9 @@ function handleKeyDown(event: KeyboardEvent) {
 
       <!-- Footer -->
       <footer class="tts-footer">
-        <p>لغات شات — تحويل النص العربي إلى كلام</p>
+        <p>Lughat Chat — Arabic Text-to-Speech</p>
         <p class="mt-1">
-          مدعوم بـ Nuxt و UnoCSS
+          Powered by Nuxt and UnoCSS
         </p>
       </footer>
     </div>
@@ -400,7 +406,8 @@ function handleKeyDown(event: KeyboardEvent) {
    Text Input Block (tts-input)
    =================================== */
 .tts-input {
-  @apply w-full p-5 border rounded-xl focus:border-blue-400 dark:focus:border-blue-500 bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all;
+  @apply w-full p-5 border rounded-xl focus:border-blue-400 dark:focus:border-blue-500 bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500;
+  transition: border-color, background-color 0.2s ease;
   border-width: 1.5px;
 
   /* Prevent horizontal overflow */
@@ -482,7 +489,8 @@ function handleKeyDown(event: KeyboardEvent) {
    Select Block (tts-select)
    =================================== */
 .tts-select {
-  @apply w-full p-2.5 border rounded-lg focus:border-blue-400 dark:focus:border-blue-500 bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm text-gray-900 dark:text-white transition-all appearance-none;
+  @apply w-full p-2.5 border rounded-lg focus:border-blue-400 dark:focus:border-blue-500 bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm text-gray-900 dark:text-white appearance-none;
+  transition: border-color, background-color 0.2s ease;
   border-width: 1.5px;
   font-size: 0.9rem;
 
@@ -506,7 +514,8 @@ function handleKeyDown(event: KeyboardEvent) {
    Generate Button Block (tts-btn-generate)
    =================================== */
 .tts-btn-generate {
-  @apply w-full px-6 py-3.5 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98];
+  @apply w-full px-6 py-3.5 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98];
+  transition: box-shadow, transform 0.2s ease;
   background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
   color: white;
   border-radius: 1rem;
@@ -594,7 +603,8 @@ function handleKeyDown(event: KeyboardEvent) {
     @apply relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
 
     &-fill {
-      @apply absolute top-0 right-0 h-full bg-gradient-to-l from-blue-500 to-indigo-500 transition-all;
+      @apply absolute top-0 right-0 h-full bg-gradient-to-l from-blue-500 to-indigo-500;
+    transition: width 0.1s ease;
       border-radius: inherit;
     }
 
@@ -616,7 +626,8 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 
   &__play-btn {
-    @apply w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white flex items-center justify-center transition-all shadow-md active:scale-95;
+    @apply w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white flex items-center justify-center shadow-md active:scale-95;
+    transition: box-shadow, transform 0.2s ease;
 
     .i-lucide-play,
     .i-lucide-pause {
@@ -629,7 +640,8 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 
   &__download-btn {
-    @apply w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 flex items-center justify-center transition-all active:scale-95;
+    @apply w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 flex items-center justify-center active:scale-95;
+    transition: background-color, transform 0.2s ease;
 
     .i-lucide-download {
       @apply w-4 h-4;
@@ -652,18 +664,6 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 /* ===================================
-   Loading Spinner (tts-spinner)
-   =================================== */
-@keyframes tts-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-.tts-spinner {
-  animation: tts-spin 1s linear infinite;
-}
-
-/* ===================================
    Transition Animations (tts-transition)
    =================================== */
 .tts-fade-enter-active,
@@ -678,7 +678,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
 .tts-slide-up-enter-active,
 .tts-slide-up-leave-active {
-  transition: all 0.3s ease;
+  transition: transform, opacity 0.3s ease;
 }
 
 .tts-slide-up-enter-from,
@@ -698,7 +698,7 @@ input[type='range']::-webkit-slider-thumb {
   border-radius: 50%;
   background: #3b82f6;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease;
 
   &:hover {
     transform: scale(1.2);
@@ -717,8 +717,8 @@ input[type='range']::-moz-range-thumb {
 /* ===================================
    Focus Styles (tts-focus)
    =================================== */
-.tts-input:focus,
-.tts-select:focus {
+.tts-input:focus-visible,
+.tts-select:focus-visible {
   outline: none;
 }
 

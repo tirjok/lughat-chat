@@ -2,7 +2,7 @@
 
 export interface SynthesisRequest {
   text: string
-  voice?: 'female' | 'male'
+  speaker?: 'female' | 'male'
   speed?: number
 }
 
@@ -36,23 +36,24 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
         },
         body: JSON.stringify({
           text: request.text,
-          voice: request.voice || 'female',
+          speaker: request.speaker || 'default',
           speed: request.speed || 1.0,
           language: 'ar'
         })
       })
     } catch {
-      throw new Error('تعذر الاتصال بالخادم')
+      throw new Error('Unable to connect to the server')
     }
 
     if (!response.ok) {
-      const arabicMessages: Record<number, string> = {
-        400: 'نص غير صالح للتوليد',
-        503: 'الخادم غير متاح حالياً',
+      const errorMessages: Record<number, string> = {
+        400: 'Invalid text for synthesis',
+        503: 'Server is currently unavailable',
+        500: 'An error occurred on the server',
       }
 
       const errorData = await response.json().catch(() => ({}))
-      const statusMessage = arabicMessages[response.status]
+      const statusMessage = errorMessages[response.status]
 
       if (statusMessage) {
         throw new Error(statusMessage)
@@ -60,10 +61,10 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
 
       const detail = errorData?.detail
       if (detail) {
-        throw new Error(`خطأ في الخادم: ${detail}`)
+        throw new Error(`Server error: ${detail}`)
       }
 
-      throw new Error('حدث خطأ في الخادم')
+      throw new Error('An error occurred on the server')
     }
 
     // Get audio blob from response
@@ -77,16 +78,16 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
       const response = await fetch('/health')
 
       if (!response.ok) {
-        throw new Error(`فشل فحص الصحة: ${response.status}`)
+        throw new Error(`Health check failed: ${response.status}`)
       }
 
       return await response.json()
     } catch (error) {
-      if (error instanceof Error && error.message.includes('فشل فحص الصحة')) {
+      if (error instanceof Error && error.message.includes('Health check failed')) {
         throw error
       }
       const message = error instanceof Error ? error.message : String(error)
-      throw new Error(`تعذر فحص حالة الصحة: ${message}`)
+      throw new Error(`Unable to check health status: ${message}`)
     }
   }
 

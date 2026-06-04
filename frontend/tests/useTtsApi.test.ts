@@ -95,7 +95,7 @@ describe('useTtsApi', () => {
       }))
 
       const { synthesize } = useTtsApi()
-      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('الخادم غير متاح حالياً')
+      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('Server is currently unavailable')
     })
 
     it('throws Arabic unknown error when response.json fails', async () => {
@@ -106,14 +106,14 @@ describe('useTtsApi', () => {
       }))
 
       const { synthesize } = useTtsApi()
-      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('حدث خطأ في الخادم')
+      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('An error occurred on the server')
     })
 
     it('throws Arabic error for network failures', async () => {
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
 
       const { synthesize } = useTtsApi()
-      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('تعذر الاتصال بالخادم')
+      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('Unable to connect to the server')
     })
 
     it('uses custom baseUrl when provided', async () => {
@@ -166,21 +166,21 @@ describe('useTtsApi', () => {
       }))
 
       const { healthCheck } = useTtsApi()
-      await expect(healthCheck()).rejects.toThrow('فشل فحص الصحة: 503')
+      await expect(healthCheck()).rejects.toThrow('Health check failed: 503')
     })
 
     it('throws Arabic error on network failure', async () => {
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
 
       const { healthCheck } = useTtsApi()
-      await expect(healthCheck()).rejects.toThrow('تعذر فحص حالة الصحة: Network error')
+      await expect(healthCheck()).rejects.toThrow('Unable to check health status: Network error')
     })
 
     it('throws Arabic error for non-Error exceptions', async () => {
       global.fetch = vi.fn(() => Promise.reject('string error'))
 
       const { healthCheck } = useTtsApi()
-      await expect(healthCheck()).rejects.toThrow('تعذر فحص حالة الصحة: string error')
+      await expect(healthCheck()).rejects.toThrow('Unable to check health status: string error')
     })
   })
 

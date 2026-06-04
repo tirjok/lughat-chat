@@ -8,20 +8,22 @@ const toast = useToast()
   <Transition name="tts-toast">
     <div
       v-if="toast.visible"
+      aria-live="polite"
       class="tts-toast tts-toast--error"
-      dir="rtl"
+      dir="ltr"
     >
       <div class="tts-toast__icon">
-        <span class="i-lucide-alert-circle" />
+        <span aria-hidden="true" class="i-lucide-alert-circle" />
       </div>
       <p class="tts-toast__message">
         {{ toast.message }}
       </p>
       <button
+        aria-label="Close notification"
         class="tts-toast__close"
         @click="toast.visible = false"
       >
-        <span class="i-lucide-x" />
+        <span aria-hidden="true" class="i-lucide-x" />
       </button>
     </div>
   </Transition>
@@ -50,7 +52,7 @@ const toast = useToast()
 
 .tts-toast-enter-active,
 .tts-toast-leave-active {
-  transition: all 0.3s ease;
+  transition: transform, opacity 0.3s ease;
 }
 
 .tts-toast-enter-from,
