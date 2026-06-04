@@ -151,7 +151,7 @@ describe('useAudioPlayer', () => {
 
       await player.play()
 
-      expect(player.error.value).toContain('تعذر تشغيل الصوت')
+      expect(player.error.value).toContain('Unable to play audio')
     })
 
     it('does nothing when audioRef is null', async () => {
@@ -459,7 +459,7 @@ describe('useAudioPlayer', () => {
   })
 
   describe('error messages', () => {
-    it('shows Arabic error when play fails', async () => {
+    it('shows English error when play fails', async () => {
       const mockAudio = {
         play: vi.fn(() => Promise.reject(new DOMException('Not allowed'))),
         pause: vi.fn(),
@@ -471,7 +471,7 @@ describe('useAudioPlayer', () => {
 
       await player.play()
 
-      expect(player.error.value).toContain('تعذر')
+      expect(player.error.value).toContain('Unable to play audio')
     })
   })
 })

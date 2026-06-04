@@ -38,10 +38,10 @@ describe('ArabicTextarea', () => {
     expect(textarea.element.style.textAlign).toBe('right')
   })
 
-  it('displays Arabic placeholder text with example sentence', () => {
+  it('displays English placeholder text with example sentence', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
-    expect(textarea.attributes('placeholder')).toContain('السلام عليكم')
+    expect(textarea.attributes('placeholder')).toContain('Type text here... Example:')
   })
 
   it('auto-resizes vertically with min 6rem and max 20rem', () => {
@@ -121,7 +121,7 @@ describe('ArabicTextarea', () => {
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toBe('5/2000 حرف')
+    expect(counter.text()).toBe('5/2000 characters')
   })
 
   it('uses maxLength prop default of 2000', () => {
@@ -131,7 +131,7 @@ describe('ArabicTextarea', () => {
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toContain('/2000 حرف')
+    expect(counter.text()).toContain('/2000 characters')
   })
 
   it('uses custom maxLength when provided', () => {
@@ -142,7 +142,7 @@ describe('ArabicTextarea', () => {
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toBe('5/500 حرف')
+    expect(counter.text()).toBe('5/500 characters')
   })
 
   it('turns ring amber when count is at or above 80% but below 100%', () => {

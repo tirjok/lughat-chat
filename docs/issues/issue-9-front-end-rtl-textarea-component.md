@@ -12,7 +12,7 @@ A right-to-left textarea component optimized for Arabic text input with proper f
 - [ ] Line-height is 2.1 to accommodate Arabic descenders (ي، ب، ت، ن)
 - [ ] Letter-spacing and word-spacing tuned for Arabic text
 - [ ] Textarea auto-resizes vertically (min-height 6rem, max-height 20rem)
-- [ ] Placeholder text in Arabic: "اكتب النص العربي هنا... مثال: السلام عليكم ورحمة الله وبركته"
+- [ ] Placeholder text in English: "Type text here... Example: Hello, how are you?"
 - [ ] Focus state has blue border glow matching design system
 
 ## Blocked by

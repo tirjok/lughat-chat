@@ -41,7 +41,7 @@ function handleSeek(ratio: number) {
       <div class="tts-audio__header">
         <h3 class="tts-audio__title">
           <span aria-hidden="true" class="i-lucide-headphones" />
-          النتيجة
+          Result
         </h3>
         <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
       </div>

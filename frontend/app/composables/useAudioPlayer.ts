@@ -52,7 +52,7 @@ export const useAudioPlayer = (options: UseAudioPlayerOptions = {}) => {
         await audioRef.value.play()
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)
-        error.value = `تعذر تشغيل الصوت: ${message}`
+        error.value = `Unable to play audio: ${message}`
       }
     }
   }

@@ -65,7 +65,7 @@ async function handleSynthesize() {
 
   // Validate input (composable handles text + model status)
   if (!isValid.value) {
-    showToast(validationError.value ?? 'نص غير صالح')
+    showToast(validationError.value ?? 'Invalid text')
     return
   }
 
@@ -88,11 +88,11 @@ async function handleSynthesize() {
       await play()
     }
   } catch (err) {
-    // Handle error — show Arabic message in toast
+    // Handle error — show error message in toast
     if (err instanceof Error) {
       showToast(err.message)
     } else {
-      showToast('حدث خطأ غير متوقع أثناء التوليد')
+      showToast('An unexpected error occurred during generation')
     }
   } finally {
     // Reset loading state
@@ -118,7 +118,7 @@ function handleKeyDown(event: KeyboardEvent) {
 <template>
   <div
     class="tts-page"
-    dir="rtl"
+    dir="ltr"
     @keydown="handleKeyDown"
   >
     <!-- Subtle background gradient -->
@@ -136,10 +136,10 @@ function handleKeyDown(event: KeyboardEvent) {
           <!-- Title and description -->
           <div class="tts-header__text">
             <h1 class="tts-header__title">
-              لغات شات
+              Lughat Chat
             </h1>
             <p class="tts-header__subtitle">
-              حوّل النص العربي إلى كلام فوري
+              Instant Arabic Text-to-Speech
             </p>
           </div>
         </div>
@@ -149,10 +149,10 @@ function handleKeyDown(event: KeyboardEvent) {
 
         <!-- Keyboard shortcut hint -->
         <p class="tts-header__shortcut">
-          اضغط
+          Press
           <kbd class="tts-header__kbd">Ctrl</kbd> +
           <kbd class="tts-header__kbd">Enter</kbd>
-          للتوليد السريع
+          for quick generation
         </p>
       </header>
 
@@ -173,7 +173,7 @@ function handleKeyDown(event: KeyboardEvent) {
               class="tts-control-group__label"
             >
               <span aria-hidden="true" class="i-lucide-user" />
-              الصوت
+              Voice
             </label>
             <div class="tts-select-wrapper">
               <select
@@ -200,7 +200,7 @@ function handleKeyDown(event: KeyboardEvent) {
               class="tts-control-group__label"
             >
               <span aria-hidden="true" class="i-lucide-gauge" />
-              سرعة الكلام
+              Speech Speed
             </label>
             <div class="tts-speed-control">
               <input
@@ -243,7 +243,7 @@ function handleKeyDown(event: KeyboardEvent) {
               class="i-lucide-mic tts-btn-generate__icon"
             />
             <span>
-              {{ isGenerating ? 'جاري التوليد...' : modelStatus === 'loading' ? 'جاري التحميل...' : 'توليد الكلام' }}
+              {{ isGenerating ? 'Generating...' : modelStatus === 'loading' ? 'Loading...' : 'Generate Speech' }}
             </span>
           </div>
         </button>
@@ -257,7 +257,7 @@ function handleKeyDown(event: KeyboardEvent) {
             <div class="tts-audio__header">
               <h3 class="tts-audio__title">
                 <span aria-hidden="true" class="i-lucide-headphones" />
-                النتيجة
+                Result
               </h3>
               <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
             </div>
@@ -309,9 +309,9 @@ function handleKeyDown(event: KeyboardEvent) {
 
       <!-- Footer -->
       <footer class="tts-footer">
-        <p>لغات شات — تحويل النص العربي إلى كلام</p>
+        <p>Lughat Chat — Arabic Text-to-Speech</p>
         <p class="mt-1">
-          مدعوم بـ Nuxt و UnoCSS
+          Powered by Nuxt and UnoCSS
         </p>
       </footer>
     </div>

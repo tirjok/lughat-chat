@@ -14,7 +14,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const defaultPlaceholder = 'اكتب النص العربي هنا... مثال: السلام عليكم ورحمة الله وبركته'
+const defaultPlaceholder = 'Type text here... Example:  السلام عليكم ورحمة الله وبركته'
 
 const charCount = computed(() => props.modelValue.length)
 const ringColorClass = computed(() => {
@@ -89,7 +89,7 @@ const dashOffset = computed(() => {
     </div>
     <div class="tts-input__meta">
       <span :class="ringColorClass">
-        {{ charCount }}/{{ maxLength }} حرف
+        {{ charCount }}/{{ maxLength }} characters
       </span>
     </div>
   </div>

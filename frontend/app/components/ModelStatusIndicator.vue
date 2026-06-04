@@ -16,7 +16,7 @@ const { status, modelLoaded } = useHealthPoll()
     <span aria-hidden="true" v-else class="i-lucide-alert-circle w-4 h-4 text-red-500" />
 
     <span>
-      {{ status === 'loading' ? 'جاري التحميل...' : modelLoaded ? 'النموذج جاهز' : 'خطأ في تحميل النموذج' }}
+      {{ status === 'loading' ? 'Loading...' : modelLoaded ? 'Model Ready' : 'Model Load Error' }}
     </span>
   </div>
 </template>

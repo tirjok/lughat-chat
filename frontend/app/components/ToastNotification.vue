@@ -9,7 +9,7 @@ const toast = useToast()
     <div
       v-if="toast.visible"
       class="tts-toast tts-toast--error"
-      dir="rtl"
+      dir="ltr"
     >
       <div class="tts-toast__icon">
         <span aria-hidden="true" class="i-lucide-alert-circle" />
