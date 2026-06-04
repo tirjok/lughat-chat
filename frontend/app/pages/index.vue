@@ -721,8 +721,8 @@ input[type='range']::-moz-range-thumb {
 /* ===================================
    Focus Styles (tts-focus)
    =================================== */
-.tts-input:focus,
-.tts-select:focus {
+.tts-input:focus-visible,
+.tts-select:focus-visible {
   outline: none;
 }
 

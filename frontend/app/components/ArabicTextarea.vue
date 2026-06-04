@@ -116,7 +116,7 @@ const dashOffset = computed(() => {
   @apply flex justify-between text-xs text-gray-500 dark:text-gray-400;
 }
 
-textarea:focus {
+textarea:focus-visible {
   outline: none;
   border-color: #60a5fa;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -129,7 +129,7 @@ textarea:focus {
     color: #f3f4f6;
   }
 
-  textarea:focus {
+  textarea:focus-visible {
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
