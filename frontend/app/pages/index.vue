@@ -180,6 +180,7 @@ function handleKeyDown(event: KeyboardEvent) {
                 id="speaker-select"
                 v-model="selectedSpeaker"
                 class="tts-select"
+                autocomplete="off"
               >
                 <option
                   v-for="speaker in speakers"
@@ -211,6 +212,7 @@ function handleKeyDown(event: KeyboardEvent) {
                 max="2.0"
                 step="0.1"
                 class="tts-range"
+                autocomplete="off"
               >
               <div class="tts-speed-value">
                 {{ speedValue }}x
