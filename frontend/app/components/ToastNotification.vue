@@ -8,6 +8,7 @@ const toast = useToast()
   <Transition name="tts-toast">
     <div
       v-if="toast.visible"
+      aria-live="polite"
       class="tts-toast tts-toast--error"
       dir="ltr"
     >

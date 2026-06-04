@@ -35,6 +35,18 @@ describe('ToastNotification', () => {
     expect(toast.value.visible).toBe(false)
   })
 
+  describe('Issue 23: aria-live on toast root', () => {
+    it('toast root element has aria-live="polite" for screen reader announcements', async () => {
+      const toast = useToast()
+      showToast('Test message')
+
+      const wrapper = mount(ToastNotification)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.tts-toast').attributes('aria-live')).toBe('polite')
+    })
+  })
+
   describe('Issue 21: aria-labels on icon buttons', () => {
     it('close button has aria-label="Close notification"', async () => {
       const toast = useToast()
