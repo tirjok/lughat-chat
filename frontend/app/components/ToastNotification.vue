@@ -12,7 +12,7 @@ const toast = useToast()
       dir="rtl"
     >
       <div class="tts-toast__icon">
-        <span class="i-lucide-alert-circle" />
+        <span aria-hidden="true" class="i-lucide-alert-circle" />
       </div>
       <p class="tts-toast__message">
         {{ toast.message }}
@@ -22,7 +22,7 @@ const toast = useToast()
         class="tts-toast__close"
         @click="toast.visible = false"
       >
-        <span class="i-lucide-x" />
+        <span aria-hidden="true" class="i-lucide-x" />
       </button>
     </div>
   </Transition>

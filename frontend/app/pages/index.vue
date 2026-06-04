@@ -130,7 +130,7 @@ function handleKeyDown(event: KeyboardEvent) {
         <div class="tts-header__content">
           <!-- Small icon with subtle glow -->
           <div class="tts-header__icon">
-            <span class="i-lucide-volume-2" />
+            <span aria-hidden="true" class="i-lucide-volume-2" />
           </div>
 
           <!-- Title and description -->
@@ -172,7 +172,7 @@ function handleKeyDown(event: KeyboardEvent) {
               for="speaker-select"
               class="tts-control-group__label"
             >
-              <span class="i-lucide-user" />
+              <span aria-hidden="true" class="i-lucide-user" />
               الصوت
             </label>
             <div class="tts-select-wrapper">
@@ -189,7 +189,7 @@ function handleKeyDown(event: KeyboardEvent) {
                   {{ speaker.label }}
                 </option>
               </select>
-              <span class="i-lucide-chevron-down tts-select__arrow" />
+              <span aria-hidden="true" class="i-lucide-chevron-down tts-select__arrow" />
             </div>
           </div>
 
@@ -199,7 +199,7 @@ function handleKeyDown(event: KeyboardEvent) {
               for="speed-slider"
               class="tts-control-group__label"
             >
-              <span class="i-lucide-gauge" />
+              <span aria-hidden="true" class="i-lucide-gauge" />
               سرعة الكلام
             </label>
             <div class="tts-speed-control">
@@ -228,14 +228,17 @@ function handleKeyDown(event: KeyboardEvent) {
         >
           <div class="tts-btn-generate__content">
             <span
+              aria-hidden="true"
               v-if="isGenerating"
               class="i-lucide-loader tts-btn-generate__icon"
             />
             <span
+              aria-hidden="true"
               v-else-if="modelStatus === 'loading'"
               class="i-lucide-loader animate-spin tts-btn-generate__icon"
             />
             <span
+              aria-hidden="true"
               v-else
               class="i-lucide-mic tts-btn-generate__icon"
             />
@@ -253,7 +256,7 @@ function handleKeyDown(event: KeyboardEvent) {
           >
             <div class="tts-audio__header">
               <h3 class="tts-audio__title">
-                <span class="i-lucide-headphones" />
+                <span aria-hidden="true" class="i-lucide-headphones" />
                 النتيجة
               </h3>
               <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
@@ -296,7 +299,7 @@ function handleKeyDown(event: KeyboardEvent) {
                   class="tts-audio__download-btn"
                   @click="handleDownload"
                 >
-                  <span class="i-lucide-download" />
+                  <span aria-hidden="true" class="i-lucide-download" />
                 </button>
               </div>
             </div>

@@ -196,7 +196,7 @@ onUnmounted(() => {
       <!-- Header -->
       <div class="tts-audio__header">
         <h3 class="tts-audio__title">
-          <span class="i-lucide-headphones" />
+          <span aria-hidden="true" class="i-lucide-headphones" />
           Result
         </h3>
         <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
@@ -230,7 +230,7 @@ onUnmounted(() => {
             class="tts-audio__download-btn"
             @click="downloadAudio"
           >
-            <span class="i-lucide-download" />
+            <span aria-hidden="true" class="i-lucide-download" />
           </button>
         </div>
       </div>
@@ -238,7 +238,7 @@ onUnmounted(() => {
       <!-- Error display -->
       <div v-if="error" class="tts-error">
         <div class="tts-error__content">
-          <span class="i-lucide-alert-circle tts-error__icon" />
+          <span aria-hidden="true" class="i-lucide-alert-circle tts-error__icon" />
           <div class="tts-error__body">
             <p class="tts-error__message">{{ error }}</p>
           </div>
