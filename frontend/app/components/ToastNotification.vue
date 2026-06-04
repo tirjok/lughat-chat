@@ -52,7 +52,7 @@ const toast = useToast()
 
 .tts-toast-enter-active,
 .tts-toast-leave-active {
-  transition: all 0.3s ease;
+  transition: transform, opacity 0.3s ease;
 }
 
 .tts-toast-enter-from,

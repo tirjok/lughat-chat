@@ -42,7 +42,8 @@ const ariaLabel = computed(() => {
 
 <style scoped>
 .tts-audio__play-btn {
-  @apply w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white flex items-center justify-center transition-all shadow-md active:scale-95;
+  @apply w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white flex items-center justify-center shadow-md active:scale-95;
+  transition: background-color, transform 0.2s ease;
 
   .i-lucide-play,
   .i-lucide-pause {

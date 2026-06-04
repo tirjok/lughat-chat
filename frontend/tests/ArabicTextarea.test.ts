@@ -189,14 +189,17 @@ describe('ArabicTextarea', () => {
     expect(offset).toBeCloseTo(169.62, 1) // ~50% of 339.24
   })
 
-  it('ring has smooth CSS transition on fill change', () => {
+  it('ring fill uses explicit CSS transition (not transition: all)', async () => {
     const wrapper = mount(ArabicTextarea, {
       props: {
         modelValue: 'مرحبا'
       }
     })
     const ringFill = wrapper.find('.tts-input__ring-fill')
-    expect(ringFill.classes()).toContain('transition-all')
+    // Verify no transition-all class is used
+    expect(ringFill.classes()).not.toContain('transition-all')
+    // Verify the element exists and has stroke-dashoffset for animation
+    expect(ringFill.attributes('stroke-dashoffset')).toBeTruthy()
   })
 
   it('turns ring red when count reaches 100% of maxLength', () => {

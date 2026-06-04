@@ -58,7 +58,7 @@ const dashOffset = computed(() => {
           stroke-width="3"
           :stroke-dasharray="circumference"
           :stroke-dashoffset="dashOffset"
-          class="tts-input__ring-fill transition-all"
+          class="tts-input__ring-fill"
           :class="ringColorClass"
         />
       </svg>
@@ -117,7 +117,7 @@ const dashOffset = computed(() => {
   }
 
   &-fill {
-    @apply transition-all;
+    transition: stroke 0.3s ease;
   }
 }
 
