@@ -4,6 +4,15 @@ import { nextTick } from 'vue'
 import ArabicTextarea from '../app/components/ArabicTextarea.vue'
 
 describe('ArabicTextarea', () => {
+  it('renders a label element associated with the textarea', () => {
+    const wrapper = mount(ArabicTextarea)
+    const label = wrapper.find('label')
+    expect(label.exists()).toBe(true)
+
+    const textarea = wrapper.find('textarea')
+    expect(label.attributes('for')).toBe(textarea.attributes('id'))
+  })
+
   it('renders a textarea element with dir="auto"', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')

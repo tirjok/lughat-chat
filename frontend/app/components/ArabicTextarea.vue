@@ -5,9 +5,11 @@ const props = withDefaults(defineProps<{
   modelValue?: string
   placeholder?: string
   maxLength?: number
+  id?: string
 }>(), {
   modelValue: '',
   maxLength: 2000,
+  id: 'arabic-textarea',
 })
 
 const emit = defineEmits<{
@@ -60,7 +62,14 @@ const dashOffset = computed(() => {
           :class="ringColorClass"
         />
       </svg>
+      <label
+        :for="id"
+        class="tts-section__label"
+      >
+        Enter Arabic text to convert to speech
+      </label>
       <textarea
+        :id="id"
         :value="modelValue"
         :placeholder="placeholder ?? defaultPlaceholder"
         dir="auto"
