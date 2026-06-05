@@ -51,7 +51,8 @@ const validationError = computed(() => validationState.value.error)
 
 // Available speakers (can be extended with backend speaker list)
 const speakers = [
-  { value: 'default', label: 'Default Voice' }
+  { value: 'female', label: 'Female Voice' },
+  { value: 'male', label: 'Male Voice' }
 ]
 
 // Format time in MM:SS format

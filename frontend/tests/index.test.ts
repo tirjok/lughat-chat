@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { shallowMount } from '@vue/test-utils'
 import { ref, computed } from 'vue'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -63,9 +63,40 @@ describe('index.vue — loading text uses proper ellipsis', () => {
   })
 })
 
+describe('index.vue — voice select renders all options', () => {
+  it('renders both female and male speaker options in the dropdown', () => {
+    const wrapper = shallowMount(Index)
+
+    const select = wrapper.find('#speaker-select')
+    expect(select.exists()).toBe(true)
+
+    const options = select.findAll('option')
+    expect(options.length).toBe(2)
+
+    const optionValues = options.map(opt => opt.attributes('value'))
+    expect(optionValues).toContain('female')
+    expect(optionValues).toContain('male')
+  })
+
+  it('first option is female and second is male', () => {
+    const wrapper = shallowMount(Index)
+
+    const select = wrapper.find('#speaker-select')
+    expect(select.exists()).toBe(true)
+
+    const options = select.findAll('option')
+    expect(options.length).toBe(2)
+
+    // First option should be female (matching the initial selectedSpeaker value)
+    expect(options[0].attributes('value')).toBe('female')
+    // Second option should be male
+    expect(options[1].attributes('value')).toBe('male')
+  })
+})
+
 describe('index.vue — autocomplete attributes', () => {
   it('sets autocomplete="off" on the speaker select input', () => {
-    const wrapper = mount(Index)
+    const wrapper = shallowMount(Index)
 
     const select = wrapper.find('#speaker-select')
     expect(select.exists()).toBe(true)
@@ -73,7 +104,7 @@ describe('index.vue — autocomplete attributes', () => {
   })
 
   it('sets autocomplete="off" on the speed range input', () => {
-    const wrapper = mount(Index)
+    const wrapper = shallowMount(Index)
 
     const rangeInput = wrapper.find('#speed-slider')
     expect(rangeInput.exists()).toBe(true)
