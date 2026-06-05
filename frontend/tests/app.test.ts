@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 
+import App from '../app/app.vue'
+
 let mockUseHead: ReturnType<typeof vi.fn>
 let mockUseSeoMeta: ReturnType<typeof vi.fn>
 
@@ -10,8 +12,6 @@ beforeEach(() => {
   ;(globalThis as Record<string, unknown>).useHead = mockUseHead
   ;(globalThis as Record<string, unknown>).useSeoMeta = mockUseSeoMeta
 })
-
-import App from '../app/app.vue'
 
 describe('app.vue — dark theme meta tags', () => {
   it('sets theme-color meta tag for dark mode with #0f172a', () => {

@@ -28,13 +28,13 @@ const ariaLabel = computed(() => {
     @click="emit('toggle')"
   >
     <span
-      aria-hidden="true"
       v-if="!isPlaying || isPaused"
+      aria-hidden="true"
       class="i-lucide-play"
     />
     <span
-      aria-hidden="true"
       v-else
+      aria-hidden="true"
       class="i-lucide-pause"
     />
   </button>

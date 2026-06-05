@@ -12,7 +12,7 @@ global.onMounted = vi.fn((cb: () => void) => mountedCallbacks.push(cb))
 
 // Mock Nuxt auto-imported composables — return reactive-like objects with .value properties
 global.ref = vi.fn((init: unknown) => ({ value: init })) as typeof global.ref
-global.computed = vi.fn((fn: () => unknown) => ({ get value() { return fn() } })) as typeof global.computed
+global.computed = vi.fn((fn: () => unknown) => ({ value: fn() })) as typeof global.computed
 
 // ─── Re-export mock factories for component tests ───────────────────
 export {

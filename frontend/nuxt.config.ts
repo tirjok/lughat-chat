@@ -11,6 +11,12 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  routeRules: {
+    '/': { prerender: true }
+  },
+
+  compatibilityDate: '2025-01-15',
+
   nitro: {
     // Proxy to backend in development mode only.
     // In production, Nginx handles all proxying (see Dockerfile).
@@ -19,20 +25,14 @@ export default defineNuxtConfig({
       : {
           '/api/': {
             target: 'http://localhost:8000',
-            changeOrigin: true,
+            changeOrigin: true
           },
           '/health': {
             target: 'http://localhost:8000',
-            changeOrigin: true,
-          },
+            changeOrigin: true
+          }
         }
   },
-
-  routeRules: {
-    '/': { prerender: true }
-  },
-
-  compatibilityDate: '2025-01-15',
 
   nitro: {
     // Proxy to backend in development mode only.

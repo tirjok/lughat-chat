@@ -9,7 +9,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   modelValue: '',
   maxLength: 2000,
-  id: 'arabic-textarea',
+  id: 'arabic-textarea'
 })
 
 const emit = defineEmits<{

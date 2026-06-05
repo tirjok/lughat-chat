@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+
 import ArabicTextarea from '../app/components/ArabicTextarea.vue'
 
 describe('ArabicTextarea', () => {

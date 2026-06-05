@@ -2,13 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, computed } from 'vue'
 
-// Mock the composable before importing the component
-vi.mock('../app/composables/useHealthPoll', () => ({
-  useHealthPoll: vi.fn(),
-}))
-
 import ModelStatusIndicator from '../app/components/ModelStatusIndicator.vue'
 import { useHealthPoll } from '../app/composables/useHealthPoll'
+
+// Mock the composable before importing the component
+vi.mock('../app/composables/useHealthPoll', () => ({
+  useHealthPoll: vi.fn()
+}))
 
 describe('ModelStatusIndicator', () => {
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('ModelStatusIndicator', () => {
     it('renders spinning loader icon and "Loading..." text on mount', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -30,7 +30,7 @@ describe('ModelStatusIndicator', () => {
     it('renders the loader icon element with spinning class', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -45,7 +45,7 @@ describe('ModelStatusIndicator', () => {
     it('does not render check or alert icons in loading state', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -60,7 +60,7 @@ describe('ModelStatusIndicator', () => {
     it('renders green check icon and "Model Ready" text when model is loaded', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('ready'),
-        modelLoaded: computed(() => true),
+        modelLoaded: computed(() => true)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -71,7 +71,7 @@ describe('ModelStatusIndicator', () => {
     it('renders the check-circle icon element', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('ready'),
-        modelLoaded: computed(() => true),
+        modelLoaded: computed(() => true)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -85,7 +85,7 @@ describe('ModelStatusIndicator', () => {
     it('does not render loader or alert icons in ready state', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('ready'),
-        modelLoaded: computed(() => true),
+        modelLoaded: computed(() => true)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -100,7 +100,7 @@ describe('ModelStatusIndicator', () => {
     it('renders red alert icon and "Model Load Error" text when model is not loaded', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('error'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -111,7 +111,7 @@ describe('ModelStatusIndicator', () => {
     it('renders the alert-circle icon element', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('error'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -125,7 +125,7 @@ describe('ModelStatusIndicator', () => {
     it('does not render loader or check icons in error state', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('error'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -143,7 +143,7 @@ describe('ModelStatusIndicator', () => {
 
       vi.mocked(useHealthPoll).mockReturnValue({
         status: statusRef,
-        modelLoaded: modelLoadedRef,
+        modelLoaded: modelLoadedRef
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -173,7 +173,7 @@ describe('ModelStatusIndicator', () => {
 
       vi.mocked(useHealthPoll).mockReturnValue({
         status: statusRef,
-        modelLoaded: modelLoadedRef,
+        modelLoaded: modelLoadedRef
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -200,7 +200,7 @@ describe('ModelStatusIndicator', () => {
 
       vi.mocked(useHealthPoll).mockReturnValue({
         status: statusRef,
-        modelLoaded: modelLoadedRef,
+        modelLoaded: modelLoadedRef
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -227,7 +227,7 @@ describe('ModelStatusIndicator', () => {
     it('renders with flex layout and RTL-compatible structure', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -241,7 +241,7 @@ describe('ModelStatusIndicator', () => {
     it('renders icon and text with gap spacing', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -253,7 +253,7 @@ describe('ModelStatusIndicator', () => {
     it('renders icon with consistent dimensions', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
@@ -268,7 +268,7 @@ describe('ModelStatusIndicator', () => {
     it('renders text with small font size', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
-        modelLoaded: computed(() => false),
+        modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)

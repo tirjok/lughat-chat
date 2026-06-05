@@ -7,8 +7,8 @@ describe('SeekableProgressBar', () => {
     const wrapper = mount(SeekableProgressBar, {
       props: {
         currentTime: 30,
-        duration: 120,
-      },
+        duration: 120
+      }
     })
 
     expect(wrapper.find('.tts-audio__progress-fill').exists()).toBe(true)
@@ -19,8 +19,8 @@ describe('SeekableProgressBar', () => {
     const wrapper = mount(SeekableProgressBar, {
       props: {
         currentTime: 60,
-        duration: 120,
-      },
+        duration: 120
+      }
     })
 
     const fill = wrapper.find('.tts-audio__progress-fill')
@@ -33,8 +33,8 @@ describe('SeekableProgressBar', () => {
     const wrapper = mount(SeekableProgressBar, {
       props: {
         currentTime: 30,
-        duration: 120,
-      },
+        duration: 120
+      }
     })
 
     const thumb = wrapper.find('.tts-audio__progress-thumb')
@@ -47,8 +47,8 @@ describe('SeekableProgressBar', () => {
     const wrapper = mount(SeekableProgressBar, {
       props: {
         currentTime: 0,
-        duration: 120,
-      },
+        duration: 120
+      }
     })
 
     const mockRect = { right: 200, width: 400 }
@@ -66,8 +66,8 @@ describe('SeekableProgressBar', () => {
     const wrapper = mount(SeekableProgressBar, {
       props: {
         currentTime: 0,
-        duration: 120,
-      },
+        duration: 120
+      }
     })
 
     const mockRect = { right: 200, width: 400 }
@@ -85,8 +85,8 @@ describe('SeekableProgressBar', () => {
     const wrapper = mount(SeekableProgressBar, {
       props: {
         currentTime: 0,
-        duration: 120,
-      },
+        duration: 120
+      }
     })
 
     const mockRect = { right: 200, width: 400 }
@@ -104,8 +104,8 @@ describe('SeekableProgressBar', () => {
     const wrapper = mount(SeekableProgressBar, {
       props: {
         currentTime: 0,
-        duration: 0,
-      },
+        duration: 0
+      }
     })
 
     const fill = wrapper.find('.tts-audio__progress-fill')

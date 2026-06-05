@@ -19,7 +19,7 @@ const {
 
 const { formatTime } = useTimeDisplay()
 
-const emit = defineEmits<{
+const _emit = defineEmits<{
   toggle: []
 }>()
 
@@ -36,18 +36,27 @@ function handleSeek(ratio: number) {
 
 <template>
   <Transition name="tts-slide-up">
-    <div v-if="audioUrl" class="tts-audio-player-container">
+    <div
+      v-if="audioUrl"
+      class="tts-audio-player-container"
+    >
       <!-- Header -->
       <div class="tts-audio__header">
         <h3 class="tts-audio__title">
-          <span aria-hidden="true" class="i-lucide-headphones" />
+          <span
+            aria-hidden="true"
+            class="i-lucide-headphones"
+          />
           Result
         </h3>
         <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
       </div>
 
       <!-- Hidden audio element -->
-      <audio ref="audioRef" class="hidden" />
+      <audio
+        ref="audioRef"
+        class="hidden"
+      />
 
       <!-- Controls -->
       <div class="tts-audio__container">

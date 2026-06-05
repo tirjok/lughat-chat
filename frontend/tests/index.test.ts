@@ -4,6 +4,8 @@ import { ref, computed } from 'vue'
 import * as fs from 'fs'
 import * as path from 'path'
 
+import Index from '../app/pages/index.vue'
+
 // Mock composables at the global level to intercept Nuxt auto-imports
 const mockUseAudioPlayer = vi.fn()
 const mockUseTtsApi = vi.fn()
@@ -25,28 +27,26 @@ beforeEach(() => {
     play: vi.fn().mockResolvedValue(undefined),
     togglePlayPause: vi.fn(),
     downloadAudio: vi.fn(),
-    audioUrl: ref(null),
+    audioUrl: ref(null)
   })
 
   ;(globalThis as Record<string, unknown>).useTtsApi = mockUseTtsApi.mockReturnValue({
     synthesize: vi.fn().mockResolvedValue(new Blob([], { type: 'audio/mpeg' })),
-    healthCheck: vi.fn().mockResolvedValue({ status: 'ready', model_loaded: true }),
+    healthCheck: vi.fn().mockResolvedValue({ status: 'ready', model_loaded: true })
   })
 
   ;(globalThis as Record<string, unknown>).useHealthPoll = mockUseHealthPoll.mockReturnValue({
     status: ref('ready'),
-    modelLoaded: computed(() => true),
+    modelLoaded: computed(() => true)
   })
 
   ;(globalThis as Record<string, unknown>).useInputValidation = mockUseInputValidation.mockReturnValue({
     isValid: ref(true),
-    error: ref(null),
+    error: ref(null)
   })
 
   ;(globalThis as Record<string, unknown>).showToast = mockShowToast
 })
-
-import Index from '../app/pages/index.vue'
 
 describe('index.vue — loading text uses proper ellipsis', () => {
   it('uses Unicode ellipsis character in generating and loading status texts', () => {
@@ -58,8 +58,8 @@ describe('index.vue — loading text uses proper ellipsis', () => {
     expect(source).toContain('Loading\u2026')
 
     // Ensure no literal three-dot sequences in status text
-    expect(source).not.toContain("Generating...")
-    expect(source).not.toContain("Loading...")
+    expect(source).not.toContain('Generating...')
+    expect(source).not.toContain('Loading...')
   })
 })
 

@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi } from 'vitest'
 import { ref, computed, type Ref } from 'vue'
 
 // ─── Audio Player Mock Factory ───────────────────────────────────────

@@ -8,8 +8,8 @@ describe('PlayPauseButton', () => {
       props: {
         isPlaying: false,
         isPaused: false,
-        isLoading: false,
-      },
+        isLoading: false
+      }
     })
 
     expect(wrapper.find('.i-lucide-play').exists()).toBe(true)
@@ -21,8 +21,8 @@ describe('PlayPauseButton', () => {
       props: {
         isPlaying: true,
         isPaused: false,
-        isLoading: false,
-      },
+        isLoading: false
+      }
     })
 
     expect(wrapper.find('.i-lucide-pause').exists()).toBe(true)
@@ -34,8 +34,8 @@ describe('PlayPauseButton', () => {
       props: {
         isPlaying: true,
         isPaused: true,
-        isLoading: false,
-      },
+        isLoading: false
+      }
     })
 
     expect(wrapper.find('.i-lucide-play').exists()).toBe(true)
@@ -47,8 +47,8 @@ describe('PlayPauseButton', () => {
       props: {
         isPlaying: false,
         isPaused: false,
-        isLoading: false,
-      },
+        isLoading: false
+      }
     })
 
     wrapper.trigger('click')
@@ -61,8 +61,8 @@ describe('PlayPauseButton', () => {
       props: {
         isPlaying: false,
         isPaused: false,
-        isLoading: true,
-      },
+        isLoading: true
+      }
     })
 
     expect(wrapper.find('button').attributes('disabled')).toBe('')
@@ -73,8 +73,8 @@ describe('PlayPauseButton', () => {
       props: {
         isPlaying: false,
         isPaused: false,
-        isLoading: false,
-      },
+        isLoading: false
+      }
     })
 
     expect(wrapper.find('button').attributes('disabled')).toBeUndefined()
@@ -83,28 +83,28 @@ describe('PlayPauseButton', () => {
   describe('Issue 21: aria-labels on icon buttons', () => {
     it('has aria-label="Play" when not playing and not paused', () => {
       const wrapper = mount(PlayPauseButton, {
-        props: { isPlaying: false, isPaused: false, isLoading: false },
+        props: { isPlaying: false, isPaused: false, isLoading: false }
       })
       expect(wrapper.find('button').attributes('aria-label')).toBe('Play')
     })
 
     it('has aria-label="Pause" when actively playing', () => {
       const wrapper = mount(PlayPauseButton, {
-        props: { isPlaying: true, isPaused: false, isLoading: false },
+        props: { isPlaying: true, isPaused: false, isLoading: false }
       })
       expect(wrapper.find('button').attributes('aria-label')).toBe('Pause')
     })
 
     it('has aria-label="Play" when paused', () => {
       const wrapper = mount(PlayPauseButton, {
-        props: { isPlaying: true, isPaused: true, isLoading: false },
+        props: { isPlaying: true, isPaused: true, isLoading: false }
       })
       expect(wrapper.find('button').attributes('aria-label')).toBe('Play')
     })
 
     it('has aria-label="Loading" when loading', () => {
       const wrapper = mount(PlayPauseButton, {
-        props: { isPlaying: false, isPaused: false, isLoading: true },
+        props: { isPlaying: false, isPaused: false, isLoading: true }
       })
       expect(wrapper.find('button').attributes('aria-label')).toBe('Loading')
     })

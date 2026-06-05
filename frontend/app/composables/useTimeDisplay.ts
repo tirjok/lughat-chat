@@ -1,5 +1,3 @@
-import { ref } from 'vue'
-
 export const useTimeDisplay = () => {
   function formatTime(seconds: number): string {
     if (!seconds || isNaN(seconds) || seconds < 0) return '0:00'
