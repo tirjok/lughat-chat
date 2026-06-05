@@ -151,7 +151,7 @@ export const useAudioPlayer = (options: UseAudioPlayerOptions = {}) => {
       // Load the audio source
       audioRef.value.src = newUrl
     }
-  })
+  }, { flush: 'post' })
 
   return {
     // Refs for template binding

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Audio player composable for playback state management
 // Toast notification for API errors
+import { nextTick } from 'vue'
 import { showToast } from '../composables/useToast'
 
 const {
@@ -82,6 +83,9 @@ async function handleSynthesize() {
 
     // Load audio blob into player
     const url = loadAudio(audioBlob)
+
+    // Wait for Vue to mount the <audio ref="audioRef"> element in the DOM
+    await nextTick()
 
     // Auto-play the generated audio
     if (audioRef.value && url) {
