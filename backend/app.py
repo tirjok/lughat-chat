@@ -19,33 +19,6 @@ _torchcodec_env = "0"
 for _env_key in ["TORCHAUDIO_USE_TORCHCODEC", "TORCHCODEC_ENABLED"]:
     _os.environ.setdefault(_env_key, _torchcodec_env)
 
-# Compatibility shim: isin_mps_friendly was removed in newer transformers
-import torch
-import transformers.pytorch_utils as _pytorch_utils
-if not hasattr(_pytorch_utils, 'isin_mps_friendly'):
-    def _isin_mps_friendly(elements, test_elements, **kwargs):
-        return torch.isin(elements, test_elements)
-    _pytorch_utils.isin_mps_friendly = _isin_mps_friendly
-
-# Patch torch.ops.load_library to suppress missing NVIDIA library errors
-# This prevents torchcodec (a TTS dependency) from crashing on CPU-only servers.
-# The TORCHAUDIO_USE_TORCHCODEC=0 env var above prevents torchaudio from
-# trying to import torchcodec at all, making this a safety net only.
-_original_load_library = None
-
-def _patched_load_library(path):
-    try:
-        return _original_load_library(path)
-    except OSError as e:
-        error_str = str(e)
-        # Suppress missing CUDA/NVIDIA shared libraries on CPU servers
-        if "libnvrtc" in error_str or "libcuda" in error_str:
-            return None
-        # Suppress all libtorchcodec loading errors (video processing, not needed for TTS)
-        if "libtorchcodec" in path or "libtorchcodec" in error_str:
-            return None
-        raise
-
 # Minimum reference audio duration for XTTS-v2 voice cloning (seconds)
 XTTS_MIN_REFERENCE_DURATION = 0.33
 
@@ -74,15 +47,47 @@ def _validate_speaker_wav(wav_path: str) -> None:
             detail=f"Failed to validate speaker WAV file '{wav_path}': {e}",
         )
 
+# Compatibility shim: isin_mps_friendly was removed in newer transformers
+# Lazy import so tests can run without torch installed.
+_torch_loaded = False
 
-def _patch_torch():
+def _ensure_torch():
+    """Ensure torch is imported and patched. Called lazily on first use."""
+    global _torch_loaded
+    if _torch_loaded:
+        return
+    import torch
+    import transformers.pytorch_utils as _pytorch_utils
+    if not hasattr(_pytorch_utils, 'isin_mps_friendly'):
+        def _isin_mps_friendly(elements, test_elements, **kwargs):
+            return torch.isin(elements, test_elements)
+        _pytorch_utils.isin_mps_friendly = _isin_mps_friendly
+
+    # Patch torch.ops.load_library to suppress missing NVIDIA library errors
     global _original_load_library
+    def _patched_load_library(path):
+        try:
+            return _original_load_library(path)
+        except OSError as e:
+            error_str = str(e)
+            if "libnvrtc" in error_str or "libcuda" in error_str:
+                return None
+            if "libtorchcodec" in path or "libtorchcodec" in error_str:
+                return None
+            raise
+
     import torch.ops  # noqa: F401
     if hasattr(torch.ops, 'load_library'):
         _original_load_library = torch.ops.load_library
         torch.ops.load_library = _patched_load_library
+    _torch_loaded = True
 
-_patch_torch()
+# Ensure torch is loaded and patched (lazy import for test compatibility)
+# Silently skip if torch isn't installed (e.g., in CI test environments).
+try:
+    _ensure_torch()
+except ImportError:
+    pass  # torch not available — acceptable in test environments
 
 # Coqui TTS imports
 from TTS.api import TTS
@@ -248,6 +253,7 @@ async def generate_speech(request: SynthesisRequest):
         # Set PyTorch random seed for deterministic XTTS generation.
         # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
         # seeding must be done at the PyTorch level before inference.
+        import torch
         torch.manual_seed(seed)
 
         tts_model.tts_to_file(

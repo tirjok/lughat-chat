@@ -25,6 +25,9 @@ const {
   }
 })
 
+// Safe audio element accessor (avoids null-safety errors in template)
+const audioElement = computed(() => audioRef.value ?? undefined)
+
 // API composable for TTS backend calls
 const { synthesize, healthCheck: _healthCheck } = useTtsApi()
 
@@ -33,7 +36,7 @@ const { status: modelStatus, modelLoaded: _modelLoaded } = useHealthPoll()
 
 // Reactive state for form inputs
 const textInput = ref('')
-const selectedSpeaker = ref('default')
+const selectedSpeaker = ref<'female' | 'male'>('female')
 const speedValue = ref(1.0)
 
 // Reactive state for UI feedback
@@ -295,7 +298,7 @@ function handleKeyDown(event: KeyboardEvent) {
               <SeekableProgressBar
                 :current-time="currentTime"
                 :duration="duration"
-                @seek="(ratio) => { if (audioRef.value && duration) audioRef.value.currentTime = ratio * duration }"
+                @seek="(ratio) => { if (audioElement && duration) audioElement.currentTime = ratio * duration }"
               />
 
               <!-- Time Display -->
