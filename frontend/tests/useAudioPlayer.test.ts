@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useAudioPlayer } from '../app/composables/useAudioPlayer'
-import * as toastModule from '../app/composables/useToast'
+import * as _toastModule from '../app/composables/useToast'
 
 describe('useAudioPlayer', () => {
   beforeEach(() => {
@@ -128,7 +128,7 @@ describe('useAudioPlayer', () => {
       const mockAudio = {
         play: vi.fn(() => Promise.resolve()),
         pause: vi.fn(),
-        addEventListener: vi.fn(),
+        addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
 
       const player = useAudioPlayer()
@@ -143,7 +143,7 @@ describe('useAudioPlayer', () => {
       const mockAudio = {
         play: vi.fn(() => Promise.reject(new DOMException('Not allowed'))),
         pause: vi.fn(),
-        addEventListener: vi.fn(),
+        addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
 
       const player = useAudioPlayer()
@@ -166,7 +166,7 @@ describe('useAudioPlayer', () => {
       const mockAudio = {
         play: vi.fn(),
         pause: vi.fn(),
-        addEventListener: vi.fn(),
+        addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
 
       const player = useAudioPlayer()
@@ -189,7 +189,7 @@ describe('useAudioPlayer', () => {
       const mockAudio = {
         play: vi.fn(),
         pause: vi.fn(),
-        addEventListener: vi.fn(),
+        addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
 
       const player = useAudioPlayer()
@@ -206,7 +206,7 @@ describe('useAudioPlayer', () => {
       const mockAudio = {
         play: vi.fn(() => Promise.resolve()),
         pause: vi.fn(),
-        addEventListener: vi.fn(),
+        addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
 
       const player = useAudioPlayer()
@@ -222,7 +222,7 @@ describe('useAudioPlayer', () => {
       const mockAudio = {
         play: vi.fn(() => Promise.resolve()),
         pause: vi.fn(),
-        addEventListener: vi.fn(),
+        addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
 
       const player = useAudioPlayer()
@@ -270,7 +270,7 @@ describe('useAudioPlayer', () => {
           return {
             href: '',
             click: linkClickSpy,
-            set download(val: string) { capturedDownload = val },
+            set download(val: string) { capturedDownload = val }
           }
         }
         return originalCreateElement(tag)
@@ -285,8 +285,8 @@ describe('useAudioPlayer', () => {
       expect(capturedDownload).toBe('test.wav')
 
       document.createElement = originalCreateElement
-      delete (document.body as any).appendChild
-      delete (document.body as any).removeChild
+      delete (document.body as HTMLElement & Record<string, unknown>).appendChild
+      delete (document.body as HTMLElement & Record<string, unknown>).removeChild
     })
 
     it('uses provided filename', async () => {
@@ -302,7 +302,7 @@ describe('useAudioPlayer', () => {
           return {
             href: '',
             click: vi.fn(),
-            set download(val: string) { capturedDownload = val },
+            set download(val: string) { capturedDownload = val }
           }
         }
         return originalCreateElement(tag)
@@ -316,8 +316,8 @@ describe('useAudioPlayer', () => {
       expect(capturedDownload).toBe('custom_name.wav')
 
       document.createElement = originalCreateElement
-      delete (document.body as any).appendChild
-      delete (document.body as any).removeChild
+      delete (document.body as HTMLElement & Record<string, unknown>).appendChild
+      delete (document.body as HTMLElement & Record<string, unknown>).removeChild
     })
 
     it('generates default filename when not provided', async () => {
@@ -333,7 +333,7 @@ describe('useAudioPlayer', () => {
           return {
             href: '',
             click: vi.fn(),
-            set download(val: string) { capturedDownload = val },
+            set download(val: string) { capturedDownload = val }
           }
         }
         return originalCreateElement(tag)
@@ -347,8 +347,8 @@ describe('useAudioPlayer', () => {
       expect(capturedDownload).toMatch(/^tts_output_\d+\.mp3$/)
 
       document.createElement = originalCreateElement
-      delete (document.body as any).appendChild
-      delete (document.body as any).removeChild
+      delete (document.body as HTMLElement & Record<string, unknown>).appendChild
+      delete (document.body as HTMLElement & Record<string, unknown>).removeChild
     })
 
     it('does nothing when no blob is loaded', async () => {
@@ -370,7 +370,7 @@ describe('useAudioPlayer', () => {
           return {
             href: '',
             click: vi.fn(),
-            set download(val: string) { capturedDownload = val },
+            set download(val: string) { capturedDownload = val }
           }
         }
         return originalCreateElement(tag)
@@ -384,8 +384,8 @@ describe('useAudioPlayer', () => {
       expect(capturedDownload).toMatch(/^tts_output_\d+\.mp3$/)
 
       document.createElement = originalCreateElement
-      delete (document.body as any).appendChild
-      delete (document.body as any).removeChild
+      delete (document.body as HTMLElement & Record<string, unknown>).appendChild
+      delete (document.body as HTMLElement & Record<string, unknown>).removeChild
     })
   })
 
@@ -445,7 +445,7 @@ describe('useAudioPlayer', () => {
         pause: vi.fn(),
         addEventListener: vi.fn((event: string, handler: () => void) => {
           if (event === 'ended') handler()
-        }),
+        })
       } as unknown as HTMLAudioElement
 
       player.audioRef.value = mockAudio
@@ -463,7 +463,7 @@ describe('useAudioPlayer', () => {
       const mockAudio = {
         play: vi.fn(() => Promise.reject(new DOMException('Not allowed'))),
         pause: vi.fn(),
-        addEventListener: vi.fn(),
+        addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
 
       const player = useAudioPlayer()

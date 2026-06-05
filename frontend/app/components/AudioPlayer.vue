@@ -188,15 +188,24 @@ onUnmounted(() => {
 
 <template>
   <!-- Hidden audio element, always mounted -->
-  <audio data-audio-player class="hidden" />
+  <audio
+    data-audio-player
+    class="hidden"
+  />
 
   <!-- Player UI, shown only when audio is loaded -->
   <Transition name="tts-slide-up">
-    <div v-if="hasAudio" class="tts-audio-player-container">
+    <div
+      v-if="hasAudio"
+      class="tts-audio-player-container"
+    >
       <!-- Header -->
       <div class="tts-audio__header">
         <h3 class="tts-audio__title">
-          <span aria-hidden="true" class="i-lucide-headphones" />
+          <span
+            aria-hidden="true"
+            class="i-lucide-headphones"
+          />
           Result
         </h3>
         <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
@@ -230,17 +239,28 @@ onUnmounted(() => {
             class="tts-audio__download-btn"
             @click="downloadAudio"
           >
-            <span aria-hidden="true" class="i-lucide-download" />
+            <span
+              aria-hidden="true"
+              class="i-lucide-download"
+            />
           </button>
         </div>
       </div>
 
       <!-- Error display -->
-      <div v-if="error" class="tts-error">
+      <div
+        v-if="error"
+        class="tts-error"
+      >
         <div class="tts-error__content">
-          <span aria-hidden="true" class="i-lucide-alert-circle tts-error__icon" />
+          <span
+            aria-hidden="true"
+            class="i-lucide-alert-circle tts-error__icon"
+          />
           <div class="tts-error__body">
-            <p class="tts-error__message">{{ error }}</p>
+            <p class="tts-error__message">
+              {{ error }}
+            </p>
           </div>
         </div>
       </div>

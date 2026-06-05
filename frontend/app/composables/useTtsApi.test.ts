@@ -21,7 +21,7 @@ describe('useTtsApi', () => {
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
         status: 400,
-        json: async () => ({}),
+        json: async () => ({})
       } as Response)
 
       await expect(synthesize({ text: '' })).rejects.toThrow('Invalid text for synthesis')
@@ -33,7 +33,7 @@ describe('useTtsApi', () => {
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
         status: 503,
-        json: async () => ({}),
+        json: async () => ({})
       } as Response)
 
       await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('Server is currently unavailable')
@@ -45,7 +45,7 @@ describe('useTtsApi', () => {
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
         status: 500,
-        json: async () => ({ detail: 'Internal error' }),
+        json: async () => ({ detail: 'Internal error' })
       } as Response)
 
       await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('Server error: Internal error')
@@ -57,7 +57,7 @@ describe('useTtsApi', () => {
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
         status: 502,
-        json: async () => ({}),
+        json: async () => ({})
       } as Response)
 
       await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('An error occurred on the server')
@@ -69,7 +69,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['audio data'], { type: 'audio/mpeg' })
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: true,
-        blob: async () => mockBlob,
+        blob: async () => mockBlob
       } as Response)
 
       const result = await synthesize({ text: 'مرحبا' })
@@ -81,7 +81,7 @@ describe('useTtsApi', () => {
 
       const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: true,
-        blob: async () => new Blob([], { type: 'audio/mpeg' }),
+        blob: async () => new Blob([], { type: 'audio/mpeg' })
       } as Response)
 
       await synthesize({ text: 'مرحبا', speaker: 'test-speaker', speed: 1.5 })
@@ -95,8 +95,8 @@ describe('useTtsApi', () => {
             text: 'مرحبا',
             speaker: 'test-speaker',
             speed: 1.5,
-            language: 'ar',
-          }),
+            language: 'ar'
+          })
         })
       )
     })
@@ -116,7 +116,7 @@ describe('useTtsApi', () => {
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
-        status: 503,
+        status: 503
       } as Response)
 
       await expect(healthCheck()).rejects.toThrow('Health check failed: 503')
@@ -127,7 +127,7 @@ describe('useTtsApi', () => {
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: true,
-        json: async () => ({ status: 'ready', model_loaded: true }),
+        json: async () => ({ status: 'ready', model_loaded: true })
       } as Response)
 
       const result = await healthCheck()

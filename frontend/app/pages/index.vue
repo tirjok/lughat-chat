@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Audio player composable for playback state management
 // Toast notification for API errors
+import { nextTick } from 'vue'
 import { showToast } from '../composables/useToast'
 
 const {
@@ -25,10 +26,10 @@ const {
 })
 
 // API composable for TTS backend calls
-const { synthesize, healthCheck } = useTtsApi()
+const { synthesize, healthCheck: _healthCheck } = useTtsApi()
 
 // Model loading status via Issue 4 composable
-const { status: modelStatus, modelLoaded } = useHealthPoll()
+const { status: modelStatus, modelLoaded: _modelLoaded } = useHealthPoll()
 
 // Reactive state for form inputs
 const textInput = ref('')
@@ -83,6 +84,9 @@ async function handleSynthesize() {
     // Load audio blob into player
     const url = loadAudio(audioBlob)
 
+    // Wait for Vue to mount the <audio ref="audioRef"> element in the DOM
+    await nextTick()
+
     // Auto-play the generated audio
     if (audioRef.value && url) {
       await play()
@@ -130,7 +134,10 @@ function handleKeyDown(event: KeyboardEvent) {
         <div class="tts-header__content">
           <!-- Small icon with subtle glow -->
           <div class="tts-header__icon">
-            <span aria-hidden="true" class="i-lucide-volume-2" />
+            <span
+              aria-hidden="true"
+              class="i-lucide-volume-2"
+            />
           </div>
 
           <!-- Title and description -->
@@ -172,7 +179,10 @@ function handleKeyDown(event: KeyboardEvent) {
               for="speaker-select"
               class="tts-control-group__label"
             >
-              <span aria-hidden="true" class="i-lucide-user" />
+              <span
+                aria-hidden="true"
+                class="i-lucide-user"
+              />
               Voice
             </label>
             <div class="tts-select-wrapper">
@@ -190,7 +200,10 @@ function handleKeyDown(event: KeyboardEvent) {
                   {{ speaker.label }}
                 </option>
               </select>
-              <span aria-hidden="true" class="i-lucide-chevron-down tts-select__arrow" />
+              <span
+                aria-hidden="true"
+                class="i-lucide-chevron-down tts-select__arrow"
+              />
             </div>
           </div>
 
@@ -200,7 +213,10 @@ function handleKeyDown(event: KeyboardEvent) {
               for="speed-slider"
               class="tts-control-group__label"
             >
-              <span aria-hidden="true" class="i-lucide-gauge" />
+              <span
+                aria-hidden="true"
+                class="i-lucide-gauge"
+              />
               Speech Speed
             </label>
             <div class="tts-speed-control">
@@ -230,18 +246,18 @@ function handleKeyDown(event: KeyboardEvent) {
         >
           <div class="tts-btn-generate__content">
             <span
-              aria-hidden="true"
               v-if="isGenerating"
+              aria-hidden="true"
               class="i-lucide-loader tts-btn-generate__icon"
             />
             <span
-              aria-hidden="true"
               v-else-if="modelStatus === 'loading'"
+              aria-hidden="true"
               class="i-lucide-loader animate-spin tts-btn-generate__icon"
             />
             <span
-              aria-hidden="true"
               v-else
+              aria-hidden="true"
               class="i-lucide-mic tts-btn-generate__icon"
             />
             <span>
@@ -258,7 +274,10 @@ function handleKeyDown(event: KeyboardEvent) {
           >
             <div class="tts-audio__header">
               <h3 class="tts-audio__title">
-                <span aria-hidden="true" class="i-lucide-headphones" />
+                <span
+                  aria-hidden="true"
+                  class="i-lucide-headphones"
+                />
                 Result
               </h3>
               <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
@@ -301,7 +320,10 @@ function handleKeyDown(event: KeyboardEvent) {
                   class="tts-audio__download-btn"
                   @click="handleDownload"
                 >
-                  <span aria-hidden="true" class="i-lucide-download" />
+                  <span
+                    aria-hidden="true"
+                    class="i-lucide-download"
+                  />
                 </button>
               </div>
             </div>

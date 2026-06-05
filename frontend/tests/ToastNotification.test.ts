@@ -37,7 +37,7 @@ describe('ToastNotification', () => {
 
   describe('Issue 23: aria-live on toast root', () => {
     it('toast root element has aria-live="polite" for screen reader announcements', async () => {
-      const toast = useToast()
+      useToast()
       showToast('Test message')
 
       const wrapper = mount(ToastNotification)
@@ -49,7 +49,7 @@ describe('ToastNotification', () => {
 
   describe('Issue 21: aria-labels on icon buttons', () => {
     it('close button has aria-label="Close notification"', async () => {
-      const toast = useToast()
+      useToast()
       showToast('Test message')
 
       const wrapper = mount(ToastNotification)

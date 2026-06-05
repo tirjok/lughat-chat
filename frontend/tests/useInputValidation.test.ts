@@ -152,7 +152,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 'Enter',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).toHaveBeenCalledTimes(1)
@@ -165,7 +165,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: false,
         key: 'Enter',
-        metaKey: true,
+        metaKey: true
       } as KeyboardEvent, callback)
 
       expect(callback).toHaveBeenCalledTimes(1)
@@ -178,7 +178,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: false,
         key: 'Enter',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()
@@ -191,7 +191,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 'a',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()
@@ -204,7 +204,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 'Enter',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()
@@ -217,7 +217,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 'Enter',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()
@@ -230,7 +230,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 's',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()

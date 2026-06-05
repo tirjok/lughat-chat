@@ -49,7 +49,7 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
       const errorMessages: Record<number, string> = {
         400: 'Invalid text for synthesis',
         503: 'Server is currently unavailable',
-        500: 'An error occurred on the server',
+        500: 'An error occurred on the server'
       }
 
       const errorData = await response.json().catch(() => ({}))

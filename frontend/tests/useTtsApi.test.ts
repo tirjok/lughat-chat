@@ -11,7 +11,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -36,7 +36,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -50,7 +50,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -64,7 +64,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -78,7 +78,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -91,7 +91,7 @@ describe('useTtsApi', () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 503,
-        json: () => Promise.resolve({ detail: 'Model not ready' }),
+        json: () => Promise.resolve({ detail: 'Model not ready' })
       }))
 
       const { synthesize } = useTtsApi()
@@ -102,7 +102,7 @@ describe('useTtsApi', () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 500,
-        json: () => Promise.reject(new Error('parse error')),
+        json: () => Promise.reject(new Error('parse error'))
       }))
 
       const { synthesize } = useTtsApi()
@@ -120,7 +120,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi({ baseUrl: 'http://custom-api.local' })
@@ -137,7 +137,7 @@ describe('useTtsApi', () => {
     it('sends GET request to /health', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ status: 'ready', model_loaded: true }),
+        json: () => Promise.resolve({ status: 'ready', model_loaded: true })
       }))
 
       const { healthCheck } = useTtsApi()
@@ -150,7 +150,7 @@ describe('useTtsApi', () => {
       const mockHealth = { status: 'ready' as const, model_loaded: true }
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockHealth),
+        json: () => Promise.resolve(mockHealth)
       }))
 
       const { healthCheck } = useTtsApi()
@@ -162,7 +162,7 @@ describe('useTtsApi', () => {
     it('throws Arabic error when health check fails', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
-        status: 503,
+        status: 503
       }))
 
       const { healthCheck } = useTtsApi()

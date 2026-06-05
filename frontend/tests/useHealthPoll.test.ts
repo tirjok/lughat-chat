@@ -26,7 +26,7 @@ describe('useHealthPoll', () => {
     it('transitions status to "ready" when model is loaded', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ status: 'ready', model_loaded: true }),
+        json: () => Promise.resolve({ status: 'ready', model_loaded: true })
       }))
 
       const poller = useHealthPoll()
@@ -45,7 +45,7 @@ describe('useHealthPoll', () => {
     it('sets modelLoaded to true when status is ready', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ status: 'ready', model_loaded: true }),
+        json: () => Promise.resolve({ status: 'ready', model_loaded: true })
       }))
 
       const poller = useHealthPoll()
@@ -65,7 +65,7 @@ describe('useHealthPoll', () => {
     it('transitions status to "error" when HTTP response is not ok', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
-        status: 503,
+        status: 503
       }))
 
       const poller = useHealthPoll()
@@ -85,11 +85,11 @@ describe('useHealthPoll', () => {
     it('stops polling after status becomes "ready"', async () => {
       const fetchSpy = vi.fn(() => Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ status: 'ready', model_loaded: true }),
+        json: () => Promise.resolve({ status: 'ready', model_loaded: true })
       }))
       global.fetch = fetchSpy
 
-      const poller = useHealthPoll()
+      useHealthPoll()
 
       // Trigger onMounted to start polling
       for (const cb of mountedCallbacks) {

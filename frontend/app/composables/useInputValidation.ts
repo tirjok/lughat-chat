@@ -43,6 +43,6 @@ export function useInputValidation(
       if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && isValid && onValid) {
         onValid()
       }
-    },
+    }
   }
 }

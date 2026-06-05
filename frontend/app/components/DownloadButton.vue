@@ -12,7 +12,10 @@ defineProps<Props>()
     class="tts-audio__download-btn"
     @click="onClick"
   >
-    <span aria-hidden="true" class="i-lucide-download" />
+    <span
+      aria-hidden="true"
+      class="i-lucide-download"
+    />
   </button>
 </template>
 
