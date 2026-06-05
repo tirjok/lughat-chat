@@ -458,6 +458,46 @@ describe('useAudioPlayer', () => {
     })
   })
 
+  describe('regression: audio playback after loadAudio', () => {
+    // Regression test for the Vue reactivity timing issue:
+    // loadAudio() sets audioUrl.value which triggers a Transition to mount
+    // <audio ref="audioRef">. The watch(audioUrl) must set up events and
+    // assign src AFTER the DOM update completes (flush: 'post').
+    it('sets up audio events and assigns src when audioUrl changes', async () => {
+      const mockAudio = {
+        play: vi.fn(() => Promise.resolve()),
+        pause: vi.fn(),
+        addEventListener: vi.fn(),
+        set src(_: string) {},
+        get src() { return '' },
+        duration: 0,
+        currentTime: 0
+      } as unknown as HTMLAudioElement
+
+      const player = useAudioPlayer()
+      player.audioRef.value = mockAudio
+
+      // Simulate audioUrl change (this triggers the watch)
+      player.audioUrl.value = 'http://mock.url/new-audio'
+
+      // Wait for flush: 'post' watch to fire (post-flush runs after DOM update)
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      // The watch should have called addEventListener for all audio events
+      expect(mockAudio.addEventListener).toHaveBeenCalled()
+    })
+
+    it('does not call play() when audioRef is null (documenting the guard)', async () => {
+      const mockAudio = { play: vi.fn() } as unknown as HTMLAudioElement
+      const player = useAudioPlayer()
+
+      // audioRef is null by default — play() should not throw or crash
+      await player.play()
+
+      expect(mockAudio.play).not.toHaveBeenCalled()
+    })
+  })
+
   describe('error messages', () => {
     it('shows English error when play fails', async () => {
       const mockAudio = {

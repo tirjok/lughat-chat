@@ -186,6 +186,18 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 
 ---
 
+---
+
+## Known Issues & Debugging Patterns
+
+### Audio Playback Timing Issue (Fixed 2026-06-05)
+**Symptom**: Audio doesn't play after first "Generate Speech" click, but works on second click.
+**Root cause**: Vue's DOM updates are async. `loadAudio()` sets `audioUrl.value` which triggers a `<Transition>` to mount `<audio ref="audioRef">`, but the element doesn't exist in DOM yet when `play()` is called immediately after. The guard `if (audioRef.value && url)` fails because `audioRef.value` is still `null`.
+**Fix**: Add `await nextTick()` between `loadAudio()` and `play()` in `index.vue`. Also added `{ flush: 'post' }` to the `watch(audioUrl)` in `useAudioPlayer.ts` as a safety net.
+**Pattern to watch for**: Anytime you call a method that depends on a `ref` bound to an element inside a `<Transition>` or conditional (`v-if`), you need `await nextTick()` first.
+
+---
+
 ## Key Conventions
 1. **Nuxt file-based routing**: pages go in `app/pages/`, auto-imported
 2. **Composables** in `app/composables/` are auto-imported (no explicit imports needed)
