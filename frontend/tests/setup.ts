@@ -13,7 +13,7 @@ const mountedCallbacks: (() => void)[] = []
 Object.assign(globalThis, {
   onMounted: vi.fn((cb: () => void) => mountedCallbacks.push(cb)),
   ref: vi.fn((init: unknown) => ({ value: init })),
-  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn(); } }))
+  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } }))
 })
 
 // ─── Re-export mock factories for component tests ───────────────────
