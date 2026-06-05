@@ -89,8 +89,11 @@ try:
 except ImportError:
     pass  # torch not available — acceptable in test environments
 
-# Coqui TTS imports
-from TTS.api import TTS
+# Coqui TTS imports (lazy — skip if torch not available, e.g. in CI tests)
+try:
+    from TTS.api import TTS
+except ImportError:
+    TTS = None  # type: ignore[misc, assignment]
 
 # Configuration
 AUDIO_DIR = os.path.join(os.path.dirname(__file__), "downloads")
@@ -119,6 +122,15 @@ async def lifespan(app: FastAPI):
         global tts_model, model_load_status
         print("Loading XTTS-v2 model...")
         try:
+            # Skip loading if already mocked (e.g. in tests)
+            if tts_model is not None:
+                print("TTS model already loaded — skipping")
+                return
+            if TTS is None:
+                print("TTS library not available (torch not installed) — skipping model load")
+                model_load_status = "error"
+                tts_model = None
+                return
             os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
             tts_model = TTS("tts_models/multilingual/xtts_v2")
             model_load_status = "ready"
@@ -253,8 +265,11 @@ async def generate_speech(request: SynthesisRequest):
         # Set PyTorch random seed for deterministic XTTS generation.
         # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
         # seeding must be done at the PyTorch level before inference.
-        import torch
-        torch.manual_seed(seed)
+        try:
+            import torch
+            torch.manual_seed(seed)
+        except ImportError:
+            pass  # torch not available (e.g. in tests) — skip seeding
 
         tts_model.tts_to_file(
             text=request.text,
