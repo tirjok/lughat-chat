@@ -84,7 +84,7 @@ describe('useTtsApi', () => {
         blob: async () => new Blob([], { type: 'audio/mpeg' })
       } as Response)
 
-      await synthesize({ text: 'مرحبا', speaker: 'test-speaker', speed: 1.5 })
+      await synthesize({ text: 'مرحبا', speaker: 'female' as const, speed: 1.5 })
 
       expect(fetchSpy).toHaveBeenCalledWith(
         '/api/generate',
@@ -93,7 +93,7 @@ describe('useTtsApi', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: 'مرحبا',
-            speaker: 'test-speaker',
+            speaker: 'female',
             speed: 1.5,
             language: 'ar'
           })

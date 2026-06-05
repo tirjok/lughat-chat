@@ -2,6 +2,7 @@
 import { ref, computed, onUnmounted, watch } from 'vue'
 
 // Reactive state
+const audioRef = ref<HTMLAudioElement | null>(null)
 const audioSrc = ref<string | null>(null)
 const isPlaying = ref(false)
 const isPaused = ref(false)
@@ -70,7 +71,7 @@ async function loadAudio(blob: Blob): Promise<void> {
 
   // Auto-play using the real audio element
   try {
-    const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+    const audioEl = audioRef.value
     if (audioEl) {
       audioEl.src = url
       await audioEl.play()
@@ -86,7 +87,7 @@ async function loadAudio(blob: Blob): Promise<void> {
 
 // Play audio
 async function play(): Promise<void> {
-  const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+  const audioEl = audioRef.value
   if (!audioEl) return
 
   try {
@@ -99,7 +100,7 @@ async function play(): Promise<void> {
 
 // Pause audio
 function pause(): void {
-  const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+  const audioEl = audioRef.value
   audioEl?.pause()
 }
 
@@ -148,7 +149,7 @@ let progressInterval: ReturnType<typeof setInterval> | null = null
 function startProgressTracking(): void {
   stopProgressTracking()
   progressInterval = setInterval(() => {
-    const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+    const audioEl = audioRef.value
     if (audioEl) {
       currentTime.value = audioEl.currentTime
       isPlaying.value = !audioEl.paused && !audioEl.ended
@@ -173,7 +174,7 @@ function stopProgressTracking(): void {
 // Watch src changes to update the real audio element and start progress tracking
 watch(audioSrc, (newSrc) => {
   if (!newSrc) return
-  const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+  const audioEl = audioRef.value
   if (audioEl && audioEl.src !== newSrc) {
     audioEl.src = newSrc
   }
@@ -217,7 +218,7 @@ onUnmounted(() => {
         <SeekableProgressBar
           :current-time="currentTime"
           :duration="duration"
-          @seek="(ratio: number) => { const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null; if (audioEl && duration) audioEl.currentTime = ratio * duration }"
+          @seek="(ratio: number) => { if (audioRef.value && duration) audioRef.value.currentTime = ratio * duration }"
         />
 
         <!-- Time Display -->
@@ -237,7 +238,7 @@ onUnmounted(() => {
 
           <button
             class="tts-audio__download-btn"
-            @click="downloadAudio"
+            @click="() => downloadAudio()"
           >
             <span
               aria-hidden="true"
