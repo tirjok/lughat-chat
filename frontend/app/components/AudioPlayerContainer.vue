@@ -54,6 +54,7 @@ function handleSeek(ratio: number) {
 
       <!-- Hidden audio element -->
       <audio
+        :key="audioUrl"
         ref="audioRef"
         class="hidden"
       />

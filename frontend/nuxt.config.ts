@@ -20,23 +20,6 @@ export default defineNuxtConfig({
   nitro: {
     // Proxy to backend in development mode only.
     // In production, Nginx handles all proxying (see Dockerfile).
-    proxy: process.env.NODE_ENV === 'production'
-      ? {}
-      : {
-          '/api/': {
-            target: 'http://localhost:8000',
-            changeOrigin: true
-          },
-          '/health': {
-            target: 'http://localhost:8000',
-            changeOrigin: true
-          }
-        }
-  },
-
-  nitro: {
-    // Proxy to backend in development mode only.
-    // In production, Nginx handles all proxying (see Dockerfile).
     devProxy: {
       '/api/': {
         target: 'http://localhost:8000/api/',

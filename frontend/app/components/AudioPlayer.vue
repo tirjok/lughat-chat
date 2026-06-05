@@ -218,7 +218,7 @@ onUnmounted(() => {
         <SeekableProgressBar
           :current-time="currentTime"
           :duration="duration"
-          @seek="(ratio: number) => { if (audioRef.value && duration) audioRef.value.currentTime = ratio * duration }"
+          @seek="(ratio: number) => { const el = audioRef; if (el && duration) el.currentTime = ratio * duration }"
         />
 
         <!-- Time Display -->

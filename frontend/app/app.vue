@@ -14,8 +14,7 @@ useHead({
   ],
   htmlAttrs: {
     lang: 'ar',
-    dir: 'rtl',
-    colorScheme: 'dark light'
+    dir: 'rtl'
   }
 })
 

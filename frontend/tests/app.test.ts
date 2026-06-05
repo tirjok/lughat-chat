@@ -58,12 +58,13 @@ describe('app.vue — dark theme meta tags', () => {
     )
   })
 
-  it('sets color-scheme to dark light on html element', () => {
+  it('sets lang and dir on html element', () => {
     mount(App)
 
     expect(mockUseHead).toHaveBeenCalled()
     const headConfig = mockUseHead.mock.calls[0][0]
 
-    expect(headConfig.htmlAttrs).toHaveProperty('colorScheme', 'dark light')
+    expect(headConfig.htmlAttrs).toHaveProperty('lang', 'ar')
+    expect(headConfig.htmlAttrs).toHaveProperty('dir', 'rtl')
   })
 })
