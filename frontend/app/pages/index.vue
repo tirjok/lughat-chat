@@ -172,7 +172,7 @@ function handleKeyDown(event: KeyboardEvent) {
         <!-- Text Input Section -->
         <ArabicTextarea
           v-model="textInput"
-          :max-length="2000"
+          :max-length="3000"
         />
 
         <!-- Controls Section — horizontal compact layout -->

@@ -8,7 +8,7 @@ const props = withDefaults(defineProps<{
   id?: string
 }>(), {
   modelValue: '',
-  maxLength: 2000,
+  maxLength: 3000,
   id: 'arabic-textarea'
 })
 

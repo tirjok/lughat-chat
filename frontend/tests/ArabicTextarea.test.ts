@@ -130,17 +130,17 @@ describe('ArabicTextarea', () => {
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toBe('5/2000 characters')
+    expect(counter.text()).toBe('5/3000 characters')
   })
 
-  it('uses maxLength prop default of 2000', () => {
+  it('uses maxLength prop default of 3000', () => {
     const wrapper = mount(ArabicTextarea, {
       props: {
         modelValue: 'مرحبا'
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toContain('/2000 characters')
+    expect(counter.text()).toContain('/3000 characters')
   })
 
   it('uses custom maxLength when provided', () => {
@@ -180,7 +180,7 @@ describe('ArabicTextarea', () => {
   it('ring fill is proportional to character count', () => {
     const wrapper = mount(ArabicTextarea, {
       props: {
-        modelValue: 'م'.repeat(1000) // 50% of 2000
+        modelValue: 'م'.repeat(1500) // 50% of 3000
       }
     })
     const ringFill = wrapper.find('.tts-input__ring-fill')

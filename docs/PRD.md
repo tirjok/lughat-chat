@@ -75,7 +75,7 @@ The model downloads once (~2GB) on first start, then persists in a Docker volume
 ```typescript
 // Request
 interface SynthesisRequest {
-  text: string          // Arabic text, 1-500 characters
+  text: string          // Arabic text, 1-3000 characters
   language: 'ar' | 'en' // Default: 'ar'
   voice: 'female' | 'male' // Default: 'female'
   speed: number         // 0.5 - 2.0, default: 1.0
