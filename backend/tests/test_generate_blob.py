@@ -4,7 +4,7 @@ from app import app
 def _mock_tts_model():
     """Create a mock TTS model that returns without error."""
     class MockTTS:
-        def tts_to_file(self, text, language, file_path):
+        def tts_to_file(self, text, language=None, file_path=None, speaker_wav=None, temperature=None):
             # Create a minimal valid WAV-like file for testing
             import wave
             import struct

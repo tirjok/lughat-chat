@@ -2,13 +2,13 @@
 
 ## What to build
 
-Input validation logic that prevents empty submissions, shows Arabic error messages, and enables Ctrl+Enter keyboard shortcut for quick generation.
+Input validation logic that prevents empty submissions, shows English error messages, and enables Ctrl+Enter keyboard shortcut for quick generation.
 
 ## Acceptance criteria
 
 - [ ] Validation function checks if text input is non-empty (trimmed)
-- [ ] Empty submission shows Arabic error: "الرجاء إدخال نص للتحويل إلى كلام"
-- [ ] Model not ready shows Arabic error: "جاري تحميل النموذج، يرجى الانتظار..."
+- [ ] Empty submission shows English error: "Please enter text to convert to speech"
+- [ ] Model not ready shows English error: "Model is loading, please wait..."
 - [ ] Ctrl+Enter keyboard shortcut triggers generation when text is valid
 - [ ] Generate button is disabled when input is empty or model is loading
 - [ ] Validation runs before API call, preventing unnecessary requests

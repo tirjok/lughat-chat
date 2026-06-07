@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 
+import AudioPlayerContainer from '../app/components/AudioPlayerContainer.vue'
+import { useAudioPlayer } from '../app/composables/useAudioPlayer'
+import { createMockUseAudioPlayer } from './mocks'
+
 // Mock the composable before importing the component
 vi.mock('../app/composables/useAudioPlayer', () => ({
   useAudioPlayer: vi.fn()
 }))
-
-import AudioPlayerContainer from '../app/components/AudioPlayerContainer.vue'
-import { useAudioPlayer } from '../app/composables/useAudioPlayer'
-import { createMockUseAudioPlayer } from './mocks'
 
 describe('AudioPlayerContainer', () => {
   beforeEach(() => {

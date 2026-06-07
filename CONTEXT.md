@@ -85,6 +85,11 @@ pnpm test          # → vitest run
 npx vitest --config vitest.component.config.ts
 ```
 
+**Run all tests (backend + frontend) from project root:**
+```bash
+./run-tests.sh     # Runs pytest (backend) then pnpm test (frontend)
+```
+
 **Test files location:** `frontend/tests/`
 - Naming: `<name>.test.ts`
 - Also has inline `.test.ts` files inside `app/composables/`
@@ -123,6 +128,11 @@ npx vitest --config vitest.component.config.ts
 ```bash
 # Run backend tests
 cd backend && pytest
+```
+
+**Run all tests (backend + frontend) from project root:**
+```bash
+./run-tests.sh     # Runs pytest (backend) then pnpm test (frontend)
 ```
 
 **Test files:** `backend/tests/`
@@ -173,6 +183,18 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 - `.tts-btn-generate` — generate button with loading state
 - `.tts-audio`, `.tts-error`, `.tts-footer` — media/error blocks
 - `.tts-spinner`, `.tts-fade-*`, `.tts-slide-up-*` — animations
+
+---
+
+---
+
+## Known Issues & Debugging Patterns
+
+### Audio Playback Timing Issue (Fixed 2026-06-05)
+**Symptom**: Audio doesn't play after first "Generate Speech" click, but works on second click.
+**Root cause**: Vue's DOM updates are async. `loadAudio()` sets `audioUrl.value` which triggers a `<Transition>` to mount `<audio ref="audioRef">`, but the element doesn't exist in DOM yet when `play()` is called immediately after. The guard `if (audioRef.value && url)` fails because `audioRef.value` is still `null`.
+**Fix**: Add `await nextTick()` between `loadAudio()` and `play()` in `index.vue`. Also added `{ flush: 'post' }` to the `watch(audioUrl)` in `useAudioPlayer.ts` as a safety net.
+**Pattern to watch for**: Anytime you call a method that depends on a `ref` bound to an element inside a `<Transition>` or conditional (`v-if`), you need `await nextTick()` first.
 
 ---
 

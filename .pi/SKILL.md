@@ -97,6 +97,11 @@ cd backend && pytest
 ```
 - Test files: `backend/tests/` (`test_generate.py`, `test_generate_blob.py`, `test_health.py`, `test_voices.py`)
 
+**Run all tests (backend + frontend) from project root:**
+```bash
+./run-tests.sh     # Runs pytest (backend) then pnpm test (frontend)
+```
+
 ## Docker Deployment (`docker-compose.yml`)
 
 ### Services

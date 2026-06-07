@@ -2,6 +2,7 @@
 import { ref, computed, onUnmounted, watch } from 'vue'
 
 // Reactive state
+const audioRef = ref<HTMLAudioElement | null>(null)
 const audioSrc = ref<string | null>(null)
 const isPlaying = ref(false)
 const isPaused = ref(false)
@@ -70,7 +71,7 @@ async function loadAudio(blob: Blob): Promise<void> {
 
   // Auto-play using the real audio element
   try {
-    const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+    const audioEl = audioRef.value
     if (audioEl) {
       audioEl.src = url
       await audioEl.play()
@@ -86,7 +87,7 @@ async function loadAudio(blob: Blob): Promise<void> {
 
 // Play audio
 async function play(): Promise<void> {
-  const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+  const audioEl = audioRef.value
   if (!audioEl) return
 
   try {
@@ -99,7 +100,7 @@ async function play(): Promise<void> {
 
 // Pause audio
 function pause(): void {
-  const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+  const audioEl = audioRef.value
   audioEl?.pause()
 }
 
@@ -148,7 +149,7 @@ let progressInterval: ReturnType<typeof setInterval> | null = null
 function startProgressTracking(): void {
   stopProgressTracking()
   progressInterval = setInterval(() => {
-    const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+    const audioEl = audioRef.value
     if (audioEl) {
       currentTime.value = audioEl.currentTime
       isPlaying.value = !audioEl.paused && !audioEl.ended
@@ -173,7 +174,7 @@ function stopProgressTracking(): void {
 // Watch src changes to update the real audio element and start progress tracking
 watch(audioSrc, (newSrc) => {
   if (!newSrc) return
-  const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null
+  const audioEl = audioRef.value
   if (audioEl && audioEl.src !== newSrc) {
     audioEl.src = newSrc
   }
@@ -188,15 +189,24 @@ onUnmounted(() => {
 
 <template>
   <!-- Hidden audio element, always mounted -->
-  <audio data-audio-player class="hidden" />
+  <audio
+    data-audio-player
+    class="hidden"
+  />
 
   <!-- Player UI, shown only when audio is loaded -->
   <Transition name="tts-slide-up">
-    <div v-if="hasAudio" class="tts-audio-player-container">
+    <div
+      v-if="hasAudio"
+      class="tts-audio-player-container"
+    >
       <!-- Header -->
       <div class="tts-audio__header">
         <h3 class="tts-audio__title">
-          <span class="i-lucide-headphones" />
+          <span
+            aria-hidden="true"
+            class="i-lucide-headphones"
+          />
           Result
         </h3>
         <span class="tts-audio__duration">{{ formatTime(duration) }}</span>
@@ -208,7 +218,7 @@ onUnmounted(() => {
         <SeekableProgressBar
           :current-time="currentTime"
           :duration="duration"
-          @seek="(ratio: number) => { const audioEl = document.querySelector('audio[data-audio-player]') as HTMLAudioElement | null; if (audioEl && duration) audioEl.currentTime = ratio * duration }"
+          @seek="(ratio: number) => { const el = audioRef; if (el && duration) el.currentTime = ratio * duration }"
         />
 
         <!-- Time Display -->
@@ -228,19 +238,30 @@ onUnmounted(() => {
 
           <button
             class="tts-audio__download-btn"
-            @click="downloadAudio"
+            @click="() => downloadAudio()"
           >
-            <span class="i-lucide-download" />
+            <span
+              aria-hidden="true"
+              class="i-lucide-download"
+            />
           </button>
         </div>
       </div>
 
       <!-- Error display -->
-      <div v-if="error" class="tts-error">
+      <div
+        v-if="error"
+        class="tts-error"
+      >
         <div class="tts-error__content">
-          <span class="i-lucide-alert-circle tts-error__icon" />
+          <span
+            aria-hidden="true"
+            class="i-lucide-alert-circle tts-error__icon"
+          />
           <div class="tts-error__body">
-            <p class="tts-error__message">{{ error }}</p>
+            <p class="tts-error__message">
+              {{ error }}
+            </p>
           </div>
         </div>
       </div>
@@ -279,7 +300,8 @@ onUnmounted(() => {
   }
 
   &__download-btn {
-    @apply w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 flex items-center justify-center transition-all active:scale-95;
+    @apply w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 flex items-center justify-center active:scale-95;
+    transition: background-color, transform 0.2s ease;
 
     .i-lucide-download {
       @apply w-4 h-4;

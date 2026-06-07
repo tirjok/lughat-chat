@@ -1,7 +1,9 @@
 <script setup lang="ts">
 useHead({
   meta: [
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+    { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
+    { name: 'theme-color', content: '#0f172a', media: '(prefers-color-scheme: dark)' },
+    { name: 'theme-color', content: '#ffffff', media: '(prefers-color-scheme: light)' }
   ],
   link: [
     { rel: 'icon', href: '/favicon.ico' },

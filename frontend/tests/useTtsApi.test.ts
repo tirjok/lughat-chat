@@ -11,7 +11,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -36,7 +36,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -50,7 +50,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -64,7 +64,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -78,7 +78,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi()
@@ -91,36 +91,36 @@ describe('useTtsApi', () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 503,
-        json: () => Promise.resolve({ detail: 'Model not ready' }),
+        json: () => Promise.resolve({ detail: 'Model not ready' })
       }))
 
       const { synthesize } = useTtsApi()
-      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('الخادم غير متاح حالياً')
+      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('Server is currently unavailable')
     })
 
     it('throws Arabic unknown error when response.json fails', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 500,
-        json: () => Promise.reject(new Error('parse error')),
+        json: () => Promise.reject(new Error('parse error'))
       }))
 
       const { synthesize } = useTtsApi()
-      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('حدث خطأ في الخادم')
+      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('An error occurred on the server')
     })
 
     it('throws Arabic error for network failures', async () => {
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
 
       const { synthesize } = useTtsApi()
-      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('تعذر الاتصال بالخادم')
+      await expect(synthesize({ text: 'Hello' })).rejects.toThrow('Unable to connect to the server')
     })
 
     it('uses custom baseUrl when provided', async () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(mockBlob),
+        blob: () => Promise.resolve(mockBlob)
       }))
 
       const { synthesize } = useTtsApi({ baseUrl: 'http://custom-api.local' })
@@ -137,7 +137,7 @@ describe('useTtsApi', () => {
     it('sends GET request to /health', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ status: 'ready', model_loaded: true }),
+        json: () => Promise.resolve({ status: 'ready', model_loaded: true })
       }))
 
       const { healthCheck } = useTtsApi()
@@ -150,7 +150,7 @@ describe('useTtsApi', () => {
       const mockHealth = { status: 'ready' as const, model_loaded: true }
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockHealth),
+        json: () => Promise.resolve(mockHealth)
       }))
 
       const { healthCheck } = useTtsApi()
@@ -162,25 +162,25 @@ describe('useTtsApi', () => {
     it('throws Arabic error when health check fails', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
-        status: 503,
+        status: 503
       }))
 
       const { healthCheck } = useTtsApi()
-      await expect(healthCheck()).rejects.toThrow('فشل فحص الصحة: 503')
+      await expect(healthCheck()).rejects.toThrow('Health check failed: 503')
     })
 
     it('throws Arabic error on network failure', async () => {
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
 
       const { healthCheck } = useTtsApi()
-      await expect(healthCheck()).rejects.toThrow('تعذر فحص حالة الصحة: Network error')
+      await expect(healthCheck()).rejects.toThrow('Unable to check health status: Network error')
     })
 
     it('throws Arabic error for non-Error exceptions', async () => {
       global.fetch = vi.fn(() => Promise.reject('string error'))
 
       const { healthCheck } = useTtsApi()
-      await expect(healthCheck()).rejects.toThrow('تعذر فحص حالة الصحة: string error')
+      await expect(healthCheck()).rejects.toThrow('Unable to check health status: string error')
     })
   })
 

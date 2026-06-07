@@ -7,60 +7,60 @@ describe('useTtsApi', () => {
   })
 
   describe('synthesize', () => {
-    it('should throw Arabic error when fetch fails (network error)', async () => {
+    it('should throw error when fetch fails (network error)', async () => {
       const { synthesize } = useTtsApi()
 
       vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network failure'))
 
-      await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('تعذر الاتصال بالخادم')
+      await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('Unable to connect to the server')
     })
 
-    it('should throw Arabic error for 400 status (invalid text)', async () => {
+    it('should throw error for 400 status (invalid text)', async () => {
       const { synthesize } = useTtsApi()
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
         status: 400,
-        json: async () => ({}),
+        json: async () => ({})
       } as Response)
 
-      await expect(synthesize({ text: '' })).rejects.toThrow('نص غير صالح للتوليد')
+      await expect(synthesize({ text: '' })).rejects.toThrow('Invalid text for synthesis')
     })
 
-    it('should throw Arabic error for 503 status (server unavailable)', async () => {
+    it('should throw error for 503 status (server unavailable)', async () => {
       const { synthesize } = useTtsApi()
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
         status: 503,
-        json: async () => ({}),
+        json: async () => ({})
       } as Response)
 
-      await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('الخادم غير متاح حالياً')
+      await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('Server is currently unavailable')
     })
 
-    it('should throw Arabic error for unknown status with detail', async () => {
+    it('should throw error for unknown status with detail', async () => {
       const { synthesize } = useTtsApi()
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
         status: 500,
-        json: async () => ({ detail: 'Internal error' }),
+        json: async () => ({ detail: 'Internal error' })
       } as Response)
 
-      await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('خطأ في الخادم: Internal error')
+      await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('Server error: Internal error')
     })
 
-    it('should throw Arabic error for unknown status without detail', async () => {
+    it('should throw error for unknown status without detail', async () => {
       const { synthesize } = useTtsApi()
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
         status: 502,
-        json: async () => ({}),
+        json: async () => ({})
       } as Response)
 
-      await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('حدث خطأ في الخادم')
+      await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('An error occurred on the server')
     })
 
     it('should return audio blob on successful response', async () => {
@@ -69,7 +69,7 @@ describe('useTtsApi', () => {
       const mockBlob = new Blob(['audio data'], { type: 'audio/mpeg' })
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: true,
-        blob: async () => mockBlob,
+        blob: async () => mockBlob
       } as Response)
 
       const result = await synthesize({ text: 'مرحبا' })
@@ -81,10 +81,10 @@ describe('useTtsApi', () => {
 
       const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: true,
-        blob: async () => new Blob([], { type: 'audio/mpeg' }),
+        blob: async () => new Blob([], { type: 'audio/mpeg' })
       } as Response)
 
-      await synthesize({ text: 'مرحبا', speaker: 'test-speaker', speed: 1.5 })
+      await synthesize({ text: 'مرحبا', speaker: 'female' as const, speed: 1.5 })
 
       expect(fetchSpy).toHaveBeenCalledWith(
         '/api/generate',
@@ -93,33 +93,33 @@ describe('useTtsApi', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: 'مرحبا',
-            speaker: 'test-speaker',
+            speaker: 'female',
             speed: 1.5,
-            language: 'ar',
-          }),
+            language: 'ar'
+          })
         })
       )
     })
   })
 
   describe('healthCheck', () => {
-    it('should throw Arabic error when fetch fails', async () => {
+    it('should throw error when fetch fails', async () => {
       const { healthCheck } = useTtsApi()
 
       vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network failure'))
 
-      await expect(healthCheck()).rejects.toThrow('تعذر فحص حالة الصحة: Network failure')
+      await expect(healthCheck()).rejects.toThrow('Unable to check health status: Network failure')
     })
 
-    it('should throw Arabic error for non-ok response', async () => {
+    it('should throw error for non-ok response', async () => {
       const { healthCheck } = useTtsApi()
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
-        status: 503,
+        status: 503
       } as Response)
 
-      await expect(healthCheck()).rejects.toThrow('فشل فحص الصحة: 503')
+      await expect(healthCheck()).rejects.toThrow('Health check failed: 503')
     })
 
     it('should return health response on success', async () => {
@@ -127,7 +127,7 @@ describe('useTtsApi', () => {
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: true,
-        json: async () => ({ status: 'ready', model_loaded: true }),
+        json: async () => ({ status: 'ready', model_loaded: true })
       } as Response)
 
       const result = await healthCheck()

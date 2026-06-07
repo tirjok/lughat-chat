@@ -47,11 +47,12 @@ uvicorn app:app --reload --port 8000
 
 3. Run tests before committing:
    ```bash
-   # Frontend
-   cd frontend && pnpm test
+   # Run all tests (backend + frontend) from project root
+   ./run-tests.sh
 
-   # Backend
-   cd backend && pytest
+   # Or run individually:
+   cd frontend && pnpm test    # Frontend only
+   cd backend && pytest        # Backend only
    ```
 
 4. Push and open a Pull Request against `develop`.

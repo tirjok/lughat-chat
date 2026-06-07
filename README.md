@@ -91,6 +91,13 @@ curl -X POST http://localhost:8000/synthesize \
 
 ## Testing
 
+### Run All Tests (Recommended)
+From the project root, run both backend and frontend tests in one command:
+```bash
+./run-tests.sh          # Run all tests (backend + frontend)
+./run-tests.sh -v       # With verbose output
+```
+
 ### Frontend (Vitest)
 ```bash
 cd frontend

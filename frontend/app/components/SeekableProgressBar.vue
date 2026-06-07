@@ -49,7 +49,8 @@ function handleSeek(event: MouseEvent) {
   @apply relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
 
   &-fill {
-    @apply absolute top-0 right-0 h-full bg-gradient-to-l from-blue-500 to-indigo-500 transition-all;
+    @apply absolute top-0 right-0 h-full bg-gradient-to-l from-blue-500 to-indigo-500;
+    transition: width 0.1s ease;
     border-radius: inherit;
   }
 

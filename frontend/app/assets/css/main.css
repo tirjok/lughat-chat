@@ -134,7 +134,8 @@ body {
    Generate Button Block (tts-btn-generate)
    =================================== */
 .tts-btn-generate {
-  @apply w-full px-6 py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg active:scale-[0.98];
+  @apply w-full px-6 py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg active:scale-[0.98];
+  transition: box-shadow, transform 0.2s ease;
 }
 
 .tts-btn-generate__content {
@@ -214,7 +215,8 @@ body {
 }
 
 .tts-audio__progress-fill {
-  @apply absolute top-0 right-0 h-full bg-blue-500 transition-all;
+  @apply absolute top-0 right-0 h-full bg-blue-500;
+  transition: width 0.1s ease;
 }
 
 /* Time Display */
@@ -229,7 +231,8 @@ body {
 
 /* Play/Pause Button */
 .tts-audio__play-btn {
-  @apply w-14 h-14 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-all hover:shadow-lg active:scale-95;
+  @apply w-14 h-14 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center hover:shadow-lg active:scale-95;
+  transition: background-color, box-shadow, transform 0.2s ease;
 }
 
 .tts-audio__play-btn svg {
@@ -242,7 +245,8 @@ body {
 
 /* Download Button */
 .tts-audio__download-btn {
-  @apply w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 flex items-center justify-center transition-all hover:shadow-lg active:scale-95;
+  @apply w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 flex items-center justify-center hover:shadow-lg active:scale-95;
+  transition: background-color, box-shadow, transform 0.2s ease;
 }
 
 .tts-audio__download-btn svg {
@@ -290,7 +294,7 @@ body {
 
 .tts-slide-up-enter-active,
 .tts-slide-up-leave-active {
-  transition: all 0.3s ease;
+  transition: transform, opacity 0.3s ease;
 }
 
 .tts-slide-up-enter-from,
@@ -310,7 +314,7 @@ input[type='range']::-webkit-slider-thumb {
   border-radius: 50%;
   background: #3b82f6;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 input[type='range']::-webkit-slider-thumb:hover {

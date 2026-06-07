@@ -7,21 +7,21 @@ describe('useInputValidation', () => {
       const result = useInputValidation('', 'ready')
 
       expect(result.isValid).toBe(false)
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
 
     it('returns error when text is only whitespace', () => {
       const result = useInputValidation('   ', 'ready')
 
       expect(result.isValid).toBe(false)
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
 
     it('returns error when text is only newlines and tabs', () => {
       const result = useInputValidation('\n\t\n  ', 'ready')
 
       expect(result.isValid).toBe(false)
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
 
     it('returns error when text is empty and model is loading', () => {
@@ -29,7 +29,7 @@ describe('useInputValidation', () => {
 
       expect(result.isValid).toBe(false)
       // Empty text error takes priority over loading error
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
 
     it('returns error when text is whitespace and model is loading', () => {
@@ -37,14 +37,14 @@ describe('useInputValidation', () => {
 
       expect(result.isValid).toBe(false)
       // Empty text error takes priority over loading error
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
 
     it('returns error when text is empty and model has error status', () => {
       const result = useInputValidation('', 'error')
 
       expect(result.isValid).toBe(false)
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
 
     it('does not call synthesize when text is empty', () => {
@@ -58,7 +58,7 @@ describe('useInputValidation', () => {
       const result = useInputValidation('   ', 'error')
 
       expect(result.isValid).toBe(false)
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
   })
 
@@ -67,14 +67,14 @@ describe('useInputValidation', () => {
       const result = useInputValidation('مرحبا بالعالم', 'loading')
 
       expect(result.isValid).toBe(false)
-      expect(result.error).toBe('جاري تحميل النموذج، يرجى الانتظار...')
+      expect(result.error).toBe('Model is loading, please wait...')
     })
 
     it('returns error when model has error status and text has content', () => {
       const result = useInputValidation('مرحبا بالعالم', 'error')
 
       expect(result.isValid).toBe(false)
-      expect(result.error).toBe('جاري تحميل النموذج، يرجى الانتظار...')
+      expect(result.error).toBe('Model is loading, please wait...')
     })
 
     it('loading error takes priority when text is non-empty whitespace', () => {
@@ -82,7 +82,7 @@ describe('useInputValidation', () => {
 
       expect(result.isValid).toBe(false)
       // Whitespace is trimmed to empty, so text error takes priority
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
 
     it('loading error does NOT take priority when text is empty', () => {
@@ -90,7 +90,7 @@ describe('useInputValidation', () => {
 
       expect(result.isValid).toBe(false)
       // Empty text error takes priority
-      expect(result.error).toBe('الرجاء إدخال نص للتحويل إلى كلام')
+      expect(result.error).toBe('Please enter text to convert to speech')
     })
   })
 
@@ -152,7 +152,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 'Enter',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).toHaveBeenCalledTimes(1)
@@ -165,7 +165,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: false,
         key: 'Enter',
-        metaKey: true,
+        metaKey: true
       } as KeyboardEvent, callback)
 
       expect(callback).toHaveBeenCalledTimes(1)
@@ -178,7 +178,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: false,
         key: 'Enter',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()
@@ -191,7 +191,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 'a',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()
@@ -204,7 +204,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 'Enter',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()
@@ -217,7 +217,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 'Enter',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()
@@ -230,7 +230,7 @@ describe('useInputValidation', () => {
       result.handleKeyDown({
         ctrlKey: true,
         key: 's',
-        metaKey: false,
+        metaKey: false
       } as KeyboardEvent, callback)
 
       expect(callback).not.toHaveBeenCalled()

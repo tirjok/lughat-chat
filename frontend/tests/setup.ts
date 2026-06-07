@@ -8,11 +8,13 @@ global.URL.revokeObjectURL = vi.fn()
 
 // Track onMounted callbacks for testing composables that use lifecycle hooks
 const mountedCallbacks: (() => void)[] = []
-global.onMounted = vi.fn((cb: () => void) => mountedCallbacks.push(cb))
 
 // Mock Nuxt auto-imported composables — return reactive-like objects with .value properties
-global.ref = vi.fn((init: unknown) => ({ value: init })) as typeof global.ref
-global.computed = vi.fn((fn: () => unknown) => ({ get value() { return fn() } })) as typeof global.computed
+Object.assign(globalThis, {
+  onMounted: vi.fn((cb: () => void) => mountedCallbacks.push(cb)),
+  ref: vi.fn((init: unknown) => ({ value: init })),
+  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } }))
+})
 
 // ─── Re-export mock factories for component tests ───────────────────
 export {

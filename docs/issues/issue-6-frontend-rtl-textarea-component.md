@@ -13,7 +13,7 @@ After this is complete, users can type Arabic text into a properly styled textar
 - [ ] Font size is 1.35rem (22px) for Arabic readability
 - [ ] Line-height is 2.1 for Arabic descenders (ي، ب، ت، ن)
 - [ ] Text aligns right-to-left by default
-- [ ] Placeholder text is in Arabic with example sentence
+- [ ] Placeholder text is in English with example sentence
 - [ ] Textarea auto-resizes vertically (min 6rem, max 20rem)
 - [ ] Styled with border, rounded corners, and focus ring matching design system
 

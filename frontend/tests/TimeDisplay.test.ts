@@ -7,8 +7,8 @@ describe('TimeDisplay', () => {
     const wrapper = mount(TimeDisplay, {
       props: {
         currentTime: 65,
-        duration: 180,
-      },
+        duration: 180
+      }
     })
 
     const spans = wrapper.findAll('span')
@@ -22,8 +22,8 @@ describe('TimeDisplay', () => {
     const wrapper = mount(TimeDisplay, {
       props: {
         currentTime: 0,
-        duration: 0,
-      },
+        duration: 0
+      }
     })
 
     const spans = wrapper.findAll('span')
@@ -35,8 +35,8 @@ describe('TimeDisplay', () => {
     const wrapper = mount(TimeDisplay, {
       props: {
         currentTime: 30,
-        duration: 60,
-      },
+        duration: 60
+      }
     })
 
     const container = wrapper.find('.tts-audio__time')
@@ -47,8 +47,8 @@ describe('TimeDisplay', () => {
     const wrapper = mount(TimeDisplay, {
       props: {
         currentTime: 30,
-        duration: 60,
-      },
+        duration: 60
+      }
     })
 
     expect(wrapper.find('.tts-audio__time').attributes('dir')).toBe('rtl')
@@ -60,8 +60,8 @@ describe('TimeDisplay', () => {
         currentTime: 30,
         duration: 60,
         currentLabel: 'Current time',
-        durationLabel: 'Duration',
-      },
+        durationLabel: 'Duration'
+      }
     })
 
     expect(wrapper.text()).toContain('Current time')
@@ -72,8 +72,8 @@ describe('TimeDisplay', () => {
     const wrapper = mount(TimeDisplay, {
       props: {
         currentTime: 30,
-        duration: 60,
-      },
+        duration: 60
+      }
     })
 
     expect(wrapper.text()).not.toContain('Current time')
@@ -84,8 +84,8 @@ describe('TimeDisplay', () => {
     const wrapper = mount(TimeDisplay, {
       props: {
         currentTime: NaN as unknown as number,
-        duration: 60,
-      },
+        duration: 60
+      }
     })
 
     expect(wrapper.findAll('span')[0].text()).toBe('0:00')
@@ -95,8 +95,8 @@ describe('TimeDisplay', () => {
     const wrapper = mount(TimeDisplay, {
       props: {
         currentTime: 30,
-        duration: NaN as unknown as number,
-      },
+        duration: NaN as unknown as number
+      }
     })
 
     expect(wrapper.findAll('span')[1].text()).toBe('0:00')

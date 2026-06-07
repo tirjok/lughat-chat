@@ -1,8 +1,8 @@
 // Validation composable for TTS input
 // Pure function — accepts raw values, returns validation state
 
-const EMPTY_TEXT_ERROR = 'الرجاء إدخال نص للتحويل إلى كلام'
-const MODEL_LOADING_ERROR = 'جاري تحميل النموذج، يرجى الانتظار...'
+const EMPTY_TEXT_ERROR = 'Please enter text to convert to speech'
+const MODEL_LOADING_ERROR = 'Model is loading, please wait...'
 
 export type ModelStatus = 'loading' | 'ready' | 'error'
 
@@ -43,6 +43,6 @@ export function useInputValidation(
       if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && isValid && onValid) {
         onValid()
       }
-    },
+    }
   }
 }

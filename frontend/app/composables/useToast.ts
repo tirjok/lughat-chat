@@ -2,7 +2,7 @@ import { ref, onMounted } from 'vue'
 
 const toastState = ref({
   message: '',
-  visible: false,
+  visible: false
 })
 
 let dismissTimer: ReturnType<typeof setTimeout> | null = null

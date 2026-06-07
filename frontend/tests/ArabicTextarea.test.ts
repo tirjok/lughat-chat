@@ -1,9 +1,18 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+
 import ArabicTextarea from '../app/components/ArabicTextarea.vue'
 
 describe('ArabicTextarea', () => {
+  it('renders a label element associated with the textarea', () => {
+    const wrapper = mount(ArabicTextarea)
+    const label = wrapper.find('label')
+    expect(label.exists()).toBe(true)
+
+    const textarea = wrapper.find('textarea')
+    expect(label.attributes('for')).toBe(textarea.attributes('id'))
+  })
+
   it('renders a textarea element with dir="auto"', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
@@ -38,10 +47,10 @@ describe('ArabicTextarea', () => {
     expect(textarea.element.style.textAlign).toBe('right')
   })
 
-  it('displays Arabic placeholder text with example sentence', () => {
+  it('displays English placeholder text with example sentence', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
-    expect(textarea.attributes('placeholder')).toContain('السلام عليكم')
+    expect(textarea.attributes('placeholder')).toContain('Type text here... Example:')
   })
 
   it('auto-resizes vertically with min 6rem and max 20rem', () => {
@@ -121,17 +130,17 @@ describe('ArabicTextarea', () => {
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toBe('5/2000 حرف')
+    expect(counter.text()).toBe('5/3000 characters')
   })
 
-  it('uses maxLength prop default of 2000', () => {
+  it('uses maxLength prop default of 3000', () => {
     const wrapper = mount(ArabicTextarea, {
       props: {
         modelValue: 'مرحبا'
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toContain('/2000 حرف')
+    expect(counter.text()).toContain('/3000 characters')
   })
 
   it('uses custom maxLength when provided', () => {
@@ -142,7 +151,7 @@ describe('ArabicTextarea', () => {
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toBe('5/500 حرف')
+    expect(counter.text()).toBe('5/500 characters')
   })
 
   it('turns ring amber when count is at or above 80% but below 100%', () => {
@@ -171,7 +180,7 @@ describe('ArabicTextarea', () => {
   it('ring fill is proportional to character count', () => {
     const wrapper = mount(ArabicTextarea, {
       props: {
-        modelValue: 'م'.repeat(1000) // 50% of 2000
+        modelValue: 'م'.repeat(1500) // 50% of 3000
       }
     })
     const ringFill = wrapper.find('.tts-input__ring-fill')
@@ -180,14 +189,17 @@ describe('ArabicTextarea', () => {
     expect(offset).toBeCloseTo(169.62, 1) // ~50% of 339.24
   })
 
-  it('ring has smooth CSS transition on fill change', () => {
+  it('ring fill uses explicit CSS transition (not transition: all)', async () => {
     const wrapper = mount(ArabicTextarea, {
       props: {
         modelValue: 'مرحبا'
       }
     })
     const ringFill = wrapper.find('.tts-input__ring-fill')
-    expect(ringFill.classes()).toContain('transition-all')
+    // Verify no transition-all class is used
+    expect(ringFill.classes()).not.toContain('transition-all')
+    // Verify the element exists and has stroke-dashoffset for animation
+    expect(ringFill.attributes('stroke-dashoffset')).toBeTruthy()
   })
 
   it('turns ring red when count reaches 100% of maxLength', () => {

@@ -30,27 +30,42 @@ server {
     listen 80;
     server_name _;
 
+    # Increase max body size for larger text payloads (up to 3000 chars)
+    client_max_body_size 50m;
+
     # Proxy API requests to backend container
     location /api/ {
         proxy_pass http://backend:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_read_timeout 300s;  # Long timeout for TTS generation
+
+        # Prevent 504 Gateway Timeout for long TTS synthesis (up to ~10min)
+        proxy_read_timeout 1800s;
+        proxy_send_timeout 1800s;
+        proxy_connect_timeout 10s;
+
+        # Disable buffering for large audio responses
+        proxy_buffering off;
+        proxy_request_buffering off;
     }
 
     # Proxy downloads to backend container
     location /downloads/ {
         proxy_pass http://backend:8000;
         proxy_set_header Host $host;
-        proxy_read_timeout 300s;
+
+        # Large file support
+        proxy_read_timeout 1800s;
+        proxy_send_timeout 1800s;
+        proxy_buffering off;
     }
 
     # Proxy health check to backend container
     location /health {
         proxy_pass http://backend:8000;
         proxy_set_header Host $host;
-        proxy_read_timeout 300s;
+        proxy_read_timeout 30s;
     }
 
     # Local health check endpoint (for docker-compose)
