@@ -85,8 +85,10 @@ def test_generate_speech_rejects_invalid_language():
     assert response.status_code == 422
 
 
-def test_generate_speech_rejects_invalid_voice():
-    """POST /api/generate returns 422 when voice is not female or male."""
+def test_generate_speech_rejects_missing_voice_file():
+    """POST /api/generate returns 500 when voice has no corresponding WAV file."""
+    _setup_mock_model()
+
     from fastapi.testclient import TestClient
     client = TestClient(app)
 
@@ -95,7 +97,9 @@ def test_generate_speech_rejects_invalid_voice():
         "voice": "robot"
     })
 
-    assert response.status_code == 422
+    assert response.status_code == 500
+    data = response.json()
+    assert "robot" in data["detail"]
 
 
 def test_generate_speech_rejects_speed_too_low():
@@ -200,6 +204,54 @@ def test_generate_speech_accepts_default_parameters():
     assert response.status_code == 200
     assert "audio/mpeg" in response.headers["content-type"]
     assert len(response.content) > 0
+
+
+def test_generate_speech_with_custom_voice_works():
+    """POST /api/generate accepts a custom voice name and generates speech when the WAV file exists."""
+    import app as main_app
+    # Create a custom voice WAV file in speaker_wavs/ (>= 0.33s for XTTS validation)
+    speaker_wav_dir = os.path.join(os.path.dirname(main_app.__file__), "speaker_wavs")
+    custom_wav = os.path.join(speaker_wav_dir, "custom_voice.wav")
+    import wave
+    with wave.open(custom_wav, 'w') as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(22050)
+        # 0.5s of silence (well above XTTS minimum duration)
+        samples = b'\x00\x00' * int(22050 * 0.5)
+        wav_file.writeframes(samples)
+    try:
+        _setup_mock_model()
+
+        from fastapi.testclient import TestClient
+        client = TestClient(app)
+
+        response = client.post("/api/generate", json={
+            "text": "Hello world",
+            "voice": "custom_voice"
+        })
+
+        assert response.status_code == 200
+        assert "audio/mpeg" in response.headers["content-type"]
+    finally:
+        os.remove(custom_wav)
+
+
+def test_generate_speech_missing_voice_file_includes_filename():
+    """POST /api/generate returns 500 with the missing filename in detail message."""
+    _setup_mock_model()
+
+    from fastapi.testclient import TestClient
+    client = TestClient(app)
+
+    response = client.post("/api/generate", json={
+        "text": "Hello world",
+        "voice": "nonexistent_voice"
+    })
+
+    assert response.status_code == 500
+    data = response.json()
+    assert "nonexistent_voice" in data["detail"]
 
 
 def test_generate_speech_accepts_english_language():
