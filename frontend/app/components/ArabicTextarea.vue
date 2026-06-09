@@ -104,7 +104,7 @@ const dashOffset = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .tts-input-wrapper {
   @apply relative;
 }

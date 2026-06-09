@@ -38,7 +38,7 @@ useSeoMeta({
   </div>
 </template>
 
-<style scoped>
+<style>
 .tts-layout {
   @apply min-h-screen;
 }

@@ -346,7 +346,7 @@ function handleKeyDown(event: KeyboardEvent) {
   </div>
 </template>
 
-<style scoped>
+<style>
 /* ===================================
    Page Block (tts-page)
    =================================== */
