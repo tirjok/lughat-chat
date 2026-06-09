@@ -2,6 +2,16 @@
 
 A **text-to-speech (TTS) web application** for Arabic speech synthesis, powered by [Coqui XTTS-v2](https://github.com/coqui-ai/TTS).
 
+## Features
+
+- **Instant Arabic TTS** — generate speech from Arabic text in seconds
+- **Two voice presets** — female and male voices with adjustable speed (0.5×–2.0×)
+- **Download MP3** — save generated audio files locally
+- **Keyboard shortcut** — press `Ctrl+Enter` to generate without clicking
+- **Dark mode** — full dark theme support with automatic toggle
+- **RTL text input** — ArabicTextarea handles right-to-left direction automatically
+- **Health monitoring** — auto-polling backend status with loading indicator
+
 [![Frontend CI](https://github.com/tirjok/lughat-chat/actions/workflows/frontend.yml/badge.svg)](https://github.com/tirjok/lughat-chat/actions/workflows/frontend.yml)
 [![Backend CI](https://github.com/tirjok/lughat-chat/actions/workflows/backend.yml/badge.svg)](https://github.com/tirjok/lughat-chat/actions/workflows/backend.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -37,6 +47,16 @@ docker compose up --build
 
 The TTS model is cached in a named volume (`tts-model-cache`) so it only downloads once. Generated audio files are persisted in `tts-audio-cache`.
 
+#### Environment Variables (in `.env`)
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `COQUI_TOS_AGREED` | `1` | Required by Coqui TTS to accept the license |
+| `TTS_MODEL_CACHE` | `/app/.cache/tts` | Path to the TTS model cache directory |
+| `TZ` | `UTC` | Timezone for log timestamps |
+
+> **Note:** These are pre-configured in `docker-compose.yml`. You only need to change them if you want custom behavior.
+
 ### Run Locally (Development)
 
 #### Backend
@@ -59,16 +79,36 @@ pnpm dev
 |----------|--------|---------|
 | `/health` | GET | Health check + model loading status |
 | `/voices` | GET | List available voices/speakers |
-| `/synthesize` | POST | Generate speech from text (returns audio file) |
+| `/api/generate` | POST | Generate speech from text (returns MP3 audio blob) |
 
-### Synthesize Example
+### Generate Example
 
 ```bash
-curl -X POST http://localhost:8000/synthesize \
+curl -X POST http://localhost:8000/api/generate \
   -H "Content-Type: application/json" \
-  -d '{"text": "مرحبا بك في لغات شات", "speaker_wav": "", "language": "ar"}' \
-  -o output.wav
+  -d '{"text": "مرحبا بك في لغات شات", "speaker": "female", "language": "ar"}' \
+  -o output.mp3
 ```
+
+#### Request Fields
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `text` | string | Yes | — | Arabic or English text to synthesize |
+| `language` | string | No | `"ar"` | Language code (`"ar"` or `"en"`) |
+| `speaker` | string | No | `"female"` | Voice preset (`"female"` or `"male"`) |
+| `speed` | float | No | `1.0` | Speech speed (range: 0.5–2.0) |
+| `seed` | int | No | — | Random seed for deterministic output (optional) |
+
+#### Response
+
+Returns `audio/mpeg` (MP3 binary). On error:
+
+| Status | Meaning |
+|--------|---------|
+| 400    | Invalid text (empty or too long) |
+| 503    | TTS model not ready yet (still loading — ~60s startup) |
+| 500    | Server error (missing speaker WAV, generation failure) |
 
 ## Project Structure
 
@@ -86,7 +126,7 @@ curl -X POST http://localhost:8000/synthesize \
 │   ├── uno.config.ts        # UnoCSS presets & shortcuts
 │   └── tests/               # Vitest test suite
 ├── docker-compose.yml        # Docker deployment config
-└── nginx/                    # Nginx reverse proxy config
+└── nginx/                    # Nginx reverse proxy (routes frontend → backend)
 ```
 
 ## Testing
@@ -135,6 +175,28 @@ The Arabic text input component (`ArabicTextarea`) handles right-to-left text di
 3. **Components** in `app/components/` are auto-imported by PascalCase name
 4. **Tests mirror source**: composables have `.test.ts` alongside them, plus additional tests in `tests/`
 5. **ESLint**: flat config via `@nuxt/eslint`, rules: `commaDangle: 'never'`, `braceStyle: '1tbs'`
+
+## Custom Voices
+
+To add a custom voice preset, place a WAV file in `backend/speaker_wavs/`:
+
+```bash
+cp my_voice.wav backend/speaker_wavs/custom.wav
+```
+
+Requirements:
+- Format: WAV (any sample rate)
+- Duration: ≥ 0.33 seconds (XTTS-v2 minimum)
+- Content: Clear speech in the target language
+
+After adding a file, restart the backend container. The new voice will appear in the `/api/voices` response.
+
+## Known Limitations
+
+- **Model loading takes ~60 seconds** — The first request after startup returns 503. Health polling handles this automatically.
+- **CPU-only inference** — No GPU support; generation takes several seconds per request.
+- **Language support** — Only `ar` (Arabic) and `en` (English) are accepted.
+- **Audio file persistence** — Generated MP3s accumulate in `tts-audio-cache`. No automatic cleanup.
 
 ## Contributing
 
