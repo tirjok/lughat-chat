@@ -59,8 +59,6 @@ const validationState = computed(() =>
 const isValid = computed(() => validationState.value.isValid)
 const validationError = computed(() => validationState.value.error)
 
-
-
 // Format time in MM:SS format
 function formatTime(seconds: number): string {
   if (!seconds || isNaN(seconds)) return '0:00'
