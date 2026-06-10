@@ -29,14 +29,14 @@ def _setup_mock_model():
     os.makedirs(speaker_wav_dir, exist_ok=True)
     for voice in ["female", "male"]:
         path = os.path.join(speaker_wav_dir, f"{voice}.wav")
-        if not os.path.exists(path):
-            import wave
-            with wave.open(path, 'w') as wav_file:
-                wav_file.setnchannels(1)
-                wav_file.setsampwidth(2)
-                wav_file.setframerate(22050)
-                samples = b'\x00\x00' * 2205
-                wav_file.writeframes(samples)
+        import wave
+        with wave.open(path, 'w') as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(22050)
+            # 0.5s of silence (well above XTTS minimum duration of 0.33s)
+            samples = b'\x00\x00' * int(22050 * 0.5)
+            wav_file.writeframes(samples)
     main_app.tts_model = _mock_tts_model()
     main_app.model_load_status = "ready"
 

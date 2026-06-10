@@ -48,7 +48,7 @@ const isGenerating = ref(false)
 // Set default to first voice when loaded
 watch(speakerVoices, (v) => {
   if (!selectedSpeaker.value && v.length > 0) {
-    selectedSpeaker.value = v[0].id
+    selectedSpeaker.value = v[0]!.id
   }
 }, { immediate: true })
 
