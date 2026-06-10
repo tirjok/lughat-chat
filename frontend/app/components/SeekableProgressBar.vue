@@ -44,7 +44,7 @@ function handleSeek(event: MouseEvent) {
   </div>
 </template>
 
-<style scoped>
+<style>
 .tts-audio__progress {
   @apply relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
 

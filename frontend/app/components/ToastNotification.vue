@@ -35,7 +35,7 @@ const toast = useToast()
   </Transition>
 </template>
 
-<style scoped>
+<style>
 .tts-toast {
   @apply fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 flex items-center gap-3 max-w-md;
 

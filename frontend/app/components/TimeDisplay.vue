@@ -22,26 +22,16 @@ const { formatTime } = useTimeDisplay()
     class="tts-audio__time font-mono"
     dir="rtl"
   >
-    <span
-      v-if="currentLabel"
-      class="sr-only"
-    >{{ currentLabel }}</span>
+    <span v-if="currentLabel">{{ currentLabel }}</span>
     <span>{{ formatTime(currentTime) }}</span>
 
-    <span
-      v-if="durationLabel"
-      class="sr-only"
-    >{{ durationLabel }}</span>
+    <span v-if="durationLabel">{{ durationLabel }}</span>
     <span>{{ formatTime(duration) }}</span>
   </div>
 </template>
 
-<style scoped>
+<style>
 .tts-audio__time {
   @apply font-mono text-sm;
-}
-
-.sr-only {
-  @apply sr-only;
 }
 </style>

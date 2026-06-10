@@ -2,7 +2,7 @@
 
 export interface SynthesisRequest {
   text: string
-  speaker?: 'female' | 'male'
+  speaker?: string
   speed?: number
 }
 
@@ -36,7 +36,7 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
         },
         body: JSON.stringify({
           text: request.text,
-          speaker: request.speaker || 'default',
+          speaker: request.speaker,
           speed: request.speed || 1.0,
           language: 'ar'
         })

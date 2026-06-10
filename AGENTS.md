@@ -116,7 +116,7 @@ npx vitest --config vitest.component.config.ts
 |----------|--------|---------|
 | `/health` | GET | Health check + model loading status |
 | `/voices` | GET | List available voices/speakers |
-| `/synthesize` | POST | Generate speech from text (returns audio file) |
+| `/api/generate` | POST | Generate speech from text (returns MP3 binary) |
 
 ### Model Loading
 - Model: `tts_models/multilingual/xtts_v2` (loaded on startup via lifespan)
@@ -193,6 +193,183 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 4. **Tests mirror source**: composables have `.test.ts` alongside them in `app/composables/`, plus additional tests in `tests/`
 5. **Dark mode**: all BEM classes have `dark:` variants defined in main.css
 6. **RTL support**: ArabicTextarea component handles RTL text input
+
+---
+
+## Quick-Start Commands
+
+### Local Development (without Docker)
+```bash
+# Start frontend dev server (hot reload, port 3000)
+cd frontend && pnpm dev
+
+# Start backend dev server (port 8000)
+cd backend && uvicorn app:app --reload
+```
+
+### Docker (production / full stack)
+```bash
+# Build and start all services
+docker compose up --build -d
+
+# View logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+
+# Rebuild after dependency changes (model cache persists)
+docker compose up --build -d
+```
+
+### Frontend Scripts (from `frontend/`)
+```bash
+pnpm dev          # Start dev server (port 3000)
+pnpm build        # Production build
+pnpm preview      # Preview production build locally
+pnpm lint         # Run ESLint
+pnpm typecheck    # TypeScript type checking
+pnpm test         # Run Vitest unit tests
+pnpm test:coverage  # Tests with coverage report
+```
+
+### Backend Scripts (from `backend/`)
+```bash
+pytest            # Run pytest tests
+uvicorn app:app --reload  # Start dev server with hot reload
+```
+
+---
+
+## API Reference
+
+### `POST /api/generate` — Generate Speech
+**Request body:**
+```json
+{
+  "text": "مرحبا بك في لغةات",
+  "language": "ar",        // optional, default: "ar" | allowed: "ar" | "en"
+  "voice": "female",       // optional, default: "female" | allowed: "female" | "male"
+  "speaker": "female",     // alias for `voice` (accepts "default" → maps to "female")
+  "speed": 1.0,            // optional, default: 1.0 | range: 0.5 – 2.0
+  "pitch": 0.0,            // optional, default: 0.0 | range: -4.0 – 4.0
+  "seed": 42               // optional, deterministic seed (defaults to fixed per voice: female=42, male=123)
+}
+```
+**Response:** Returns `audio/mpeg` (MP3 binary blob via `FileResponse`). The frontend loads this into an `<audio>` element via `URL.createObjectURL()`.
+
+> **Note:** The `SynthesisResponse` Pydantic model (audio_url, filename, duration_seconds) is defined but **not used** — the endpoint returns a raw file response instead of JSON.
+
+**Error responses:**
+| Status | Meaning |
+|--------|---------|
+| 400    | Invalid text (empty or too long) |
+| 503    | TTS model not ready yet (still loading) |
+| 500    | Server error (missing speaker WAV, generation failure) |
+
+### `GET /health` — Health Check
+**Response:**
+```json
+{
+  "status": "ready",       // "loading" | "ready" | "error"
+  "model_loaded": true
+}
+```
+
+### `GET /api/voices` — List Voices
+**Response:**
+```json
+[
+  { "id": "female", "name": "Female Voice" },
+  { "id": "male", "name": "Male Voice" }
+]
+```
+
+### `GET /api/history` — Audio History
+**Response:** Array of previously generated audio files with metadata (filename, language, voice, created_at).
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+- Node.js 20+ (or via nvm)
+- pnpm 10.33.4
+- Python 3.10+ (for backend)
+- ffmpeg (for WAV→MP3 conversion)
+
+### Running Both Services Locally
+```bash
+# Terminal 1 — Backend (port 8000)
+cd backend && uvicorn app:app --reload
+
+# Terminal 2 — Frontend (port 3000, proxies to localhost:8000)
+cd frontend && pnpm dev
+```
+> **Note:** When running locally, the frontend dev server proxies API calls to `localhost:8000`. In Docker, Nginx handles this proxying.
+
+### Speaker WAV Files
+Voice presets use reference audio files stored in `backend/speaker_wavs/`:
+- `female.wav` — Female voice reference
+- `male.wav` — Male voice reference
+
+These must be ≥ 0.33 seconds (XTTS-v2 minimum). Add custom voices by placing WAV files here.
+
+---
+
+## Error Handling Patterns
+
+### Frontend (Vue)
+- **Toast notifications**: All user-facing errors use `showToast()` from `useToast` composable — appears at top-center with auto-dismiss
+- **Input validation**: `useInputValidation` composable validates text length + model status before API call
+- **Loading states**: `isGenerating` flag disables button and shows spinner during synthesis
+- **Keyboard shortcut**: `Ctrl+Enter` triggers generation (handled in `@keydown` on root element)
+
+### Backend (FastAPI)
+- **HTTPException**: Used for all business errors with descriptive `detail` messages
+- **CORS**: All origins allowed (`*`) — restrict in production to frontend container IP
+- **Model readiness**: 503 returned if synthesis called before model finishes loading (~60s startup)
+
+---
+
+## Known Gotchas & Limitations
+
+1. **Model loading takes ~60 seconds** — The first request after startup will get 503. Health polling (`useHealthPoll`) handles this by checking `/health` every few seconds.
+2. **TTS model is ~2GB** — Persisted in `tts-model-cache` volume. Docker rebuilds won't re-download.
+3. **CPU-only inference** — No GPU support; generation takes several seconds per request.
+4. **Speaker WAV validation** — XTTS-v2 requires ≥ 0.33s reference audio. Shorter files raise a 500 error.
+5. **Audio file persistence** — Generated MP3s accumulate in `tts-audio-cache`. No cleanup mechanism.
+6. **Language support** — Only `ar` (Arabic) and `en` (English) are accepted. Other languages will be rejected.
+7. **Deterministic output** — Seeds are fixed per voice preset (female=42, male=123) for consistent results. Override via `seed` field in request.
+
+---
+
+## CI/CD Pipeline (GitHub Actions)
+
+Two separate workflows — one per service. Both run on `ubuntu-latest` and trigger on pushes/PRs to `main` and `develop`.
+
+### Backend CI (`.github/workflows/backend.yml`)
+- **Triggers**: Push/PR to `main` or `develop` when files under `backend/**` change
+- **Steps**:
+  1. Checkout (actions/checkout@v5)
+  2. Python 3.12 setup (actions/setup-python@v6)
+  3. Install ffmpeg (`apt-get`)
+  4. `pip install -r backend/requirements-test.txt`
+  5. Run: `pytest --cov=app --cov-report=term-missing -v`
+
+### Frontend CI (`.github/workflows/frontend.yml`)
+- **Triggers**: Push/PR to `main` or `develop` when files under `frontend/**` change
+- **Steps**:
+  1. Checkout (actions/checkout@v5)
+  2. pnpm v4 action, Node.js 24 (cached via `pnpm`)
+  3. `pnpm install --frozen-lockfile`
+  4. `pnpm lint` (ESLint)
+  5. `pnpm typecheck` (TypeScript)
+  6. `pnpm test -- --coverage`
+
+### Requirements Files
+- **Backend**: `backend/requirements-test.txt` (test deps separate from runtime)
+- **Frontend**: Standard `package.json` + `pnpm-lock.yaml`
 
 ---
 

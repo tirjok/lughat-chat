@@ -1,27 +1,21 @@
-// API composable for fetching available voices
-
 export interface Voice {
   id: string
   name: string
-  language: string
 }
 
-export interface UseVoicesOptions {
-  baseUrl?: string
-}
+export const useVoices = () => {
+  const voices = ref<Voice[]>([])
 
-export const useVoices = (options: UseVoicesOptions = {}) => {
-  const baseUrl = options.baseUrl || ''
-
-  async function fetchVoices(): Promise<Voice[]> {
-    const response = await fetch(`${baseUrl}/api/voices`)
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch voices')
+  onMounted(async () => {
+    try {
+      const response = await fetch('/api/voices')
+      if (response.ok) {
+        voices.value = await response.json()
+      }
+    } catch (error) {
+      console.error('Failed to load voices:', error)
     }
+  })
 
-    return response.json() as Promise<Voice[]>
-  }
-
-  return { fetchVoices }
+  return { voices }
 }

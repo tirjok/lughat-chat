@@ -189,10 +189,7 @@ onUnmounted(() => {
 
 <template>
   <!-- Hidden audio element, always mounted -->
-  <audio
-    data-audio-player
-    class="hidden"
-  />
+  <audio data-audio-player />
 
   <!-- Player UI, shown only when audio is loaded -->
   <Transition name="tts-slide-up">
@@ -269,7 +266,7 @@ onUnmounted(() => {
   </Transition>
 </template>
 
-<style scoped>
+<style>
 .tts-audio-player-container {
   @apply space-y-3 pt-4 border-t border-gray-200/60 dark:border-gray-700/60;
 }
@@ -307,9 +304,5 @@ onUnmounted(() => {
       @apply w-4 h-4;
     }
   }
-}
-
-.hidden {
-  @apply hidden;
 }
 </style>
