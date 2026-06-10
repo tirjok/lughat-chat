@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -15,6 +15,7 @@ from typing import Optional
 # Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
 # This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
 import os as _os
+
 _torchcodec_env = "0"
 for _env_key in ["TORCHAUDIO_USE_TORCHCODEC", "TORCHCODEC_ENABLED"]:
     _os.environ.setdefault(_env_key, _torchcodec_env)
@@ -47,9 +48,11 @@ def _validate_speaker_wav(wav_path: str) -> None:
             detail=f"Failed to validate speaker WAV file '{wav_path}': {e}",
         )
 
+
 # Compatibility shim: isin_mps_friendly was removed in newer transformers
 # Lazy import so tests can run without torch installed.
 _torch_loaded = False
+
 
 def _ensure_torch():
     """Ensure torch is imported and patched. Called lazily on first use."""
@@ -58,13 +61,17 @@ def _ensure_torch():
         return
     import torch
     import transformers.pytorch_utils as _pytorch_utils
-    if not hasattr(_pytorch_utils, 'isin_mps_friendly'):
+
+    if not hasattr(_pytorch_utils, "isin_mps_friendly"):
+
         def _isin_mps_friendly(elements, test_elements, **kwargs):
             return torch.isin(elements, test_elements)
+
         _pytorch_utils.isin_mps_friendly = _isin_mps_friendly
 
     # Patch torch.ops.load_library to suppress missing NVIDIA library errors
     global _original_load_library
+
     def _patched_load_library(path):
         try:
             return _original_load_library(path)
@@ -77,10 +84,12 @@ def _ensure_torch():
             raise
 
     import torch.ops  # noqa: F401
-    if hasattr(torch.ops, 'load_library'):
+
+    if hasattr(torch.ops, "load_library"):
         _original_load_library = torch.ops.load_library
         torch.ops.load_library = _patched_load_library
     _torch_loaded = True
+
 
 # Ensure torch is loaded and patched (lazy import for test compatibility)
 # Silently skip if torch isn't installed (e.g., in CI test environments).
@@ -116,6 +125,7 @@ def discover_voices(directory: str) -> list[dict]:
             voices.append({"id": name, "name": name})
     return voices
 
+
 # Create directories if writable (skip on read-only filesystems like Docker host mounts)
 for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
     try:
@@ -143,7 +153,9 @@ async def lifespan(app: FastAPI):
                 print("TTS model already loaded — skipping")
                 return
             if TTS is None:
-                print("TTS library not available (torch not installed) — skipping model load")
+                print(
+                    "TTS library not available (torch not installed) — skipping model load"
+                )
                 model_load_status = "error"
                 tts_model = None
                 return
@@ -169,7 +181,7 @@ app = FastAPI(
     title="Lughat Chat TTS API",
     description="Text-to-Speech API with XTTS-v2 (Arabic & English)",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware - allow frontend container to call API
@@ -194,11 +206,17 @@ app.mount("/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker
 class SynthesisRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=3000)
     language: str = Field(default="ar", pattern="^(ar|en)$")
-    voice: Optional[str] = Field(default=None)  # any string accepted; validated at runtime via file existence
-    speaker: Optional[str] = None  # Alias for voice (accepts "default", "female", "male")
+    voice: Optional[str] = Field(
+        default=None
+    )  # any string accepted; validated at runtime via file existence
+    speaker: Optional[str] = (
+        None  # Alias for voice (accepts "default", "female", "male")
+    )
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
     pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
-    seed: Optional[int] = Field(default=None, ge=0)  # Deterministic seed (optional, defaults to fixed per voice)
+    seed: Optional[int] = Field(
+        default=None, ge=0
+    )  # Deterministic seed (optional, defaults to fixed per voice)
 
 
 class SynthesisResponse(BaseModel):
@@ -224,7 +242,7 @@ async def health():
     """Health check endpoint - returns model load status."""
     return {
         "status": model_load_status,
-        "model_loaded": tts_model is not None and model_load_status == "ready"
+        "model_loaded": tts_model is not None and model_load_status == "ready",
     }
 
 
@@ -263,7 +281,7 @@ async def generate_speech(request: SynthesisRequest):
         if not os.path.exists(speaker_wav):
             raise HTTPException(
                 status_code=500,
-                detail=f"Speaker WAV file not found for voice '{voice}'. Please add {speaker_wav}"
+                detail=f"Speaker WAV file not found for voice '{voice}'. Please add {speaker_wav}",
             )
 
         # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
@@ -279,6 +297,7 @@ async def generate_speech(request: SynthesisRequest):
         # seeding must be done at the PyTorch level before inference.
         try:
             import torch
+
             torch.manual_seed(seed)
         except ImportError:
             pass  # torch not available (e.g. in tests) — skip seeding
@@ -298,14 +317,18 @@ async def generate_speech(request: SynthesisRequest):
         try:
             subprocess.run(
                 [
-                    "ffmpeg", "-y",
-                    "-i", wav_path,
-                    "-filter:a", f"atempo={request.speed}",
-                    "-b:a", "192k",
-                    mp3_path
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    wav_path,
+                    "-filter:a",
+                    f"atempo={request.speed}",
+                    "-b:a",
+                    "192k",
+                    mp3_path,
                 ],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
         except subprocess.CalledProcessError as e:
             print(f"FFmpeg error: {e.stderr}")
@@ -313,11 +336,7 @@ async def generate_speech(request: SynthesisRequest):
             shutil.copy2(wav_path, mp3_path)
 
         # Return MP3 file as binary response
-        return FileResponse(
-            path=mp3_path,
-            media_type="audio/mpeg",
-            filename=filename
-        )
+        return FileResponse(path=mp3_path, media_type="audio/mpeg", filename=filename)
 
     except HTTPException:
         raise
@@ -332,24 +351,26 @@ async def get_history():
     try:
         items = []
         for filename in sorted(os.listdir(AUDIO_DIR), reverse=True):
-            if filename.endswith(('.mp3', '.wav')):
+            if filename.endswith((".mp3", ".wav")):
                 filepath = os.path.join(AUDIO_DIR, filename)
                 stat = os.stat(filepath)
 
                 # Parse metadata from filename if possible
-                parts = filename.split('_')
+                parts = filename.split("_")
                 language = parts[0] if len(parts) > 0 else "unknown"
                 voice = parts[1] if len(parts) > 1 else "default"
 
-                items.append({
-                    "filename": filename,
-                    "text": "",  # We don't store the original text in this simple version
-                    "language": language,
-                    "voice": voice,
-                    "speed": 1.0,
-                    "pitch": 0.0,
-                    "created_at": str(int(stat.st_mtime))
-                })
+                items.append(
+                    {
+                        "filename": filename,
+                        "text": "",  # We don't store the original text in this simple version
+                        "language": language,
+                        "voice": voice,
+                        "speed": 1.0,
+                        "pitch": 0.0,
+                        "created_at": str(int(stat.st_mtime)),
+                    }
+                )
 
         return items
 

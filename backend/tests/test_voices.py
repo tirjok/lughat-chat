@@ -31,7 +31,12 @@ def test_discover_voices_ignores_non_wav_files():
     """discover_voices() only returns entries for .wav files, ignoring other extensions."""
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create a mix of files
-        for name, ext in [("alice", ".wav"), ("bob", ".mp3"), ("charlie", ".wav"), ("dave", ".txt")]:
+        for name, ext in [
+            ("alice", ".wav"),
+            ("bob", ".mp3"),
+            ("charlie", ".wav"),
+            ("dave", ".txt"),
+        ]:
             path = os.path.join(tmpdir, f"{name}{ext}")
             with open(path, "wb") as f:
                 f.write(b"")
@@ -78,6 +83,7 @@ def test_discover_voices_returns_sorted_by_filename():
 def test_list_voices_returns_voice_array():
     """GET /api/voices returns a list of available voices discovered from speaker_wavs/."""
     from fastapi.testclient import TestClient
+
     client = TestClient(app)
 
     response = client.get("/api/voices")
@@ -89,7 +95,6 @@ def test_list_voices_returns_voice_array():
 
     # Verify voice structure (id + name from filename)
     ids = [v["id"] for v in data]
-    names = [v["name"] for v in data]
     assert "female" in ids
     assert "male" in ids
     for v in data:
@@ -100,6 +105,7 @@ def test_list_voices_returns_voice_array():
 def test_api_voices_uses_discover_voices():
     """GET /api/voices returns voices discovered from the speaker_wavs directory."""
     import app as main_app
+
     # Patch discover_voices to return controlled data
     original = main_app.discover_voices
     main_app.discover_voices = lambda d: [
@@ -109,6 +115,7 @@ def test_api_voices_uses_discover_voices():
 
     try:
         from fastapi.testclient import TestClient
+
         client = TestClient(app)
         response = client.get("/api/voices")
 
@@ -125,6 +132,7 @@ def test_api_voices_uses_discover_voices():
 def test_list_voices_includes_both_genders():
     """GET /api/voices returns both male and female voice options."""
     from fastapi.testclient import TestClient
+
     client = TestClient(app)
 
     response = client.get("/api/voices")

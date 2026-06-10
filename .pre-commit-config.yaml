@@ -1,0 +1,43 @@
+repos:
+  # ── Python (backend) ────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.16
+    hooks:
+      - id: ruff
+        args: [--fix, --show-fixes]
+      - id: ruff-format
+
+  # ── Frontend (Nuxt/Vue) ─────────────────────────────
+  - repo: local
+    hooks:
+      - id: eslint-fix
+        name: eslint (fix)
+        entry: bash -c 'cd frontend && [ "$(git diff --name-only --cached 2>/dev/null | grep -E "frontend/.*\\.(ts|vue)$" )" ] && pnpm lint --fix || exit 0'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: nuxt-typecheck
+        name: nuxt typecheck
+        entry: bash -c 'cd frontend && [ "$(git diff --name-only --cached 2>/dev/null | grep -E "frontend/.*\.(ts|vue)$" )" ] && pnpm typecheck || exit 0'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: vitest
+        name: frontend tests (vitest)
+        entry: bash -c 'cd frontend && [ "$(git diff --name-only --cached 2>/dev/null | grep -E "frontend/.*\.(ts|vue)$" )" ] && pnpm test || exit 0'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: pytest
+        name: backend tests (pytest)
+        entry: bash -c 'cd backend && python -m pytest'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
