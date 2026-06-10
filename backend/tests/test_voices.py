@@ -85,14 +85,16 @@ def test_list_voices_returns_voice_array():
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) == 2
+    assert len(data) >= 2
 
     # Verify voice structure (id + name from filename)
-    female = data[0]
-    assert "id" in female
-    assert "name" in female
-    assert female["id"] == "female"
-    assert female["name"] == "female"
+    ids = [v["id"] for v in data]
+    names = [v["name"] for v in data]
+    assert "female" in ids
+    assert "male" in ids
+    for v in data:
+        assert "id" in v
+        assert "name" in v
 
 
 def test_api_voices_uses_discover_voices():

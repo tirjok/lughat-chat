@@ -44,8 +44,8 @@ describe('useTtsApi', () => {
 
       vi.spyOn(global, 'fetch').mockResolvedValue({
         ok: false,
-        status: 500,
-        json: async () => ({ detail: 'Internal error' })
+        status: 502,
+        json: async () => ({ status: 'error', detail: 'Internal error' })
       } as Response)
 
       await expect(synthesize({ text: 'مرحبا' })).rejects.toThrow('Server error: Internal error')
@@ -84,7 +84,7 @@ describe('useTtsApi', () => {
         blob: async () => new Blob([], { type: 'audio/mpeg' })
       } as Response)
 
-      await synthesize({ text: 'مرحبا', speaker: 'female' as const, speed: 1.5 })
+      await synthesize({ text: 'مرحبا', speaker: 'custom_voice', speed: 1.5 })
 
       expect(fetchSpy).toHaveBeenCalledWith(
         '/api/generate',
@@ -93,7 +93,7 @@ describe('useTtsApi', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: 'مرحبا',
-            speaker: 'female',
+            speaker: 'custom_voice',
             speed: 1.5,
             language: 'ar'
           })
