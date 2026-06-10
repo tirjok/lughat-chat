@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Audio player composable for playback state management
 // Toast notification for API errors
-import { nextTick } from 'vue'
+import { nextTick, watch } from 'vue'
 import { showToast } from '../composables/useToast'
 
 const {
@@ -34,13 +34,23 @@ const { synthesize, healthCheck: _healthCheck } = useTtsApi()
 // Model loading status via Issue 4 composable
 const { status: modelStatus, modelLoaded: _modelLoaded } = useHealthPoll()
 
+// Voices composable — reactive list of available voices
+const { voices: speakerVoices } = useVoices()
+
 // Reactive state for form inputs
 const textInput = ref('')
-const selectedSpeaker = ref<'female' | 'male'>('female')
+const selectedSpeaker = ref<string>('')
 const speedValue = ref(1.0)
 
 // Reactive state for UI feedback
 const isGenerating = ref(false)
+
+// Set default to first voice when loaded
+watch(speakerVoices, (v) => {
+  if (!selectedSpeaker.value && v.length > 0) {
+    selectedSpeaker.value = v[0].id
+  }
+}, { immediate: true })
 
 // Input validation composable — reactive via computed
 const validationState = computed(() =>
@@ -49,11 +59,7 @@ const validationState = computed(() =>
 const isValid = computed(() => validationState.value.isValid)
 const validationError = computed(() => validationState.value.error)
 
-// Available speakers (can be extended with backend speaker list)
-const speakers = [
-  { value: 'female', label: 'Female Voice' },
-  { value: 'male', label: 'Male Voice' }
-]
+
 
 // Format time in MM:SS format
 function formatTime(seconds: number): string {
@@ -197,11 +203,11 @@ function handleKeyDown(event: KeyboardEvent) {
                 autocomplete="off"
               >
                 <option
-                  v-for="speaker in speakers"
-                  :key="speaker.value"
-                  :value="speaker.value"
+                  v-for="voice in speakerVoices"
+                  :key="voice.id"
+                  :value="voice.id"
                 >
-                  {{ speaker.label }}
+                  {{ voice.name }}
                 </option>
               </select>
               <span

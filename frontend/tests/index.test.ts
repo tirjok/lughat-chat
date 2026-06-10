@@ -9,6 +9,7 @@ import Index from '../app/pages/index.vue'
 // Mock composables at the global level to intercept Nuxt auto-imports
 const mockUseAudioPlayer = vi.fn()
 const mockUseTtsApi = vi.fn()
+const mockUseVoices = vi.fn()
 const mockUseHealthPoll = vi.fn()
 const mockUseInputValidation = vi.fn()
 const mockShowToast = vi.fn()
@@ -33,6 +34,13 @@ beforeEach(() => {
   ;(globalThis as Record<string, unknown>).useTtsApi = mockUseTtsApi.mockReturnValue({
     synthesize: vi.fn().mockResolvedValue(new Blob([], { type: 'audio/mpeg' })),
     healthCheck: vi.fn().mockResolvedValue({ status: 'ready', model_loaded: true })
+  })
+
+  ;(globalThis as Record<string, unknown>).useVoices = mockUseVoices.mockReturnValue({
+    voices: ref([
+      { id: 'female', name: 'Female' },
+      { id: 'male', name: 'Male' }
+    ])
   })
 
   ;(globalThis as Record<string, unknown>).useHealthPoll = mockUseHealthPoll.mockReturnValue({

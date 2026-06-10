@@ -32,7 +32,7 @@ describe('useTtsApi', () => {
       )
     })
 
-    it('defaults speaker to "default" when not provided', async () => {
+    it('sends undefined speaker when not provided', async () => {
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
@@ -43,7 +43,21 @@ describe('useTtsApi', () => {
       await synthesize({ text: 'Hello' })
 
       const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
-      expect(body.speaker).toBe('default')
+      expect(body.speaker).toBeUndefined()
+    })
+
+    it('sends custom voice name as plain string', async () => {
+      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob)
+      }))
+
+      const { synthesize } = useTtsApi()
+      await synthesize({ text: 'Hello', speaker: 'ahmed_ksa' })
+
+      const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
+      expect(body.speaker).toBe('ahmed_ksa')
     })
 
     it('defaults speed to 1.0 when not provided', async () => {

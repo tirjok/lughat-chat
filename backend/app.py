@@ -100,6 +100,22 @@ AUDIO_DIR = os.path.join(os.path.dirname(__file__), "downloads")
 MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
 SPEAKER_WAV_DIR = os.path.join(os.path.dirname(__file__), "speaker_wavs")
 
+
+def discover_voices(directory: str) -> list[dict]:
+    """Scan directory for .wav files and return voice entries.
+
+    Each discovered file produces a voice entry: { id: filename_without_extension, name: filename_without_extension }.
+    Non-.wav files are ignored. Returns empty list if directory doesn't exist.
+    """
+    voices = []
+    if not os.path.isdir(directory):
+        return voices
+    for filename in sorted(os.listdir(directory)):
+        if filename.endswith(".wav"):
+            name = filename[:-4]  # strip .wav extension
+            voices.append({"id": name, "name": name})
+    return voices
+
 # Create directories if writable (skip on read-only filesystems like Docker host mounts)
 for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
     try:
@@ -178,7 +194,7 @@ app.mount("/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker
 class SynthesisRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=3000)
     language: str = Field(default="ar", pattern="^(ar|en)$")
-    voice: Optional[str] = Field(default=None, pattern="^(female|male|default)$")
+    voice: Optional[str] = Field(default=None)  # any string accepted; validated at runtime via file existence
     speaker: Optional[str] = None  # Alias for voice (accepts "default", "female", "male")
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
     pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
@@ -214,8 +230,8 @@ async def health():
 
 @app.get("/api/voices")
 async def list_voices():
-    """List available voices."""
-    return VOICES
+    """List available voices discovered from speaker_wavs directory."""
+    return discover_voices(SPEAKER_WAV_DIR)
 
 
 @app.post("/api/generate")
@@ -241,14 +257,10 @@ async def generate_speech(request: SynthesisRequest):
         # Generate WAV first (XTTS native format)
         print(f"Generating speech: {request.text[:50]}...")
 
-        # Map voice preset to speaker_wav file
-        speaker_wavs = {
-            "female": os.path.join(SPEAKER_WAV_DIR, "female.wav"),
-            "male": os.path.join(SPEAKER_WAV_DIR, "male.wav"),
-        }
-        speaker_wav = speaker_wavs.get(voice)
+        # Dynamic resolution: speaker_wavs/{voice}.wav
+        speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
 
-        if not speaker_wav or not os.path.exists(speaker_wav):
+        if not os.path.exists(speaker_wav):
             raise HTTPException(
                 status_code=500,
                 detail=f"Speaker WAV file not found for voice '{voice}'. Please add {speaker_wav}"
