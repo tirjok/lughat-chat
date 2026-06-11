@@ -61,9 +61,9 @@ describe('index.vue — loading text uses proper ellipsis', () => {
     const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
     const source = fs.readFileSync(indexPath, 'utf-8')
 
-    // Verify both status strings use proper Unicode ellipsis (U+2026), not three dots
-    expect(source).toContain('Generating\u2026')
-    expect(source).toContain('Loading\u2026')
+    // Verify both status strings use Unicode escape sequences (\u2026), not literal three dots
+    expect(source).toContain('Generating\\u2026')
+    expect(source).toContain('Loading\\u2026')
 
     // Ensure no literal three-dot sequences in status text
     expect(source).not.toContain('Generating...')
