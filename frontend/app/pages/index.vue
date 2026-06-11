@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Audio player composable for playback state management
 // Toast notification for API errors
-import { computed, nextTick, watch } from 'vue'
+import { computed, nextTick, shallowRef, watch } from 'vue'
 import { showToast } from '../composables/useToast'
 
 const {
@@ -30,10 +30,10 @@ const { synthesize, healthCheck: _healthCheck } = useTtsApi()
 const { status: modelStatus, modelLoaded: _modelLoaded } = useHealthPoll()
 const { voices: speakerVoices } = useVoices()
 
-const textInput = ref('')
-const selectedSpeaker = ref<string>('')
-const speedValue = ref(1.0)
-const isGenerating = ref(false)
+const textInput = shallowRef('')
+const selectedSpeaker = shallowRef('')
+const speedValue = shallowRef(1.0)
+const isGenerating = shallowRef(false)
 
 watch(speakerVoices, (v) => {
   if (!selectedSpeaker.value && v.length > 0) {

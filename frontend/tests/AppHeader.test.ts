@@ -50,11 +50,10 @@ describe('AppHeader', () => {
 
       const wrapper = mount(AppHeader)
 
-      // The "Chat" span should have inline style for magenta color
-      const spans = wrapper.findAll('span')
-      const chatSpan = spans.find(span => span.text() === 'Chat')
-      expect(chatSpan).toBeDefined()
-      expect(chatSpan?.attributes('style')).toContain('#DD2476')
+      // Use CSS attribute selector — robust against nesting changes
+      const chatSpan = wrapper.find('span[style*="#DD2476"]')
+      expect(chatSpan.exists()).toBe(true)
+      expect(chatSpan.text()).toBe('Chat')
     })
 
     it('renders "Lughat" portion separately from "Chat"', () => {
@@ -86,7 +85,7 @@ describe('AppHeader', () => {
   })
 
   describe('model status indicator', () => {
-    it('renders ModelStatusIndicator component', () => {
+    it('shows loading text when model is loading', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
@@ -94,7 +93,7 @@ describe('AppHeader', () => {
 
       const wrapper = mount(AppHeader)
 
-      // ModelStatusIndicator renders text like "Loading..." or "Model Ready"
+      // AppHeader inlines useHealthPoll — shows "Loading..." text
       expect(wrapper.text()).toContain('Loading...')
     })
 
