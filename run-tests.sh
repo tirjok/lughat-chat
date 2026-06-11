@@ -4,11 +4,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# ── Backend tests (pytest) ─────────────────────────────
+# ── Backend tests (pytest inside Docker) ───────────────
 echo "▶ Running backend tests..."
-cd backend
-python -m pytest "$@"
-cd ..
+./scripts/run-backend-tests.sh "$@"
 
 # ── Frontend tests (vitest via pnpm) ───────────────────
 echo ""

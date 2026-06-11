@@ -26,6 +26,10 @@ RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install test dependencies
+COPY requirements-test.txt .
+RUN pip install --no-cache-dir -r requirements-test.txt
+
 # Rebuild torchcodec from source without CUDA (pre-built wheel has libnvrtc dependency)
 # Patch pyproject.toml to remove deprecated 'license-files' field, then install with --no-build-isolation
 RUN pip uninstall -y torchcodec && \

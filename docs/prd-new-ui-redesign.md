@@ -8,11 +8,11 @@ The current Lughat Chat interface is a single-page, light-theme card layout that
 
 A complete UI rewrite that transforms the application into a dark-themed, two-panel studio interface. The new design features:
 
-- **Left sidebar panel**: Arabic text input area with real-time character counting, voice selector dropdown, and speed control slider
-- **Right content panel**: Large generate button with glow animation, slide-up audio player panel with waveform visualization
-- **Fixed dark theme**: Charcoal background with sunrise gradient accents (coral, orange, gold)
-- **Professional typography**: Inter for UI labels, Noto Sans Arabic for text content
-- **Animated interactions**: Glow-border button, slide-up player panel, focus halo behind textarea
+- **Left sidebar panel** (~30% width on desktop, ~25% on lg+): Arabic text input area with real-time character counting, voice selector dropdown, speed control slider, and High Quality Audio toggle
+- **Right content panel** (~70% width on desktop, ~75% on lg+): Animated glowing-border generate button, slide-up audio player panel with canvas-based heatmap waveform visualization
+- **Fixed dark theme**: Charcoal background (#121212) with sunrise gradient accents (magenta #DD2476, orange #FF512F)
+- **Professional typography**: Inter for UI labels, Cairo for Arabic text content
+- **Animated interactions**: Spinning conic-gradient border on generate button, slide-up player panel, focus halo (radial gradient) behind textarea, canvas-based animated waveform
 
 The rewrite preserves all existing composable logic (useAudioPlayer, useTtsApi, useHealthPoll, etc.) — only the presentation layer changes.
 
@@ -28,21 +28,21 @@ The rewrite preserves all existing composable logic (useAudioPlayer, useTtsApi, 
 
 5. As a TTS user, I want the character count to turn red when I exceed the limit, so that I immediately understand why generation is blocked.
 
-6. As a TTS user, I want a clear text input area with a "Clear" button (X icon) to quickly reset my text, so that I can start fresh without manually selecting and deleting.
+6. As a TTS user, I want a clear text input area with a trash icon button to quickly reset my text, so that I can start fresh without manually selecting and deleting.
 
-7. As a TTS user, I want to select a voice from a custom dropdown (not the native browser select), so that the interface feels cohesive and polished.
+7. As a TTS user, I want a floating shortcut hint at the bottom-right of the canvas ("Press Ctrl + Enter to generate") styled with dark panel background and keyboard key badges, so that I'm reminded of the keyboard shortcut without it being intrusive.
 
-8. As a TTS user, I want to see all available voices listed in the dropdown with their full names, so that I can easily identify and select my preferred voice.
+8. As a TTS user, I want to select a voice from a custom dropdown (not the native browser select) that shows voice name, regional dialect tag, and a play icon for preview, so that the interface feels cohesive and polished.
 
-9. As a TTS user, I want the voice selector to show "No voices available" when no voices are loaded, so that I understand why I can't generate speech.
+9. As a TTS user, I want to see 3 voice presets in the dropdown (Aisha - Conversational / Egyptian Arabic [AR-EG], Tariq - News Anchor / Modern Standard Arabic [MSA], Laila - Storyteller / Levantine Arabic [AR-LB]) with color-coded voice icons (orange/magenta), so that I can easily identify and select my preferred voice.
 
-10. As a TTS user, I want to adjust the speech speed using a visual slider with gradient fill, so that I can fine-tune the playback rate intuitively.
+10. As a TTS user, I want to adjust the speech speed using a visual slider with a gradient track fill (magenta → orange), so that I can fine-tune the playback rate intuitively.
 
-11. As a TTS user, I want to see the current speed value displayed as a percentage (e.g., "100%") next to the slider, so that I know exactly what speed setting I've chosen.
+11. As a TTS user, I want to see the current speed value displayed as "1.0x" next to the slider in a monospace badge, so that I know exactly what speed setting I've chosen.
 
-12. As a TTS user, I want the speed slider to have a gradient track that fills proportionally as I adjust it, so that the control feels responsive and visually satisfying.
+12. As a TTS user, I want the speed slider to have a gradient track (magenta #DD2476 to orange #FF512F) that fills proportionally as I adjust it, so that the control feels responsive and visually satisfying.
 
-13. As a TTS user, I want a large generate button with an animated glow border and gradient fill, so that the primary action feels prominent and inviting.
+13. As a TTS user, I want a large generate button with an animated spinning conic-gradient border (magenta → orange) and dark inner fill, so that the primary action feels prominent and inviting.
 
 14. As a TTS user, I want the generate button to swap its icon and text when loading (spinner + "Loading…"), generating ("Generating…" with spinner), or ready, so that I always understand the current state.
 
@@ -50,21 +50,21 @@ The rewrite preserves all existing composable logic (useAudioPlayer, useTtsApi, 
 
 16. As a TTS user, I want the generate button to be disabled while the model is loading, so that I don't attempt generation before the system is ready.
 
-17. As a TTS user, I want an audio player panel that slides up from the bottom of the right panel when audio is generated, so that playback controls appear smoothly without disrupting my workflow.
+17. As a TTS user, I want an audio player panel that slides up from the bottom of the right panel when audio is generated (using cubic-bezier(0.16, 1, 0.3, 1) easing), so that playback controls appear smoothly without disrupting my workflow.
 
-18. As a TTS user, I want to see a visual waveform bar in the audio player that shows playback progress with a gradient fill, so that I can visually track where I am in the audio.
+18. As a TTS user, I want to see a canvas-based heatmap waveform in the audio player — 60 animated bars with colors interpolated between magenta (#DD2476) and orange (#FF512F) based on bar height, animating via requestAnimationFrame during playback — so that I can visually track where I am in the audio.
 
 19. As a TTS user, I want to see time displayed as "current / total" (e.g., "0:12 / 0:45"), so that I know how much audio remains.
 
-20. As a TTS user, I want play/pause and rewind (10 seconds) buttons in the audio player, so that I can control playback precisely.
+20. As a TTS user, I want a large magenta play/pause button and a download button in the audio player, so that I can control playback precisely.
 
 21. As a TTS user, I want a download button in the audio player to save the generated MP3, so that I can reuse the audio outside the app.
 
 22. As a TTS user, I want the audio player panel to stay visible after playback ends (until I manually collapse it), so that I can replay or download without regenerating.
 
-23. As a TTS user, I want to manually collapse the audio player panel using a chevron button, so that I can reclaim screen space when I'm done with playback.
+23. As a TTS user, I want to manually collapse the audio player panel using a close (X) button, so that I can reclaim screen space when I'm done with playback.
 
-24. As a TTS user, I want the header to show the app logo, title, and model loading status indicator, so that I always know if the TTS engine is ready.
+24. As a TTS user, I want the header to show the app logo (waves icon), title "LughatChat" (with "Chat" in magenta), subtitle "Premium Audio Studio", and model loading status indicator, so that I always know if the TTS engine is ready.
 
 25. As a TTS user, I want the model status to show "Loading…" with an animated spinner while the model initializes, so that I understand why generation might be delayed.
 
@@ -78,7 +78,7 @@ The rewrite preserves all existing composable logic (useAudioPlayer, useTtsApi, 
 
 30. As a TTS user, I want the overall layout to be clean and uncluttered with proper spacing between elements, so that I can focus on composing text without visual distraction.
 
-31. As a TTS user, I want the app to use Inter font for UI labels and Noto Sans Arabic for text content, so that both English controls and Arabic text are optimally readable.
+31. As a TTS user, I want the app to use Inter font for UI labels and Cairo font for Arabic text content, so that both English controls and Arabic text are optimally readable.
 
 32. As a TTS user, I want the interface to be fully functional without JavaScript-dependent styling (progressive enhancement), so that basic content is visible even if styles fail to load.
 
@@ -90,9 +90,9 @@ The rewrite preserves all existing composable logic (useAudioPlayer, useTtsApi, 
 
 36. As a developer, I want the new UI components to follow the existing `@apply` pattern with BEM-style class names, so that styling is consistent with the rest of the codebase.
 
-37. As a developer, I want to use Lucide icons (via @iconify/json) instead of Phosphor icons, so that we don't add a new icon library dependency.
+37. As a developer, I want to keep the existing Lucide icon setup (via @iconify/json) for consistency with the current codebase.
 
-38. As a developer, I want the simplified CSS-based waveform (no canvas/audio decoding), so that we avoid complex audio processing code in a TTS application.
+38. As a developer, I want a canvas-based heatmap waveform (60 animated bars, color-interpolated between magenta and orange based on height, animated via requestAnimationFrame), matching the design file's visual specification.
 
 39. As a developer, I want the fixed dark theme (no light mode), so that we eliminate ~40% of CSS complexity and remove all `dark:` variant classes.
 
@@ -108,13 +108,13 @@ The rewrite is split into two phases to enable incremental testing and visible p
 - Build FocusHalo component (glow effect behind textarea on focus)
 
 **Phase 2 — Interactive Components (the "brains"):**
-- Build VoiceSelector component (custom dropdown with voice data from existing composable)
-- Build SpeedSlider component (gradient track, live percentage display)
-- Build GenerateButton component (glow animation, loading state swap)
-- Build AudioPlayerPanel component (slide-up panel, CSS waveform bar, playback controls)
+- Build VoiceSelector component (custom dropdown with 3 voice presets, regional tags, preview from existing composable)
+- Build SpeedSlider component (gradient track, live "1.0x" display)
+- Build GenerateButton component (conic-gradient animation, loading state swap)
+- Build AudioPlayerPanel component (slide-up panel, canvas heatmap waveform, playback controls)
 
 ### Module: Header
-- Displays app logo (volume icon), title "Lughat Chat", and subtitle
+- Displays app logo (waves icon), title "LughatChat" (with "Chat" in magenta), subtitle "Premium Audio Studio"
 - Contains the ModelStatusIndicator component (reused from existing codebase)
 - Two-column layout: logo + title on left, status indicator on right
 
@@ -122,82 +122,102 @@ The rewrite is split into two phases to enable incremental testing and visible p
 - Full-size text input area in the left sidebar
 - RTL direction for Arabic text content
 - Real-time character count display (e.g., "123/3000")
-- Character count turns red when approaching/exceeding limit
-- Clear button (X icon) to reset text
+- Character count turns red when exceeding limit
+- Trash icon button to reset text
+- Floating shortcut hint at bottom-right of canvas ("Press Ctrl + Enter")
 - Disabled state with visual feedback when text is too long
 
 ### Module: FocusHalo
-- Subtle glow effect rendered behind the textarea when it has focus
-- Uses CSS box-shadow with blur and gradient colors (coral/orange tones)
+- Radial gradient glow effect rendered behind/below the textarea when it has focus
+- Uses CSS radial-gradient (magenta/orange tones) with blur, positioned below textarea
 - Automatically appears/disappears based on textarea focus state
 
 ### Module: VoiceSelector
 - Custom dropdown replacing native `<select>` element
 - Populated from existing `useVoices()` composable
-- Shows voice names as dropdown items
-- Empty state: "No voices available" when no voices loaded
+- Shows 3 voice presets with color-coded icons: Aisha (orange, Egyptian Arabic [AR-EG]), Tariq (magenta, Modern Standard Arabic [MSA]), Laila (orange, Levantine Arabic [AR-LB])
+- Each voice option shows name, regional dialect tag, and a hover-revealed play icon for "Preview Voice" (shows toast: "Playing 1-second preview...")
+- Selected voice shown in trigger with color-coded waveform icon
 - Animated chevron indicator for open/closed state
+- Backend change: extend `/api/voices` to support 3 voice presets (Aisha, Tariq, Laila) with regional dialect metadata
 
 ### Module: SpeedSlider
-- Visual range slider with gradient track fill
-- Current speed displayed as percentage (e.g., "100%") next to slider
-- Range: 50% (0.5x) to 200% (2.0x), default 100%
-- Track fills proportionally based on current value
+- Visual range slider with gradient track fill (magenta #DD2476 to orange #FF512F)
+- Current speed displayed as "1.0x" format next to slider in monospace badge
+- Range: 0.5x to 2.0x, default 1.0x
+- Track fills proportionally based on current value (JS sets CSS gradient variable)
 
 ### Module: GenerateButton
-- Large, prominent button with animated glow border
-- Gradient fill (coral → orange → gold)
+- Large button with animated spinning conic-gradient border (magenta → orange) and dark inner fill
 - Icon and text swap based on state:
-  - Ready: mic icon + "Generate Speech"
-  - Loading (model): spinner icon + "Loading…"
-  - Generating: spinner icon + "Generating…"
+  - Ready: play icon (ph-fill ph-play-circle equivalent) + "Generate Speech"
+  - Loading (model): spinner + "Processing Model..."
+  - Generating: spinner + "Processing Model..."
 - Disabled when text is invalid or too long
+- Backend icon mapping (Lucide): volume-2 (logo), mic/gauge (labels), play/pause (audio controls), download (download), loader (spinner), x (close), trash (clear), waves (header logo)
 
 ### Module: AudioPlayerPanel
-- Slide-up panel at the bottom of the right content area
+- Slide-up panel at the bottom of the right content area (cubic-bezier(0.16, 1, 0.3, 1) easing)
 - Hidden by default, appears when audio is generated
-- Contains: waveform bar (CSS gradient), time display, playback controls, download button
-- Manual collapse via chevron button
+- Contains: canvas-based heatmap waveform (60 animated bars, magenta→orange color interpolation), time display, play/pause button (magenta), download button
+- Manual collapse via X button
 - Stays visible after playback ends (no auto-collapse)
+- Backend icon mapping (Lucide): music-notes (audio icon), download (download), x (close), play/pause (controls)
 
 ### Module: Main Page (index.vue)
-- Two-panel layout: aside (left, ~350px) + main content (right, flex-1)
+- Two-panel layout: aside (left, ~30% width) + main content (right, ~70% width; ~25%/~75% on lg+)
 - Fixed dark theme with charcoal background and sunrise gradient accents
 - Uses existing composables: useAudioPlayer, useTtsApi, useHealthPoll, useVoices
-- Keyboard shortcut (Ctrl+Enter) for generation
+- Keyboard shortcut (Ctrl+Enter) for generation (also shown as floating hint at bottom-right)
 
-### Icon Strategy: Lucide Mapping
-All Phosphor icons from the design are mapped to equivalent Lucide icons via `@iconify/json`:
-- Speaker hifi → volume-2 (logo)
-- Microphone → mic (generate button)
-- Headphones → headphones (result label)
-- User → user (voice selector)
-- Gauge → gauge (speed slider)
-- Play → play, Pause → pause (audio controls)
-- Download simple → download (download button)
-- Skip back → rotate-ccw (rewind 10s)
-- Spinner → loader (loading states)
-- X → x (close/clear buttons)
+### Icon Strategy: Keep Lucide
+We keep the existing Lucide icon setup (via `@iconify/json`) for consistency. The design file uses Phosphor icons, but the mapping to Lucide equivalents is:
+- waves (header logo) → volume-2
+- user-sound (voice selector label) → user
+- gauge (speed label) → gauge
+- sliders-horizontal (output settings label) → sliders-horizontal
+- play-circle (generate button) → play (or custom SVG)
+- waveform (voice icon) → waveform (or music-notes)
+- play/pause (audio controls) → play / pause
+- download-simple (download) → download
+- x (close/clear) → x
+- trash (clear text) → trash
+- spinner (loading) → loader
+- music-notes (audio icon) → music-notes
+- keyboard (canvas label) → keyboard
 
-### Theme: Fixed Dark
+### Theme: Fixed Dark ("Sunrise Surge" Palette)
 - No light mode support
 - All `dark:` variant classes removed from CSS
-- Single gradient background: charcoal → deep purple
-- Simplified CSS (~60% reduction in style rules)
+- Color palette:
+  - **Background**: Charcoal #121212
+  - **Panels**: #1A1A1A
+  - **Borders**: #2A2A2A
+  - **Text**: #E0E0E0 (primary), gray #a0aec0 (secondary)
+  - **Sunrise orange**: #FF512F
+  - **Sunrise magenta**: #DD2476
+  - **Green (status)**: #22c55e
+  - **Red (errors)**: red-500
+- Border radius: 12px (cards), 8px (inputs/buttons), rounded-full (status dots, buttons)
+- Spacing: 16px base unit, consistent padding/margin scale
+- Custom scrollbar: 8px width, #2A2A2A thumb, #121212 track
+- Custom animation: `pulse-glow` (2s cubic-bezier infinite), `spin-slow` (4s linear infinite)
 
 ### Typography: Dual Font Strategy
 - **Inter**: UI labels, headers, buttons, status text (English)
-- **Noto Sans Arabic**: Textarea content and all Arabic text
+- **Cairo**: Textarea content and all Arabic text (matches design file and current codebase)
 
 ### Styling: @apply Pattern Retained
 - BEM-style class names in templates (e.g., `header-title`, `sidebar-content`)
 - UnoCSS `@apply` directives map class names to utility classes
 - Minimal `<style>` blocks only for animations/transitions that can't be expressed as utilities
 
-### Waveform: Simplified CSS Approach
-- No canvas-based audio decoding
-- CSS gradient progress bar with animated fill
-- Synced to playback position via existing `useAudioPlayer` composable
+### Waveform: Canvas-Based Heatmap
+- Canvas-based heatmap waveform with 60 animated bars
+- Colors interpolated between magenta (#DD2476) and orange (#FF512F) based on bar height
+- Bars animate via `requestAnimationFrame` during playback (sine wave + random noise modulation)
+- Static state: bars settle to random target heights
+- Synced to playback state via existing `useAudioPlayer` composable (isPlaying flag)
 
 ### Error Handling: Toast + Inline
 - Global errors (API failures, network issues): toast notifications via existing `useToast` composable
@@ -213,10 +233,10 @@ All Phosphor icons from the design are mapped to equivalent Lucide icons via `@i
 
 ### Modules to Test
 1. **ArabicTextarea**: Character count updates, validation state changes (valid/invalid/too long), clear button resets text, disabled state when invalid
-2. **VoiceSelector**: Dropdown renders voices from composable, empty state when no voices, selection updates model
-3. **SpeedSlider**: Value reflects slider position, percentage display updates, range constraints enforced (50%-200%)
+2. **VoiceSelector**: Dropdown renders 3 voice presets with regional tags, color-coded icons, preview play button (toast), selection updates model
+3. **SpeedSlider**: Value reflects slider position, "1.0x" display updates, range constraints enforced (0.5x-2.0x)
 4. **GenerateButton**: Icon/text swap per state, disabled when invalid, click triggers synthesis
-5. **AudioPlayerPanel**: Slide-up animation on audio ready, play/pause toggles, download triggers, collapse button hides panel
+5. **AudioPlayerPanel**: Slide-up animation on audio ready, canvas waveform animation, play/pause toggles, download triggers, collapse button hides panel
 6. **Header**: Status indicator reflects model status from useHealthPoll composable
 
 ### Prior Art
@@ -227,14 +247,12 @@ All Phosphor icons from the design are mapped to equivalent Lucide icons via `@i
 ### Testing Strategy
 - **Unit tests**: Composable integration — verify components correctly consume useAudioPlayer, useTtsApi, useHealthPoll
 - **Component tests**: Render and interaction testing for each new component using jsdom environment
-- **Integration test**: Full page flow — enter text → select voice → generate → verify player appears → play → download
+- **Integration test**: Full page flow — enter text → select voice (with preview) → generate → verify player appears with canvas waveform → play → download → collapse
 
 ## Out of Scope
 
 - **Light mode support**: The fixed dark theme is a deliberate decision; light mode will not be implemented
-- **Canvas-based waveform**: The simplified CSS progress bar replaces the complex audio decoding approach
-- **Backend changes**: No modifications to FastAPI, Coqui XTTS-v2, or Docker configuration
-- **Voice discovery**: Dynamic voice preset system (from separate PRD) is out of scope for this rewrite
+- **Backend voice changes**: Supporting 3 voice presets (Aisha, Tariq, Laila) with regional dialect metadata requires extending `/api/voices` endpoint
 - **Recording pipeline**: No audio recording capability — the app only generates and plays back speech
 - **Multi-language support**: The app remains Arabic-only; no language switching UI
 - **Mobile responsive design**: The new layout is desktop-first; mobile adaptations are out of scope for this PRD
@@ -252,14 +270,21 @@ The rewrite replaces the presentation layer entirely while preserving all busine
 ### Design File Reference
 The new design is specified in `frontend/docs/new-design/lughat_chat_studio.html`. This file serves as the visual reference for all components. Key design tokens:
 
-- **Background**: Charcoal (#1a1b26) with sunrise gradient accents
-- **Primary colors**: Coral (#ff6b6b), Orange (#ffa07a), Gold (#ffd93d)
-- **Text**: White (#ffffff) for primary, gray (#a0aec0) for secondary
-- **Border radius**: 12px (cards), 8px (inputs/buttons)
+- **Background**: Deep charcoal #121212
+- **Panels**: #1A1A1A
+- **Borders**: #2A2A2A
+- **Sunrise orange**: #FF512F
+- **Sunrise magenta**: #DD2476
+- **Text**: #E0E0E0 (primary), gray #a0aec0 (secondary)
+- **Border radius**: 12px (cards), 8px (inputs/buttons), rounded-full (status dots, buttons)
 - **Spacing**: 16px base unit, consistent padding/margin scale
+- **Layout**: Sidebar ~30% width (desktop), ~25% (lg+); Canvas ~70% (desktop), ~75% (lg+)
+- **Custom scrollbar**: 8px width, #2A2A2A thumb
+- **Animations**: `pulse-glow` (2s), `spin-slow` (4s), slide-up with cubic-bezier(0.16, 1, 0.3, 1)
 
 ### Risk Areas
-- **Icon mapping**: Some Phosphor icons don't have perfect Lucide equivalents (e.g., skip-back → rotate-ccw is a reasonable but not exact match)
 - **RTL vs LTR**: The page layout is LTR (matching design file), but Arabic text in the textarea remains RTL — this hybrid approach needs careful testing
 - **Component state management**: The slide-up player panel introduces new state (visible/collapsed) that doesn't exist in the current single-page flow
-- **Animation performance**: Glow effects and slide-up transitions need testing on lower-end devices
+- **Animation performance**: Conic-gradient spinning border, canvas waveform, and slide-up transitions need testing on lower-end devices
+- **Canvas waveform**: 60 bars animated at 60fps needs performance budgeting
+- **Backend voice presets**: Extending `/api/voices` to support 3 presets with regional dialect metadata is a new backend requirement

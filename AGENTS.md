@@ -126,13 +126,13 @@ npx vitest --config vitest.component.config.ts
 
 ### Test Setup (Pytest)
 ```bash
-# Run backend tests
-cd backend && pytest
+# Run backend tests (inside Docker — no host Python needed)
+./scripts/run-backend-tests.sh
 ```
 
 **Run all tests (backend + frontend) from project root:**
 ```bash
-./run-tests.sh     # Runs pytest (backend) then pnpm test (frontend)
+./run-tests.sh     # Runs backend tests in Docker, then pnpm test (frontend)
 ```
 
 **Test files:** `backend/tests/`
@@ -204,8 +204,10 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 cd frontend && pnpm dev
 
 # Start backend dev server (port 8000)
-cd backend && uvicorn app:app --reload
+# Note: backend still needs Docker for TTS model; use `docker compose up backend` or `uvicorn` with a local TTS setup
 ```
+
+> **Pre-commit hooks** require `pre-commit` installed on the host (`pip install pre-commit`), but all backend tests run in Docker.
 
 ### Docker (production / full stack)
 ```bash
@@ -233,11 +235,13 @@ pnpm test         # Run Vitest unit tests
 pnpm test:coverage  # Tests with coverage report
 ```
 
-### Backend Scripts (from `backend/`)
+### Backend Scripts (from project root)
 ```bash
-pytest            # Run pytest tests
-uvicorn app:app --reload  # Start dev server with hot reload
+./scripts/run-backend-tests.sh    # Run pytest inside Docker
+uvicorn backend/app:app --reload  # Start backend dev server (port 8000)
 ```
+
+> **Docker-first backend:** All backend dependencies (Python, pytest, FastAPI, Coqui TTS, ffmpeg) live **inside the Docker container**. Your host machine only needs Docker and Git. No Python installation required.
 
 ---
 
@@ -295,8 +299,10 @@ uvicorn app:app --reload  # Start dev server with hot reload
 ### Prerequisites
 - Node.js 20+ (or via nvm)
 - pnpm 10.33.4
-- Python 3.10+ (for backend)
-- ffmpeg (for WAV→MP3 conversion)
+- Docker & Docker Compose (backend runs entirely inside containers)
+- Git (for pre-commit hooks)
+
+> **No Python on the host** — all backend tooling runs inside Docker.
 
 ### Running Both Services Locally
 ```bash
@@ -382,5 +388,6 @@ When the user asks about building features, modifying existing code, or understa
 4. When adding new components, check existing ones in `app/components/` for patterns first
 5. When modifying composables, read the existing one in `app/composables/` for patterns first
 6. Frontend work: run from `frontend/` directory using pnpm commands
-7. Backend work: run from `backend/` directory using pip/pytest
-8. Running all tests: use `./run-tests.sh` from the project root to run both backend and frontend tests
+7. Backend work: run from `backend/` directory using Docker (all deps inside container)
+8. Running all tests: use `./run-tests.sh` from the project root to run both backend (Docker) and frontend tests
+9. Backend tests: use `./scripts/run-backend-tests.sh` — runs pytest inside Docker, no host Python needed
