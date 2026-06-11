@@ -138,6 +138,8 @@ From the project root, run both backend and frontend tests in one command:
 ./run-tests.sh -v       # With verbose output
 ```
 
+All **backend tests run inside Docker** — no Python installation needed on your host machine.
+
 ### Frontend (Vitest)
 ```bash
 cd frontend
@@ -145,10 +147,19 @@ pnpm test              # Run all unit tests
 npx vitest --config vitest.component.config.ts  # Component tests only
 ```
 
-### Backend (Pytest)
+### Backend (Pytest — inside Docker)
 ```bash
-cd backend
-pytest
+./scripts/run-backend-tests.sh          # Run backend tests in Docker
+./scripts/run-backend-tests.sh -v       # With verbose output
+```
+
+> **Note:** The backend Docker image includes `pytest`, `fastapi`, and all test dependencies. No Python is installed on the host — everything runs in the container.
+
+### Pre-commit Hooks
+All hooks run automatically on `git commit`. Backend tests execute inside Docker:
+```bash
+pre-commit install    # (already done — see setup below)
+git add . && git commit -m "fix: something"
 ```
 
 ## UnoCSS Shortcuts
