@@ -340,7 +340,6 @@ input[type='range']::-moz-range-thumb {
   letter-spacing: 0.015em;
   word-spacing: 0.08em;
   text-align: right;
-}
 
   &::placeholder {
     @apply text-base;
