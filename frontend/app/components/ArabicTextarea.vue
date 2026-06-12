@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import FocusHalo from './FocusHalo.vue'
 
 const props = withDefaults(defineProps<{
   modelValue?: string
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const defaultPlaceholder = 'Type text here... Example:  السلام عليكم ورحمة الله وبركته'
+const focused = ref(false)
 
 const charCount = computed(() => props.modelValue.length)
 const ringColorClass = computed(() => {
@@ -68,11 +70,21 @@ const dashOffset = computed(() => {
       >
         Enter Arabic text to convert to speech
       </label>
+      <button
+        class="tts-textarea__trash"
+        type="button"
+        aria-label="Clear text"
+        :disabled="!modelValue"
+        @click="emit('update:modelValue', '')"
+      >
+        <span class="i-lucide-trash" />
+      </button>
+      <FocusHalo :focused="focused" />
       <textarea
         :id="id"
         :value="modelValue"
         :placeholder="placeholder ?? defaultPlaceholder"
-        dir="auto"
+        dir="rtl"
         style="
           font-family: 'Noto Sans Arabic', 'Amiri', 'Scheherazade New', sans-serif;
           font-size: 1.35rem;
@@ -94,17 +106,26 @@ const dashOffset = computed(() => {
           color: #f3f4f6;
         "
         @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
+        @focus="focused = true"
+        @blur="focused = false"
       />
     </div>
     <div class="tts-input__meta">
       <span :class="ringColorClass">
-        {{ charCount }}/{{ maxLength }} characters
+        {{ charCount }}/{{ maxLength }}
       </span>
     </div>
   </div>
 </template>
 
 <style>
+.tts-textarea__trash {
+  @apply absolute top-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-transparent;
+
+  .i-lucide-trash {
+    @apply h-5 w-5;
+  }
+}
 .tts-input-wrapper {
   @apply relative;
 }
