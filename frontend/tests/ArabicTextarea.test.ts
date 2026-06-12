@@ -13,11 +13,11 @@ describe('ArabicTextarea', () => {
     expect(label.attributes('for')).toBe(textarea.attributes('id'))
   })
 
-  it('renders a textarea element with dir="auto"', () => {
+  it('renders a textarea element with RTL direction (dir="rtl")', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
     expect(textarea.exists()).toBe(true)
-    expect(textarea.attributes('dir')).toBe('auto')
+    expect(textarea.attributes('dir')).toBe('rtl')
   })
 
   it('uses Arabic-optimized font stack', () => {
@@ -123,14 +123,14 @@ describe('ArabicTextarea', () => {
     expect(ring.exists()).toBe(true)
   })
 
-  it('displays character counter in X/{maxLength} حرف format', () => {
+  it('displays character count in "X/3000" format without suffix', () => {
     const wrapper = mount(ArabicTextarea, {
       props: {
         modelValue: 'مرحبا'
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toBe('5/3000 characters')
+    expect(counter.text()).toBe('5/3000')
   })
 
   it('uses maxLength prop default of 3000', () => {
@@ -140,7 +140,7 @@ describe('ArabicTextarea', () => {
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toContain('/3000 characters')
+    expect(counter.text()).toContain('/3000')
   })
 
   it('uses custom maxLength when provided', () => {
@@ -151,7 +151,7 @@ describe('ArabicTextarea', () => {
       }
     })
     const counter = wrapper.find('.tts-input__meta span')
-    expect(counter.text()).toBe('5/500 characters')
+    expect(counter.text()).toBe('5/500')
   })
 
   it('turns ring amber when count is at or above 80% but below 100%', () => {
@@ -234,6 +234,37 @@ describe('ArabicTextarea', () => {
     const counter = wrapper.find('.tts-input__meta span')
     expect(counter.classes()).not.toContain('text-amber-500')
     expect(counter.classes()).not.toContain('text-red-500')
+  })
+
+  it('renders a trash icon button that clears the textarea content', async () => {
+    const wrapper = mount(ArabicTextarea, {
+      props: {
+        modelValue: 'نص للاختبار'
+      }
+    })
+    const trashBtn = wrapper.find('.tts-textarea__trash')
+    expect(trashBtn.exists()).toBe(true)
+
+    await trashBtn.trigger('click')
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([''])
+  })
+
+  it('shows FocusHalo when textarea is focused and hides it when blurred', async () => {
+    const wrapper = mount(ArabicTextarea)
+    const halo = wrapper.find('.tts-halo')
+    const textarea = wrapper.find('textarea')
+
+    // Initially hidden
+    expect(halo.classes()).toContain('opacity-0')
+
+    // Focus textarea
+    await textarea.trigger('focus')
+    expect(halo.classes()).not.toContain('opacity-0')
+
+    // Blur textarea
+    await textarea.trigger('blur')
+    expect(halo.classes()).toContain('opacity-0')
   })
 
   it('emits update:modelValue when user types', async () => {
