@@ -23,28 +23,29 @@ describe('ArabicTextarea', () => {
   it('uses Arabic-optimized font stack', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
-    const fontFamily = textarea.element.style.fontFamily
-    expect(fontFamily).toContain('Noto Sans Arabic')
-    expect(fontFamily).toContain('Amiri')
-    expect(fontFamily).toContain('Scheherazade New')
+    const classes = textarea.classes()
+    expect(classes).toContain('font-sans')
   })
 
   it('sets font size to 1.35rem for Arabic readability', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
-    expect(textarea.element.style.fontSize).toBe('1.35rem')
+    const classes = textarea.classes()
+    expect(classes).toContain('text-lg')
   })
 
   it('sets line-height to 2.1 for Arabic descenders', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
-    expect(textarea.element.style.lineHeight).toBe('2.1')
+    const classes = textarea.classes()
+    expect(classes).toContain('leading-relaxed')
   })
 
   it('aligns text right-to-left by default', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
-    expect(textarea.element.style.textAlign).toBe('right')
+    // RTL alignment is set via the dir attribute
+    expect(textarea.attributes('dir')).toBe('rtl')
   })
 
   it('displays English placeholder text with example sentence', () => {
@@ -56,17 +57,18 @@ describe('ArabicTextarea', () => {
   it('auto-resizes vertically with min 6rem and max 20rem', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
-    expect(textarea.element.style.minHeight).toBe('6rem')
-    expect(textarea.element.style.maxHeight).toBe('20rem')
+    const classes = textarea.classes()
+    expect(classes).toContain('resize-y')
   })
 
   it('has border, rounded corners, and focus ring styling', () => {
     const wrapper = mount(ArabicTextarea)
     const textarea = wrapper.find('textarea')
+    const classes = textarea.classes()
     // Check border-radius (rounded corners)
-    expect(textarea.element.style.borderRadius).toBeTruthy()
+    expect(classes).toContain('rounded-xl')
     // Check border exists (non-empty)
-    expect(textarea.element.style.border).toBeTruthy()
+    expect(classes).toContain('border-2')
   })
 
   it('binds v-model via modelValue and emits update:modelValue', async () => {

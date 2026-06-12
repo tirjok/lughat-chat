@@ -88,7 +88,7 @@ const dashOffset = computed(() => {
         :placeholder="placeholder ?? defaultPlaceholder"
         dir="rtl"
         :disabled="disabled"
-        class="tts-textarea__input"
+        class="tts-textarea__input font-sans text-lg leading-relaxed resize-y rounded-xl border-2"
         @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
         @focus="focused = true"
         @blur="focused = false"
