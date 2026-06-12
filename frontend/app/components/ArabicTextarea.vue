@@ -7,10 +7,12 @@ const props = withDefaults(defineProps<{
   placeholder?: string
   maxLength?: number
   id?: string
+  disabled?: boolean
 }>(), {
   modelValue: '',
   maxLength: 3000,
-  id: 'arabic-textarea'
+  id: 'arabic-textarea',
+  disabled: false
 })
 
 const emit = defineEmits<{
@@ -85,26 +87,8 @@ const dashOffset = computed(() => {
         :value="modelValue"
         :placeholder="placeholder ?? defaultPlaceholder"
         dir="rtl"
-        style="
-          font-family: 'Noto Sans Arabic', 'Amiri', 'Scheherazade New', sans-serif;
-          font-size: 1.35rem;
-          line-height: 2.1;
-          letter-spacing: 0.015em;
-          word-spacing: 0.08em;
-          text-align: right;
-          min-height: 6rem;
-          max-height: 20rem;
-          resize: vertical;
-          border: 1.5px solid #4b5563;
-          border-radius: 0.75rem;
-          padding: 1.25rem;
-          width: 100%;
-          box-sizing: border-box;
-          overflow-x: hidden;
-          min-width: 0;
-          background-color: rgba(17, 24, 39, 0.4);
-          color: #f3f4f6;
-        "
+        :disabled="disabled"
+        class="tts-textarea__input"
         @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
         @focus="focused = true"
         @blur="focused = false"
@@ -119,15 +103,28 @@ const dashOffset = computed(() => {
 </template>
 
 <style>
+.tts-input-wrapper {
+  @apply relative flex flex-col;
+}
+
+.tts-textarea__input {
+  @apply w-full rounded-xl border-2 border-gray-600 bg-gray-900/40 text-gray-100 placeholder-gray-500 p-5 font-sans text-lg leading-relaxed tracking-wide resize-y overflow-x-hidden min-w-0 focus-visible:outline-none focus-visible:border-blue-500 focus-visible:ring-4 focus-visible:ring-blue-500/20 transition-colors flex-1;
+
+  &::placeholder {
+    @apply text-base;
+  }
+
+  &:disabled {
+    @apply opacity-50 cursor-not-allowed border-red-500/50 bg-gray-800/50;
+  }
+}
+
 .tts-textarea__trash {
   @apply absolute top-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-transparent;
 
   .i-lucide-trash {
     @apply h-5 w-5;
   }
-}
-.tts-input-wrapper {
-  @apply relative;
 }
 
 .tts-input__ring {
@@ -144,17 +141,5 @@ const dashOffset = computed(() => {
 
 .tts-input__meta {
   @apply flex justify-between text-xs text-gray-400;
-}
-
-textarea:focus-visible {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-textarea::placeholder {
-  color: #6b7280;
-  font-size: inherit;
-  line-height: inherit;
 }
 </style>

@@ -331,6 +331,51 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* ===================================
+   Textarea Canvas Block (tts-textarea)
+   =================================== */
+.tts-textarea__input {
+  @apply w-full rounded-xl border-2 border-gray-600 bg-gray-900/40 text-gray-100 placeholder-gray-500 p-5 font-sans text-lg leading-relaxed tracking-wide resize-y overflow-x-hidden min-w-0 focus-visible:outline-none focus-visible:border-blue-500 focus-visible:ring-4 focus-visible:ring-blue-500/20 transition-colors flex-1;
+  font-family: 'Noto Sans Arabic', 'Amiri', 'Scheherazade New', sans-serif;
+  line-height: 2.1;
+  letter-spacing: 0.015em;
+  word-spacing: 0.08em;
+  text-align: right;
+}
+
+  &::placeholder {
+    @apply text-base;
+  }
+
+  &:disabled {
+    @apply opacity-50 cursor-not-allowed border-red-500/50 bg-gray-800/50;
+  }
+}
+
+.tts-textarea__trash {
+  @apply absolute top-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-transparent;
+
+  .i-lucide-trash {
+    @apply h-5 w-5;
+  }
+}
+
+/* ===================================
+   Focus Halo (tts-halo)
+   =================================== */
+.tts-halo {
+  @apply absolute inset-0 rounded-xl pointer-events-none transition-opacity duration-500 ease-out;
+
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 0, 255, 0.15) 0%,
+    rgba(255, 165, 0, 0.1) 40%,
+    transparent 70%
+  );
+  filter: blur(20px);
+  transform: scale(1.05);
+}
+
+/* ===================================
    Focus Styles (tts-focus)
    =================================== */
 .tts-input:focus,
