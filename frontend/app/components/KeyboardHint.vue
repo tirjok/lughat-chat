@@ -1,6 +1,3 @@
-<script setup lang="ts">
-</script>
-
 <template>
   <div class="text-sm font-medium flex items-center gap-2">
     Press

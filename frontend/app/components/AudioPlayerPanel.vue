@@ -30,15 +30,18 @@ function formatTime(seconds: number): string {
   <Transition name="slide-up-player">
     <div
       v-if="visible"
-      class="absolute bottom-0 left-0 w-full bg-studio-800 border-t border-studio-700 p-6 flex flex-col gap-4 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+      class="absolute bottom-0 left-0 w-full bg-studio-800 border-t border-studio-700 p-5 flex flex-col gap-3 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
     >
       <!-- Player Header -->
-      <div class="flex justify-between items-center mb-2">
+      <div class="flex justify-between items-center">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg">
+          <!-- Gradient audio icon -->
+          <div
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg"
+          >
             <span
               aria-hidden="true"
-              class="i-lucide-music text-white"
+              class="i-lucide-music text-white text-sm"
             />
           </div>
           <div>
@@ -50,25 +53,26 @@ function formatTime(seconds: number): string {
             </p>
           </div>
         </div>
+        <!-- Action buttons -->
         <div class="flex items-center gap-2">
           <button
-            class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-white text-gray-400 transition-colors"
+            class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
             title="Download MP3"
             @click="emit('download')"
           >
             <span
               aria-hidden="true"
-              class="i-lucide-download"
+              class="i-lucide-download text-lg"
             />
           </button>
           <button
-            class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-red-400 text-gray-400 transition-colors"
+            class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors"
             title="Close Player"
             @click="emit('close')"
           >
             <span
               aria-hidden="true"
-              class="i-lucide-x"
+              class="i-lucide-x text-lg"
             />
           </button>
         </div>
@@ -76,8 +80,9 @@ function formatTime(seconds: number): string {
 
       <!-- Waveform Container -->
       <div class="w-full bg-studio-900 rounded-lg border border-studio-700 p-4 flex items-center gap-4">
+        <!-- Play/Pause button -->
         <button
-          class="w-12 h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0 focus:outline-none focus-visible:outline-none"
+          class="w-12 h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0"
           @click="emit('toggle')"
         >
           <span
@@ -92,7 +97,7 @@ function formatTime(seconds: number): string {
           />
         </button>
 
-        <!-- Canvas for dynamic waveform -->
+        <!-- Waveform canvas -->
         <div class="flex-1 h-12 relative w-full overflow-hidden">
           <WaveformCanvas
             :visible="visible"
@@ -102,6 +107,7 @@ function formatTime(seconds: number): string {
           />
         </div>
 
+        <!-- Duration display -->
         <span class="text-xs font-mono text-gray-400 flex-shrink-0 w-10 text-right">
           {{ formatTime(duration) }}
         </span>

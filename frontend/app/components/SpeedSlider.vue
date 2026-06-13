@@ -35,15 +35,12 @@ const trackPercent = computed(() => {
         />
         Speech Speed
       </label>
-      <span
-        class="text-xs font-mono text-sunrise-orange bg-studio-900 px-2 py-1 rounded border border-studio-700"
-      >
+      <span class="text-xs font-mono text-sunrise-orange bg-studio-900 px-2 py-1 rounded border border-studio-700">
         {{ displayValue }}
       </span>
     </div>
 
     <div class="relative w-full pt-2 pb-4">
-      <!-- Custom range input with gradient track -->
       <input
         :value="clampedValue"
         type="range"

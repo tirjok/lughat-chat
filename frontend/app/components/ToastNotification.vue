@@ -1,49 +1,74 @@
 <script setup lang="ts">
 import { useToast } from '../composables/useToast'
+import type { ToastType } from '../composables/useToast'
 
-const toast = useToast()
+const toasts = useToast()
+
+function toastIconClass(type: ToastType): string {
+  switch (type) {
+    case 'error': return 'text-red-400 i-lucide-alert-circle text-lg'
+    case 'info': return 'text-blue-400 i-lucide-info text-lg'
+    default: return 'text-green-400 i-lucide-check-circle text-lg'
+  }
+}
+
+function toastBgClass(type: ToastType): string {
+  switch (type) {
+    case 'error': return 'bg-red-500/10 border-red-500/50'
+    case 'info': return 'bg-blue-500/10 border-blue-500/50'
+    default: return 'bg-studio-800 border-studio-700'
+  }
+}
 </script>
 
 <template>
-  <Transition name="tts-toast">
-    <div
-      v-if="toast.visible"
-      aria-live="polite"
-      class="fixed top-4 right-4 z-50 p-3 bg-studio-800 rounded-lg shadow-xl border border-studio-700 flex items-center gap-3 max-w-md"
-      dir="ltr"
-    >
-      <div class="w-5 h-5 text-green-400 flex-shrink-0">
-        <span
-          aria-hidden="true"
-          class="i-lucide-check"
-        />
-      </div>
-      <p class="text-sm text-white flex-1">
-        {{ toast.message }}
-      </p>
-      <button
-        aria-label="Close notification"
-        class="w-5 h-5 text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
-        @click="toast.visible = false"
+  <div
+    class="fixed top-4 right-4 z-50 flex flex-col gap-2"
+    dir="ltr"
+  >
+    <TransitionGroup name="toast-slide">
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        class="flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl max-w-md"
+        :class="toastBgClass(toast.type)"
+        aria-live="polite"
       >
         <span
           aria-hidden="true"
-          class="i-lucide-x"
+          :class="toastIconClass(toast.type)"
         />
-      </button>
-    </div>
-  </Transition>
+        <p class="text-sm text-white flex-1">
+          {{ toast.message }}
+        </p>
+        <button
+          class="text-gray-500 hover:text-white transition-colors cursor-pointer"
+          aria-label="Close notification"
+          @click="toasts.splice(toasts.indexOf(toast), 1)"
+        >
+          <span
+            aria-hidden="true"
+            class="i-lucide-x text-sm"
+          />
+        </button>
+      </div>
+    </TransitionGroup>
+  </div>
 </template>
 
 <style>
-.tts-toast-enter-active,
-.tts-toast-leave-active {
-  transition: transform, opacity 0.3s ease;
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-.tts-toast-enter-from,
-.tts-toast-leave-to {
+.toast-slide-enter-from,
+.toast-slide-leave-to {
   opacity: 0;
-  transform: translate(50%, -20px);
+  transform: translateX(100%);
+}
+
+.toast-slide-leave-active {
+  transition-duration: 0.2s;
 }
 </style>

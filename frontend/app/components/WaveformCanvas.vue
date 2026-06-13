@@ -35,7 +35,6 @@ function resizeCanvas() {
 function initBars() {
   bars = []
   for (let i = 0; i < numBars; i++) {
-    // Random target height between 10% and 90%
     bars.push({
       targetHeight: Math.random() * 0.8 + 0.1,
       currentHeight: 0.1,
@@ -49,7 +48,6 @@ function drawWaveform() {
   if (!canvas) return
   const ctx = canvas.getContext('2d')
   if (!ctx) return
-  // Skip drawing only when truly hidden (panel not yet visible)
   if (!isCanvasVisible) return
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -59,31 +57,25 @@ function drawWaveform() {
   bars.forEach((bar, index) => {
     const x = index * (barWidth + 2)
 
-    // If playing, animate bars based on a sine wave + random noise to simulate audio
     if (props.isPlaying) {
       bar.phase += 0.1
       const noise = Math.sin(bar.phase) * 0.3
       bar.currentHeight = bar.targetHeight + noise
       bar.currentHeight = Math.max(0.1, Math.min(1.0, bar.currentHeight))
     } else {
-      // Settle down to static height
       bar.currentHeight += (bar.targetHeight - bar.currentHeight) * 0.1
     }
 
     const height = bar.currentHeight * canvas.height * 0.8
     const y = centerY - (height / 2)
 
-    // Heatmap Color Logic: Taller bars are orange, shorter bars are magenta
-    const ratio = bar.currentHeight // 0.1 to 1.0
-
-    // Interpolate between Magenta (DD2476) and Orange (FF512F)
+    const ratio = bar.currentHeight
     const r = Math.round(221 + (255 - 221) * ratio)
     const g = Math.round(36 + (81 - 36) * ratio)
     const b = Math.round(118 + (47 - 118) * ratio)
 
     ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
 
-    // Draw rounded rect at correct x position
     ctx.beginPath()
     ctx.roundRect(x, y, barWidth, height, 4)
     ctx.fill()
@@ -105,12 +97,10 @@ function stopAnimation() {
     cancelAnimationFrame(animationFrameId)
     animationFrameId = null
   }
-  // Draw static state
   drawWaveform()
 }
 
 async function ensureCanvasReady() {
-  // Wait for the panel to become visible and canvas to have real dimensions
   if (canvasRef.value) {
     await nextTick()
     await new Promise(resolve => setTimeout(resolve, 50))
@@ -121,7 +111,6 @@ async function ensureCanvasReady() {
 onMounted(async () => {
   await ensureCanvasReady()
   window.addEventListener('resize', resizeCanvas)
-  // Initial static draw
   setTimeout(() => {
     drawWaveform()
   }, 100)
@@ -135,7 +124,6 @@ onUnmounted(() => {
   isCanvasVisible = false
 })
 
-// Watch isPlaying to start/stop animation
 watch(() => props.isPlaying, async (val) => {
   await ensureCanvasReady()
   if (val) {
@@ -145,7 +133,6 @@ watch(() => props.isPlaying, async (val) => {
   }
 })
 
-// Watch visible to re-render when panel appears
 watch(() => props.visible, async (val) => {
   if (val) {
     await ensureCanvasReady()

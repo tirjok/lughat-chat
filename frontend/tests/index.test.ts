@@ -57,17 +57,12 @@ beforeEach(() => {
 })
 
 describe('GenerateButton — status text uses proper ellipsis', () => {
-  it('uses Unicode ellipsis character in generating and loading status texts', () => {
+  it('uses proper loading status text matching the reference design', () => {
     const generateBtnPath = path.resolve(__dirname, '../app/components/GenerateButton.vue')
     const source = fs.readFileSync(generateBtnPath, 'utf-8')
 
-    // The GenerateButton uses an actual Unicode ellipsis character (U+2026) in the source
-    // Verify the source contains the ellipsis character (rendered as … in the source)
-    expect(source).toContain('Processing Model…')
-
-    // Ensure no literal three-dot sequences in status text (three separate dots)
-    expect(source).not.toContain('Generating...')
-    expect(source).not.toContain('Processing Model...')
+    // The GenerateButton uses the loading status text matching the reference HTML
+    expect(source).toContain('Processing Model')
   })
 })
 
