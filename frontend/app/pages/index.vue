@@ -10,7 +10,7 @@ const {
   currentTime,
   isPlaying,
   isPaused,
-  _isLoading,
+  isLoading: _isLoading,
   error: audioError,
   loadAudio,
   play,

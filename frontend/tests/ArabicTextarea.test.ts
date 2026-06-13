@@ -13,8 +13,8 @@ describe('ArabicTextarea', () => {
   })
 
   it('renders a textarea element', () => {
-    const textarea = wrapper.find('textarea')
-    expect(textarea.exists()).toBe(true)
+    const _textarea = wrapper.find('textarea')
+    expect(_textarea.exists()).toBe(true)
   })
 
   it('has the correct placeholder text in Arabic', () => {
@@ -24,12 +24,12 @@ describe('ArabicTextarea', () => {
   })
 
   it('debug: prints full HTML', () => {
-    const fs = require('fs')
     const html = wrapper.html()
     const textareaClasses = wrapper.find('textarea').classes()
     const lucideIcons = wrapper.findAll('[class*="i-lucide"]')
     const fcElements = wrapper.findAll('[class*="flex-col"]')
-    fs.writeFileSync('/tmp/textarea_debug.txt', `HTML:\n${html}\n\nTextarea classes: ${JSON.stringify(textareaClasses)}\n\nLucide icons: ${lucideIcons.length}\n\nflex-col count: ${fcElements.length}\n` + (fcElements[0]?.html() ?? 'none'))
+    const debugInfo = `HTML:\n${html}\n\nTextarea classes: ${JSON.stringify(textareaClasses)}\n\nLucide icons: ${lucideIcons.length}\n\nflex-col count: ${fcElements.length}\n` + (fcElements[0]?.html() ?? 'none')
+    console.log(debugInfo)
   })
 
   it('has RTL direction attribute', () => {
@@ -53,7 +53,7 @@ describe('ArabicTextarea', () => {
     })
 
     it('displays "0/3000" when the textarea is empty', () => {
-      const textarea = wrapper.find('textarea')
+      const _textarea = wrapper.find('textarea')
       const counterText = wrapper.find('[class*="flex flex-col"]')
       expect(counterText.text()).toContain('0/3000')
     })

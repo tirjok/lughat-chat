@@ -8,12 +8,22 @@ cd "$SCRIPT_DIR"
 echo "▶ Running backend tests..."
 ./scripts/run-backend-tests.sh "$@"
 
+# ── Frontend: lint ─────────────────────────────────────
+echo ""
+echo "▶ Running frontend lint..."
+cd frontend
+pnpm lint "$@"
+
+# ── Frontend: typecheck ────────────────────────────────
+echo ""
+echo "▶ Running frontend typecheck..."
+pnpm typecheck "$@"
+
 # ── Frontend tests (vitest via pnpm) ───────────────────
 echo ""
 echo "▶ Running frontend tests..."
-cd frontend
 pnpm test "$@"
 cd ..
 
 echo ""
-echo "✓ All tests passed!"
+echo "✓ All checks passed!"

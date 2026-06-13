@@ -14,11 +14,10 @@ describe('AppHeader', () => {
   // The component accesses `status` directly in the template (Vue auto-unwraps real refs).
   // Since we mock ref() to return { value: init }, Vue doesn't auto-unwrap it,
   // so we need to make `status` itself be the string value for the === comparison.
-  const mockStatus = { value: 'loading' as const }
-  const mockModelLoaded = { get value() { return false } }
-  const mockLoadingStatus = 'loading' // Direct string for === comparison
-  const mockReadyStatus = 'ready' // Direct string for === comparison
-  const mockReadyModelLoaded = { get value() { return true } }
+  const mockStatus = { value: 'loading' }
+  const mockLoadingStatus = 'loading'
+  const mockReadyStatus = 'ready'
+  const mockModelLoaded = { value: false }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -109,7 +108,7 @@ describe('AppHeader', () => {
     it('shows model status text based on health poll state', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: mockReadyStatus,
-        modelLoaded: mockReadyModelLoaded
+        modelLoaded: mockModelLoaded
       })
 
       const wrapper = mount(AppHeader)

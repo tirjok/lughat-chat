@@ -7,36 +7,12 @@ repos:
         args: [--fix, --show-fixes]
       - id: ruff-format
 
-  # ── Frontend (Nuxt/Vue) ─────────────────────────────
+  # ── Full check (lint + typecheck + tests) ───────────
   - repo: local
     hooks:
-      - id: eslint-fix
-        name: eslint (fix)
-        entry: bash -c 'cd frontend && [ "$(git diff --name-only --cached 2>/dev/null | grep -E "frontend/.*\\.(ts|vue)$" )" ] && pnpm lint --fix || exit 0'
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
-
-      - id: nuxt-typecheck
-        name: nuxt typecheck
-        entry: bash -c 'cd frontend && [ "$(git diff --name-only --cached 2>/dev/null | grep -E "frontend/.*\.(ts|vue)$" )" ] && pnpm typecheck || exit 0'
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
-
-      - id: vitest
-        name: frontend tests (vitest)
-        entry: bash -c 'cd frontend && [ "$(git diff --name-only --cached 2>/dev/null | grep -E "frontend/.*\.(ts|vue)$" )" ] && pnpm test || exit 0'
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
-
-      - id: pytest
-        name: backend tests (pytest)
-        entry: bash -c 'cd "$(git rev-parse --show-toplevel)" && docker compose run --rm backend pytest'
+      - id: full-check
+        name: full pre-commit check
+        entry: bash ./run-tests.sh
         language: system
         pass_filenames: false
         always_run: true

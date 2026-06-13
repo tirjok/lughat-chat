@@ -209,7 +209,7 @@ cd frontend && pnpm dev
 # Note: backend still needs Docker for TTS model; use `docker compose up backend` or `uvicorn` with a local TTS setup
 ```
 
-> **Pre-commit hooks** require `pre-commit` installed on the host (`pip install pre-commit`), but all backend tests run in Docker.
+> **Pre-commit hooks** require `pre-commit` installed on the host (`pip install pre-commit`). All backend tests run inside Docker — no host Python needed.
 
 ### Docker (production / full stack)
 ```bash
@@ -236,6 +236,21 @@ pnpm typecheck    # TypeScript type checking
 pnpm test         # Run Vitest unit tests
 pnpm test:coverage  # Tests with coverage report
 ```
+
+### Pre-commit & Full Check (from project root)
+```bash
+./run-tests.sh    # Run ALL checks: backend tests → lint → typecheck → frontend tests
+```
+
+**How it works:**
+- `run-tests.sh` is the **single source of truth** for all quality gates.
+- Pre-commit hooks call `./run-tests.sh` automatically on every commit.
+- Run it manually before pushing: `./run-tests.sh` from the project root.
+- It runs 4 checks in order (stops at first failure thanks to `set -e`):
+  1. **Backend tests** — pytest inside Docker (`./scripts/run-backend-tests.sh`)
+  2. **Frontend lint** — ESLint (`pnpm lint`)
+  3. **Frontend typecheck** — TypeScript (`pnpm typecheck`)
+  4. **Frontend tests** — Vitest (`pnpm test`)
 
 ### Backend Scripts (from project root)
 ```bash
@@ -391,6 +406,6 @@ When the user asks about building features, modifying existing code, or understa
 5. When modifying composables, read the existing one in `app/composables/` for patterns first
 6. Frontend work: run from `frontend/` directory using pnpm commands
 7. Backend work: run from `backend/` directory using Docker (all deps inside container)
-8. Running all tests: use `./run-tests.sh` from the project root to run both backend (Docker) and frontend tests
-9. Backend tests: use `./scripts/run-backend-tests.sh` — runs pytest inside Docker, no host Python needed
+8. **Quality gate:** `./run-tests.sh` is the single source of truth — runs backend tests, lint, typecheck, and frontend tests. Pre-commit hooks call it automatically. Use it before every commit/push.
+9. Backend tests: `./scripts/run-backend-tests.sh` runs pytest inside Docker, no host Python needed.
 10. **TEST FILES MUST STAY IN `tests/`**: Frontend tests → `frontend/tests/`. Backend tests → `backend/tests/`. Never create a `.test.ts` or `*_test.py` file inside `app/`, `components/`, `composables/`, or any source directory. If existing inline test files exist in source directories, move them to `tests/`.

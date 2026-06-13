@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import type { Voice } from '../app/composables/useVoices'
@@ -23,6 +23,10 @@ function getVoiceSelectorWrapper(props: Record<string, unknown> = {}) {
 
 function getTriggerButton(wrapper: ReturnType<typeof mount>) {
   return wrapper.find('button')
+}
+
+function getComponent(vm: unknown) {
+  return vm as Record<string, unknown>
 }
 
 describe('VoiceSelector', () => {
@@ -92,7 +96,7 @@ describe('VoiceSelector', () => {
       await nextTick()
 
       // Access the component's isOpen state directly
-      const comp = wrapper.vm as any
+      const comp = getComponent(wrapper.vm) as { isOpen: boolean, handleOutsideMousedown: (e: MouseEvent) => void }
       expect(comp.isOpen).toBe(true)
 
       // Simulate outside click by calling the handler directly
@@ -115,13 +119,10 @@ describe('VoiceSelector', () => {
       await nextTick()
 
       // Get the component's selectVoice method via the component instance
-      const comp = wrapper.vm as any
-
-      // Find the voices array from the component
-      const voices = comp.voices
+      const comp = getComponent(wrapper.vm) as { selectVoice: (v: Voice) => void, voices: Voice[] }
 
       // Select the second voice directly
-      comp.selectVoice(voices[1])
+      comp.selectVoice(comp.voices[1])
       await nextTick()
 
       expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
@@ -137,9 +138,8 @@ describe('VoiceSelector', () => {
       await nextTick()
 
       // Get the component instance and select the second voice directly
-      const comp = wrapper.vm as any
-      const voices = comp.voices
-      comp.selectVoice(voices[1])
+      const comp = getComponent(wrapper.vm) as { selectVoice: (v: Voice) => void, voices: Voice[] }
+      comp.selectVoice(comp.voices[1])
       await nextTick()
 
       // Manually update the prop to simulate the emit being handled
