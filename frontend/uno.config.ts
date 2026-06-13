@@ -1,6 +1,6 @@
 import {
   defineConfig,
-  presetUno,
+  presetWind3,
   presetIcons,
   presetTypography,
   presetWebFonts,
@@ -26,10 +26,15 @@ export default defineConfig({
         orange: '#FF512F',
         magenta: '#DD2476'
       }
+    },
+    // Match Tailwind CSS v3 (sample design) shadow values exactly
+    // UnoCSS presetWind3 uses slightly different values for shadow-2xl
+    boxShadow: {
+      '2xl': '0 35px 60px -15px rgba(0, 0, 0, 0.3)'
     }
   },
   presets: [
-    presetUno(),
+    presetWind3(),
     presetIcons({
       extraProperties: {
         display: 'inline-block',

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps<{
+const _props = defineProps<{
   focused?: boolean
 }>()
 
@@ -17,11 +17,33 @@ function updateHalo() {
   }
 }
 
+function handleTextareaFocus() {
+  updateHalo()
+}
+
+function handleTextareaBlur() {
+  const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
+  if (textarea && textarea.value.trim() === '') {
+    haloRef.value?.classList.remove('active')
+  }
+}
+
 onMounted(() => {
   updateHalo()
+  const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
+  if (textarea) {
+    textarea.addEventListener('focus', handleTextareaFocus)
+    textarea.addEventListener('blur', handleTextareaBlur)
+  }
 })
 
-watch(() => props.focused, updateHalo)
+onUnmounted(() => {
+  const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
+  if (textarea) {
+    textarea.removeEventListener('focus', handleTextareaFocus)
+    textarea.removeEventListener('blur', handleTextareaBlur)
+  }
+})
 </script>
 
 <template>

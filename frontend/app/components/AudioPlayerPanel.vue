@@ -30,7 +30,7 @@ function formatTime(seconds: number): string {
   <Transition name="slide-up-player">
     <div
       v-if="visible"
-      class="absolute bottom-0 left-0 w-full bg-studio-800 border-t border-studio-700 p-5 flex flex-col gap-3 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+      class="absolute bottom-0 left-0 w-full bg-studio-800 border-t border-studio-700 p-6 flex flex-col gap-4 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
     >
       <!-- Player Header -->
       <div class="flex justify-between items-center">

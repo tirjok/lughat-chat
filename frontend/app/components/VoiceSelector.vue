@@ -108,8 +108,8 @@ onUnmounted(() => {
     <!-- Dropdown Trigger -->
     <button
       ref="triggerRef"
-      class="w-full bg-studio-900 border rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group"
-      :class="isOpen ? 'border-sunrise-orange' : 'border-studio-700 hover:border-sunrise-orange/50'"
+      class="w-full bg-studio-900 border border-studio-700 hover:border-sunrise-orange/50 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none focus:border-sunrise-orange relative overflow-hidden group shadow-inner"
+      :class="isOpen ? 'border-sunrise-orange' : ''"
       @click="toggleDropdown"
     >
       <div

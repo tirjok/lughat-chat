@@ -139,10 +139,9 @@ function handleClosePlayer() {
     <div class="flex h-screen w-screen">
       <!-- LEFT PANEL: The Control Deck (30% desktop, 100% mobile) -->
       <aside class="w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl">
-        <!-- Header with gradient fade -->
+        <!-- Header with gradient fade (matches sample exactly) -->
         <header
-          class="p-6 border-b border-studio-700 flex justify-between items-center"
-          style="background: linear-gradient(to bottom, #1f1f1f, transparent);"
+          class="p-6 border-b border-studio-700 flex justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent"
         >
           <div>
             <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -171,6 +170,28 @@ function handleClosePlayer() {
 
           <!-- Speed Control -->
           <SpeedSlider v-model="speedValue" />
+
+          <!-- Output Settings (matches sample design) -->
+          <div class="flex flex-col gap-3">
+            <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                class="i-lucide-sliders-horizontal text-lg"
+              />
+              Output Settings
+            </label>
+            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700">
+              <span class="text-sm text-gray-400">High Quality Audio</span>
+              <button
+                class="w-8 h-4 bg-sunrise-orange rounded-full relative transition-colors duration-300 ease-in-out"
+                title="High Quality Audio (placeholder)"
+              >
+                <span
+                  class="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"
+                />
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Action Area -->
@@ -223,13 +244,8 @@ function handleClosePlayer() {
           <textarea
             v-model="textInput"
             dir="rtl"
-            class="w-full h-full bg-transparent border-none outline-none resize-none text-gray-200 placeholder-gray-700 scroll-smooth z-10"
-            style="
-              font-family: 'Cairo', sans-serif;
-              font-size: clamp(1.5rem, 3vw, 3rem);
-              line-height: 2;
-              caret-color: #FF512F;
-            "
+            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-3xl md:text-5xl leading-relaxed text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+            style="caret-color: #FF512F;"
             placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           />
         </div>
