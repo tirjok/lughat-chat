@@ -176,33 +176,12 @@ function handleKeyDown(event: KeyboardEvent) {
           </div>
 
           <!-- Generate Button -->
-          <button
-            :disabled="!isValid || isGenerating"
-            class="w-full rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-            :class="{ 'animate-spin': isGenerating }"
+          <GenerateButton
+            :is-generating="isGenerating"
+            :model-status="modelStatus"
+            :disabled="!isValid || isGenerating || modelStatus === 'loading'"
             @click="handleSynthesize"
-          >
-            <div class="flex items-center justify-center gap-2">
-              <span
-                v-if="isGenerating"
-                aria-hidden="true"
-                class="i-lucide-loader h-4 w-4"
-              />
-              <span
-                v-else-if="modelStatus === 'loading'"
-                aria-hidden="true"
-                class="i-lucide-loader h-4 w-4"
-              />
-              <span
-                v-else
-                aria-hidden="true"
-                class="i-lucide-mic h-4 w-4"
-              />
-              <span>
-                {{ isGenerating ? 'Generating\u2026' : modelStatus === 'loading' ? 'Loading\u2026' : 'Generate Speech' }}
-              </span>
-            </div>
-          </button>
+          />
 
           <!-- Audio Player Section -->
           <Transition name="slide-up">

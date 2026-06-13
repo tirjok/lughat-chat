@@ -37,3 +37,5 @@ backend/output_*.wav
 backend/__pycache__/
 backend/*.pyc
 backend/.pytest_cache/
+
+.pi

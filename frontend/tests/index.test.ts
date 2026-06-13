@@ -56,18 +56,18 @@ beforeEach(() => {
   ;(globalThis as Record<string, unknown>).showToast = mockShowToast
 })
 
-describe('index.vue — loading text uses proper ellipsis', () => {
+describe('GenerateButton — status text uses proper ellipsis', () => {
   it('uses Unicode ellipsis character in generating and loading status texts', () => {
-    const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
-    const source = fs.readFileSync(indexPath, 'utf-8')
+    const generateBtnPath = path.resolve(__dirname, '../app/components/GenerateButton.vue')
+    const source = fs.readFileSync(generateBtnPath, 'utf-8')
 
     // Verify both status strings use Unicode escape sequences (\u2026), not literal three dots
     expect(source).toContain('Generating\\u2026')
-    expect(source).toContain('Loading\\u2026')
+    expect(source).toContain('Processing Model\\u2026')
 
     // Ensure no literal three-dot sequences in status text
     expect(source).not.toContain('Generating...')
-    expect(source).not.toContain('Loading...')
+    expect(source).not.toContain('Processing Model...')
   })
 })
 
