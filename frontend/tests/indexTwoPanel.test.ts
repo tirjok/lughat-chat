@@ -59,7 +59,15 @@ describe('index.vue — full page integration (Slice 8)', () => {
       },
       global: {
         stubs: {
-          Teleport: { template: '<slot />' }
+          Teleport: {
+            template: '<teleport-to-stub :to="to"><slot /></teleport-to-stub>'
+          }
+        },
+        components: {
+          'teleport-to-stub': {
+            template: '<slot />',
+            props: ['to']
+          }
         }
       },
       ...options
