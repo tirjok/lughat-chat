@@ -147,7 +147,8 @@ function handleClosePlayer() {
             <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <span
                 aria-hidden="true"
-                class="i-lucide-volume text-sunrise-orange"
+                class="i-lucide-audio-waveform text-sunrise-orange"
+                style="filter: drop-shadow(0 0 6px rgba(255,81,47,0.6));"
               />
               Lughat<span style="color: #DD2476;">Chat</span>
             </h1>
@@ -161,7 +162,7 @@ function handleClosePlayer() {
         </header>
 
         <!-- Controls Container -->
-        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-8">
+        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-6 border-b border-studio-700">
           <!-- Voice Selection -->
           <VoiceSelector
             v-model="selectedSpeaker"
@@ -172,7 +173,7 @@ function handleClosePlayer() {
           <SpeedSlider v-model="speedValue" />
 
           <!-- Output Settings (matches sample design) -->
-          <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-3 border-b border-studio-700 pb-6">
             <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
               <span
                 aria-hidden="true"
@@ -180,7 +181,7 @@ function handleClosePlayer() {
               />
               Output Settings
             </label>
-            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700">
+            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700 shadow-inner">
               <span class="text-sm text-gray-400">High Quality Audio</span>
               <button
                 class="w-8 h-4 bg-sunrise-orange rounded-full relative transition-colors duration-300 ease-in-out"
@@ -206,16 +207,19 @@ function handleClosePlayer() {
       </aside>
 
       <!-- RIGHT PANEL: The Canvas (70% desktop, 100% mobile) -->
-      <main class="w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden">
+      <main
+        class="w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden"
+        style="border-left: 1px solid #333333;"
+      >
         <!-- Focus Halo (radial gradient glow behind textarea) -->
         <FocusHaloCanvas :focused="!!textInput" />
 
         <!-- Header / Context -->
-        <div class="w-full p-8 pb-4 flex justify-between items-center opacity-70">
+        <div class="w-full p-6 pb-4 flex justify-between items-center opacity-70 border-b border-studio-700">
           <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
             <span
               aria-hidden="true"
-              class="i-lucide-keyboard text-lg"
+              class="i-lucide-terminal text-lg"
             />
             Editor Canvas
           </h2>
@@ -227,7 +231,7 @@ function handleClosePlayer() {
               {{ charCount }} / 3000
             </span>
             <button
-              class="hover:text-white transition-colors"
+              class="hover:text-white transition-colors bg-studio-900 border border-studio-700 rounded-full w-8 h-8 flex items-center justify-center"
               title="Clear Canvas"
               @click="handleClearText"
             >
@@ -240,7 +244,7 @@ function handleClosePlayer() {
         </div>
 
         <!-- Text Input Area -->
-        <div class="flex-1 relative w-full max-w-5xl mx-auto px-8 pb-32 flex flex-col">
+        <div class="flex-1 relative w-full max-w-5xl mx-auto px-8 pb-32 flex flex-col border-b border-studio-700">
           <textarea
             v-model="textInput"
             dir="rtl"
@@ -251,7 +255,7 @@ function handleClosePlayer() {
         </div>
 
         <!-- Floating Shortcut Hint -->
-        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50">
+        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/90 backdrop-blur px-4 py-2 rounded-lg border border-studio-700">
           Press
           <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
           +

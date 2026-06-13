@@ -26,7 +26,7 @@ const trackPercent = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 border-b border-studio-700 pb-6">
     <div class="flex justify-between items-end">
       <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
         <span

@@ -33,7 +33,7 @@ describe('AppHeader', () => {
       const wrapper = mount(AppHeader)
 
       // Lucide icon via UnoCSS preset
-      const icon = wrapper.find('.i-lucide-volume')
+      const icon = wrapper.find('.i-lucide-audio-waveform')
       expect(icon.exists()).toBe(true)
     })
   })

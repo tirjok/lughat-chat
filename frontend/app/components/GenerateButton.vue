@@ -25,7 +25,8 @@ const emit = defineEmits<{
     >
       <span
         aria-hidden="true"
-        class="i-lucide-circle-play text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"
+        class="i-lucide-play text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"
+        style="filter: drop-shadow(0 0 6px rgba(221,36,118,0.5));"
       />
       <span class="font-bold text-white tracking-wide">Generate Speech</span>
     </div>
@@ -56,7 +57,7 @@ const emit = defineEmits<{
   padding: 1rem 1.5rem;
   min-height: 3.5rem;
   cursor: pointer;
-  border: none;
+  border: 1px solid #333333;
 }
 
 /* Spinning conic-gradient border */

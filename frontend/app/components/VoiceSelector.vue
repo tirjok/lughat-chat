@@ -94,13 +94,13 @@ onUnmounted(() => {
 <template>
   <div
     ref="dropdownRef"
-    class="flex flex-col gap-3"
+    class="flex flex-col gap-3 border-b border-studio-700 pb-6"
   >
     <!-- Label -->
     <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
       <span
         aria-hidden="true"
-        class="i-lucide-user text-lg"
+        class="i-lucide-headphones text-lg"
       />
       Voice Model
     </label>
@@ -108,8 +108,7 @@ onUnmounted(() => {
     <!-- Dropdown Trigger -->
     <button
       ref="triggerRef"
-      class="w-full bg-studio-900 border border-studio-700 hover:border-sunrise-orange/50 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none focus:border-sunrise-orange relative overflow-hidden group shadow-inner"
-      :class="isOpen ? 'border-sunrise-orange' : ''"
+      class="w-full bg-studio-900 border border-studio-700 hover:border-sunrise-orange/50 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group shadow-inner"
       @click="toggleDropdown"
     >
       <div
@@ -191,6 +190,7 @@ onUnmounted(() => {
                       : 'group-hover:text-sunrise-orange',
                     { 'group-hover:text-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }
                   ]"
+                  :style="voice.id === modelValue ? `filter: drop-shadow(0 0 6px rgba(255,81,47,0.5));` : ''"
                 />
               </div>
               <div class="flex flex-col">

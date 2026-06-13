@@ -64,9 +64,9 @@ describe('VoiceSelector', () => {
       expect(label.text()).toContain('Voice Model')
     })
 
-    it('renders a user icon next to the label', () => {
+    it('renders a headphones icon next to the label', () => {
       const wrapper = getVoiceSelectorWrapper({ modelValue: 'aisha' })
-      const userIcon = wrapper.find('[class*="i-lucide-user"]')
+      const userIcon = wrapper.find('[class*="i-lucide-headphones"]')
       expect(userIcon.exists()).toBe(true)
     })
   })
