@@ -231,7 +231,8 @@ describe('VoiceSelector', () => {
       })
 
       await wrapper.find('.voice-trigger-btn').trigger('click')
-      await wrapper.find('.voice-search-input').setValue('nonexistent')
+
+      await wrapper.find<HTMLInputElement>('.voice-search-input').setValue('nonexistent')
 
       expect(document.querySelector('.voice-empty')).not.toBeNull()
       expect(document.querySelector('.voice-empty')!.textContent).toContain('nonexistent')

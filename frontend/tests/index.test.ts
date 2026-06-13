@@ -102,6 +102,15 @@ describe('index.vue — voice select renders all options', () => {
   })
 })
 
+describe('index.vue — speed control uses SpeedSlider component', () => {
+  it('renders SpeedSlider component for speed control', () => {
+    const wrapper = shallowMount(Index)
+
+    // SpeedSlider should be rendered (auto-imported by Nuxt)
+    expect(wrapper.find('speedslider').exists()).toBe(true)
+  })
+})
+
 describe('index.vue — autocomplete attributes', () => {
   it('sets autocomplete="off" on the speaker select input', () => {
     const wrapper = shallowMount(Index)
@@ -109,13 +118,5 @@ describe('index.vue — autocomplete attributes', () => {
     const select = wrapper.find('#speaker-select')
     expect(select.exists()).toBe(true)
     expect(select.attributes('autocomplete')).toBe('off')
-  })
-
-  it('sets autocomplete="off" on the speed range input', () => {
-    const wrapper = shallowMount(Index)
-
-    const rangeInput = wrapper.find('#speed-slider')
-    expect(rangeInput.exists()).toBe(true)
-    expect(rangeInput.attributes('autocomplete')).toBe('off')
   })
 })
