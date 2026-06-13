@@ -24,6 +24,15 @@ const focused = ref(false)
 
 const charCount = computed(() => props.modelValue.length)
 const _isOverLimit = computed(() => charCount.value > props.maxLength)
+const isNearLimit = computed(() => {
+  const ratio = charCount.value / props.maxLength
+  return ratio >= 0.8 && charCount.value <= props.maxLength
+})
+const isOverLimit = computed(() => charCount.value > props.maxLength)
+
+function clearText() {
+  emit('update:modelValue', '')
+}
 </script>
 
 <template>
@@ -41,5 +50,26 @@ const _isOverLimit = computed(() => charCount.value > props.maxLength)
       @focus="focused = true"
       @blur="focused = false"
     />
+    <!-- Character counter and clear button -->
+    <div class="flex flex-col items-end gap-1 px-2 py-1">
+      <span
+        class="text-xs font-medium"
+        :class="{
+          'text-amber-400': isNearLimit,
+          'text-red-500': isOverLimit,
+          'text-gray-400': !isNearLimit && !isOverLimit
+        }"
+      >
+        {{ charCount }}/{{ maxLength }}
+      </span>
+      <button
+        v-if="charCount > 0"
+        aria-label="Clear text"
+        class="text-gray-400 hover:text-white transition-colors cursor-pointer"
+        @click="clearText"
+      >
+        <span class="i-lucide-x text-sm" />
+      </button>
+    </div>
   </div>
 </template>

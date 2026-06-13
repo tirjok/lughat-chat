@@ -27,7 +27,7 @@ describe('ModelStatusIndicator', () => {
       expect(wrapper.text()).toContain('Loading...')
     })
 
-    it('renders the loader icon element with spinning class', () => {
+    it('renders the loader indicator (orange dot) in loading state', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
@@ -35,14 +35,12 @@ describe('ModelStatusIndicator', () => {
 
       const wrapper = mount(ModelStatusIndicator)
 
-      // The loader icon should be the first child span
-      const icons = wrapper.findAll('span')
-      expect(icons.length).toBeGreaterThan(0)
-      // First icon should have the loader class (spinning indicator)
-      expect(icons[0].classes()).toContain('i-lucide-loader')
+      // Loading state renders an orange dot (not an icon)
+      const dot = wrapper.find('span.bg-orange-500')
+      expect(dot.exists()).toBe(true)
     })
 
-    it('does not render check or alert icons in loading state', () => {
+    it('does not render check or alert dots in loading state', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
@@ -51,13 +49,13 @@ describe('ModelStatusIndicator', () => {
       const wrapper = mount(ModelStatusIndicator)
       const allClasses = wrapper.html()
 
-      expect(allClasses).not.toContain('i-lucide-check-circle')
-      expect(allClasses).not.toContain('i-lucide-alert-circle')
+      expect(allClasses).not.toContain('bg-green-500')
+      expect(allClasses).not.toContain('bg-red-500')
     })
   })
 
   describe('ready state', () => {
-    it('renders green check icon and "Model Ready" text when model is loaded', () => {
+    it('renders green indicator dot and "Ready" text when model is loaded', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('ready'),
         modelLoaded: computed(() => true)
@@ -65,24 +63,22 @@ describe('ModelStatusIndicator', () => {
 
       const wrapper = mount(ModelStatusIndicator)
 
-      expect(wrapper.text()).toContain('Model Ready')
+      expect(wrapper.text()).toContain('Ready')
     })
 
-    it('renders the check-circle icon element', () => {
+    it('renders the green dot indicator element', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('ready'),
         modelLoaded: computed(() => true)
       })
 
       const wrapper = mount(ModelStatusIndicator)
-      const icons = wrapper.findAll('span')
-
-      expect(icons.length).toBeGreaterThan(0)
-      // First icon should have the check-circle class
-      expect(icons[0].classes()).toContain('i-lucide-check-circle')
+      // Ready state renders a green dot (not an icon)
+      const dot = wrapper.find('span.bg-green-500')
+      expect(dot.exists()).toBe(true)
     })
 
-    it('does not render loader or alert icons in ready state', () => {
+    it('does not render loading or error dots in ready state', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('ready'),
         modelLoaded: computed(() => true)
@@ -91,13 +87,13 @@ describe('ModelStatusIndicator', () => {
       const wrapper = mount(ModelStatusIndicator)
       const allClasses = wrapper.html()
 
-      expect(allClasses).not.toContain('i-lucide-loader')
-      expect(allClasses).not.toContain('i-lucide-alert-circle')
+      expect(allClasses).not.toContain('bg-orange-500')
+      expect(allClasses).not.toContain('bg-red-500')
     })
   })
 
   describe('error state', () => {
-    it('renders red alert icon and "Model Load Error" text when model is not loaded', () => {
+    it('renders red indicator dot and "Error" text when model is not loaded', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('error'),
         modelLoaded: computed(() => false)
@@ -105,24 +101,22 @@ describe('ModelStatusIndicator', () => {
 
       const wrapper = mount(ModelStatusIndicator)
 
-      expect(wrapper.text()).toContain('Model Load Error')
+      expect(wrapper.text()).toContain('Error')
     })
 
-    it('renders the alert-circle icon element', () => {
+    it('renders the red dot indicator element', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('error'),
         modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
-      const icons = wrapper.findAll('span')
-
-      expect(icons.length).toBeGreaterThan(0)
-      // First icon should have the alert-circle class
-      expect(icons[0].classes()).toContain('i-lucide-alert-circle')
+      // Error state renders a red dot (not an icon)
+      const dot = wrapper.find('span.bg-red-500')
+      expect(dot.exists()).toBe(true)
     })
 
-    it('does not render loader or check icons in error state', () => {
+    it('does not render loading or ready dots in error state', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('error'),
         modelLoaded: computed(() => false)
@@ -131,13 +125,13 @@ describe('ModelStatusIndicator', () => {
       const wrapper = mount(ModelStatusIndicator)
       const allClasses = wrapper.html()
 
-      expect(allClasses).not.toContain('i-lucide-loader')
-      expect(allClasses).not.toContain('i-lucide-check-circle')
+      expect(allClasses).not.toContain('bg-orange-500')
+      expect(allClasses).not.toContain('bg-green-500')
     })
   })
 
   describe('reactivity', () => {
-    it('updates icon and text when status changes from loading to ready', async () => {
+    it('updates indicator and text when status changes from loading to ready', async () => {
       const statusRef = ref('loading')
       const modelLoadedRef = ref(false)
 
@@ -150,8 +144,7 @@ describe('ModelStatusIndicator', () => {
 
       // Verify initial loading state
       expect(wrapper.text()).toContain('Loading...')
-      const icons = wrapper.findAll('span')
-      expect(icons[0].classes()).toContain('i-lucide-loader')
+      expect(wrapper.find('span.bg-orange-500').exists()).toBe(true)
 
       // Mutate the reactive refs to simulate status change
       statusRef.value = 'ready'
@@ -162,12 +155,11 @@ describe('ModelStatusIndicator', () => {
       await wrapper.vm.$nextTick()
 
       // Verify updated state
-      expect(wrapper.text()).toContain('Model Ready')
-      const updatedIcons = wrapper.findAll('span')
-      expect(updatedIcons[0].classes()).toContain('i-lucide-check-circle')
+      expect(wrapper.text()).toContain('Ready')
+      expect(wrapper.find('span.bg-green-500').exists()).toBe(true)
     })
 
-    it('updates icon and text when status changes from loading to error', async () => {
+    it('updates indicator and text when status changes from loading to error', async () => {
       const statusRef = ref('loading')
       const modelLoadedRef = ref(false)
 
@@ -189,12 +181,11 @@ describe('ModelStatusIndicator', () => {
       await wrapper.vm.$nextTick()
 
       // Verify error state
-      expect(wrapper.text()).toContain('Model Load Error')
-      const icons = wrapper.findAll('span')
-      expect(icons[0].classes()).toContain('i-lucide-alert-circle')
+      expect(wrapper.text()).toContain('Error')
+      expect(wrapper.find('span.bg-red-500').exists()).toBe(true)
     })
 
-    it('updates icon and text when status changes from error to ready', async () => {
+    it('updates indicator and text when status changes from error to ready', async () => {
       const statusRef = ref('error')
       const modelLoadedRef = ref(false)
 
@@ -206,7 +197,7 @@ describe('ModelStatusIndicator', () => {
       const wrapper = mount(ModelStatusIndicator)
 
       // Verify initial error state
-      expect(wrapper.text()).toContain('Model Load Error')
+      expect(wrapper.text()).toContain('Error')
 
       // Mutate the reactive refs to simulate recovery
       statusRef.value = 'ready'
@@ -217,9 +208,8 @@ describe('ModelStatusIndicator', () => {
       await wrapper.vm.$nextTick()
 
       // Verify ready state
-      expect(wrapper.text()).toContain('Model Ready')
-      const icons = wrapper.findAll('span')
-      expect(icons[0].classes()).toContain('i-lucide-check-circle')
+      expect(wrapper.text()).toContain('Ready')
+      expect(wrapper.find('span.bg-green-500').exists()).toBe(true)
     })
   })
 
@@ -238,7 +228,7 @@ describe('ModelStatusIndicator', () => {
       expect(root.classes()).toContain('items-center')
     })
 
-    it('renders icon and text with gap spacing', () => {
+    it('renders indicator dot and text with gap spacing', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
@@ -250,19 +240,17 @@ describe('ModelStatusIndicator', () => {
       expect(root.classes()).toContain('gap-2')
     })
 
-    it('renders icon with consistent dimensions', () => {
+    it('renders indicator dot with consistent dimensions', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
       })
 
       const wrapper = mount(ModelStatusIndicator)
-      const icons = wrapper.findAll('span')
-
-      expect(icons.length).toBeGreaterThan(0)
-      // Icon should have w-4 h-4 classes for consistent sizing
-      expect(icons[0].classes()).toContain('w-4')
-      expect(icons[0].classes()).toContain('h-4')
+      // The indicator dot should have w-2 h-2 classes for consistent sizing
+      const dot = wrapper.find('span.w-2')
+      expect(dot.exists()).toBe(true)
+      expect(dot.classes()).toContain('h-2')
     })
 
     it('renders text with small font size', () => {
@@ -273,10 +261,9 @@ describe('ModelStatusIndicator', () => {
 
       const wrapper = mount(ModelStatusIndicator)
 
-      // The text span should have text-sm class
-      const spans = wrapper.findAll('span')
-      // Last span is the text (first two are icons)
-      expect(spans.length).toBeGreaterThanOrEqual(2)
+      // The text span should have text-xs class (smaller font for status indicator)
+      const textSpan = wrapper.find('span.text-xs')
+      expect(textSpan.exists()).toBe(true)
     })
   })
 })

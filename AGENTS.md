@@ -92,7 +92,7 @@ npx vitest --config vitest.component.config.ts
 
 **Test files location:** `frontend/tests/`
 - Naming: `<name>.test.ts`
-- Also has inline `.test.ts` files inside `app/composables/`
+- All test files MUST live in `frontend/tests/`. Never create test files inside `app/` or any source directory.
 
 ---
 
@@ -136,6 +136,7 @@ npx vitest --config vitest.component.config.ts
 ```
 
 **Test files:** `backend/tests/`
+- All test files MUST live in `backend/tests/`. Never create test files inside `app/` or any source directory.
 - `test_generate.py` — synthesis endpoint tests
 - `test_generate_blob.py` — blob response tests
 - `test_health.py` — health check endpoint tests
@@ -190,7 +191,8 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 1. **Nuxt file-based routing**: pages go in `app/pages/`, auto-imported
 2. **Composables** in `app/composables/` are auto-imported (no explicit imports needed)
 3. **Components** in `app/components/` are auto-imported by name
-4. **Tests mirror source**: composables have `.test.ts` alongside them in `app/composables/`, plus additional tests in `tests/`
+4. **Tests mirror source**: additional tests go in `tests/` alongside their source counterparts
+5. **TEST FILES NEVER LEAVE `tests/`**: All test files (`.test.ts`, `*.test.py`) MUST live inside `frontend/tests/` or `backend/tests/`. Never create test files inside `app/`, `components/`, `composables/`, or any other source directory. If you find inline `.test.ts` files in source directories, move them to `tests/`.
 5. **Dark mode**: all BEM classes have `dark:` variants defined in main.css
 6. **RTL support**: ArabicTextarea component handles RTL text input
 
@@ -391,3 +393,4 @@ When the user asks about building features, modifying existing code, or understa
 7. Backend work: run from `backend/` directory using Docker (all deps inside container)
 8. Running all tests: use `./run-tests.sh` from the project root to run both backend (Docker) and frontend tests
 9. Backend tests: use `./scripts/run-backend-tests.sh` — runs pytest inside Docker, no host Python needed
+10. **TEST FILES MUST STAY IN `tests/`**: Frontend tests → `frontend/tests/`. Backend tests → `backend/tests/`. Never create a `.test.ts` or `*_test.py` file inside `app/`, `components/`, `composables/`, or any source directory. If existing inline test files exist in source directories, move them to `tests/`.
