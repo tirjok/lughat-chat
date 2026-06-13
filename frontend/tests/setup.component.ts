@@ -15,6 +15,9 @@ Object.assign(globalThis, {
   onMounted: vi.fn((_: () => void) => {
     // Store callbacks for tests that need to trigger mount lifecycle
   }),
+  onUnmounted: vi.fn((_: () => void) => {
+    // Store callbacks for tests that need to trigger unmount lifecycle
+  }),
   ref: vi.fn((init: unknown) => ({ value: init })),
   computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } }))
 })

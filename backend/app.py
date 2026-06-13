@@ -230,11 +230,52 @@ class HealthResponse(BaseModel):
     model_loaded: bool
 
 
-# Voice presets
+# Voice presets — 3 voice presets with regional dialect metadata
 VOICES = [
-    {"id": "female", "name": "Female Voice", "language": "multilingual"},
-    {"id": "male", "name": "Male Voice", "language": "multilingual"},
+    {
+        "id": "aisha",
+        "name": "Aisha",
+        "dialect": "Egyptian Arabic",
+        "tag": "AR-EG",
+        "icon": "orange",
+        "speaker_wav": "female.wav",
+        "seed": 42,
+    },
+    {
+        "id": "tariq",
+        "name": "Tariq",
+        "dialect": "Modern Standard Arabic",
+        "tag": "MSA",
+        "icon": "magenta",
+        "speaker_wav": "male.wav",
+        "seed": 123,
+    },
+    {
+        "id": "laila",
+        "name": "Laila",
+        "dialect": "Levantine Arabic",
+        "tag": "AR-LB",
+        "icon": "orange",
+        "speaker_wav": "female.wav",
+        "seed": 42,
+    },
 ]
+
+
+def _map_voice_to_speaker(voice_id: str) -> str:
+    """Map a voice preset ID to its speaker WAV file."""
+    for v in VOICES:
+        if v["id"] == voice_id:
+            return v["speaker_wav"]
+    return f"{voice_id}.wav"  # fallback: use voice_id with .wav extension
+
+
+def _get_voice_seed(voice_id: str) -> int:
+    """Get the deterministic seed for a voice preset."""
+    for v in VOICES:
+        if v["id"] == voice_id:
+            return v["seed"]
+    return 42  # fallback
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -248,8 +289,8 @@ async def health():
 
 @app.get("/api/voices")
 async def list_voices():
-    """List available voices discovered from speaker_wavs directory."""
-    return discover_voices(SPEAKER_WAV_DIR)
+    """List available voice presets with dialect metadata."""
+    return VOICES
 
 
 @app.post("/api/generate")
@@ -263,10 +304,10 @@ async def generate_speech(request: SynthesisRequest):
         timestamp = uuid.uuid4().hex[:8]
         lang_code = request.language
 
-        # Resolve voice: accept both "voice" and "speaker" fields, map "default" to "female"
-        voice = request.speaker if request.speaker else (request.voice or "female")
+        # Resolve voice: accept both "voice" and "speaker" fields, map "default" to "aisha"
+        voice = request.speaker if request.speaker else (request.voice or "aisha")
         if voice == "default":
-            voice = "female"
+            voice = "aisha"
 
         filename = f"{lang_code}_{voice}_{timestamp}.mp3"
         wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
@@ -275,13 +316,14 @@ async def generate_speech(request: SynthesisRequest):
         # Generate WAV first (XTTS native format)
         print(f"Generating speech: {request.text[:50]}...")
 
-        # Dynamic resolution: speaker_wavs/{voice}.wav
-        speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
+        # Map voice preset ID to its speaker WAV file
+        speaker_wav_name = _map_voice_to_speaker(voice)
+        speaker_wav = os.path.join(SPEAKER_WAV_DIR, speaker_wav_name)
 
         if not os.path.exists(speaker_wav):
             raise HTTPException(
                 status_code=500,
-                detail=f"Speaker WAV file not found for voice '{voice}'. Please add {speaker_wav}",
+                detail=f"Speaker WAV file not found for voice '{voice}' (maps to '{speaker_wav_name}'). Please add {speaker_wav}",
             )
 
         # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
@@ -289,8 +331,7 @@ async def generate_speech(request: SynthesisRequest):
 
         # Generate audio with speaker reference for voice cloning
         # Use deterministic seed per voice preset for consistent voice output
-        voice_seeds = {"female": 42, "male": 123}
-        seed = request.seed if request.seed is not None else voice_seeds.get(voice, 42)
+        seed = request.seed if request.seed is not None else _get_voice_seed(voice)
 
         # Set PyTorch random seed for deterministic XTTS generation.
         # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;

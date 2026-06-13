@@ -91,46 +91,38 @@ def test_list_voices_returns_voice_array():
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) >= 2
+    assert len(data) == 3  # aisha, laila, tariq
 
-    # Verify voice structure (id + name from filename)
+    # Verify preset structure (id, name, dialect, speaker_wav)
     ids = [v["id"] for v in data]
-    assert "female" in ids
-    assert "male" in ids
+    assert "aisha" in ids
+    assert "laila" in ids
+    assert "tariq" in ids
     for v in data:
         assert "id" in v
         assert "name" in v
+        assert "dialect" in v
+        assert "speaker_wav" in v
 
 
 def test_api_voices_uses_discover_voices():
-    """GET /api/voices returns voices discovered from the speaker_wavs directory."""
-    import app as main_app
+    """GET /api/voices returns the hardcoded VOICES preset list (not discover_voices)."""
+    from fastapi.testclient import TestClient
 
-    # Patch discover_voices to return controlled data
-    original = main_app.discover_voices
-    main_app.discover_voices = lambda d: [
-        {"id": "custom_voice", "name": "custom_voice"},
-        {"id": "another", "name": "another"},
-    ]
+    client = TestClient(app)
+    response = client.get("/api/voices")
 
-    try:
-        from fastapi.testclient import TestClient
-
-        client = TestClient(app)
-        response = client.get("/api/voices")
-
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 2
-        ids = [v["id"] for v in data]
-        assert "custom_voice" in ids
-        assert "another" in ids
-    finally:
-        main_app.discover_voices = original
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 3  # aisha, laila, tariq
+    ids = [v["id"] for v in data]
+    assert "aisha" in ids
+    assert "laila" in ids
+    assert "tariq" in ids
 
 
 def test_list_voices_includes_both_genders():
-    """GET /api/voices returns both male and female voice options."""
+    """GET /api/voices returns both female (aisha, laila) and male (tariq) voice presets."""
     from fastapi.testclient import TestClient
 
     client = TestClient(app)
@@ -139,5 +131,8 @@ def test_list_voices_includes_both_genders():
 
     data = response.json()
     ids = [v["id"] for v in data]
-    assert "female" in ids
-    assert "male" in ids
+    # Female presets
+    assert "aisha" in ids
+    assert "laila" in ids
+    # Male preset
+    assert "tariq" in ids
