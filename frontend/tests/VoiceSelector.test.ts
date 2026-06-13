@@ -171,9 +171,12 @@ describe('VoiceSelector', () => {
       await triggerButton.trigger('click')
       await nextTick()
 
-      // The first voice option should have the selected class
-      const selectedOptions = document.querySelectorAll('.voice-option.is-selected')
-      expect(selectedOptions.length).toBe(1)
+      // The first voice option should have the selected styling (bg + border)
+      const selectedOptions = document.querySelectorAll('.voice-option')
+      expect(selectedOptions.length).toBe(2)
+      // First option should have the selected background styling
+      const firstOption = selectedOptions[0]
+      expect(firstOption.className).toContain('bg-[#2a1a1a]')
     })
 
     it('applies the correct color class based on voice ID', async () => {

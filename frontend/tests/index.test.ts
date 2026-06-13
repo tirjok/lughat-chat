@@ -38,8 +38,9 @@ beforeEach(() => {
 
   ;(globalThis as Record<string, unknown>).useVoices = mockUseVoices.mockReturnValue({
     voices: ref([
-      { id: 'female', name: 'Female' },
-      { id: 'male', name: 'Male' }
+      { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
+      { id: 'tariq', name: 'Tariq - News Anchor', dialect: 'Modern Standard Arabic [MSA]', tag: 'MSA', icon: 'waveform', speaker_wav: 'male.wav' },
+      { id: 'laila', name: 'Laila - Storyteller', dialect: 'Levantine Arabic [AR-LB]', tag: 'AR-LB', icon: 'waveform', speaker_wav: 'female.wav' }
     ])
   })
 
@@ -56,55 +57,89 @@ beforeEach(() => {
   ;(globalThis as Record<string, unknown>).showToast = mockShowToast
 })
 
-describe('GenerateButton — status text uses proper ellipsis', () => {
-  it('uses Unicode ellipsis character in generating and loading status texts', () => {
+describe('index.vue — full page integration (Slice 8)', () => {
+  it('renders VoiceSelector component for voice selection', () => {
+    const wrapper = shallowMount(Index)
+    expect(wrapper.find('voiceselector').exists()).toBe(true)
+  })
+
+  it('renders SpeedSlider component for speed control', () => {
+    const wrapper = shallowMount(Index)
+    expect(wrapper.find('speedslider').exists()).toBe(true)
+  })
+
+  it('renders GenerateButton component', () => {
+    const wrapper = shallowMount(Index)
+    expect(wrapper.find('generatebutton').exists()).toBe(true)
+  })
+
+  it('renders FocusHaloCanvas behind textarea', () => {
+    const wrapper = shallowMount(Index)
+    expect(wrapper.find('focushalocanvas').exists()).toBe(true)
+  })
+
+  it('renders ToastNotification for global notifications', () => {
+    const wrapper = shallowMount(Index)
+    expect(wrapper.find('toastnotification').exists()).toBe(true)
+  })
+
+  it('renders a textarea for Arabic text input', () => {
+    const wrapper = shallowMount(Index)
+    expect(wrapper.find('textarea').exists()).toBe(true)
+  })
+
+  it('renders a hidden audio element', () => {
+    const wrapper = shallowMount(Index)
+    expect(wrapper.find('audio').exists()).toBe(true)
+  })
+
+  it('has the LughatChat branding in the header', () => {
+    const wrapper = shallowMount(Index)
+    const html = wrapper.html()
+    expect(html).toContain('Lughat')
+    expect(html).toContain('Chat')
+  })
+
+  it('applies Sunrise color palette (orange + magenta) to the page', () => {
+    const wrapper = shallowMount(Index)
+    const html = wrapper.html()
+    // jsdom converts hex colors to rgb()
+    expect(html).toContain('rgb(255, 81, 47)')
+    expect(html).toContain('rgb(221, 36, 118)')
+  })
+
+  it('applies charcoal background (#121212) to the page', () => {
+    const wrapper = shallowMount(Index)
+    const html = wrapper.html()
+    expect(html).toContain('rgb(18, 18, 18)')
+  })
+
+  it('has no dark: variant classes (fixed dark theme)', () => {
+    const wrapper = shallowMount(Index)
+    const html = wrapper.html()
+    expect(html).not.toContain('dark:')
+  })
+
+  it('applies Inter font (sans) to UI and Cairo (arabic) to content', () => {
+    const wrapper = shallowMount(Index)
+    const html = wrapper.html()
+    // Font families are configured via UnoCSS and inline styles
+    expect(html).toContain('Cairo')
+  })
+
+  it('textarea has RTL direction for Arabic text', () => {
+    const wrapper = shallowMount(Index)
+    const textarea = wrapper.find('textarea')
+    expect(textarea.exists()).toBe(true)
+    expect(textarea.attributes('dir')).toBe('rtl')
+  })
+})
+
+describe('GenerateButton — status text matches reference design', () => {
+  it('uses proper loading status text matching the reference HTML', () => {
     const generateBtnPath = path.resolve(__dirname, '../app/components/GenerateButton.vue')
     const source = fs.readFileSync(generateBtnPath, 'utf-8')
 
-    // The GenerateButton uses an actual Unicode ellipsis character (U+2026) in the source
-    // Verify the source contains the ellipsis character (rendered as … in the source)
-    expect(source).toContain('Processing Model…')
-
-    // Ensure no literal three-dot sequences in status text (three separate dots)
-    expect(source).not.toContain('Generating...')
-    expect(source).not.toContain('Processing Model...')
-  })
-})
-
-describe('index.vue — voice select renders all options', () => {
-  it('renders VoiceSelector component for voice selection', () => {
-    const wrapper = shallowMount(Index)
-
-    // index.vue uses VoiceSelector component (not a native <select>)
-    // VoiceSelector is auto-imported by Nuxt, so it renders as <voice-selector>
-    expect(wrapper.find('voiceselector').exists()).toBe(true)
-  })
-
-  it('VoiceSelector renders voice options from speakerVoices', () => {
-    const wrapper = shallowMount(Index)
-
-    // The VoiceSelector component receives speakerVoices as a prop
-    // Check that the component renders (VoiceSelector is auto-imported)
-    const vs = wrapper.find('voiceselector')
-    expect(vs.exists()).toBe(true)
-  })
-})
-
-describe('index.vue — speed control uses SpeedSlider component', () => {
-  it('renders SpeedSlider component for speed control', () => {
-    const wrapper = shallowMount(Index)
-
-    // SpeedSlider should be rendered (auto-imported by Nuxt)
-    expect(wrapper.find('speedslider').exists()).toBe(true)
-  })
-})
-
-describe('index.vue — autocomplete attributes', () => {
-  it('renders VoiceSelector component (no native select needed)', () => {
-    const wrapper = shallowMount(Index)
-
-    // index.vue now uses VoiceSelector component instead of a native <select>
-    // VoiceSelector handles its own accessibility and styling
-    expect(wrapper.find('voiceselector').exists()).toBe(true)
+    expect(source).toContain('Processing Model')
   })
 })

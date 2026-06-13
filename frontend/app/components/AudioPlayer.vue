@@ -253,7 +253,7 @@ onUnmounted(() => {
         <div class="tts-error__content">
           <span
             aria-hidden="true"
-            class="i-lucide-alert-circle tts-error__icon"
+            class="i-lucide-badge-info tts-error__icon"
           />
           <div class="tts-error__body">
             <p class="tts-error__message">
@@ -268,7 +268,7 @@ onUnmounted(() => {
 
 <style>
 .tts-audio-player-container {
-  @apply space-y-3 pt-4 border-t border-gray-200/60 dark:border-gray-700/60;
+  @apply space-y-3 pt-4 border-t border-studio-700;
 }
 
 .tts-audio {
@@ -277,19 +277,19 @@ onUnmounted(() => {
   }
 
   &__title {
-    @apply text-xs font-semibold text-gray-700 dark:text-gray-300;
+    @apply text-xs font-semibold text-studio-text;
   }
 
   &__duration {
-    @apply text-[10px] font-mono text-gray-400 dark:text-gray-500;
+    @apply text-[10px] font-mono text-gray-400;
   }
 
   &__container {
-    @apply bg-gray-50/60 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 space-y-2.5;
+    @apply bg-studio-900 rounded-xl p-4 space-y-2.5;
   }
 
   &__time {
-    @apply flex justify-between text-[10px] font-mono text-gray-500 dark:text-gray-400;
+    @apply flex justify-between text-[10px] font-mono text-gray-500;
   }
 
   &__controls {
@@ -297,12 +297,32 @@ onUnmounted(() => {
   }
 
   &__download-btn {
-    @apply w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 flex items-center justify-center active:scale-95;
+    @apply w-9 h-9 rounded-full bg-studio-900 hover:bg-studio-700 text-gray-400 hover:text-white flex items-center justify-center active:scale-95;
     transition: background-color, transform 0.2s ease;
 
     .i-lucide-download {
       @apply w-4 h-4;
     }
+  }
+}
+
+.tts-error {
+  @apply mt-3;
+
+  &__content {
+    @apply flex items-center gap-2;
+  }
+
+  &__icon {
+    @apply text-red-400 text-lg;
+  }
+
+  &__body {
+    @apply flex-1;
+  }
+
+  &__message {
+    @apply text-sm text-red-200;
   }
 }
 </style>

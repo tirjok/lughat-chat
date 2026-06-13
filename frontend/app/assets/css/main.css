@@ -1,5 +1,5 @@
 /* ===================================
-   Global Styles - Studio Dark Theme
+   Global Styles (fixed dark theme — "Sunrise Surge")
    =================================== */
 
 /* Base element */
@@ -30,7 +30,11 @@ body {
   background: #3A3A3A;
 }
 
-/* Loading spinner animation */
+/* ===================================
+   Animations (fixed dark theme)
+   =================================== */
+
+/* Loading spinner */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -38,4 +42,30 @@ body {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+/* Spin-slow for conic-gradient border (4s linear infinite) */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 4s linear infinite;
+}
+
+/* Pulse-glow for focus effects (2s cubic-bezier infinite) */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.8;
+    filter: brightness(1.5);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

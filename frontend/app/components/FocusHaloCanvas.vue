@@ -7,31 +7,27 @@ const props = defineProps<{
 
 const haloRef = ref<HTMLDivElement | null>(null)
 
-onMounted(() => {
-  if (haloRef.value && props.focused) {
+function updateHalo() {
+  if (!haloRef.value) return
+  const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
+  if (textarea && textarea.value.trim() === '') {
+    haloRef.value.classList.remove('active')
+  } else {
     haloRef.value.classList.add('active')
   }
+}
+
+onMounted(() => {
+  updateHalo()
 })
 
-watch(() => props.focused, (val) => {
-  if (haloRef.value) {
-    if (val) {
-      haloRef.value.classList.add('active')
-    } else {
-      const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
-      if (textarea && textarea.value.trim() === '') {
-        haloRef.value.classList.remove('active')
-      }
-    }
-  }
-})
+watch(() => props.focused, updateHalo)
 </script>
 
 <template>
   <div
     ref="haloRef"
     class="canvas-halo"
-    :class="{ active: focused }"
   />
 </template>
 

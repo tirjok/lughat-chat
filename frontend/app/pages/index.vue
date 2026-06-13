@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// Audio player composable for playback state management
-// Toast notification for API errors
+// Full-page TTS Studio — complete integration of all 6 components
+// Two-panel layout: Left (Control Deck) + Right (Canvas)
+import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import { computed, nextTick, shallowRef, watch } from 'vue'
 import { showToast } from '../composables/useToast'
 
@@ -53,13 +54,12 @@ const validationState = computed(() =>
 )
 const isValid = computed(() => validationState.value.isValid)
 const validationError = computed(() => validationState.value.error)
-
-function formatTime(seconds: number): string {
-  if (!seconds || isNaN(seconds)) return '0:00'
-  const minutes = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${minutes}:${secs.toString().padStart(2, '0')}`
-}
+const charCount = computed(() => textInput.value.length)
+const isNearLimit = computed(() => {
+  const ratio = charCount.value / 3000
+  return ratio >= 0.8 && charCount.value <= 3000
+})
+const isOverLimit = computed(() => charCount.value > 3000)
 
 async function handleSynthesize() {
   audioError.value = null
@@ -70,7 +70,6 @@ async function handleSynthesize() {
   }
 
   isGenerating.value = true
-  // Hide player when starting new generation
   playerVisible.value = false
 
   try {
@@ -87,14 +86,13 @@ async function handleSynthesize() {
       await play()
     }
 
-    // Show player after generation
     await nextTick()
     playerVisible.value = true
   } catch (err) {
     if (err instanceof Error) {
-      showToast(err.message)
+      showToast(err.message, 'error')
     } else {
-      showToast('An unexpected error occurred during generation')
+      showToast('An unexpected error occurred during generation', 'error')
     }
   } finally {
     isGenerating.value = false
@@ -112,9 +110,12 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 }
 
+function handleClearText() {
+  textInput.value = ''
+}
+
 function handleClosePlayer() {
   playerVisible.value = false
-  // Stop playback when closing
   const el = audioRef.value
   if (el) {
     el.pause()
@@ -131,15 +132,38 @@ function handleClosePlayer() {
     dir="ltr"
     @keydown="handleKeyDown"
   >
+    <!-- Toast Notification Container -->
+    <ToastNotification />
+
     <!-- Two-Panel Layout -->
     <div class="flex h-screen w-screen">
-      <!-- LEFT PANEL: The Control Deck (~30% desktop, ~25% lg+) -->
+      <!-- LEFT PANEL: The Control Deck (30% desktop, 100% mobile) -->
       <aside class="w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl">
-        <!-- Header -->
-        <AppHeader />
+        <!-- Header with gradient fade -->
+        <header
+          class="p-6 border-b border-studio-700 flex justify-between items-center"
+          style="background: linear-gradient(to bottom, #1f1f1f, transparent);"
+        >
+          <div>
+            <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                class="i-lucide-volume text-sunrise-orange"
+              />
+              Lughat<span style="color: #DD2476;">Chat</span>
+            </h1>
+            <p class="text-xs text-gray-400 mt-1 uppercase tracking-wider">
+              Premium Audio Studio
+            </p>
+          </div>
+
+          <!-- Status Indicator (pill style) -->
+          <ModelStatusIndicator />
+        </header>
 
         <!-- Controls Container -->
         <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-8">
+          <!-- Voice Selection -->
           <VoiceSelector
             v-model="selectedSpeaker"
             :voices="speakerVoices"
@@ -160,10 +184,10 @@ function handleClosePlayer() {
         </div>
       </aside>
 
-      <!-- RIGHT PANEL: The Canvas (~70% desktop, ~75% lg+) -->
+      <!-- RIGHT PANEL: The Canvas (70% desktop, 100% mobile) -->
       <main class="w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden">
-        <!-- Focus Halo (behind textarea) -->
-        <FocusHaloCanvas />
+        <!-- Focus Halo (radial gradient glow behind textarea) -->
+        <FocusHaloCanvas :focused="!!textInput" />
 
         <!-- Header / Context -->
         <div class="w-full p-8 pb-4 flex justify-between items-center opacity-70">
@@ -175,11 +199,16 @@ function handleClosePlayer() {
             Editor Canvas
           </h2>
           <div class="flex items-center gap-4 text-sm text-gray-500">
-            <span class="font-mono">{{ textInput.length }} / 3000</span>
+            <span
+              class="font-mono"
+              :class="{ 'text-red-400': isOverLimit, 'text-amber-400': isNearLimit, 'text-gray-500': !isNearLimit && !isOverLimit }"
+            >
+              {{ charCount }} / 3000
+            </span>
             <button
               class="hover:text-white transition-colors"
               title="Clear Canvas"
-              @click="textInput = ''"
+              @click="handleClearText"
             >
               <span
                 aria-hidden="true"
@@ -194,98 +223,39 @@ function handleClosePlayer() {
           <textarea
             v-model="textInput"
             dir="rtl"
-            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-3xl md:text-5xl leading-relaxed text-gray-200 placeholder-gray-700 scroll-smooth z-10"
-            style="caret-color: #FF512F;"
+            class="w-full h-full bg-transparent border-none outline-none resize-none text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+            style="
+              font-family: 'Cairo', sans-serif;
+              font-size: clamp(1.5rem, 3vw, 3rem);
+              line-height: 2;
+              caret-color: #FF512F;
+            "
             placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           />
         </div>
 
-        <!-- Floating Shortcut Hint (bottom-right of canvas) -->
-        <div class="absolute bottom-6 right-8 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50">
-          <KeyboardHint />
+        <!-- Floating Shortcut Hint -->
+        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50">
+          Press
+          <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
+          +
+          <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Enter</kbd>
+          to generate
         </div>
 
         <!-- Audio Player Panel (slides up from bottom) -->
-        <Transition name="slide-up-player">
-          <div
-            v-if="playerVisible && audioUrl"
-            class="absolute bottom-0 left-0 w-full bg-studio-800 border-t border-studio-700 p-6 flex flex-col gap-4 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
-          >
-            <!-- Player Header -->
-            <div class="flex justify-between items-center mb-2">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg">
-                  <span
-                    aria-hidden="true"
-                    class="i-lucide-music-notes text-white"
-                  />
-                </div>
-                <div>
-                  <h3 class="text-white font-semibold text-sm">
-                    Generated Audio
-                  </h3>
-                  <p class="text-xs text-gray-400">
-                    {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <button
-                  class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-white text-gray-400 transition-colors"
-                  title="Download MP3"
-                  @click="handleDownload"
-                >
-                  <span
-                    aria-hidden="true"
-                    class="i-lucide-download-simple"
-                  />
-                </button>
-                <button
-                  class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-red-400 text-gray-400 transition-colors"
-                  title="Close Player"
-                  @click="handleClosePlayer"
-                >
-                  <span
-                    aria-hidden="true"
-                    class="i-lucide-x"
-                  />
-                </button>
-              </div>
-            </div>
-
-            <!-- Heatmap Waveform Container -->
-            <div class="w-full bg-studio-900 rounded-lg border border-studio-700 p-4 flex items-center gap-4">
-              <button
-                class="w-12 h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0"
-                @click="togglePlayPause"
-              >
-                <span
-                  v-if="isPlaying"
-                  aria-hidden="true"
-                  class="i-lucide-pause text-xl"
-                />
-                <span
-                  v-else
-                  aria-hidden="true"
-                  class="i-lucide-play text-xl ml-1"
-                />
-              </button>
-
-              <!-- Canvas for dynamic waveform -->
-              <div class="flex-1 h-12 relative w-full overflow-hidden">
-                <WaveformCanvas
-                  :is-playing="isPlaying"
-                  :current-time="currentTime"
-                  :duration="duration"
-                />
-              </div>
-
-              <span class="text-xs font-mono text-gray-400 flex-shrink-0 w-10 text-right">
-                {{ formatTime(duration) }}
-              </span>
-            </div>
-          </div>
-        </Transition>
+        <AudioPlayerPanel
+          :visible="playerVisible && !!audioUrl"
+          :is-playing="isPlaying"
+          :current-time="currentTime"
+          :duration="duration"
+          :audio-url="audioUrl"
+          :selected-voice-name="selectedVoiceName"
+          :speed-value="speedValue"
+          @close="handleClosePlayer"
+          @toggle="togglePlayPause"
+          @download="handleDownload"
+        />
       </main>
     </div>
 
@@ -321,20 +291,6 @@ html, body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #3A3A3A;
-}
-
-/* ===================================
-   Slide-Up Player Animation
-   =================================== */
-.slide-up-player-enter-active,
-.slide-up-player-leave-active {
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.slide-up-player-enter-from,
-.slide-up-player-leave-to {
-  opacity: 0;
-  transform: translateY(150%);
 }
 
 /* ===================================

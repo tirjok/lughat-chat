@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 
 const props = defineProps<{
+  visible: boolean
   isPlaying: boolean
   currentTime: number
   duration: number
@@ -16,14 +17,17 @@ interface Bar {
   phase: number
 }
 let bars: Bar[] = []
+let isCanvasVisible = false
 
 function resizeCanvas() {
   const canvas = canvasRef.value
   if (!canvas) return
   const parent = canvas.parentElement
-  if (!parent) return
-  canvas.width = parent.clientWidth
-  canvas.height = parent.clientHeight
+  if (parent) {
+    canvas.width = parent.clientWidth
+    canvas.height = parent.clientHeight
+  }
+  isCanvasVisible = true
   initBars()
   drawWaveform()
 }
@@ -44,39 +48,36 @@ function drawWaveform() {
   if (!canvas) return
   const ctx = canvas.getContext('2d')
   if (!ctx) return
+  if (!isCanvasVisible) return
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   const barWidth = (canvas.width / numBars) - 2
   const centerY = canvas.height / 2
 
-  bars.forEach((bar) => {
-    // If playing, animate bars based on a sine wave + random noise to simulate audio
+  bars.forEach((bar, index) => {
+    const x = index * (barWidth + 2)
+
     if (props.isPlaying) {
       bar.phase += 0.1
       const noise = Math.sin(bar.phase) * 0.3
       bar.currentHeight = bar.targetHeight + noise
       bar.currentHeight = Math.max(0.1, Math.min(1.0, bar.currentHeight))
     } else {
-      // Settle down to static height
       bar.currentHeight += (bar.targetHeight - bar.currentHeight) * 0.1
     }
 
     const height = bar.currentHeight * canvas.height * 0.8
     const y = centerY - (height / 2)
 
-    // Heatmap Color Logic: Taller bars are orange, shorter bars are magenta
     const ratio = bar.currentHeight
-
-    // Interpolate between Magenta (#DD2476) and Orange (#FF512F)
     const r = Math.round(221 + (255 - 221) * ratio)
     const g = Math.round(36 + (81 - 36) * ratio)
     const b = Math.round(118 + (47 - 118) * ratio)
 
     ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
 
-    // Draw rounded rect
     ctx.beginPath()
-    ctx.roundRect(0, y, barWidth, height, 4)
+    ctx.roundRect(x, y, barWidth, height, 4)
     ctx.fill()
   })
 
@@ -86,7 +87,7 @@ function drawWaveform() {
 }
 
 function startAnimation() {
-  if (props.isPlaying) {
+  if (props.isPlaying && isCanvasVisible) {
     animationFrameId = requestAnimationFrame(drawWaveform)
   }
 }
@@ -96,14 +97,20 @@ function stopAnimation() {
     cancelAnimationFrame(animationFrameId)
     animationFrameId = null
   }
-  // Draw static state
   drawWaveform()
 }
 
-onMounted(() => {
-  resizeCanvas()
+async function ensureCanvasReady() {
+  if (canvasRef.value) {
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 50))
+    resizeCanvas()
+  }
+}
+
+onMounted(async () => {
+  await ensureCanvasReady()
   window.addEventListener('resize', resizeCanvas)
-  // Initial static draw
   setTimeout(() => {
     drawWaveform()
   }, 100)
@@ -114,14 +121,22 @@ onUnmounted(() => {
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId)
   }
+  isCanvasVisible = false
 })
 
-// Watch isPlaying to start/stop animation
-watch(() => props.isPlaying, (val) => {
+watch(() => props.isPlaying, async (val) => {
+  await ensureCanvasReady()
   if (val) {
     startAnimation()
   } else {
     stopAnimation()
+  }
+})
+
+watch(() => props.visible, async (val) => {
+  if (val) {
+    await ensureCanvasReady()
+    drawWaveform()
   }
 })
 </script>

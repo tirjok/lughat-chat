@@ -15,33 +15,29 @@ const emit = defineEmits<{
 <template>
   <button
     :disabled="disabled"
-    class="generate-btn"
+    class="generate-btn group"
     @click="emit('click')"
   >
-    <!-- Ready state: play icon + text -->
+    <!-- Ready state -->
     <div
       v-if="!isGenerating && modelStatus === 'ready'"
       class="btn-content"
     >
       <span
         aria-hidden="true"
-        class="i-lucide-play-circle text-xl text-sunrise-magenta group-hover:text-sunrise-orange"
-        style="transition: color;"
+        class="i-lucide-circle-play text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"
       />
       <span class="font-bold text-white tracking-wide">Generate Speech</span>
     </div>
 
-    <!-- Loading/Generating state: spinner + status text -->
+    <!-- Loading/Generating state -->
     <div
       v-else
       class="btn-content"
     >
-      <span
-        aria-hidden="true"
-        class="i-lucide-loader h-6 w-6"
-      />
-      <span class="font-medium text-sunrise-orange">
-        Processing Model…
+      <div class="loader" />
+      <span class="font-medium text-sunrise-orange animate-pulse">
+        Processing Model...
       </span>
     </div>
   </button>
@@ -58,12 +54,12 @@ const emit = defineEmits<{
   display: block;
   width: 100%;
   padding: 1rem 1.5rem;
-  cursor: pointer;
   min-height: 3.5rem;
+  cursor: pointer;
   border: none;
 }
 
-/* Spinning conic-gradient border (sweeping highlight effect) */
+/* Spinning conic-gradient border */
 .generate-btn::before {
   content: '';
   position: absolute;
@@ -82,7 +78,7 @@ const emit = defineEmits<{
   z-index: -2;
 }
 
-/* Inner fill (creates the border thickness) */
+/* Inner fill (border thickness) */
 .generate-btn::after {
   content: '';
   position: absolute;
@@ -114,13 +110,16 @@ const emit = defineEmits<{
   @apply flex items-center justify-center gap-2 relative z-10;
 }
 
-.i-lucide-loader {
+.loader {
+  border: 3px solid rgba(255, 81, 47, 0.3);
+  border-top: 3px solid #FF512F;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 </style>
