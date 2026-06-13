@@ -18,16 +18,20 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 const dropdownRef = ref<HTMLDivElement | null>(null)
+const triggerRef = ref<HTMLButtonElement | null>(null)
+const menuRef = ref<HTMLDivElement | null>(null)
 
 const selectedVoice = computed(() => {
   const voice = props.voices.find(v => v.id === props.modelValue)
-  if (voice) return voice
-  // Default to first voice if none selected
-  if (props.voices.length > 0) {
-    emit('update:modelValue', props.voices[0]!.id)
+  return voice ?? null
+})
+
+const displayVoice = computed(() => {
+  // Show the first voice as default when no selection
+  if (!props.modelValue && props.voices.length > 0) {
     return props.voices[0]
   }
-  return null
+  return selectedVoice.value
 })
 
 // Color mapping for voices (matching design: orange/magenta)
@@ -52,29 +56,45 @@ function selectVoice(voice: Voice) {
 }
 
 function previewVoice(voice: Voice) {
-  showToast(`Playing 1-second preview of ${voice.name}...`, 'success')
+  showToast(`Playing 1-second preview of ${voice.name}...`)
 }
 
-// Close dropdown when clicking outside
-function handleOutsideClick(e: MouseEvent) {
-  if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+// Close dropdown when clicking outside — uses mousedown to race ahead of document click
+function handleOutsideMousedown(e: MouseEvent) {
+  if (!isOpen.value) return
+  const target = e.target as Node
+  // Check the trigger container and the teleported menu — if click is outside both, close the dropdown
+  const insideTrigger = dropdownRef.value && dropdownRef.value.contains(target)
+  const insideMenu = menuRef.value && menuRef.value.contains(target)
+  if (!insideTrigger && !insideMenu) {
     isOpen.value = false
   }
 }
 
+// Compute the teleported menu's position based on the trigger button
+const menuPositionStyle = computed(() => {
+  if (!triggerRef.value) return {}
+  const rect = triggerRef.value.getBoundingClientRect()
+  return {
+    top: `${rect.bottom + 8}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`
+  }
+})
+
 onMounted(() => {
-  document.addEventListener('click', handleOutsideClick)
+  document.addEventListener('mousedown', handleOutsideMousedown)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleOutsideClick)
+  document.removeEventListener('mousedown', handleOutsideMousedown)
 })
 </script>
 
 <template>
   <div
     ref="dropdownRef"
-    class="flex flex-col gap-3 relative"
+    class="flex flex-col gap-3"
   >
     <!-- Label -->
     <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
@@ -87,10 +107,11 @@ onUnmounted(() => {
 
     <!-- Dropdown Trigger Button -->
     <button
+      ref="triggerRef"
       class="w-full bg-studio-900 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group"
       :class="isOpen ? 'border-sunrise-orange' : 'border-studio-700 hover:border-sunrise-orange/50'"
       style="border-width: 1px;"
-      @click.stop="toggleDropdown"
+      @click="toggleDropdown"
     >
       <!-- Gradient overlay on hover -->
       <div
@@ -101,18 +122,18 @@ onUnmounted(() => {
       <!-- Selected voice info -->
       <div class="flex items-center gap-3 relative z-10">
         <span
-          v-if="selectedVoice"
+          v-if="displayVoice"
           aria-hidden="true"
           class="i-lucide-waveform text-2xl"
-          :class="getVoiceColorClass(selectedVoice)"
+          :class="getVoiceColorClass(displayVoice)"
           style="filter: drop-shadow(0 0 8px rgba(255, 81, 47, 0.5));"
         />
         <div class="flex flex-col items-start">
           <span class="text-sm font-bold text-white tracking-wide">
-            {{ selectedVoice?.name ?? 'Select a voice' }}
+            {{ displayVoice?.name ?? 'Select a voice' }}
           </span>
           <span class="text-xs text-gray-400 font-medium">
-            {{ selectedVoice?.dialect ?? '' }}
+            {{ displayVoice?.dialect ?? '' }}
           </span>
         </div>
       </div>
@@ -124,62 +145,75 @@ onUnmounted(() => {
         style="transition: transform 0.3s;"
       />
     </button>
+  </div>
 
-    <!-- Dropdown Menu (absolute positioned) -->
-    <Teleport to="body">
-      <div
-        v-if="isOpen"
-        class="absolute top-full left-0 w-80 mt-2 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] z-50 overflow-hidden"
-        style="transform: opacity 0.2s, transform 0.2s;"
-        @click.stop
-      >
-        <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
-          <button
-            v-for="voice in voices"
-            :key="voice.id"
-            class="voice-option w-full text-left p-3 rounded-lg flex items-center justify-between hover:bg-studio-700/70 transition-colors group"
-            :class="{ 'is-selected': voice.id === modelValue }"
-            @click="selectVoice(voice)"
-          >
-            <div class="flex items-center gap-3">
-              <!-- Icon circle -->
-              <div
-                class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center group-hover:border-sunrise-orange transition-colors"
-                :class="{ 'group-hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }"
-              >
-                <span
-                  aria-hidden="true"
-                  class="i-lucide-waveform text-gray-400 group-hover:text-sunrise-orange transition-colors text-lg"
-                  :class="{ 'group-hover:text-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }"
-                />
-              </div>
-              <div class="flex flex-col">
-                <span class="text-sm font-bold text-white">{{ voice.name }}</span>
-                <span class="text-xs text-gray-500 font-medium">{{ voice.dialect }}</span>
-              </div>
-            </div>
-
-            <!-- Preview play button (visible on hover) -->
-            <button
-              class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 text-gray-400"
-              :class="{ 'hover:text-sunrise-orange hover:border-sunrise-orange': getVoiceColorClass(voice).includes('orange'), 'hover:text-sunrise-magenta hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }"
-              title="Preview Voice"
-              @click.stop="previewVoice(voice)"
+  <!-- Dropdown Menu (Teleported to body to avoid overflow clipping) -->
+  <Teleport to="body">
+    <div
+      v-if="isOpen"
+      ref="menuRef"
+      class="fixed z-50 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden"
+      :style="menuPositionStyle"
+    >
+      <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
+        <button
+          v-for="voice in voices"
+          :key="voice.id"
+          class="voice-option w-full text-left p-3 rounded-lg flex items-center justify-between transition-colors group"
+          :class="[
+            voice.id === modelValue
+              ? 'bg-[#2a1a1a] border border-studio-600/50 is-selected'
+              : 'bg-studio-700/40 hover:bg-studio-700/70 border border-transparent'
+          ]"
+          @click="selectVoice(voice)"
+        >
+          <div class="flex items-center gap-3">
+            <!-- Icon circle -->
+            <div
+              class="w-10 h-10 rounded-full bg-studio-900 border border-studio-600 flex items-center justify-center transition-colors"
+              :class="[
+                voice.id === modelValue
+                  ? 'border-sunrise-orange'
+                  : 'group-hover:border-sunrise-orange',
+                { 'group-hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }
+              ]"
             >
               <span
                 aria-hidden="true"
-                class="i-lucide-play text-sm"
+                class="i-lucide-waveform text-gray-500 transition-colors text-lg"
+                :class="[
+                  voice.id === modelValue
+                    ? 'text-sunrise-orange'
+                    : 'group-hover:text-sunrise-orange',
+                  { 'group-hover:text-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }
+                ]"
               />
-            </button>
-          </button>
-        </div>
-      </div>
-    </Teleport>
-  </div>
-</template>
+            </div>
+            <div
+              class="flex flex-col"
+            >
+              <span class="text-sm font-bold text-white">{{ voice.name }}</span>
+              <span class="text-xs text-gray-400 font-medium">{{ voice.dialect }}</span>
+            </div>
+          </div>
 
-<style scoped>
-.voice-option.is-selected {
-  background: rgba(255, 81, 47, 0.1);
-}
-</style>
+          <!-- Preview play button (visible on hover) -->
+          <span
+            class="w-8 h-8 rounded-full bg-studio-900 border border-studio-600 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:scale-110 text-gray-500"
+            :class="{
+              'hover:text-sunrise-orange hover:border-sunrise-orange': getVoiceColorClass(voice).includes('orange'),
+              'hover:text-sunrise-magenta hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta')
+            }"
+            title="Preview Voice"
+            @click.stop="previewVoice(voice)"
+          >
+            <span
+              aria-hidden="true"
+              class="i-lucide-play text-sm"
+            />
+          </span>
+        </button>
+      </div>
+    </div>
+  </Teleport>
+</template>

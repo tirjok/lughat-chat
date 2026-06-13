@@ -13,7 +13,7 @@ describe('ToastNotification', () => {
 
     // Toast should be visible with the message
     expect(toast.value.visible).toBe(true)
-    const toastEl = wrapper.find('.tts-toast')
+    const toastEl = wrapper.find('[class*="fixed"]')
     expect(toastEl.exists()).toBe(true)
     expect(toastEl.text()).toContain('حدث خطأ في التوليد')
   })
@@ -27,8 +27,8 @@ describe('ToastNotification', () => {
 
     await wrapper.vm.$nextTick()
 
-    // Click the close button
-    const closeButton = wrapper.find('.tts-toast__close')
+    // Click the close button (find by aria-label attribute)
+    const closeButton = wrapper.find('button[aria-label="Close notification"]')
     await closeButton.trigger('click')
 
     // Toast should be hidden again
@@ -43,7 +43,9 @@ describe('ToastNotification', () => {
       const wrapper = mount(ToastNotification)
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('.tts-toast').attributes('aria-live')).toBe('polite')
+      const rootEl = wrapper.find('[aria-live="polite"]')
+      expect(rootEl.exists()).toBe(true)
+      expect(rootEl.attributes('aria-live')).toBe('polite')
     })
   })
 
@@ -55,7 +57,9 @@ describe('ToastNotification', () => {
       const wrapper = mount(ToastNotification)
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('.tts-toast__close').attributes('aria-label')).toBe('Close notification')
+      const btn = wrapper.find('button[aria-label="Close notification"]')
+      expect(btn.exists()).toBe(true)
+      expect(btn.attributes('aria-label')).toBe('Close notification')
     })
   })
 })

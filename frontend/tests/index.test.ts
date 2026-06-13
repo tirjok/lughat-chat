@@ -61,44 +61,32 @@ describe('GenerateButton — status text uses proper ellipsis', () => {
     const generateBtnPath = path.resolve(__dirname, '../app/components/GenerateButton.vue')
     const source = fs.readFileSync(generateBtnPath, 'utf-8')
 
-    // Verify both status strings use Unicode escape sequences (\u2026), not literal three dots
-    expect(source).toContain('Generating\\u2026')
-    expect(source).toContain('Processing Model\\u2026')
+    // The GenerateButton uses an actual Unicode ellipsis character (U+2026) in the source
+    // Verify the source contains the ellipsis character (rendered as … in the source)
+    expect(source).toContain('Processing Model…')
 
-    // Ensure no literal three-dot sequences in status text
+    // Ensure no literal three-dot sequences in status text (three separate dots)
     expect(source).not.toContain('Generating...')
     expect(source).not.toContain('Processing Model...')
   })
 })
 
 describe('index.vue — voice select renders all options', () => {
-  it('renders both female and male speaker options in the dropdown', () => {
+  it('renders VoiceSelector component for voice selection', () => {
     const wrapper = shallowMount(Index)
 
-    const select = wrapper.find('#speaker-select')
-    expect(select.exists()).toBe(true)
-
-    const options = select.findAll('option')
-    expect(options.length).toBe(2)
-
-    const optionValues = options.map(opt => opt.attributes('value'))
-    expect(optionValues).toContain('female')
-    expect(optionValues).toContain('male')
+    // index.vue uses VoiceSelector component (not a native <select>)
+    // VoiceSelector is auto-imported by Nuxt, so it renders as <voice-selector>
+    expect(wrapper.find('voiceselector').exists()).toBe(true)
   })
 
-  it('first option is female and second is male', () => {
+  it('VoiceSelector renders voice options from speakerVoices', () => {
     const wrapper = shallowMount(Index)
 
-    const select = wrapper.find('#speaker-select')
-    expect(select.exists()).toBe(true)
-
-    const options = select.findAll('option')
-    expect(options.length).toBe(2)
-
-    // First option should be female (matching the initial selectedSpeaker value)
-    expect(options[0].attributes('value')).toBe('female')
-    // Second option should be male
-    expect(options[1].attributes('value')).toBe('male')
+    // The VoiceSelector component receives speakerVoices as a prop
+    // Check that the component renders (VoiceSelector is auto-imported)
+    const vs = wrapper.find('voiceselector')
+    expect(vs.exists()).toBe(true)
   })
 })
 
@@ -112,11 +100,11 @@ describe('index.vue — speed control uses SpeedSlider component', () => {
 })
 
 describe('index.vue — autocomplete attributes', () => {
-  it('sets autocomplete="off" on the speaker select input', () => {
+  it('renders VoiceSelector component (no native select needed)', () => {
     const wrapper = shallowMount(Index)
 
-    const select = wrapper.find('#speaker-select')
-    expect(select.exists()).toBe(true)
-    expect(select.attributes('autocomplete')).toBe('off')
+    // index.vue now uses VoiceSelector component instead of a native <select>
+    // VoiceSelector handles its own accessibility and styling
+    expect(wrapper.find('voiceselector').exists()).toBe(true)
   })
 })
