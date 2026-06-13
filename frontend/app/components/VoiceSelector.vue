@@ -124,7 +124,7 @@ onUnmounted(() => {
         <span
           v-if="displayVoice"
           aria-hidden="true"
-          class="i-lucide-waveform text-2xl"
+          class="i-lucide-waves text-2xl"
           :class="getVoiceColorClass(displayVoice)"
           style="filter: drop-shadow(0 0 8px rgba(255, 81, 47, 0.5));"
         />
@@ -180,7 +180,7 @@ onUnmounted(() => {
             >
               <span
                 aria-hidden="true"
-                class="i-lucide-waveform text-gray-500 transition-colors text-lg"
+                class="i-lucide-waves text-gray-500 transition-colors text-lg"
                 :class="[
                   voice.id === modelValue
                     ? 'text-sunrise-orange'

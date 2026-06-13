@@ -15,7 +15,7 @@ const toast = useToast()
       <div class="w-5 h-5 text-green-400 flex-shrink-0">
         <span
           aria-hidden="true"
-          class="i-lucide-check-circle"
+          class="i-lucide-check"
         />
       </div>
       <p class="text-sm text-white flex-1">

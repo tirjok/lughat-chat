@@ -253,7 +253,7 @@ onUnmounted(() => {
         <div class="tts-error__content">
           <span
             aria-hidden="true"
-            class="i-lucide-alert-circle tts-error__icon"
+            class="i-lucide-info tts-error__icon"
           />
           <div class="tts-error__body">
             <p class="tts-error__message">

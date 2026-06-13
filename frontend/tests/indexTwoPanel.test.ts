@@ -15,6 +15,7 @@ import TimeDisplay from '../app/components/TimeDisplay.vue'
 import ToastNotification from '../app/components/ToastNotification.vue'
 import PlayPauseButton from '../app/components/PlayPauseButton.vue'
 import ArabicTextarea from '../app/components/ArabicTextarea.vue'
+import AudioPlayerPanel from '../app/components/AudioPlayerPanel.vue'
 
 beforeEach(() => {
   const mockAudio = createMockUseAudioPlayer()
@@ -50,6 +51,7 @@ describe('index.vue — two-panel layout', () => {
         ToastNotification,
         PlayPauseButton,
         ArabicTextarea,
+        AudioPlayerPanel,
         NuxtPage: defineComponent({ template: '<div />' })
       },
       ...options

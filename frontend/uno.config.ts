@@ -34,6 +34,10 @@ export default defineConfig({
       extraProperties: {
         display: 'inline-block',
         verticalAlign: 'middle'
+      },
+      collections: {
+        'lucide': () => import('@iconify-json/lucide/icons.json').then(i => i.default as object),
+        'simple-icons': () => import('@iconify-json/simple-icons/icons.json').then(i => i.default as object)
       }
     }),
     presetTypography({

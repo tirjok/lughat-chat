@@ -14,7 +14,7 @@ defineProps<Props>()
   >
     <span
       aria-hidden="true"
-      class="i-lucide-download-simple"
+      class="i-lucide-download"
     />
   </button>
 </template>
