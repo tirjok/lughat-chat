@@ -204,10 +204,8 @@ describe('VoiceSelector', () => {
       })
 
       await wrapper.find('.voice-trigger-btn').trigger('click')
-      const searchInput = document.querySelector('.voice-search-input') as HTMLInputElement
-
       // Type "Laila"
-      await (searchInput as any).setValue('Laila')
+      await wrapper.find('.voice-search-input').setValue('Laila')
 
       const options = document.querySelectorAll('.voice-option')
       expect(options).toHaveLength(1)
@@ -220,9 +218,7 @@ describe('VoiceSelector', () => {
       })
 
       await wrapper.find('.voice-trigger-btn').trigger('click')
-      const searchInput = document.querySelector('.voice-search-input') as HTMLInputElement
-
-      await (searchInput as any).setValue('Egyptian')
+      await wrapper.find('.voice-search-input').setValue('Egyptian')
 
       const options = document.querySelectorAll('.voice-option')
       expect(options).toHaveLength(1)
@@ -235,9 +231,7 @@ describe('VoiceSelector', () => {
       })
 
       await wrapper.find('.voice-trigger-btn').trigger('click')
-      const searchInput = document.querySelector('.voice-search-input') as HTMLInputElement
-
-      await (searchInput as any).setValue('nonexistent')
+      await wrapper.find('.voice-search-input').setValue('nonexistent')
 
       expect(document.querySelector('.voice-empty')).not.toBeNull()
       expect(document.querySelector('.voice-empty')!.textContent).toContain('nonexistent')
