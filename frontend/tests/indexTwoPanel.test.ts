@@ -1,9 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { ref, defineComponent } from 'vue'
 import { createMockUseAudioPlayer, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation } from './mocks'
 
 import Index from '../app/pages/index.vue'
+import KeyboardHint from '../app/components/KeyboardHint.vue'
+import AppHeader from '../app/components/AppHeader.vue'
+import VoiceSelector from '../app/components/VoiceSelector.vue'
+import SpeedSlider from '../app/components/SpeedSlider.vue'
+import GenerateButton from '../app/components/GenerateButton.vue'
+import FocusHaloCanvas from '../app/components/FocusHaloCanvas.vue'
+import SeekableProgressBar from '../app/components/SeekableProgressBar.vue'
+import TimeDisplay from '../app/components/TimeDisplay.vue'
+import ToastNotification from '../app/components/ToastNotification.vue'
+import PlayPauseButton from '../app/components/PlayPauseButton.vue'
+import ArabicTextarea from '../app/components/ArabicTextarea.vue'
 
 beforeEach(() => {
   const mockAudio = createMockUseAudioPlayer()
@@ -25,22 +36,42 @@ beforeEach(() => {
 })
 
 describe('index.vue — two-panel layout', () => {
+  const mountIndex = (options = {}) => {
+    return mount(Index, {
+      components: {
+        KeyboardHint,
+        AppHeader,
+        VoiceSelector,
+        SpeedSlider,
+        GenerateButton,
+        FocusHaloCanvas,
+        SeekableProgressBar,
+        TimeDisplay,
+        ToastNotification,
+        PlayPauseButton,
+        ArabicTextarea,
+        NuxtPage: defineComponent({ template: '<div />' })
+      },
+      ...options
+    })
+  }
+
   it('renders an aside element (sidebar panel)', () => {
-    const wrapper = mount(Index)
+    const wrapper = mountIndex()
 
     const aside = wrapper.find('aside')
     expect(aside.exists()).toBe(true)
   })
 
   it('renders a main element (content panel)', () => {
-    const wrapper = mount(Index)
+    const wrapper = mountIndex()
 
     const main = wrapper.find('main')
     expect(main.exists()).toBe(true)
   })
 
   it('aside appears before main in DOM order', () => {
-    const wrapper = mount(Index)
+    const wrapper = mountIndex()
 
     const aside = wrapper.find('aside')
     const main = wrapper.find('main')
@@ -50,9 +81,9 @@ describe('index.vue — two-panel layout', () => {
   })
 
   it('applies charcoal background color (#121212) to the page', () => {
-    const wrapper = mount(Index)
+    const wrapper = mountIndex()
 
-    const page = wrapper.find('[class*="min-h-screen"]')
+    const page = wrapper.find('[class*="h-screen"]')
     expect(page.exists()).toBe(true)
     // Check inline style — hex #121212 becomes rgb(18, 18, 18) in rendered HTML
     const html = wrapper.html()
@@ -60,23 +91,27 @@ describe('index.vue — two-panel layout', () => {
   })
 
   it('has no dark: variant classes (fixed dark theme)', () => {
-    const wrapper = mount(Index)
+    const wrapper = mountIndex()
 
     const html = wrapper.html()
     expect(html).not.toContain('dark:')
   })
 
   it('renders AppHeader component', () => {
-    const wrapper = mount(Index)
+    const wrapper = mountIndex()
 
     // Full mount (not shallowMount) so child components are rendered, not stubbed
-    expect(wrapper.find('appheader').exists()).toBe(true)
+    expect(wrapper.find('header').exists()).toBe(true)
   })
 
   it('renders KeyboardHint component', () => {
-    const wrapper = mount(Index)
+    const wrapper = mountIndex()
 
     // Full mount (not shallowMount) so child components are rendered, not stubbed
-    expect(wrapper.find('keyboardhint').exists()).toBe(true)
+    // The KeyboardHint is rendered inside a wrapper div in the page template
+    const html = wrapper.html()
+    expect(html).toContain('Ctrl')
+    expect(html).toContain('Enter')
+    expect(html).toContain('to generate')
   })
 })

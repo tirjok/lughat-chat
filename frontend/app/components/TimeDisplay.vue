@@ -1,37 +1,15 @@
 <script setup lang="ts">
-import { useTimeDisplay } from '../composables/useTimeDisplay'
+interface Props {
+  currentTime: number
+  duration: number
+}
 
-const _props = withDefaults(
-  defineProps<{
-    currentTime: number
-    duration: number
-    currentLabel?: string
-    durationLabel?: string
-  }>(),
-  {
-    currentLabel: '',
-    durationLabel: ''
-  }
-)
-
-const { formatTime } = useTimeDisplay()
+defineProps<Props>()
 </script>
 
 <template>
-  <div
-    class="tts-audio__time font-mono"
-    dir="rtl"
-  >
-    <span v-if="currentLabel">{{ currentLabel }}</span>
-    <span>{{ formatTime(currentTime) }}</span>
-
-    <span v-if="durationLabel">{{ durationLabel }}</span>
-    <span>{{ formatTime(duration) }}</span>
+  <div class="flex justify-between text-[10px] font-mono text-gray-400">
+    <span>{{ currentTime }}</span>
+    <span>{{ duration }}</span>
   </div>
 </template>
-
-<style>
-.tts-audio__time {
-  @apply font-mono text-sm;
-}
-</style>

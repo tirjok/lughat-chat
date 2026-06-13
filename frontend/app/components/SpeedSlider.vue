@@ -26,96 +26,86 @@ const trackPercent = computed(() => {
 </script>
 
 <template>
-  <div class="speed-slider">
-    <div class="speed-track">
-      <div
-        class="speed-track-fill"
-        :style="{ width: `${trackPercent}%` }"
-      />
+  <div class="flex flex-col gap-4">
+    <div class="flex justify-between items-end">
+      <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          class="i-lucide-gauge text-lg"
+        />
+        Speech Speed
+      </label>
+      <span
+        class="text-xs font-mono text-sunrise-orange bg-studio-900 px-2 py-1 rounded border border-studio-700"
+      >
+        {{ displayValue }}
+      </span>
     </div>
-    <input
-      :value="modelValue"
-      type="range"
-      min="0.5"
-      max="2.0"
-      step="0.1"
-      class="speed-slider__input"
-      @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
-    >
-    <span class="speed-badge">{{ displayValue }}</span>
+
+    <div class="relative w-full pt-2 pb-4">
+      <!-- Custom range input with gradient track -->
+      <input
+        :value="clampedValue"
+        type="range"
+        min="0.5"
+        max="2.0"
+        step="0.1"
+        class="speed-slider__input"
+        :style="{
+          background: `linear-gradient(to right, #DD2476, #FF512F ${trackPercent}%, #2A2A2A ${trackPercent}%, #2A2A2A 100%)`
+        }"
+        @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
+      >
+      <!-- Range markers -->
+      <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-2 absolute w-full pointer-events-none">
+        <span>0.5x</span>
+        <span>1.0x</span>
+        <span>2.0x</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.speed-slider {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-}
-
-.speed-track {
-  flex: 1;
-  height: 0.375rem;
-  border-radius: 9999px;
-  background: #374151;
-  overflow: hidden;
-  position: relative;
-}
-
-.speed-track-fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background: linear-gradient(to right, #DD2476, #FF512F);
-  transition: width 0.1s ease;
-}
-
 .speed-slider__input {
   -webkit-appearance: none;
   appearance: none;
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
-  margin: 0;
+  height: 4px;
   background: transparent;
   cursor: pointer;
+  border-radius: 2px;
 }
 
 .speed-slider__input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 1rem;
-  height: 1rem;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: #DD2476;
+  background: #FF512F;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  box-shadow: 0 0 0 2px #374151;
+  margin-top: -6px;
+  box-shadow: 0 0 10px rgba(255, 81, 47, 0.8);
+  transition: transform 0.1s;
+}
 
-  &:hover {
-    transform: scale(1.2);
-  }
+.speed-slider__input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
 }
 
 .speed-slider__input::-moz-range-thumb {
-  width: 1rem;
-  height: 1rem;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: #DD2476;
-  border: 2px solid #374151;
+  background: #FF512F;
   cursor: pointer;
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.2);
-  }
+  box-shadow: 0 0 10px rgba(255, 81, 47, 0.8);
+  border: none;
+  transition: transform 0.1s;
 }
 
-.speed-badge {
-  @apply font-mono text-xs font-semibold text-gray-300 min-w-[3rem];
+.speed-slider__input::-moz-range-thumb:hover {
+  transform: scale(1.2);
 }
 </style>

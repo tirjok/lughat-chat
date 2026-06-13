@@ -19,10 +19,10 @@ describe('KeyboardHint', () => {
     expect(wrapper.text()).toContain('Press')
   })
 
-  it('renders "for quick generation" text after the keys', () => {
+  it('renders "to generate" text after the keys', () => {
     const wrapper = mount(KeyboardHint)
 
-    expect(wrapper.text()).toContain('for quick generation')
+    expect(wrapper.text()).toContain('to generate')
   })
 
   it('renders the + separator between keys', () => {

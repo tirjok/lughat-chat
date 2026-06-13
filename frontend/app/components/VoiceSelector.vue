@@ -1,27 +1,15 @@
 <script setup lang="ts">
 import type { Voice } from '../composables/useVoices'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { showToast } from '../composables/useToast'
 
 interface Props {
-  /** Available voice presets from the API */
   voices: Voice[]
-  /** Currently selected voice ID */
   modelValue?: string
-  /** When true, render as a compact button instead of a full dropdown */
-  compact?: boolean
-  /** Placeholder text when no voice is selected */
-  placeholder?: string
-  /** Whether the component is in a disabled/loading state */
-  disabled?: boolean
-  /** Whether an error state is active */
-  hasError?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: 'aisha',
-  compact: false,
-  placeholder: 'Select a voice preset',
-  disabled: false,
-  hasError: false
+  modelValue: ''
 })
 
 const emit = defineEmits<{
@@ -29,34 +17,42 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(false)
-const searchQuery = ref('')
 const dropdownRef = ref<HTMLDivElement | null>(null)
 
-const selectedVoice = computed(() =>
-  props.voices.find(v => v.id === props.modelValue) || props.voices[0]
-)
-
-const filteredVoices = computed(() => {
-  const q = searchQuery.value.toLowerCase().trim()
-  if (!q) return props.voices
-  return props.voices.filter(
-    v =>
-      v.id.toLowerCase().includes(q)
-      || v.name.toLowerCase().includes(q)
-      || v.dialect.toLowerCase().includes(q)
-      || v.tag.toLowerCase().includes(q)
-  )
+const selectedVoice = computed(() => {
+  const voice = props.voices.find(v => v.id === props.modelValue)
+  if (voice) return voice
+  // Default to first voice if none selected
+  if (props.voices.length > 0) {
+    emit('update:modelValue', props.voices[0]!.id)
+    return props.voices[0]
+  }
+  return null
 })
+
+// Color mapping for voices (matching design: orange/magenta)
+function getVoiceColorClass(voice: Voice): string {
+  const id = voice.id.toLowerCase()
+  if (id === 'aisha' || id === 'female') {
+    return 'text-sunrise-orange'
+  }
+  if (id === 'tariq' || id === 'male') {
+    return 'text-sunrise-magenta'
+  }
+  return 'text-sunrise-orange'
+}
+
+function toggleDropdown() {
+  isOpen.value = !isOpen.value
+}
 
 function selectVoice(voice: Voice) {
   emit('update:modelValue', voice.id)
   isOpen.value = false
-  searchQuery.value = ''
 }
 
-function toggleDropdown() {
-  if (props.disabled) return
-  isOpen.value = !isOpen.value
+function previewVoice(voice: Voice) {
+  showToast(`Playing 1-second preview of ${voice.name}...`, 'success')
 }
 
 // Close dropdown when clicking outside
@@ -73,197 +69,109 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick)
 })
-
-// Keyboard navigation
-function handleKeydown(e: KeyboardEvent) {
-  if (!isOpen.value) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      toggleDropdown()
-    }
-    return
-  }
-
-  if (e.key === 'Escape') {
-    isOpen.value = false
-    searchQuery.value = ''
-    return
-  }
-
-  if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    const next = document.querySelector('.voice-option:not(.sr-only)') as HTMLElement
-    next?.focus()
-  }
-
-  if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    const prev = document.querySelector('.voice-option:focus')?.previousElementSibling as HTMLElement
-    prev?.focus()
-  }
-
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault()
-    const focused = document.querySelector('.voice-option:focus') as HTMLElement
-    if (focused) {
-      focused.click()
-    }
-  }
-}
 </script>
 
 <template>
   <div
     ref="dropdownRef"
-    class="voice-selector"
-    :class="{ 'has-error': hasError }"
+    class="flex flex-col gap-3 relative"
   >
-    <!-- Compact mode: single button trigger -->
+    <!-- Label -->
+    <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+      <span
+        aria-hidden="true"
+        class="i-lucide-user text-lg"
+      />
+      Voice Model
+    </label>
+
+    <!-- Dropdown Trigger Button -->
     <button
-      v-if="compact"
-      class="voice-trigger-btn"
-      :class="{ 'is-disabled': disabled, 'is-selected': !!selectedVoice }"
-      :disabled="disabled"
-      aria-haspopup="listbox"
-      :aria-expanded="isOpen"
-      :aria-label="selectedVoice ? selectedVoice.name : placeholder"
+      class="w-full bg-studio-900 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group"
+      :class="isOpen ? 'border-sunrise-orange' : 'border-studio-700 hover:border-sunrise-orange/50'"
+      style="border-width: 1px;"
       @click.stop="toggleDropdown"
-      @keydown="handleKeydown"
     >
-      <!-- Icon badge -->
-      <span
-        v-if="selectedVoice"
-        class="voice-icon-badge"
-        :class="`icon-${selectedVoice.icon}`"
-        aria-hidden="true"
-      >
-        {{ selectedVoice.tag }}
-      </span>
+      <!-- Gradient overlay on hover -->
+      <div
+        class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        style="background: linear-gradient(to right, rgba(255, 81, 47, 0.05), transparent);"
+      />
 
-      <span class="voice-trigger-text">
-        {{ selectedVoice ? selectedVoice.name : placeholder }}
-      </span>
-
-      <span
-        class="voice-chevron"
-        :class="{ 'is-open': isOpen }"
-        aria-hidden="true"
-      >
-        ▼
-      </span>
-    </button>
-
-    <!-- Full mode: label + trigger -->
-    <div
-      v-else
-      class="voice-full-selector"
-    >
-      <label class="voice-label">
-        Voice Preset
-      </label>
-
-      <button
-        class="voice-trigger-btn"
-        :class="{ 'is-disabled': disabled, 'is-selected': !!selectedVoice }"
-        :disabled="disabled"
-        aria-haspopup="listbox"
-        :aria-expanded="isOpen"
-        :aria-label="selectedVoice ? selectedVoice.name : placeholder"
-        @click.stop="toggleDropdown"
-        @keydown="handleKeydown"
-      >
+      <!-- Selected voice info -->
+      <div class="flex items-center gap-3 relative z-10">
         <span
           v-if="selectedVoice"
-          class="voice-icon-badge"
-          :class="`icon-${selectedVoice.icon}`"
           aria-hidden="true"
-        >
-          {{ selectedVoice.tag }}
-        </span>
+          class="i-lucide-waveform text-2xl"
+          :class="getVoiceColorClass(selectedVoice)"
+          style="filter: drop-shadow(0 0 8px rgba(255, 81, 47, 0.5));"
+        />
+        <div class="flex flex-col items-start">
+          <span class="text-sm font-bold text-white tracking-wide">
+            {{ selectedVoice?.name ?? 'Select a voice' }}
+          </span>
+          <span class="text-xs text-gray-400 font-medium">
+            {{ selectedVoice?.dialect ?? '' }}
+          </span>
+        </div>
+      </div>
 
-        <span class="voice-trigger-text">
-          {{ selectedVoice ? selectedVoice.name : placeholder }}
-        </span>
+      <!-- Animated chevron -->
+      <span
+        class="i-lucide-chevron-down text-gray-400 transition-transform duration-300"
+        :class="{ 'rotate-180': isOpen }"
+        style="transition: transform 0.3s;"
+      />
+    </button>
 
-        <span
-          class="voice-chevron"
-          :class="{ 'is-open': isOpen }"
-          aria-hidden="true"
-        >
-          ▼
-        </span>
-      </button>
-    </div>
-
-    <!-- Dropdown panel -->
+    <!-- Dropdown Menu (absolute positioned) -->
     <Teleport to="body">
       <div
-        v-if="isOpen && !compact"
-        class="voice-dropdown"
-        role="listbox"
-        :aria-label="placeholder"
+        v-if="isOpen"
+        class="absolute top-full left-0 w-80 mt-2 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] z-50 overflow-hidden"
+        style="transform: opacity 0.2s, transform 0.2s;"
         @click.stop
       >
-        <!-- Search bar -->
-        <div class="voice-search-bar">
-          <span
-            class="voice-search-icon"
-            aria-hidden="true"
-          >🔍</span>
-          <input
-            v-model="searchQuery"
-            class="voice-search-input"
-            type="text"
-            placeholder="Filter voices..."
-            aria-label="Filter voices"
-            refocused
-          >
-        </div>
-
-        <!-- Voice options -->
-        <div class="voice-options">
+        <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
           <button
-            v-for="voice in filteredVoices"
+            v-for="voice in voices"
             :key="voice.id"
-            class="voice-option"
+            class="voice-option w-full text-left p-3 rounded-lg flex items-center justify-between hover:bg-studio-700/70 transition-colors group"
             :class="{ 'is-selected': voice.id === modelValue }"
-            role="option"
-            :aria-selected="voice.id === modelValue"
-            tabindex="-1"
             @click="selectVoice(voice)"
           >
-            <!-- Icon badge -->
-            <span
-              class="voice-option-icon"
-              :class="`icon-${voice.icon}`"
-              aria-hidden="true"
-            >
-              {{ voice.tag }}
-            </span>
-
-            <!-- Voice info -->
-            <div class="voice-option-info">
-              <span class="voice-option-name">{{ voice.name }}</span>
-              <span class="voice-option-dialect">{{ voice.dialect }}</span>
+            <div class="flex items-center gap-3">
+              <!-- Icon circle -->
+              <div
+                class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center group-hover:border-sunrise-orange transition-colors"
+                :class="{ 'group-hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }"
+              >
+                <span
+                  aria-hidden="true"
+                  class="i-lucide-waveform text-gray-400 group-hover:text-sunrise-orange transition-colors text-lg"
+                  :class="{ 'group-hover:text-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }"
+                />
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-bold text-white">{{ voice.name }}</span>
+                <span class="text-xs text-gray-500 font-medium">{{ voice.dialect }}</span>
+              </div>
             </div>
 
-            <!-- Selected check -->
-            <span
-              v-if="voice.id === modelValue"
-              class="voice-option-check"
-              aria-hidden="true"
+            <!-- Preview play button (visible on hover) -->
+            <button
+              class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 text-gray-400"
+              :class="{ 'hover:text-sunrise-orange hover:border-sunrise-orange': getVoiceColorClass(voice).includes('orange'), 'hover:text-sunrise-magenta hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }"
+              title="Preview Voice"
+              @click.stop="previewVoice(voice)"
             >
-              ✓
-            </span>
+              <span
+                aria-hidden="true"
+                class="i-lucide-play text-sm"
+              />
+            </button>
           </button>
-
-          <!-- Empty state -->
-          <div
-            v-if="filteredVoices.length === 0"
-            class="voice-empty"
-          >
-            No voice presets match "{{ searchQuery }}"
-          </div>
         </div>
       </div>
     </Teleport>
@@ -271,267 +179,7 @@ function handleKeydown(e: KeyboardEvent) {
 </template>
 
 <style scoped>
-/* ── Container ─────────────────────────────────── */
-.voice-selector {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-}
-
-.voice-selector.has-error .voice-trigger-btn {
-  border-color: var(--color-red-500);
-}
-
-/* ── Trigger Button ────────────────────────────── */
-.voice-trigger-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: 0.5rem;
-  background: var(--color-white, #fff);
-  color: var(--color-gray-700, #374151);
-  font-size: 0.875rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-  text-align: left;
-}
-
-.dark .voice-trigger-btn {
-  background: var(--color-gray-800, #1f2937);
-  border-color: var(--color-gray-600, #4b5563);
-  color: var(--color-gray-200, #e5e7eb);
-}
-
-.voice-trigger-btn:hover:not(.is-disabled) {
-  border-color: var(--color-green-400, #4ade80);
-  box-shadow: 0 0 0 2px var(--color-green-100, #dcfce7);
-}
-
-.voice-trigger-btn.is-selected {
-  border-color: var(--color-green-500, #22c55e);
-}
-
-.voice-trigger-btn.is-disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ── Icon Badge ────────────────────────────────── */
-.voice-icon-badge,
-.voice-option-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-
-.icon-ar {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.dark .icon-ar {
-  background: #78350f;
-  color: #fde68a;
-}
-
-.icon-en {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.dark .icon-en {
-  background: #1e3a5f;
-  color: #93c5fd;
-}
-
-.icon-ml {
-  background: #fce7f3;
-  color: #9d174d;
-}
-
-.dark .icon-ml {
-  background: #500724;
-  color: #f9a8d4;
-}
-
-/* ── Trigger Text ──────────────────────────────── */
-.voice-trigger-text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ── Chevron ───────────────────────────────────── */
-.voice-chevron {
-  display: inline-block;
-  transition: transform 0.2s ease;
-  font-size: 0.625rem;
-  color: var(--color-gray-400, #9ca3af);
-}
-
-.voice-chevron.is-open {
-  transform: rotate(180deg);
-}
-
-/* ── Full Selector (with label) ────────────────── */
-.voice-full-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.voice-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-gray-600, #4b5563);
-}
-
-.dark .voice-label {
-  color: var(--color-gray-400, #9ca3af);
-}
-
-/* ── Dropdown Panel ────────────────────────────── */
-.voice-dropdown {
-  position: absolute;
-  z-index: 50;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 0.25rem;
-  background: var(--color-white, #fff);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  max-height: 20rem;
-  overflow-y: auto;
-}
-
-.dark .voice-dropdown {
-  background: var(--color-gray-800, #1f2937);
-  border-color: var(--color-gray-700, #374151);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-}
-
-/* ── Search Bar ────────────────────────────────── */
-.voice-search-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
-}
-
-.dark .voice-search-bar {
-  border-color: var(--color-gray-700, #374151);
-}
-
-.voice-search-icon {
-  font-size: 0.875rem;
-  opacity: 0.5;
-}
-
-.voice-search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 0.875rem;
-  font-family: inherit;
-  color: var(--color-gray-700, #374151);
-  outline: none;
-}
-
-.dark .voice-search-input {
-  color: var(--color-gray-200, #e5e7eb);
-}
-
-/* ── Voice Options ─────────────────────────────── */
-.voice-options {
-  padding: 0.25rem;
-}
-
-.voice-option {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: none;
-  border-radius: 0.375rem;
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.15s;
-  text-align: left;
-  font-family: inherit;
-  font-size: 0.875rem;
-  color: var(--color-gray-700, #374151);
-}
-
-.voice-option:hover,
-.voice-option:focus-visible {
-  background: var(--color-gray-100, #f3f4f6);
-}
-
-.dark .voice-option:hover,
-.dark .voice-option:focus-visible {
-  background: var(--color-gray-700, #374151);
-}
-
 .voice-option.is-selected {
-  background: var(--color-green-50, #f0fdf4);
-  font-weight: 600;
-}
-
-.dark .voice-option.is-selected {
-  background: #052e16;
-}
-
-/* ── Option Info ───────────────────────────────── */
-.voice-option-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.voice-option-name {
-  font-size: 0.875rem;
-}
-
-.voice-option-dialect {
-  font-size: 0.75rem;
-  color: var(--color-gray-500, #6b7280);
-}
-
-.dark .voice-option-dialect {
-  color: var(--color-gray-400, #9ca3af);
-}
-
-/* ── Selected Check ────────────────────────────── */
-.voice-option-check {
-  color: var(--color-green-500, #22c55e);
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-/* ── Empty State ───────────────────────────────── */
-.voice-empty {
-  padding: 1rem 0.75rem;
-  text-align: center;
-  color: var(--color-gray-400, #9ca3af);
-  font-size: 0.875rem;
+  background: rgba(255, 81, 47, 0.1);
 }
 </style>

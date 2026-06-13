@@ -5,51 +5,52 @@ const { status, modelLoaded } = useHealthPoll()
 </script>
 
 <template>
-  <header class="flex items-center justify-between gap-4 px-6 py-4">
+  <header
+    class="p-6 border-b border-studio-700 flex justify-between items-center"
+    style="background: linear-gradient(to bottom, #1f1f1f, transparent);"
+  >
     <!-- Left: Icon + Title -->
-    <div class="flex items-center gap-4">
-      <!-- Waves icon (volume-2) -->
-      <span
-        aria-hidden="true"
-        class="i-lucide-volume-2 h-8 w-8"
-      />
-
-      <!-- Title: "Lughat" + "Chat" in magenta -->
-      <div>
-        <h1 class="text-xl font-bold">
-          <span>Lughat</span><span style="color: #DD2476;">Chat</span>
-        </h1>
-        <p class="text-xs text-gray-400">
-          Premium Audio Studio
-        </p>
-      </div>
+    <div>
+      <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          class="i-lucide-volume-2 text-sunrise-orange"
+        />
+        Lughat<span style="color: #DD2476;">Chat</span>
+      </h1>
+      <p class="text-xs text-gray-400 mt-1 uppercase tracking-wider">
+        Premium Audio Studio
+      </p>
     </div>
 
-    <!-- Right: Model status indicator -->
-    <div class="flex items-center gap-2 text-sm">
-      <!-- Loading state: spinning loader -->
+    <!-- Right: Status Indicator (pill style) -->
+    <div
+      class="flex items-center gap-2 bg-studio-900 px-3 py-1.5 rounded-full border border-studio-700"
+      title="Model XTTS-v2 Ready"
+    >
+      <!-- Loading state: pulsing orange dot -->
       <span
         v-if="status === 'loading'"
         aria-hidden="true"
-        class="i-lucide-loader animate-spin h-4 w-4"
+        class="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse"
       />
 
-      <!-- Ready state: green check -->
+      <!-- Ready state: green dot with glow -->
       <span
         v-else-if="modelLoaded"
         aria-hidden="true"
-        class="i-lucide-check-circle h-4 w-4 text-green-500"
+        class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"
       />
 
-      <!-- Error state: red alert -->
+      <!-- Error state: red dot -->
       <span
         v-else
         aria-hidden="true"
-        class="i-lucide-alert-circle h-4 w-4 text-red-500"
+        class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"
       />
 
-      <span>
-        {{ status === 'loading' ? 'Loading...' : modelLoaded ? 'Model Ready' : 'Model Load Error' }}
+      <span class="text-xs font-medium text-gray-300">
+        {{ status === 'loading' ? 'Loading...' : modelLoaded ? 'Ready' : 'Error' }}
       </span>
     </div>
   </header>

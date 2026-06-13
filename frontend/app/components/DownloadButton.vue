@@ -9,23 +9,12 @@ defineProps<Props>()
 <template>
   <button
     aria-label="Download audio"
-    class="tts-audio__download-btn"
+    class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-white text-gray-400 transition-colors"
     @click="onClick"
   >
     <span
       aria-hidden="true"
-      class="i-lucide-download"
+      class="i-lucide-download-simple"
     />
   </button>
 </template>
-
-<style>
-.tts-audio__download-btn {
-  @apply w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 flex items-center justify-center active:scale-95;
-  transition: background-color, transform 0.2s ease;
-
-  .i-lucide-download {
-    @apply w-4 h-4;
-  }
-}
-</style>

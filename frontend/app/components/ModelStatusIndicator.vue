@@ -5,30 +5,33 @@ const { status, modelLoaded } = useHealthPoll()
 </script>
 
 <template>
-  <div class="flex items-center gap-2 text-sm">
-    <!-- Loading state: spinning loader -->
+  <div
+    class="flex items-center gap-2 bg-studio-900 px-3 py-1.5 rounded-full border border-studio-700"
+    title="Model XTTS-v2 Ready"
+  >
+    <!-- Loading state: pulsing orange dot -->
     <span
       v-if="status === 'loading'"
       aria-hidden="true"
-      class="i-lucide-loader animate-spin w-4 h-4"
+      class="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse"
     />
 
-    <!-- Ready state: green check -->
+    <!-- Ready state: green dot with glow -->
     <span
       v-else-if="modelLoaded"
       aria-hidden="true"
-      class="i-lucide-check-circle w-4 h-4 text-green-500"
+      class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"
     />
 
-    <!-- Error state: red alert -->
+    <!-- Error state: red dot -->
     <span
       v-else
       aria-hidden="true"
-      class="i-lucide-alert-circle w-4 h-4 text-red-500"
+      class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"
     />
 
-    <span>
-      {{ status === 'loading' ? 'Loading...' : modelLoaded ? 'Model Ready' : 'Model Load Error' }}
+    <span class="text-xs font-medium text-gray-300">
+      {{ status === 'loading' ? 'Loading...' : modelLoaded ? 'Ready' : 'Error' }}
     </span>
   </div>
 </template>

@@ -2,11 +2,11 @@
 </script>
 
 <template>
-  <div class="text-[10px] text-gray-500">
+  <div class="text-sm font-medium flex items-center gap-2">
     Press
-    <kbd class="rounded bg-gray-700 px-1 py-0.5 font-mono">Ctrl</kbd>
+    <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
     +
-    <kbd class="rounded bg-gray-700 px-1 py-0.5 font-mono">Enter</kbd>
-    for quick generation
+    <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Enter</kbd>
+    to generate
   </div>
 </template>

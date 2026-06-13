@@ -11,6 +11,23 @@ export default defineConfig({
   transformers: [
     transformerDirectives()
   ],
+  theme: {
+    fontFamily: {
+      sans: ['Inter', 'sans-serif'],
+      arabic: ['Cairo', 'sans-serif']
+    },
+    colors: {
+      studio: {
+        900: '#121212',
+        800: '#1A1A1A',
+        700: '#2A2A2A'
+      },
+      sunrise: {
+        orange: '#FF512F',
+        magenta: '#DD2476'
+      }
+    }
+  },
   presets: [
     presetUno(),
     presetIcons({

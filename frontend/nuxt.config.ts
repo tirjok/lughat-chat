@@ -1,12 +1,33 @@
 export default defineNuxtConfig({
+
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
     '@unocss/nuxt'
   ],
-
   devtools: {
     enabled: true
+  },
+
+  // Inter font for UI labels (Cairo already loaded for Arabic)
+  app: {
+    head: {
+      link: [
+        {
+          rel: 'preconnect',
+          href: 'https://fonts.googleapis.com'
+        },
+        {
+          rel: 'preconnect',
+          href: 'https://fonts.gstatic.com',
+          crossorigin: 'true'
+        },
+        {
+          href: 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap',
+          rel: 'stylesheet'
+        }
+      ]
+    }
   },
 
   css: ['~/assets/css/main.css'],

@@ -10,7 +10,7 @@ const {
   currentTime,
   isPlaying,
   isPaused,
-  isLoading,
+  _isLoading,
   error: audioError,
   loadAudio,
   play,
@@ -24,7 +24,7 @@ const {
   }
 })
 
-const audioElement = computed(() => audioRef.value ?? undefined)
+const _audioElement = computed(() => audioRef.value ?? undefined)
 
 const { synthesize, healthCheck: _healthCheck } = useTtsApi()
 const { status: modelStatus, modelLoaded: _modelLoaded } = useHealthPoll()
@@ -34,6 +34,13 @@ const textInput = shallowRef('')
 const selectedSpeaker = shallowRef('')
 const speedValue = shallowRef(1.0)
 const isGenerating = shallowRef(false)
+const playerVisible = shallowRef(false)
+
+// Track selected voice for display
+const selectedVoiceName = computed(() => {
+  const voice = speakerVoices.value.find(v => v.id === selectedSpeaker.value)
+  return voice ? voice.name : ''
+})
 
 watch(speakerVoices, (v) => {
   if (!selectedSpeaker.value && v.length > 0) {
@@ -63,6 +70,8 @@ async function handleSynthesize() {
   }
 
   isGenerating.value = true
+  // Hide player when starting new generation
+  playerVisible.value = false
 
   try {
     const audioBlob = await synthesize({
@@ -77,6 +86,10 @@ async function handleSynthesize() {
     if (audioRef.value && url) {
       await play()
     }
+
+    // Show player after generation
+    await nextTick()
+    playerVisible.value = true
   } catch (err) {
     if (err instanceof Error) {
       showToast(err.message)
@@ -98,241 +111,257 @@ function handleKeyDown(event: KeyboardEvent) {
     handleSynthesize()
   }
 }
+
+function handleClosePlayer() {
+  playerVisible.value = false
+  // Stop playback when closing
+  const el = audioRef.value
+  if (el) {
+    el.pause()
+    isPlaying.value = false
+    isPaused.value = false
+  }
+}
 </script>
 
 <template>
   <div
-    class="min-h-screen"
+    class="h-screen w-screen overflow-hidden text-studio-text antialiased"
     style="background-color: #121212;"
     dir="ltr"
     @keydown="handleKeyDown"
   >
     <!-- Two-Panel Layout -->
-    <div class="flex min-h-screen">
-      <!-- Left Sidebar (~30% desktop, ~25% lg+) -->
-      <aside class="w-[30%] lg:w-[25%]">
+    <div class="flex h-screen w-screen">
+      <!-- LEFT PANEL: The Control Deck (~30% desktop, ~25% lg+) -->
+      <aside class="w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl">
+        <!-- Header -->
         <AppHeader />
-      </aside>
 
-      <!-- Right Content Area (~70% desktop, ~75% lg+) -->
-      <main class="w-[70%] lg:w-[75%]">
-        <div class="mx-auto max-w-2xl px-4 py-6">
-          <!-- Text Input -->
-          <ArabicTextarea
-            v-model="textInput"
-            :max-length="3000"
+        <!-- Controls Container -->
+        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-8">
+          <VoiceSelector
+            v-model="selectedSpeaker"
+            :voices="speakerVoices"
           />
 
-          <!-- Controls -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <!-- Speaker Selection -->
-            <div class="space-y-1.5">
-              <label
-                for="speaker-select"
-                class="flex items-center gap-2 text-xs font-semibold text-gray-300"
-              >
-                <span
-                  aria-hidden="true"
-                  class="i-lucide-user"
-                />
-                Voice
-              </label>
-              <div class="relative">
-                <select
-                  id="speaker-select"
-                  v-model="selectedSpeaker"
-                  class="w-full appearance-none rounded-lg border border-gray-600 bg-gray-900/40 p-2.5 text-sm text-gray-100 focus:border-blue-500"
-                  autocomplete="off"
-                >
-                  <option
-                    v-for="voice in speakerVoices"
-                    :key="voice.id"
-                    :value="voice.id"
-                  >
-                    {{ voice.name }}
-                  </option>
-                </select>
-                <span
-                  aria-hidden="true"
-                  class="i-lucide-chevron-down absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 pointer-events-none"
-                />
-              </div>
-            </div>
+          <!-- Speed Control -->
+          <SpeedSlider v-model="speedValue" />
+        </div>
 
-            <!-- Speed Control -->
-            <div class="space-y-1.5">
-              <label
-                for="speed-slider"
-                class="flex items-center gap-2 text-xs font-semibold text-gray-300"
-              >
-                <span
-                  aria-hidden="true"
-                  class="i-lucide-gauge"
-                />
-                Speech Speed
-              </label>
-              <SpeedSlider v-model="speedValue" />
-            </div>
-          </div>
-
-          <!-- Generate Button -->
+        <!-- Action Area -->
+        <div class="p-6 border-t border-studio-700 bg-studio-800">
           <GenerateButton
             :is-generating="isGenerating"
             :model-status="modelStatus"
             :disabled="!isValid || isGenerating || modelStatus === 'loading'"
             @click="handleSynthesize"
           />
+        </div>
+      </aside>
 
-          <!-- Audio Player Section -->
-          <Transition name="slide-up">
-            <div
-              v-if="audioUrl"
-              class="space-y-3 rounded-xl border-t border-gray-700/60 bg-gray-900/30 p-4"
+      <!-- RIGHT PANEL: The Canvas (~70% desktop, ~75% lg+) -->
+      <main class="w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden">
+        <!-- Focus Halo (behind textarea) -->
+        <FocusHaloCanvas />
+
+        <!-- Header / Context -->
+        <div class="w-full p-8 pb-4 flex justify-between items-center opacity-70">
+          <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              class="i-lucide-keyboard text-lg"
+            />
+            Editor Canvas
+          </h2>
+          <div class="flex items-center gap-4 text-sm text-gray-500">
+            <span class="font-mono">{{ textInput.length }} / 3000</span>
+            <button
+              class="hover:text-white transition-colors"
+              title="Clear Canvas"
+              @click="textInput = ''"
             >
-              <div class="flex items-center justify-between">
-                <h3 class="text-xs font-semibold text-gray-300">
+              <span
+                aria-hidden="true"
+                class="i-lucide-trash"
+              />
+            </button>
+          </div>
+        </div>
+
+        <!-- Text Input Area -->
+        <div class="flex-1 relative w-full max-w-5xl mx-auto px-8 pb-32 flex flex-col">
+          <textarea
+            v-model="textInput"
+            dir="rtl"
+            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-3xl md:text-5xl leading-relaxed text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+            style="caret-color: #FF512F;"
+            placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
+          />
+        </div>
+
+        <!-- Floating Shortcut Hint (bottom-right of canvas) -->
+        <div class="absolute bottom-6 right-8 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50">
+          <KeyboardHint />
+        </div>
+
+        <!-- Audio Player Panel (slides up from bottom) -->
+        <Transition name="slide-up-player">
+          <div
+            v-if="playerVisible && audioUrl"
+            class="absolute bottom-0 left-0 w-full bg-studio-800 border-t border-studio-700 p-6 flex flex-col gap-4 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+          >
+            <!-- Player Header -->
+            <div class="flex justify-between items-center mb-2">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg">
                   <span
                     aria-hidden="true"
-                    class="i-lucide-headphones"
+                    class="i-lucide-music-notes text-white"
                   />
-                  Result
-                </h3>
-                <span class="font-mono text-[10px] text-gray-500">
-                  {{ formatTime(duration) }}
-                </span>
+                </div>
+                <div>
+                  <h3 class="text-white font-semibold text-sm">
+                    Generated Audio
+                  </h3>
+                  <p class="text-xs text-gray-400">
+                    {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
+                  </p>
+                </div>
               </div>
-
-              <audio
-                ref="audioRef"
-                class="hidden"
-              />
-
-              <!-- Progress Bar -->
-              <SeekableProgressBar
-                :current-time="currentTime"
-                :duration="duration"
-                @seek="(ratio) => { if (audioElement && duration) audioElement.currentTime = ratio * duration }"
-              />
-
-              <!-- Time Display -->
-              <div class="flex justify-between font-mono text-[10px] text-gray-500">
-                <span>{{ formatTime(currentTime) }}</span>
-                <span>{{ formatTime(duration) }}</span>
-              </div>
-
-              <!-- Controls -->
-              <div class="flex items-center justify-center gap-3">
-                <PlayPauseButton
-                  :is-playing="isPlaying"
-                  :is-paused="isPaused"
-                  :is-loading="isLoading"
-                  @toggle="togglePlayPause"
-                />
-
+              <div class="flex items-center gap-2">
                 <button
-                  aria-label="Download audio"
-                  class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-700 text-gray-200 transition-transform active:scale-95 hover:bg-gray-600"
+                  class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-white text-gray-400 transition-colors"
+                  title="Download MP3"
                   @click="handleDownload"
                 >
                   <span
                     aria-hidden="true"
-                    class="i-lucide-download h-4 w-4"
+                    class="i-lucide-download-simple"
+                  />
+                </button>
+                <button
+                  class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-red-400 text-gray-400 transition-colors"
+                  title="Close Player"
+                  @click="handleClosePlayer"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="i-lucide-x"
                   />
                 </button>
               </div>
             </div>
-          </Transition>
 
-          <!-- Footer -->
-          <footer class="pt-2 text-center text-[10px] text-gray-500">
-            <p>Lughat Chat — Arabic Text-to-Speech</p>
-            <p class="mt-1">
-              Powered by Nuxt and UnoCSS
-            </p>
-          </footer>
-        </div>
+            <!-- Heatmap Waveform Container -->
+            <div class="w-full bg-studio-900 rounded-lg border border-studio-700 p-4 flex items-center gap-4">
+              <button
+                class="w-12 h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0"
+                @click="togglePlayPause"
+              >
+                <span
+                  v-if="isPlaying"
+                  aria-hidden="true"
+                  class="i-lucide-pause text-xl"
+                />
+                <span
+                  v-else
+                  aria-hidden="true"
+                  class="i-lucide-play text-xl ml-1"
+                />
+              </button>
 
-        <!-- Floating Keyboard Hint (bottom-right of canvas) -->
-        <div class="fixed bottom-4 right-4">
-          <div
-            class="rounded-lg bg-gray-800/90 px-3 py-2 text-[10px] text-gray-400 shadow-lg backdrop-blur-sm"
-          >
-            <KeyboardHint />
+              <!-- Canvas for dynamic waveform -->
+              <div class="flex-1 h-12 relative w-full overflow-hidden">
+                <WaveformCanvas
+                  :is-playing="isPlaying"
+                  :current-time="currentTime"
+                  :duration="duration"
+                />
+              </div>
+
+              <span class="text-xs font-mono text-gray-400 flex-shrink-0 w-10 text-right">
+                {{ formatTime(duration) }}
+              </span>
+            </div>
           </div>
-        </div>
+        </Transition>
       </main>
     </div>
+
+    <!-- Hidden audio element -->
+    <audio
+      ref="audioRef"
+      class="hidden"
+    />
   </div>
 </template>
 
 <style>
 /* ===================================
-   Page Block (tts-page)
+   Global Styles (fixed dark theme)
    =================================== */
-.min-h-screen {
-  @apply min-h-screen relative overflow-hidden;
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Custom scrollbar for dark UI */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #121212;
+}
+::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3A3A3A;
 }
 
 /* ===================================
-   Transition Animations
+   Slide-Up Player Animation
    =================================== */
-.slide-up-enter-active,
-.slide-up-leave-active {
-  transition: transform, opacity 0.3s ease;
+.slide-up-player-enter-active,
+.slide-up-player-leave-active {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.slide-up-enter-from,
-.slide-up-leave-to {
+.slide-up-player-enter-from,
+.slide-up-player-leave-to {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(150%);
 }
 
 /* ===================================
-   Focus Styles
+   Focus Halo (radial gradient glow)
    =================================== */
-.tts-input:focus-visible,
-select:focus-visible {
-  outline: none;
-}
-
-/* ===================================
-   Toast Block (tts-toast)
-   =================================== */
-.tts-toast {
-  @apply fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 bg-gray-800 rounded-lg shadow-xl border border-gray-700 flex items-center gap-3 max-w-md;
-
-  &--error {
-    @apply border-red-700;
-  }
-
-  &__icon {
-    @apply w-5 h-5 text-red-500 flex-shrink-0;
-  }
-
-  &__message {
-    @apply text-sm text-white flex-1;
-  }
-
-  &__close {
-    @apply w-5 h-5 text-gray-400 hover:text-gray-200 transition-colors cursor-pointer;
-  }
-}
-
-.tts-toast-enter-active,
-.tts-toast-leave-active {
-  transition: transform, opacity 0.3s ease;
-}
-
-.tts-toast-enter-from,
-.tts-toast-leave-to {
+.canvas-halo {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 100px;
+  background: radial-gradient(ellipse at center, rgba(255, 81, 47, 0.15) 0%, rgba(221, 36, 118, 0.05) 50%, transparent 70%);
+  filter: blur(20px);
   opacity: 0;
-  transform: translate(-50%, -20px);
+  transition: opacity 0.5s ease-in-out;
+  pointer-events: none;
+}
+
+.canvas-halo.active {
+  opacity: 1;
 }
 
 /* ===================================
-   Margin Top Utility
+   Hidden utility
    =================================== */
-.mt-1 {
-  @apply mt-1;
+.hidden {
+  @apply hidden;
 }
 </style>

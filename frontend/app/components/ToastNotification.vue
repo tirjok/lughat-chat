@@ -9,21 +9,21 @@ const toast = useToast()
     <div
       v-if="toast.visible"
       aria-live="polite"
-      class="tts-toast tts-toast--error"
+      class="fixed top-4 right-4 z-50 p-3 bg-studio-800 rounded-lg shadow-xl border border-studio-700 flex items-center gap-3 max-w-md"
       dir="ltr"
     >
-      <div class="tts-toast__icon">
+      <div class="w-5 h-5 text-green-400 flex-shrink-0">
         <span
           aria-hidden="true"
-          class="i-lucide-alert-circle"
+          class="i-lucide-check-circle"
         />
       </div>
-      <p class="tts-toast__message">
+      <p class="text-sm text-white flex-1">
         {{ toast.message }}
       </p>
       <button
         aria-label="Close notification"
-        class="tts-toast__close"
+        class="w-5 h-5 text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
         @click="toast.visible = false"
       >
         <span
@@ -36,26 +36,6 @@ const toast = useToast()
 </template>
 
 <style>
-.tts-toast {
-  @apply fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 flex items-center gap-3 max-w-md;
-
-  &--error {
-    @apply border-red-300 dark:border-red-700;
-  }
-
-  &__icon {
-    @apply w-5 h-5 text-red-500 flex-shrink-0;
-  }
-
-  &__message {
-    @apply text-sm text-gray-900 dark:text-white flex-1;
-  }
-
-  &__close {
-    @apply w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer;
-  }
-}
-
 .tts-toast-enter-active,
 .tts-toast-leave-active {
   transition: transform, opacity 0.3s ease;
@@ -64,6 +44,6 @@ const toast = useToast()
 .tts-toast-enter-from,
 .tts-toast-leave-to {
   opacity: 0;
-  transform: translate(-50%, -20px);
+  transform: translate(50%, -20px);
 }
 </style>
