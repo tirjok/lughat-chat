@@ -267,6 +267,7 @@ function handleClosePlayer() {
         <AudioPlayerPanel
           :visible="playerVisible && !!audioUrl"
           :is-playing="isPlaying"
+          :is-paused="isPaused"
           :current-time="currentTime"
           :duration="duration"
           :audio-url="audioUrl"

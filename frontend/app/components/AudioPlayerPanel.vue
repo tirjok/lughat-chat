@@ -4,6 +4,7 @@ import WaveformCanvas from './WaveformCanvas.vue'
 interface Props {
   visible: boolean
   isPlaying: boolean
+  isPaused: boolean
   currentTime: number
   duration: number
   audioUrl: string | null
@@ -15,7 +16,7 @@ interface Emits {
   (e: 'close' | 'toggle' | 'download'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 function formatTime(seconds: number): string {
@@ -87,7 +88,7 @@ function formatTime(seconds: number): string {
           @click="emit('toggle')"
         >
           <span
-            v-if="isPlaying"
+            v-if="props.isPlaying && !props.isPaused"
             aria-hidden="true"
             class="i-lucide-pause text-xl"
           />
