@@ -171,21 +171,7 @@ function handleKeyDown(event: KeyboardEvent) {
                 />
                 Speech Speed
               </label>
-              <div class="flex items-center gap-3">
-                <input
-                  id="speed-slider"
-                  v-model.number="speedValue"
-                  type="range"
-                  min="0.5"
-                  max="2.0"
-                  step="0.1"
-                  class="h-1.5 w-full appearance-none cursor-pointer rounded-lg bg-gray-600 accent-blue-500"
-                  autocomplete="off"
-                >
-                <div class="min-w-[3rem] text-sm font-semibold text-blue-400">
-                  {{ speedValue }}x
-                </div>
-              </div>
+              <SpeedSlider v-model="speedValue" />
             </div>
           </div>
 
@@ -320,33 +306,6 @@ function handleKeyDown(event: KeyboardEvent) {
 .slide-up-leave-to {
   opacity: 0;
   transform: translateY(20px);
-}
-
-/* ===================================
-   Range Slider Thumb
-   =================================== */
-input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #3b82f6;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.2);
-  }
-}
-
-input[type='range']::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #3b82f6;
-  cursor: pointer;
-  border: none;
 }
 
 /* ===================================
