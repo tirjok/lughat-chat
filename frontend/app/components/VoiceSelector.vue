@@ -108,9 +108,8 @@ onUnmounted(() => {
     <!-- Dropdown Trigger -->
     <button
       ref="triggerRef"
-      class="w-full bg-studio-900 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group"
+      class="w-full bg-studio-900 border rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group"
       :class="isOpen ? 'border-sunrise-orange' : 'border-studio-700 hover:border-sunrise-orange/50'"
-      style="border-width: 1px;"
       @click="toggleDropdown"
     >
       <div
@@ -125,7 +124,7 @@ onUnmounted(() => {
       >
         <span
           aria-hidden="true"
-          class="i-lucide-waveform text-2xl"
+          class="i-lucide-audio-waveform text-2xl"
           :class="getVoiceColorClass(displayVoice)"
           :style="`filter: drop-shadow(0 0 8px ${getShadowColor(displayVoice)});`"
         />
@@ -147,7 +146,7 @@ onUnmounted(() => {
       </span>
 
       <span
-        class="i-lucide-chevron-down text-gray-400 transition-transform duration-300"
+        class="i-lucide-chevron-down text-gray-400"
         :class="{ 'rotate-180': isOpen }"
         style="transition: transform 0.3s;"
       />
@@ -185,7 +184,7 @@ onUnmounted(() => {
               >
                 <span
                   aria-hidden="true"
-                  class="i-lucide-waveform text-gray-500 transition-colors text-lg"
+                  class="i-lucide-audio-waveform text-gray-500 transition-colors text-lg"
                   :class="[
                     voice.id === modelValue
                       ? 'text-sunrise-orange'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Audio player composable for playback state management
-// Toast notification for API errors
+// Full-page TTS Studio — complete integration of all 6 components
+// Two-panel layout: Left (Control Deck) + Right (Canvas)
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import { computed, nextTick, shallowRef, watch } from 'vue'
 import { showToast } from '../composables/useToast'
@@ -54,6 +54,12 @@ const validationState = computed(() =>
 )
 const isValid = computed(() => validationState.value.isValid)
 const validationError = computed(() => validationState.value.error)
+const charCount = computed(() => textInput.value.length)
+const isNearLimit = computed(() => {
+  const ratio = charCount.value / 3000
+  return ratio >= 0.8 && charCount.value <= 3000
+})
+const isOverLimit = computed(() => charCount.value > 3000)
 
 async function handleSynthesize() {
   audioError.value = null
@@ -104,6 +110,10 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 }
 
+function handleClearText() {
+  textInput.value = ''
+}
+
 function handleClosePlayer() {
   playerVisible.value = false
   const el = audioRef.value
@@ -122,9 +132,12 @@ function handleClosePlayer() {
     dir="ltr"
     @keydown="handleKeyDown"
   >
+    <!-- Toast Notification Container -->
+    <ToastNotification />
+
     <!-- Two-Panel Layout -->
     <div class="flex h-screen w-screen">
-      <!-- LEFT PANEL: The Control Deck -->
+      <!-- LEFT PANEL: The Control Deck (30% desktop, 100% mobile) -->
       <aside class="w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl">
         <!-- Header with gradient fade -->
         <header
@@ -135,7 +148,7 @@ function handleClosePlayer() {
             <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <span
                 aria-hidden="true"
-                class="i-lucide-volume-2 text-sunrise-orange"
+                class="i-lucide-volume text-sunrise-orange"
               />
               Lughat<span style="color: #DD2476;">Chat</span>
             </h1>
@@ -144,33 +157,13 @@ function handleClosePlayer() {
             </p>
           </div>
 
-          <!-- Status Indicator -->
-          <div
-            class="flex items-center gap-2 bg-studio-900 px-3 py-1.5 rounded-full border border-studio-700"
-          >
-            <span
-              v-if="modelStatus === 'loading'"
-              aria-hidden="true"
-              class="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse"
-            />
-            <span
-              v-else-if="modelStatus === 'ready'"
-              aria-hidden="true"
-              class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"
-            />
-            <span
-              v-else
-              aria-hidden="true"
-              class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"
-            />
-            <span class="text-xs font-medium text-gray-300">
-              {{ modelStatus === 'loading' ? 'Loading...' : modelStatus === 'ready' ? 'Ready' : 'Error' }}
-            </span>
-          </div>
+          <!-- Status Indicator (pill style) -->
+          <ModelStatusIndicator />
         </header>
 
         <!-- Controls Container -->
         <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-8">
+          <!-- Voice Selection -->
           <VoiceSelector
             v-model="selectedSpeaker"
             :voices="speakerVoices"
@@ -191,9 +184,9 @@ function handleClosePlayer() {
         </div>
       </aside>
 
-      <!-- RIGHT PANEL: The Canvas -->
+      <!-- RIGHT PANEL: The Canvas (70% desktop, 100% mobile) -->
       <main class="w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden">
-        <!-- Focus Halo (behind textarea) -->
+        <!-- Focus Halo (radial gradient glow behind textarea) -->
         <FocusHaloCanvas :focused="!!textInput" />
 
         <!-- Header / Context -->
@@ -206,11 +199,16 @@ function handleClosePlayer() {
             Editor Canvas
           </h2>
           <div class="flex items-center gap-4 text-sm text-gray-500">
-            <span class="font-mono">{{ textInput.length }} / 3000</span>
+            <span
+              class="font-mono"
+              :class="{ 'text-red-400': isOverLimit, 'text-amber-400': isNearLimit, 'text-gray-500': !isNearLimit && !isOverLimit }"
+            >
+              {{ charCount }} / 3000
+            </span>
             <button
               class="hover:text-white transition-colors"
               title="Clear Canvas"
-              @click="textInput = ''"
+              @click="handleClearText"
             >
               <span
                 aria-hidden="true"
@@ -225,8 +223,13 @@ function handleClosePlayer() {
           <textarea
             v-model="textInput"
             dir="rtl"
-            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-3xl md:text-5xl leading-[2] text-gray-200 placeholder-gray-700 scroll-smooth z-10"
-            style="caret-color: #FF512F;"
+            class="w-full h-full bg-transparent border-none outline-none resize-none text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+            style="
+              font-family: 'Cairo', sans-serif;
+              font-size: clamp(1.5rem, 3vw, 3rem);
+              line-height: 2;
+              caret-color: #FF512F;
+            "
             placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           />
         </div>
@@ -240,7 +243,7 @@ function handleClosePlayer() {
           to generate
         </div>
 
-        <!-- Audio Player Panel -->
+        <!-- Audio Player Panel (slides up from bottom) -->
         <AudioPlayerPanel
           :visible="playerVisible && !!audioUrl"
           :is-playing="isPlaying"
@@ -287,7 +290,7 @@ html, body {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3A3A2A;
+  background: #3A3A3A;
 }
 
 /* ===================================

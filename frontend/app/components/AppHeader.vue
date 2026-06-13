@@ -13,7 +13,7 @@ const { status, modelLoaded } = useHealthPoll()
       <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
         <span
           aria-hidden="true"
-          class="i-lucide-volume-2 text-sunrise-orange"
+          class="i-lucide-volume text-sunrise-orange"
         />
         Lughat<span style="color: #DD2476;">Chat</span>
       </h1>

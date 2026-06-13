@@ -25,7 +25,7 @@ const emit = defineEmits<{
     >
       <span
         aria-hidden="true"
-        class="i-lucide-play-circle text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"
+        class="i-lucide-circle-play text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"
       />
       <span class="font-bold text-white tracking-wide">Generate Speech</span>
     </div>

@@ -41,7 +41,7 @@ function formatTime(seconds: number): string {
           >
             <span
               aria-hidden="true"
-              class="i-lucide-music text-white text-sm"
+              class="i-lucide-music-2 text-white"
             />
           </div>
           <div>

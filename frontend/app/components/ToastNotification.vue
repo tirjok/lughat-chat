@@ -7,7 +7,7 @@ const toasts = useToast()
 function toastIconClass(type: ToastType): string {
   switch (type) {
     case 'error': return 'text-red-400 i-lucide-alert-circle text-lg'
-    case 'info': return 'text-blue-400 i-lucide-info text-lg'
+    case 'info': return 'text-blue-400 i-lucide-badge-info text-lg'
     default: return 'text-green-400 i-lucide-check-circle text-lg'
   }
 }

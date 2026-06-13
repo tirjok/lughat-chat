@@ -24,7 +24,7 @@ describe('AppHeader', () => {
   })
 
   describe('icon', () => {
-    it('renders the waves (volume-2) icon', () => {
+    it('renders the volume icon', () => {
       vi.mocked(useHealthPoll).mockReturnValue({
         status: mockStatus,
         modelLoaded: mockModelLoaded
@@ -33,7 +33,7 @@ describe('AppHeader', () => {
       const wrapper = mount(AppHeader)
 
       // Lucide icon via UnoCSS preset
-      const icon = wrapper.find('.i-lucide-volume-2')
+      const icon = wrapper.find('.i-lucide-volume')
       expect(icon.exists()).toBe(true)
     })
   })

@@ -92,7 +92,7 @@ function handleSeek(ratio: number) {
 
 <style>
 .tts-audio-player-container {
-  @apply space-y-3 pt-4 border-t border-gray-200/60 dark:border-gray-700/60;
+  @apply space-y-3 pt-4 border-t border-studio-700;
 }
 
 .tts-audio {
@@ -101,19 +101,19 @@ function handleSeek(ratio: number) {
   }
 
   &__title {
-    @apply text-xs font-semibold text-gray-700 dark:text-gray-300;
+    @apply text-xs font-semibold text-studio-text;
   }
 
   &__duration {
-    @apply text-[10px] font-mono text-gray-400 dark:text-gray-500;
+    @apply text-[10px] font-mono text-gray-400;
   }
 
   &__container {
-    @apply bg-gray-50/60 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 space-y-2.5;
+    @apply bg-studio-900 rounded-xl p-4 space-y-2.5;
   }
 
   &__time {
-    @apply flex justify-between text-[10px] font-mono text-gray-500 dark:text-gray-400;
+    @apply flex justify-between text-[10px] font-mono text-gray-500;
   }
 
   &__controls {
