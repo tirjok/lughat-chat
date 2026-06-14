@@ -55,6 +55,12 @@ function updateFromEvent(event: PointerEvent) {
   const stepped = Math.round(value / 0.1) * 0.1
   emit('update:modelValue', Math.max(0.5, Math.min(2.0, stepped)))
 }
+
+function adjustSpeed(delta: number) {
+  const stepped = Math.round(clampedValue.value / 0.1) * 0.1
+  const newValue = Math.max(0.5, Math.min(2.0, stepped + delta))
+  emit('update:modelValue', newValue)
+}
 </script>
 
 <template>
@@ -72,9 +78,11 @@ function updateFromEvent(event: PointerEvent) {
       </span>
     </div>
 
+    <!-- Desktop: Horizontal slider (≥768px) -->
     <div
       ref="sliderRef"
-      class="speed-slider__track relative h-6 cursor-pointer select-none touch-none"
+      class="speed-slider__track relative h-6 cursor-pointer select-none"
+      :style="{ touchAction: 'pan-y' }"
       @pointerdown="handlePointerDown"
       @pointermove="handlePointerMove"
       @pointerup="handlePointerUp"
@@ -107,6 +115,37 @@ function updateFromEvent(event: PointerEvent) {
         >1.0x</span>
         <span class="absolute right-0">2.0x</span>
       </div>
+    </div>
+
+    <!-- Mobile: Stepper buttons (<768px) -->
+    <div class="md:hidden flex items-center justify-center gap-4">
+      <button
+        class="w-11 h-11 rounded-full bg-studio-700 border border-studio-600 text-white flex items-center justify-center shadow-md hover:bg-studio-600 active:scale-95 transition-all"
+        :class="{ 'opacity-40 cursor-not-allowed': clampedValue <= 0.5 }"
+        :aria-label="`Decrease speed to ${(clampedValue - 0.1).toFixed(1)}x`"
+        @click="adjustSpeed(-0.1)"
+      >
+        <span
+          aria-hidden="true"
+          class="i-lucide-minus text-lg"
+        />
+      </button>
+
+      <span class="text-xl font-mono text-sunrise-orange bg-studio-900 px-4 py-2 rounded-lg border border-studio-700 min-w-[4rem] text-center">
+        {{ displayValue }}
+      </span>
+
+      <button
+        class="w-11 h-11 rounded-full bg-studio-700 border border-studio-600 text-white flex items-center justify-center shadow-md hover:bg-studio-600 active:scale-95 transition-all"
+        :class="{ 'opacity-40 cursor-not-allowed': clampedValue >= 2.0 }"
+        :aria-label="`Increase speed to ${(clampedValue + 0.1).toFixed(1)}x`"
+        @click="adjustSpeed(0.1)"
+      >
+        <span
+          aria-hidden="true"
+          class="i-lucide-plus text-lg"
+        />
+      </button>
     </div>
   </div>
 </template>
