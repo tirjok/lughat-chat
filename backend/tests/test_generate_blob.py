@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from app import app
 
@@ -30,26 +30,41 @@ def _mock_tts_model():
     return MockTTS()
 
 
+def _make_mock_wav():
+    """Build a MagicMock that looks like a valid WAV file for _validate_speaker_wav."""
+    mock = MagicMock()
+    mock.getnframes.return_value = int(22050 * 0.5)
+    mock.getframerate.return_value = 22050
+    mock.getnchannels.return_value = 1
+    mock.getsampwidth.return_value = 2
+    return mock
+
+
 def _setup_mock_model():
     """Set up mock TTS model in app module without creating physical files.
 
     Mocks os.path.exists so the backend's speaker_wav file check passes,
-    and replaces tts_model with a mock that generates valid WAV output.
+    and mocks wave.open so _validate_speaker_wav() can read duration without
+    actual files on disk.
     """
     import app as main_app
 
-    speaker_wav_dir = os.path.join(main_app.__path__[0], "speaker_wavs")
+    speaker_wav_dir = os.path.join(os.path.dirname(main_app.__file__), "speaker_wavs")
+    _mock_wav = _make_mock_wav()
 
     def _mock_path_exists(path):
-        """Return True for speaker_wav paths, False otherwise."""
         if isinstance(path, str) and path.startswith(speaker_wav_dir + os.sep):
             return True
         return _original_path_exists(path)
 
+    def _mock_wave_open(path, mode="r"):
+        return _mock_wav
+
     _original_path_exists = os.path.exists
     with patch("os.path.exists", side_effect=_mock_path_exists):
-        main_app.tts_model = _mock_tts_model()
-        main_app.model_load_status = "ready"
+        with patch.object(main_app, "wave", open_side_effect=_mock_wave_open):
+            main_app.tts_model = _mock_tts_model()
+            main_app.model_load_status = "ready"
 
 
 def test_generate_speech_returns_mp3_blob():
