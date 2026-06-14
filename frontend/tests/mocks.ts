@@ -1,6 +1,16 @@
 import { vi } from 'vitest'
 import { ref, computed, type Ref } from 'vue'
 
+// ─── Breakpoint Simulation Helper ─────────────────────────────────────
+// Sets window.innerWidth to simulate a specific device breakpoint.
+// Call this before mounting components that depend on responsive state.
+//
+// Common breakpoints: 375 (iPhone SE), 414 (iPhone Max), 768 (iPad), 1024 (tablet)
+export function setBreakpoint(width: number): void {
+  Object.defineProperty(window, 'innerWidth', { value: width, writable: true })
+  Object.defineProperty(window, 'innerHeight', { value: Math.max(600, width * 0.6), writable: true })
+}
+
 // ─── Audio Player Mock Factory ───────────────────────────────────────
 // Returns reactive refs + mock methods matching useAudioPlayer's real interface.
 // Use this in vi.mock() callbacks for component tests that depend on useAudioPlayer.

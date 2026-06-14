@@ -108,19 +108,24 @@ body {
 
 /* Reduced motion: slow down or disable animations */
 @media (prefers-reduced-motion: reduce) {
-  .panel-slide-enter {
-    animation: none !important;
-  }
-  .panel-slide-leave {
-    animation: none !important;
-  }
+  /* Spinners continue but at reduced speed (2x slower) */
   .animate-spin {
     animation-duration: 2s;
   }
   .animate-spin-slow {
     animation-duration: 8s;
   }
+  /* Pulse-glow animation is disabled */
   .animate-pulse-glow {
     animation: none;
+  }
+  /* Panel slide transitions reduced to 50ms (no opacity change) */
+  .panel-slide-enter {
+    animation-duration: 50ms !important;
+    animation-fill-mode: forwards;
+  }
+  .panel-slide-leave {
+    animation-duration: 50ms !important;
+    animation-fill-mode: forwards;
   }
 }

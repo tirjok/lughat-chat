@@ -414,4 +414,85 @@ describe('AudioPlayerPanel', () => {
       expect(componentSource).toContain('translateY(150%)')
     })
   })
+
+  // ─── Responsive Flex Direction Tests ──────────────────────────────────
+
+  describe('responsive flex direction (mobile vs desktop)', () => {
+    it('flex direction is flex-col on mobile widths (<768px)', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Mobile layout: flex-col stacks play button above waveform
+      expect(html).toContain('flex flex-col gap-3')
+      // The mobile waveform container should have md:hidden (hidden on desktop)
+      expect(html).toContain('md:hidden')
+      // Verify the source uses responsive flex-col for mobile
+      const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
+      const source = fs.readFileSync(componentPath, 'utf-8')
+      expect(source).toContain('flex flex-col gap-3')
+    })
+
+    it('flex direction is flex-row on desktop widths (≥768px)', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Desktop layout: flex (row) puts play | waveform | duration in a row
+      expect(html).toContain('md:flex')
+      expect(html).toContain('md:items-center')
+      // Verify the source has responsive flex-row for desktop
+      const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
+      const source = fs.readFileSync(componentPath, 'utf-8')
+      expect(source).toContain('md:flex')
+      expect(source).toContain('md:items-center')
+      expect(source).toContain('md:gap-4')
+    })
+
+    it('touch targets are 44px+ on mobile (WCAG compliance)', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Download/close buttons: 44px (w-11 h-11) on mobile
+      expect(html).toContain('w-11 h-11')
+      // Play/pause button: 48px (w-12 h-12) on mobile for WCAG
+      expect(html).toContain('w-12 h-12')
+      // Verify the source has responsive sizing
+      const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
+      const source = fs.readFileSync(componentPath, 'utf-8')
+      expect(source).toContain('w-11 h-11 md:w-10 md:h-10')
+      expect(source).toContain('w-12 h-12')
+    })
+  })
 })
