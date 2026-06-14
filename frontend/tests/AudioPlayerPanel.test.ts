@@ -307,8 +307,8 @@ describe('AudioPlayerPanel', () => {
       const html = wrapper.html()
       // Mobile waveform container uses flex-col (stacked: play button above waveform)
       expect(html).toContain('flex flex-col gap-3')
-      // Mobile layout is hidden on desktop (md:hidden)
-      expect(html).toContain('md:hidden')
+      // Outer wrapper is responsive: narrow on mobile, full on desktop
+      expect(html).toContain('w-[92%] md:w-full mx-auto')
     })
 
     it('renders desktop horizontal layout with flex on the waveform container', () => {
@@ -370,9 +370,9 @@ describe('AudioPlayerPanel', () => {
       })
 
       const html = wrapper.html()
-      // Mobile panel is narrower so it doesn't cover the entire textarea
-      expect(html).toContain('w-[92%] mx-auto')
-      expect(html).toContain('md:hidden')
+      // Mobile panel is narrower (92%) so it doesn't cover the entire textarea
+      // On desktop the wrapper expands to full width (responsive, not hidden)
+      expect(html).toContain('w-[92%] md:w-full mx-auto')
     })
 
     it('preserves the visible prop and close/toggle/download emits', () => {
@@ -435,8 +435,8 @@ describe('AudioPlayerPanel', () => {
       const html = wrapper.html()
       // Mobile layout: flex-col stacks play button above waveform
       expect(html).toContain('flex flex-col gap-3')
-      // The mobile waveform container should have md:hidden (hidden on desktop)
-      expect(html).toContain('md:hidden')
+      // Outer wrapper is responsive: 92% width on mobile, full on desktop
+      expect(html).toContain('w-[92%] md:w-full mx-auto')
       // Verify the source uses responsive flex-col for mobile
       const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
       const source = fs.readFileSync(componentPath, 'utf-8')

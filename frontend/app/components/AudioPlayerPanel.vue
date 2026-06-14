@@ -31,13 +31,13 @@ function formatTime(seconds: number): string {
   <Transition name="slide-up-player">
     <div
       v-if="visible"
-      class="absolute bottom-0 left-0 w-full md:w-auto md:right-0 bg-studio-800 border-t border-studio-700 p-6 flex flex-col gap-4 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+      class="absolute bottom-0 left-0 w-full md:right-0 bg-studio-800 border-t border-studio-700 p-6 flex flex-col gap-4 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
       style="border-left: 1px solid #333333; border-right: 1px solid #333333"
     >
       <!-- Mobile: narrower bottom sheet so it doesn't cover the entire textarea -->
-      <div class="md:hidden w-[92%] mx-auto">
+      <div class="w-[92%] md:w-full mx-auto">
         <!-- Player Header -->
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center px-4">
           <div class="flex items-center gap-3">
             <!-- Gradient audio icon -->
             <div
@@ -122,7 +122,7 @@ function formatTime(seconds: number): string {
 
         <!-- Mobile (<768px): stacked layout — Play above Waveform -->
         <div
-          class="md:hidden w-full bg-studio-900 rounded-lg border border-studio-700 p-4 flex flex-col gap-3"
+          class="w-full bg-studio-900 rounded-lg border border-studio-700 p-4 flex flex-col gap-3"
         >
           <!-- Play/Pause button — full-width on mobile, enlarged to 48px for WCAG touch targets -->
           <button
