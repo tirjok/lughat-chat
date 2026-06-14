@@ -91,22 +91,19 @@ def test_list_voices_returns_voice_array():
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) == 3  # aisha, laila, tariq
+    assert len(data) == 4  # female, male, KSA Hamed - Male, KSA Zariyah - Female
 
-    # Verify preset structure (id, name, dialect, speaker_wav)
+    # Verify structure (id, name)
     ids = [v["id"] for v in data]
-    assert "aisha" in ids
-    assert "laila" in ids
-    assert "tariq" in ids
+    assert "female" in ids
+    assert "male" in ids
     for v in data:
         assert "id" in v
         assert "name" in v
-        assert "dialect" in v
-        assert "speaker_wav" in v
 
 
 def test_api_voices_uses_discover_voices():
-    """GET /api/voices returns the hardcoded VOICES preset list (not discover_voices)."""
+    """GET /api/voices returns the discovered voices from speaker_wavs/."""
     from fastapi.testclient import TestClient
 
     client = TestClient(app)
@@ -114,15 +111,14 @@ def test_api_voices_uses_discover_voices():
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 3  # aisha, laila, tariq
+    assert len(data) == 4  # female, male, KSA Hamed - Male, KSA Zariyah - Female
     ids = [v["id"] for v in data]
-    assert "aisha" in ids
-    assert "laila" in ids
-    assert "tariq" in ids
+    assert "female" in ids
+    assert "male" in ids
 
 
 def test_list_voices_includes_both_genders():
-    """GET /api/voices returns both female (aisha, laila) and male (tariq) voice presets."""
+    """GET /api/voices returns both female and male voice presets."""
     from fastapi.testclient import TestClient
 
     client = TestClient(app)
@@ -131,8 +127,7 @@ def test_list_voices_includes_both_genders():
 
     data = response.json()
     ids = [v["id"] for v in data]
-    # Female presets
-    assert "aisha" in ids
-    assert "laila" in ids
+    # Female preset
+    assert "female" in ids
     # Male preset
-    assert "tariq" in ids
+    assert "male" in ids
