@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 from app import app
 
@@ -30,25 +31,25 @@ def _mock_tts_model():
 
 
 def _setup_mock_model():
-    """Set up mock TTS model in app module."""
+    """Set up mock TTS model in app module without creating physical files.
+
+    Mocks os.path.exists so the backend's speaker_wav file check passes,
+    and replaces tts_model with a mock that generates valid WAV output.
+    """
     import app as main_app
 
-    # Create speaker_wav directory and files for the mock
-    speaker_wav_dir = os.path.join(os.path.dirname(main_app.__file__), "speaker_wavs")
-    os.makedirs(speaker_wav_dir, exist_ok=True)
-    for voice in ["female", "male"]:
-        path = os.path.join(speaker_wav_dir, f"{voice}.wav")
-        import wave
+    speaker_wav_dir = os.path.join(main_app.__path__[0], "speaker_wavs")
 
-        with wave.open(path, "w") as wav_file:
-            wav_file.setnchannels(1)
-            wav_file.setsampwidth(2)
-            wav_file.setframerate(22050)
-            # 0.5s of silence (well above XTTS minimum duration of 0.33s)
-            samples = b"\x00\x00" * int(22050 * 0.5)
-            wav_file.writeframes(samples)
-    main_app.tts_model = _mock_tts_model()
-    main_app.model_load_status = "ready"
+    def _mock_path_exists(path):
+        """Return True for speaker_wav paths, False otherwise."""
+        if isinstance(path, str) and path.startswith(speaker_wav_dir + os.sep):
+            return True
+        return _original_path_exists(path)
+
+    _original_path_exists = os.path.exists
+    with patch("os.path.exists", side_effect=_mock_path_exists):
+        main_app.tts_model = _mock_tts_model()
+        main_app.model_load_status = "ready"
 
 
 def test_generate_speech_requires_text():
@@ -215,23 +216,19 @@ def test_generate_speech_accepts_default_parameters():
 def test_generate_speech_with_custom_voice_works():
     """POST /api/generate accepts a custom voice name and generates speech when the WAV file exists."""
     import app as main_app
+    from fastapi.testclient import TestClient
 
-    # Create a custom voice WAV file in speaker_wavs/ (>= 0.33s for XTTS validation)
-    speaker_wav_dir = os.path.join(os.path.dirname(main_app.__file__), "speaker_wavs")
-    custom_wav = os.path.join(speaker_wav_dir, "custom_voice.wav")
-    import wave
+    speaker_wav_dir = os.path.join(main_app.__path__[0], "speaker_wavs")
 
-    with wave.open(custom_wav, "w") as wav_file:
-        wav_file.setnchannels(1)
-        wav_file.setsampwidth(2)
-        wav_file.setframerate(22050)
-        # 0.5s of silence (well above XTTS minimum duration)
-        samples = b"\x00\x00" * int(22050 * 0.5)
-        wav_file.writeframes(samples)
-    try:
-        _setup_mock_model()
+    def _mock_path_exists(path):
+        if isinstance(path, str) and path.startswith(speaker_wav_dir + os.sep):
+            return True
+        return _original_path_exists(path)
 
-        from fastapi.testclient import TestClient
+    _original_path_exists = os.path.exists
+    with patch("os.path.exists", side_effect=_mock_path_exists):
+        main_app.tts_model = _mock_tts_model()
+        main_app.model_load_status = "ready"
 
         client = TestClient(app)
 
@@ -241,8 +238,6 @@ def test_generate_speech_with_custom_voice_works():
 
         assert response.status_code == 200
         assert "audio/mpeg" in response.headers["content-type"]
-    finally:
-        os.remove(custom_wav)
 
 
 def test_generate_speech_missing_voice_file_includes_filename():
