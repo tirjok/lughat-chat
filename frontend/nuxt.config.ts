@@ -12,6 +12,12 @@ export default defineNuxtConfig({
   // Inter font for UI labels (Cairo already loaded for Arabic)
   app: {
     head: {
+      meta: [
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1, viewport-fit=cover'
+        }
+      ],
       link: [
         {
           rel: 'preconnect',
@@ -43,11 +49,11 @@ export default defineNuxtConfig({
     // In production, Nginx handles all proxying (see Dockerfile).
     devProxy: {
       '/api/': {
-        target: 'http://localhost:8000/api/',
+        target: 'http://localhost:8090/api/',
         changeOrigin: true
       },
       '/health': {
-        target: 'http://localhost:8000/health',
+        target: 'http://localhost:8090/health',
         changeOrigin: true
       }
     }

@@ -2,8 +2,12 @@
 // Full-page TTS Studio — complete integration of all 6 components
 // Two-panel layout: Left (Control Deck) + Right (Canvas)
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
+import PanelToggle from '../components/PanelToggle.vue'
 import { computed, nextTick, shallowRef, watch } from 'vue'
+import { usePanelToggle } from '../composables/usePanelToggle'
 import { showToast } from '../composables/useToast'
+
+const { activePanel, isMobile, togglePanel } = usePanelToggle()
 
 const {
   audioRef,
@@ -52,6 +56,14 @@ watch(speakerVoices, (v) => {
 const validationState = computed(() =>
   useInputValidation(textInput.value, modelStatus.value)
 )
+
+// Panel announcement for screen readers
+const panelAnnouncement = computed(() => {
+  if (!isMobile.value) return ''
+  return activePanel.value === 'control-deck'
+    ? 'Switched to voice settings panel'
+    : 'Switched to text editor panel'
+})
 const isValid = computed(() => validationState.value.isValid)
 const validationError = computed(() => validationState.value.error)
 const charCount = computed(() => textInput.value.length)
@@ -127,7 +139,7 @@ function handleClosePlayer() {
 
 <template>
   <div
-    class="h-screen w-screen overflow-hidden text-studio-text antialiased"
+    class="h-dvh w-screen overflow-y-auto text-studio-text antialiased"
     style="background-color: #121212;"
     dir="ltr"
     @keydown="handleKeyDown"
@@ -135,20 +147,45 @@ function handleClosePlayer() {
     <!-- Toast Notification Container -->
     <ToastNotification />
 
+    <!-- Screen reader live region for panel announcements -->
+    <div
+      role="status"
+      class="absolute -translate-x-9999 -translate-y-9999 opacity-0 overflow-hidden h-0 w-0"
+      aria-live="polite"
+    >
+      {{ isMobile && panelAnnouncement }}
+    </div>
+
+    <!-- Panel Toggle FAB (mobile only) -->
+    <PanelToggle
+      :active-panel="activePanel"
+      :toggle-panel="togglePanel"
+    />
+
     <!-- Two-Panel Layout -->
     <div class="flex h-screen w-screen">
       <!-- LEFT PANEL: The Control Deck (30% desktop, 100% mobile) -->
-      <aside class="w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl">
-        <!-- Header with gradient fade -->
+      <aside
+        role="region"
+        aria-labelledby="control-deck-heading"
+        data-panel="control-deck"
+        :class="[
+          'w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl md:overflow-y-auto',
+          isMobile && activePanel === 'control-deck' ? 'panel-slide-enter' : '',
+          isMobile && activePanel !== 'control-deck' ? 'panel-slide-leave' : ''
+        ]"
+        style="padding-top: env(safe-area-inset-top);"
+      >
+        <!-- Header with gradient fade (matches sample exactly) -->
         <header
-          class="p-6 border-b border-studio-700 flex justify-between items-center"
-          style="background: linear-gradient(to bottom, #1f1f1f, transparent);"
+          class="p-6 border-b border-studio-700 flex justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent"
         >
           <div>
             <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <span
                 aria-hidden="true"
-                class="i-lucide-volume text-sunrise-orange"
+                class="i-lucide-audio-waveform text-sunrise-orange"
+                style="filter: drop-shadow(0 0 6px rgba(255,81,47,0.6));"
               />
               Lughat<span style="color: #DD2476;">Chat</span>
             </h1>
@@ -162,7 +199,7 @@ function handleClosePlayer() {
         </header>
 
         <!-- Controls Container -->
-        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-8">
+        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-6 border-b border-studio-700">
           <!-- Voice Selection -->
           <VoiceSelector
             v-model="selectedSpeaker"
@@ -171,6 +208,28 @@ function handleClosePlayer() {
 
           <!-- Speed Control -->
           <SpeedSlider v-model="speedValue" />
+
+          <!-- Output Settings (matches sample design) -->
+          <div class="flex flex-col gap-3 border-b border-studio-700 pb-6">
+            <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                class="i-lucide-sliders-horizontal text-lg"
+              />
+              Output Settings
+            </label>
+            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700 shadow-inner">
+              <span class="text-sm text-gray-400">High Quality Audio</span>
+              <button
+                class="w-8 h-4 bg-sunrise-orange rounded-full relative transition-colors duration-300 ease-in-out"
+                title="High Quality Audio (placeholder)"
+              >
+                <span
+                  class="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"
+                />
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Action Area -->
@@ -185,16 +244,26 @@ function handleClosePlayer() {
       </aside>
 
       <!-- RIGHT PANEL: The Canvas (70% desktop, 100% mobile) -->
-      <main class="w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden">
+      <main
+        role="region"
+        aria-labelledby="canvas-heading"
+        data-panel="canvas"
+        :class="[
+          'w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-y-auto md:overflow-hidden',
+          isMobile && activePanel === 'canvas' ? 'panel-slide-enter' : '',
+          isMobile && activePanel !== 'canvas' ? 'panel-slide-leave' : ''
+        ]"
+        style="border-left: 1px solid #333333; padding-bottom: env(safe-area-inset-bottom);"
+      >
         <!-- Focus Halo (radial gradient glow behind textarea) -->
         <FocusHaloCanvas :focused="!!textInput" />
 
         <!-- Header / Context -->
-        <div class="w-full p-8 pb-4 flex justify-between items-center opacity-70">
+        <div class="w-full p-6 pb-4 flex justify-between items-center opacity-70 border-b border-studio-700">
           <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
             <span
               aria-hidden="true"
-              class="i-lucide-keyboard text-lg"
+              class="i-lucide-terminal text-lg"
             />
             Editor Canvas
           </h2>
@@ -206,7 +275,7 @@ function handleClosePlayer() {
               {{ charCount }} / 3000
             </span>
             <button
-              class="hover:text-white transition-colors"
+              class="hover:text-white transition-colors bg-studio-900 border border-studio-700 rounded-full w-8 h-8 flex items-center justify-center"
               title="Clear Canvas"
               @click="handleClearText"
             >
@@ -219,23 +288,18 @@ function handleClosePlayer() {
         </div>
 
         <!-- Text Input Area -->
-        <div class="flex-1 relative w-full max-w-5xl mx-auto px-8 pb-32 flex flex-col">
+        <div class="flex-1 relative w-full max-w-5xl mx-auto px-8 pb-32 flex flex-col border-b border-studio-700">
           <textarea
             v-model="textInput"
             dir="rtl"
-            class="w-full h-full bg-transparent border-none outline-none resize-none text-gray-200 placeholder-gray-700 scroll-smooth z-10"
-            style="
-              font-family: 'Cairo', sans-serif;
-              font-size: clamp(1.5rem, 3vw, 3rem);
-              line-height: 2;
-              caret-color: #FF512F;
-            "
+            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-3xl md:text-5xl leading-relaxed text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+            style="caret-color: #FF512F;"
             placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           />
         </div>
 
-        <!-- Floating Shortcut Hint -->
-        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50">
+        <!-- Floating Shortcut Hint (hidden on mobile) -->
+        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/90 backdrop-blur px-4 py-2 rounded-lg border border-studio-700 hidden sm:flex">
           Press
           <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
           +
@@ -247,6 +311,7 @@ function handleClosePlayer() {
         <AudioPlayerPanel
           :visible="playerVisible && !!audioUrl"
           :is-playing="isPlaying"
+          :is-paused="isPaused"
           :current-time="currentTime"
           :duration="duration"
           :audio-url="audioUrl"

@@ -3,6 +3,8 @@ import { vi } from 'vitest'
 // ─── Browser API Mocks ──────────────────────────────────────────────
 // These are shared across all tests (composable + component).
 
+global.window.devicePixelRatio = 1
+
 global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob') as unknown as typeof global.URL.createObjectURL
 global.URL.revokeObjectURL = vi.fn()
 

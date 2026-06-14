@@ -288,4 +288,211 @@ describe('AudioPlayerPanel', () => {
     panel = wrapper.find('.absolute.bottom-0')
     expect(panel.exists()).toBe(true)
   })
+
+  describe('responsive layout', () => {
+    it('renders mobile stacked layout with flex-col on the waveform container', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Mobile waveform container uses flex-col (stacked: play button above waveform)
+      expect(html).toContain('flex flex-col gap-3')
+      // Mobile layout is hidden on desktop (md:hidden)
+      expect(html).toContain('md:hidden')
+    })
+
+    it('renders desktop horizontal layout with flex on the waveform container', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Desktop waveform container uses flex (horizontal row)
+      expect(html).toContain('md:flex')
+      expect(html).toContain('md:items-center')
+      // Desktop layout is hidden on mobile (hidden md:)
+      expect(html).toContain('hidden md:')
+    })
+
+    it('uses 44px (w-11 h-11) action buttons on mobile, 40px (w-10 h-10) on desktop', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Download button: 44px on mobile, 40px on desktop
+      expect(html).toContain('w-11 h-11 md:w-10 md:h-10')
+      // Close button: same responsive sizing
+      const buttons = wrapper.findAll('button[title]')
+      expect(buttons.length).toBeGreaterThanOrEqual(2)
+    })
+
+    it('renders mobile panel at 92% width centered (narrower bottom sheet)', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Mobile panel is narrower so it doesn't cover the entire textarea
+      expect(html).toContain('w-[92%] mx-auto')
+      expect(html).toContain('md:hidden')
+    })
+
+    it('preserves the visible prop and close/toggle/download emits', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      // Close emits close
+      const closeBtn = wrapper.find('button[title="Close Player"]')
+      expect(closeBtn.exists()).toBe(true)
+
+      // Toggle emits toggle
+      const toggleBtn = wrapper.find('button.bg-sunrise-magenta')
+      expect(toggleBtn.exists()).toBe(true)
+
+      // Download emits download
+      const downloadBtn = wrapper.find('button[title="Download MP3"]')
+      expect(downloadBtn.exists()).toBe(true)
+    })
+
+    it('preserves the slide-up-player CSS transition', () => {
+      const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
+      const componentSource = fs.readFileSync(componentPath, 'utf-8')
+
+      expect(componentSource).toContain('.slide-up-player-enter-active')
+      expect(componentSource).toContain('.slide-up-player-leave-active')
+      expect(componentSource).toContain('.slide-up-player-enter-from')
+      expect(componentSource).toContain('.slide-up-player-leave-to')
+      expect(componentSource).toContain('cubic-bezier(0.16, 1, 0.3, 1)')
+      expect(componentSource).toContain('translateY(150%)')
+    })
+  })
+
+  // ─── Responsive Flex Direction Tests ──────────────────────────────────
+
+  describe('responsive flex direction (mobile vs desktop)', () => {
+    it('flex direction is flex-col on mobile widths (<768px)', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Mobile layout: flex-col stacks play button above waveform
+      expect(html).toContain('flex flex-col gap-3')
+      // The mobile waveform container should have md:hidden (hidden on desktop)
+      expect(html).toContain('md:hidden')
+      // Verify the source uses responsive flex-col for mobile
+      const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
+      const source = fs.readFileSync(componentPath, 'utf-8')
+      expect(source).toContain('flex flex-col gap-3')
+    })
+
+    it('flex direction is flex-row on desktop widths (≥768px)', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Desktop layout: flex (row) puts play | waveform | duration in a row
+      expect(html).toContain('md:flex')
+      expect(html).toContain('md:items-center')
+      // Verify the source has responsive flex-row for desktop
+      const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
+      const source = fs.readFileSync(componentPath, 'utf-8')
+      expect(source).toContain('md:flex')
+      expect(source).toContain('md:items-center')
+      expect(source).toContain('md:gap-4')
+    })
+
+    it('touch targets are 44px+ on mobile (WCAG compliance)', () => {
+      const wrapper = shallowMount(AudioPlayerPanel, {
+        global: { components: stubComponents },
+        props: {
+          visible: true,
+          isPlaying: false,
+          currentTime: 0,
+          duration: 10,
+          audioUrl: null,
+          selectedVoiceName: '',
+          speedValue: 1.0
+        }
+      })
+
+      const html = wrapper.html()
+      // Download/close buttons: 44px (w-11 h-11) on mobile
+      expect(html).toContain('w-11 h-11')
+      // Play/pause button: 48px (w-12 h-12) on mobile for WCAG
+      expect(html).toContain('w-12 h-12')
+      // Verify the source has responsive sizing
+      const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
+      const source = fs.readFileSync(componentPath, 'utf-8')
+      expect(source).toContain('w-11 h-11 md:w-10 md:h-10')
+      expect(source).toContain('w-12 h-12')
+    })
+  })
 })

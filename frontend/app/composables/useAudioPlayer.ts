@@ -61,6 +61,7 @@ export const useAudioPlayer = (options: UseAudioPlayerOptions = {}) => {
   function pause() {
     if (audioRef.value) {
       audioRef.value.pause()
+      isPlaying.value = false
     }
   }
 

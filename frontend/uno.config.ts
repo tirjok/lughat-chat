@@ -1,6 +1,6 @@
 import {
   defineConfig,
-  presetUno,
+  presetWind3,
   presetIcons,
   presetTypography,
   presetWebFonts,
@@ -20,16 +20,30 @@ export default defineConfig({
       studio: {
         900: '#121212',
         800: '#1A1A1A',
-        700: '#2A2A2A'
+        700: '#525252'
       },
       sunrise: {
         orange: '#FF512F',
         magenta: '#DD2476'
       }
+    },
+    // Match Tailwind CSS v3 (sample design) shadow values exactly
+    // UnoCSS presetWind3 uses slightly different values for shadow-2xl
+    boxShadow: {
+      '2xl': '0 35px 60px -15px rgba(0, 0, 0, 0.3)'
+    },
+    // Phone-specific breakpoints for responsive design
+    breakpoints: {
+      'xs': '375px',
+      'sm': '414px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px'
     }
   },
   presets: [
-    presetUno(),
+    presetWind3(),
     presetIcons({
       extraProperties: {
         display: 'inline-block',
