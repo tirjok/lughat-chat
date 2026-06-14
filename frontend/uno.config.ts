@@ -31,6 +31,15 @@ export default defineConfig({
     // UnoCSS presetWind3 uses slightly different values for shadow-2xl
     boxShadow: {
       '2xl': '0 35px 60px -15px rgba(0, 0, 0, 0.3)'
+    },
+    // Phone-specific breakpoints for responsive design
+    breakpoints: {
+      'xs': '375px',
+      'sm': '414px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px'
     }
   },
   presets: [

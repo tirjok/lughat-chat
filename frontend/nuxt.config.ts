@@ -12,6 +12,12 @@ export default defineNuxtConfig({
   // Inter font for UI labels (Cairo already loaded for Arabic)
   app: {
     head: {
+      meta: [
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1, viewport-fit=cover'
+        }
+      ],
       link: [
         {
           rel: 'preconnect',

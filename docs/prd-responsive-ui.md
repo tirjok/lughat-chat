@@ -61,11 +61,13 @@ The existing two-panel layout (`aside` = Control Deck, `main` = Canvas) is prese
 - The panel toggle activates below `md:` (768px), covering both phones and tablets in portrait
 
 ### Panel Toggle Component
-- A new `PanelToggle` component renders a floating action button (FAB) or top-bar toggle on mobile
-- When in Canvas mode, the toggle shows a "back to controls" icon (e.g., `lucide:sliders-horizontal`)
-- When in Control Deck mode, the toggle shows a "to editor" icon (e.g., `lucide:terminal`)
-- The toggle is hidden on desktop (`hidden md:hidden` → actually `hidden sm:md:block` — i.e., visible only below md)
-- Panel transitions use a slide animation (CSS `transform: translateX`) for visual continuity
+- A new `PanelToggle` component renders as a **floating action button (FAB)** in the bottom-right corner on mobile/tablet
+- When in Canvas mode, the toggle shows a "back to controls" icon (`lucide:sliders-horizontal` with label "Voice settings")
+- When in Control Deck mode, the toggle shows a "to editor" icon (`lucide:terminal` with label "Text editor")
+- The toggle is hidden on desktop (visible only below `md:` / 768px)
+- Panel transitions use a **slide-up animation** (CSS `transform: translateY`) — the outgoing panel slides upward and fades out (150ms, `ease-out`), the incoming panel slides up from the bottom (150ms, `ease-out`)
+- **Focus management:** When a panel switches, `nextTick()` is used followed by `$focus()` on the first interactive element in the new panel (consistent with ADR-001 pattern). A live region (`role="status"`) announces the panel change to screen readers.
+- **Accessibility:** The FAB has `aria-label` that swaps based on active panel. Each panel is wrapped in `role="region"` with `aria-labelledby` pointing to the panel name. The toggle button itself has `min-w-[48px] min-h-[48px]` for WCAG compliance.
 
 ### Viewport and Scroll Fixes
 - Add `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` to `nuxt.config.ts` → `app.head`
@@ -89,12 +91,13 @@ The existing two-panel layout (`aside` = Control Deck, `main` = Canvas) is prese
 
 ### Voice Selector Dropdown
 - On narrow screens, the dropdown menu uses `max-width: calc(100vw - 32px)` to prevent overflow
-- The dropdown repositions itself using a `useDropdownPosition` composable that checks viewport bounds and flips direction if needed
+- Uses **`@floating-ui/vue`** (portal-based popover) for robust positioning — handles viewport bounds, flips direction when near edges, and manages focus trapping and outside-click dismissal automatically
 - Touch-friendly: each voice option has minimum 48px height
 
 ### Speed Slider
-- The slider track gets `touch-action: pan-y` to allow vertical scrolling while still accepting horizontal touch for value changes
-- The thumb knob is enlarged on mobile (44px diameter instead of 16px)
+- On mobile (<768px): replaced with **stepper-style +/- buttons** flanking the speed value (e.g., `0.8`, `-`, `+`, `1.4`) — no slider on mobile, avoiding the `touch-action` conflict entirely
+- On desktop (≥768px): existing horizontal slider preserved with `touch-action: pan-y` for touchpad users
+- The speed value display is enlarged on mobile (`text-lg` → `text-xl`) for readability
 
 ### Waveform Canvas
 - Canvas rendering respects `window.devicePixelRatio` for sharp display on Retina/HD screens
@@ -111,6 +114,13 @@ The existing two-panel layout (`aside` = Control Deck, `main` = Canvas) is prese
 ### Testing Viewport Simulation
 - Component tests use Vitest's jsdom environment with viewport resizing via `window.resizeTo()`
 - Tests verify panel toggle behavior, dropdown positioning, and touch target sizes at different breakpoints
+- **Additional test targets:**
+  - `PanelToggle` component: renders with correct icon and `aria-label` for each active panel state; hidden on desktop widths
+  - `usePanelToggle` composable: `isMobile` returns correct boolean at 375, 414, 768, 1024px; `togglePanel()` flips state; initial panel is `'control-deck'`
+  - `index.vue` page: shortcut hint is hidden below `sm:`, visible at `sm:` and above; root container allows scroll
+  - `AudioPlayerPanel` component: flex direction is `flex-col` on mobile widths, `flex-row` on desktop
+  - `SpeedSlider` component: stepper buttons render on mobile widths, slider renders on desktop widths
+  - `VoiceSelector` component: dropdown portal renders when triggered; voice options have min 48px height on mobile
 
 ### UnoCSS Configuration Changes
 - Add custom breakpoints (`xs`, `sm`) via `extendTheme` in `uno.config.ts`
@@ -118,9 +128,8 @@ The existing two-panel layout (`aside` = Control Deck, `main` = Canvas) is prese
 - No changes to existing desktop shortcuts
 
 ### Composables Added
-1. **`usePanelToggle.ts`** — Manages active panel state on mobile/tablet; returns `activePanel`, `togglePanel()`, and a computed `isMobile` (based on window width)
-2. **`useDropdownPosition.ts`** — Computes safe positioning for dropdown menus near viewport edges; returns a `positionStyle` object
-3. **`useSafeArea.ts`** — Returns CSS variable values for safe-area-inset; used in template style bindings
+1. **`usePanelToggle.ts`** — Manages active panel state on mobile/tablet; returns `activePanel`, `togglePanel()`, and a computed `isMobile` (based on window width). Handles focus management via `nextTick()` + `$focus()` on panel switch.
+2. **`useSafeArea.ts`** — Returns CSS variable values for safe-area-inset; used in template style bindings
 
 ### Composables Modified
 1. **`useAudioPlayer.ts`** — No interface changes; internal canvas resize logic updated for DPR
@@ -138,8 +147,7 @@ The existing two-panel layout (`aside` = Control Deck, `main` = Canvas) is prese
 5. **`WaveformCanvas.vue`** — DPR-aware canvas sizing
 
 ### Components Added
-1. **`PanelToggle.vue`** — Floating toggle button for switching between Control Deck and Canvas on mobile/tablet
-2. **`MobileNavHeader.vue`** (optional) — Compact top bar on mobile showing current panel name and back button
+1. **`PanelToggle.vue`** — Floating action button (FAB) for switching between Control Deck and Canvas on mobile/tablet. Renders with swap icon/label, ARIA labels, and 48px touch target. Hidden on desktop.
 
 ## Testing Decisions
 
@@ -186,13 +194,13 @@ Tests should verify behavior at these widths:
 This PRD extends the original Lughat Chat PRD (`docs/PRD.md`) which focused on core TTS functionality. The original PRD did not address responsive design — the app was built with a desktop-first assumption. This overhaul makes the existing UI accessible on mobile without changing any backend behavior or API contracts.
 
 ### Relationship to ADR-001
-ADR-001 addresses audio playback timing with Vue refs in transitions. This PRD does not change that pattern but adds a new composable (`usePanelToggle`) that follows the same `await nextTick()` safety pattern when transitioning between panels.
+ADR-001 addresses audio playback timing with Vue refs in transitions. This PRD extends that pattern: `usePanelToggle` also uses `await nextTick()` for focus management when switching panels, and panel transitions (`slide-up`, `fade-out`) are defined in global CSS following the same animation layering approach.
 
 ### UnoCSS-Specific Notes
 - `presetWind3` provides responsive variants via breakpoint prefixes (`sm:`, `md:`, etc.)
 - Custom breakpoints are added via `extendTheme` in `uno.config.ts` — this merges with defaults rather than replacing them
 - The existing shortcuts (`btn`, `card`, etc.) are desktop-oriented; new mobile-specific shortcuts will be added without modifying existing ones
-- `touch-action` utilities from presetWind3 (`touch-none`, `touch-auto`) are used for the speed slider
+- Custom animations are added via `presetWind3`'s `layers` system for panel slide transitions (`@keyframes slide-up`, `@keyframes fade-out`)
 
 ### Migration Path
 - No breaking changes to existing components' props or emits
@@ -204,3 +212,4 @@ ADR-001 addresses audio playback timing with Vue refs in transitions. This PRD d
 - The existing `run-tests.sh` script runs frontend tests via `pnpm test` (Vitest)
 - Component tests run in jsdom, which simulates different viewport sizes via `window.innerWidth` manipulation
 - No Docker changes needed — responsive UI is purely a frontend concern
+- **New test setup additions:** `tests/setup.component.ts` extended to mock `window.innerWidth`, `window.resizeTo`, and `window.matchMedia` for breakpoint simulation

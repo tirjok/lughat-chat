@@ -2,8 +2,12 @@
 // Full-page TTS Studio — complete integration of all 6 components
 // Two-panel layout: Left (Control Deck) + Right (Canvas)
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
+import PanelToggle from '../components/PanelToggle.vue'
 import { computed, nextTick, shallowRef, watch } from 'vue'
+import { usePanelToggle } from '../composables/usePanelToggle'
 import { showToast } from '../composables/useToast'
+
+const { activePanel, isMobile, togglePanel } = usePanelToggle()
 
 const {
   audioRef,
@@ -52,6 +56,14 @@ watch(speakerVoices, (v) => {
 const validationState = computed(() =>
   useInputValidation(textInput.value, modelStatus.value)
 )
+
+// Panel announcement for screen readers
+const panelAnnouncement = computed(() => {
+  if (!isMobile.value) return ''
+  return activePanel.value === 'control-deck'
+    ? 'Switched to voice settings panel'
+    : 'Switched to text editor panel'
+})
 const isValid = computed(() => validationState.value.isValid)
 const validationError = computed(() => validationState.value.error)
 const charCount = computed(() => textInput.value.length)
@@ -127,7 +139,7 @@ function handleClosePlayer() {
 
 <template>
   <div
-    class="h-screen w-screen overflow-hidden text-studio-text antialiased"
+    class="h-dvh w-screen overflow-y-auto text-studio-text antialiased"
     style="background-color: #121212;"
     dir="ltr"
     @keydown="handleKeyDown"
@@ -135,10 +147,35 @@ function handleClosePlayer() {
     <!-- Toast Notification Container -->
     <ToastNotification />
 
+    <!-- Screen reader live region for panel announcements -->
+    <div
+      role="status"
+      class="absolute -translate-x-9999 -translate-y-9999 opacity-0 overflow-hidden h-0 w-0"
+      aria-live="polite"
+    >
+      {{ isMobile && panelAnnouncement }}
+    </div>
+
+    <!-- Panel Toggle FAB (mobile only) -->
+    <PanelToggle
+      :active-panel="activePanel"
+      :toggle-panel="togglePanel"
+    />
+
     <!-- Two-Panel Layout -->
     <div class="flex h-screen w-screen">
       <!-- LEFT PANEL: The Control Deck (30% desktop, 100% mobile) -->
-      <aside class="w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl">
+      <aside
+        role="region"
+        aria-labelledby="control-deck-heading"
+        data-panel="control-deck"
+        :class="[
+          'w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl md:overflow-y-auto',
+          isMobile && activePanel === 'control-deck' ? 'panel-slide-enter' : '',
+          isMobile && activePanel !== 'control-deck' ? 'panel-slide-leave' : ''
+        ]"
+        style="padding-top: env(safe-area-inset-top);"
+      >
         <!-- Header with gradient fade (matches sample exactly) -->
         <header
           class="p-6 border-b border-studio-700 flex justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent"
@@ -208,8 +245,15 @@ function handleClosePlayer() {
 
       <!-- RIGHT PANEL: The Canvas (70% desktop, 100% mobile) -->
       <main
-        class="w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden"
-        style="border-left: 1px solid #333333;"
+        role="region"
+        aria-labelledby="canvas-heading"
+        data-panel="canvas"
+        :class="[
+          'w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-y-auto md:overflow-hidden',
+          isMobile && activePanel === 'canvas' ? 'panel-slide-enter' : '',
+          isMobile && activePanel !== 'canvas' ? 'panel-slide-leave' : ''
+        ]"
+        style="border-left: 1px solid #333333; padding-bottom: env(safe-area-inset-bottom);"
       >
         <!-- Focus Halo (radial gradient glow behind textarea) -->
         <FocusHaloCanvas :focused="!!textInput" />
@@ -254,8 +298,8 @@ function handleClosePlayer() {
           />
         </div>
 
-        <!-- Floating Shortcut Hint -->
-        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/90 backdrop-blur px-4 py-2 rounded-lg border border-studio-700">
+        <!-- Floating Shortcut Hint (hidden on mobile) -->
+        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/90 backdrop-blur px-4 py-2 rounded-lg border border-studio-700 hidden sm:flex">
           Press
           <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
           +

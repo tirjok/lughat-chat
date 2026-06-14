@@ -7,6 +7,24 @@ global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob')
 global.URL.revokeObjectURL = vi.fn()
 global.fetch = vi.fn()
 
+// ─── Viewport / Responsive Mocks ──────────────────────────────────────
+// Used by responsive UI tests to simulate different viewport sizes.
+// Set `window.innerWidth` to the desired breakpoint width before mounting components.
+
+global.window.innerWidth = 1024 // Default: desktop width
+global.window.innerHeight = 768
+global.window.resizeTo = vi.fn()
+global.window.matchMedia = vi.fn((query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: vi.fn(), // deprecated
+  removeListener: vi.fn(), // deprecated
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn()
+}))
+
 // ─── Nuxt Auto-Import Mocks ─────────────────────────────────────────
 // Vue composables that Nuxt auto-imports — needed when testing components
 // that use ref/computed as auto-imports (not explicit imports).
