@@ -105,9 +105,11 @@ except ImportError:
     TTS = None  # type: ignore[misc, assignment]
 
 # Configuration
-AUDIO_DIR = os.path.join(os.path.dirname(__file__), "downloads")
+AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
 MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
-SPEAKER_WAV_DIR = os.path.join(os.path.dirname(__file__), "speaker_wavs")
+SPEAKER_WAV_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "speaker_wavs"
+)
 
 
 def discover_voices(directory: str) -> list[dict]:
@@ -209,14 +211,12 @@ class SynthesisRequest(BaseModel):
     voice: Optional[str] = Field(
         default=None
     )  # any string accepted; validated at runtime via file existence
-    speaker: Optional[str] = (
-        None  # Alias for voice (accepts "default", "female", "male")
+    speaker: Optional[str] = Field(
+        default=None  # Alias for voice (any string accepted)
     )
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
     pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
-    seed: Optional[int] = Field(
-        default=None, ge=0
-    )  # Deterministic seed (optional, defaults to fixed per voice)
+    seed: Optional[int] = Field(default=None, ge=0)  # Deterministic seed (optional)
 
 
 class SynthesisResponse(BaseModel):
@@ -230,54 +230,6 @@ class HealthResponse(BaseModel):
     model_loaded: bool
 
 
-# Voice presets — 3 voice presets with regional dialect metadata
-VOICES = [
-    {
-        "id": "aisha",
-        "name": "Aisha",
-        "dialect": "Egyptian Arabic",
-        "tag": "AR-EG",
-        "icon": "orange",
-        "speaker_wav": "female.wav",
-        "seed": 42,
-    },
-    {
-        "id": "tariq",
-        "name": "Tariq",
-        "dialect": "Modern Standard Arabic",
-        "tag": "MSA",
-        "icon": "magenta",
-        "speaker_wav": "male.wav",
-        "seed": 123,
-    },
-    {
-        "id": "laila",
-        "name": "Laila",
-        "dialect": "Levantine Arabic",
-        "tag": "AR-LB",
-        "icon": "orange",
-        "speaker_wav": "female.wav",
-        "seed": 42,
-    },
-]
-
-
-def _map_voice_to_speaker(voice_id: str) -> str:
-    """Map a voice preset ID to its speaker WAV file."""
-    for v in VOICES:
-        if v["id"] == voice_id:
-            return v["speaker_wav"]
-    return f"{voice_id}.wav"  # fallback: use voice_id with .wav extension
-
-
-def _get_voice_seed(voice_id: str) -> int:
-    """Get the deterministic seed for a voice preset."""
-    for v in VOICES:
-        if v["id"] == voice_id:
-            return v["seed"]
-    return 42  # fallback
-
-
 @app.get("/health", response_model=HealthResponse)
 async def health():
     """Health check endpoint - returns model load status."""
@@ -289,8 +241,8 @@ async def health():
 
 @app.get("/api/voices")
 async def list_voices():
-    """List available voice presets with dialect metadata."""
-    return VOICES
+    """List available voices discovered from speaker_wavs/ directory."""
+    return discover_voices(SPEAKER_WAV_DIR)
 
 
 @app.post("/api/generate")
@@ -304,10 +256,8 @@ async def generate_speech(request: SynthesisRequest):
         timestamp = uuid.uuid4().hex[:8]
         lang_code = request.language
 
-        # Resolve voice: accept both "voice" and "speaker" fields, map "default" to "aisha"
-        voice = request.speaker if request.speaker else (request.voice or "aisha")
-        if voice == "default":
-            voice = "aisha"
+        # Resolve voice: accept both "voice" and "speaker" fields; default to "female"
+        voice = request.speaker if request.speaker else (request.voice or "female")
 
         filename = f"{lang_code}_{voice}_{timestamp}.mp3"
         wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
@@ -316,22 +266,21 @@ async def generate_speech(request: SynthesisRequest):
         # Generate WAV first (XTTS native format)
         print(f"Generating speech: {request.text[:50]}...")
 
-        # Map voice preset ID to its speaker WAV file
-        speaker_wav_name = _map_voice_to_speaker(voice)
-        speaker_wav = os.path.join(SPEAKER_WAV_DIR, speaker_wav_name)
+        # Use the voice ID directly as the WAV filename
+        speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
 
         if not os.path.exists(speaker_wav):
             raise HTTPException(
                 status_code=500,
-                detail=f"Speaker WAV file not found for voice '{voice}' (maps to '{speaker_wav_name}'). Please add {speaker_wav}",
+                detail=f"Speaker WAV file not found for voice '{voice}' (expected at '{speaker_wav}'). Add it to speaker_wavs/.",
             )
 
         # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
         _validate_speaker_wav(speaker_wav)
 
         # Generate audio with speaker reference for voice cloning
-        # Use deterministic seed per voice preset for consistent voice output
-        seed = request.seed if request.seed is not None else _get_voice_seed(voice)
+        # Use deterministic seed if provided
+        seed = request.seed if request.seed is not None else 42
 
         # Set PyTorch random seed for deterministic XTTS generation.
         # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;

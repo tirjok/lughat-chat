@@ -1,4 +1,5 @@
 import os
+from unittest.mock import MagicMock, patch
 
 from app import app
 
@@ -29,25 +30,41 @@ def _mock_tts_model():
     return MockTTS()
 
 
+def _make_mock_wav():
+    """Build a MagicMock that looks like a valid WAV file for _validate_speaker_wav."""
+    mock = MagicMock()
+    mock.getnframes.return_value = int(22050 * 0.5)
+    mock.getframerate.return_value = 22050
+    mock.getnchannels.return_value = 1
+    mock.getsampwidth.return_value = 2
+    return mock
+
+
 def _setup_mock_model():
-    """Set up mock TTS model in app module."""
+    """Set up mock TTS model in app module without creating physical files.
+
+    Mocks os.path.exists so the backend's speaker_wav file check passes,
+    and mocks wave.open so _validate_speaker_wav() can read duration without
+    actual files on disk.
+    """
     import app as main_app
 
-    # Create speaker_wav directory and files for the mock (>= 0.5s for XTTS validation)
     speaker_wav_dir = os.path.join(os.path.dirname(main_app.__file__), "speaker_wavs")
-    os.makedirs(speaker_wav_dir, exist_ok=True)
-    for voice in ["female", "male"]:
-        path = os.path.join(speaker_wav_dir, f"{voice}.wav")
-        import wave
+    _mock_wav = _make_mock_wav()
 
-        with wave.open(path, "w") as wav_file:
-            wav_file.setnchannels(1)
-            wav_file.setsampwidth(2)
-            wav_file.setframerate(22050)
-            samples = b"\x00\x00" * int(22050 * 0.5)
-            wav_file.writeframes(samples)
-    main_app.tts_model = _mock_tts_model()
-    main_app.model_load_status = "ready"
+    def _mock_path_exists(path):
+        if isinstance(path, str) and path.startswith(speaker_wav_dir + os.sep):
+            return True
+        return _original_path_exists(path)
+
+    def _mock_wave_open(path, mode="r"):
+        return _mock_wav
+
+    _original_path_exists = os.path.exists
+    with patch("os.path.exists", side_effect=_mock_path_exists):
+        with patch.object(main_app, "wave", open_side_effect=_mock_wave_open):
+            main_app.tts_model = _mock_tts_model()
+            main_app.model_load_status = "ready"
 
 
 def test_generate_speech_returns_mp3_blob():
