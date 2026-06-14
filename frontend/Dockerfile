@@ -35,7 +35,7 @@ server {
 
     # Proxy API requests to backend container
     location /api/ {
-        proxy_pass http://backend:8090;
+        proxy_pass http://backend:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -52,7 +52,7 @@ server {
 
     # Proxy downloads to backend container
     location /downloads/ {
-        proxy_pass http://backend:8090;
+        proxy_pass http://backend:8000;
         proxy_set_header Host $host;
 
         # Large file support
@@ -63,7 +63,7 @@ server {
 
     # Proxy health check to backend container
     location /health {
-        proxy_pass http://backend:8090;
+        proxy_pass http://backend:8000;
         proxy_set_header Host $host;
         proxy_read_timeout 30s;
     }
