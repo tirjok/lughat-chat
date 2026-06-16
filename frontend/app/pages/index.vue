@@ -3,37 +3,28 @@
 // Two-panel layout: Left (Control Deck) + Right (Canvas)
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import PanelToggle from '../components/PanelToggle.vue'
-import { computed, nextTick, shallowRef, watch } from 'vue'
+import { computed, nextTick, shallowRef, watch, onUnmounted } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
+import { useAudioModule } from '../composables/useAudioModule'
 import { showToast } from '../composables/useToast'
 
 const { activePanel, isMobile, togglePanel } = usePanelToggle()
 
-const {
-  audioRef,
-  duration,
-  currentTime,
-  isPlaying,
-  isPaused,
-  isLoading: _isLoading,
-  error: audioError,
-  loadAudio,
-  play,
-  togglePlayPause,
-  downloadAudio,
-  audioUrl
-} = useAudioPlayer({
+const audioModule = useAudioModule({
   onPlaybackEnd: () => {
-    isPlaying.value = false
-    isPaused.value = false
+    audioModule.isPlaying.value = false
+    audioModule.isPaused.value = false
   }
 })
 
-const _audioElement = computed(() => audioRef.value ?? undefined)
+const { audioRef, audioUrl: _audioUrl, duration: _duration, currentTime: _currentTime, isPlaying: _isPlaying, isPaused: _isPaused, isLoading: _isLoading, error: audioError } = audioModule
 
 const { synthesize, healthCheck: _healthCheck } = useTtsApi()
 const { status: modelStatus, modelLoaded: _modelLoaded } = useHealthPoll()
 const { voices: speakerVoices } = useVoices()
+
+// Safety net: dispose on unmount
+onUnmounted(() => audioModule.dispose())
 
 const textInput = shallowRef('')
 const selectedSpeaker = shallowRef('')
@@ -91,11 +82,11 @@ async function handleSynthesize() {
       speed: speedValue.value
     })
 
-    const url = loadAudio(audioBlob)
+    audioModule.load(audioBlob)
     await nextTick()
 
-    if (audioRef.value && url) {
-      await play()
+    if (audioRef.value) {
+      await audioModule.play()
     }
 
     await nextTick()
@@ -113,7 +104,7 @@ async function handleSynthesize() {
 
 function handleDownload() {
   const filename = `tts_output_${Date.now()}.mp3`
-  downloadAudio(filename)
+  audioModule.download(filename)
 }
 
 function handleKeyDown(event: KeyboardEvent) {
@@ -128,12 +119,7 @@ function handleClearText() {
 
 function handleClosePlayer() {
   playerVisible.value = false
-  const el = audioRef.value
-  if (el) {
-    el.pause()
-    isPlaying.value = false
-    isPaused.value = false
-  }
+  audioModule.pause()
 }
 </script>
 
@@ -309,16 +295,16 @@ function handleClosePlayer() {
 
         <!-- Audio Player Panel (slides up from bottom) -->
         <AudioPlayerPanel
-          :visible="playerVisible && !!audioUrl"
-          :is-playing="isPlaying"
-          :is-paused="isPaused"
-          :current-time="currentTime"
-          :duration="duration"
-          :audio-url="audioUrl"
+          :visible="playerVisible && !!audioModule.audioUrl.value"
+          :is-playing="audioModule.isPlaying.value"
+          :is-paused="audioModule.isPaused.value"
+          :current-time="audioModule.currentTime.value"
+          :duration="audioModule.duration.value"
+          :audio-url="audioModule.audioUrl.value"
           :selected-voice-name="selectedVoiceName"
           :speed-value="speedValue"
           @close="handleClosePlayer"
-          @toggle="togglePlayPause"
+          @toggle="audioModule.pause"
           @download="handleDownload"
         />
       </main>

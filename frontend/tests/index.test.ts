@@ -8,7 +8,7 @@ import Index from '../app/pages/index.vue'
 import { setBreakpoint } from './mocks'
 
 // Mock composables at the global level to intercept Nuxt auto-imports
-const mockUseAudioPlayer = vi.fn()
+const mockUseAudioModule = vi.fn()
 const mockUseTtsApi = vi.fn()
 const mockUseVoices = vi.fn()
 const mockUseHealthPoll = vi.fn()
@@ -17,19 +17,23 @@ const mockShowToast = vi.fn()
 
 beforeEach(() => {
   // Provide default mock return values so the component renders without errors
-  ;(globalThis as Record<string, unknown>).useAudioPlayer = mockUseAudioPlayer.mockReturnValue({
+  ;(globalThis as Record<string, unknown>).useAudioModule = mockUseAudioModule.mockReturnValue({
     audioRef: ref(null),
+    audioUrl: ref(null),
     duration: ref(0),
     currentTime: ref(0),
     isPlaying: ref(false),
     isPaused: ref(false),
     isLoading: ref(false),
     error: ref(null),
-    loadAudio: vi.fn().mockReturnValue('http://mock.url/blob'),
+    formattedCurrentTime: ref('0:00'),
+    formattedDuration: ref('0:00'),
+    load: vi.fn(),
     play: vi.fn().mockResolvedValue(undefined),
-    togglePlayPause: vi.fn(),
-    downloadAudio: vi.fn(),
-    audioUrl: ref(null)
+    pause: vi.fn(),
+    seek: vi.fn(),
+    download: vi.fn(),
+    dispose: vi.fn()
   })
 
   ;(globalThis as Record<string, unknown>).useTtsApi = mockUseTtsApi.mockReturnValue({

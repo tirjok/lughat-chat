@@ -11,38 +11,39 @@ export function setBreakpoint(width: number): void {
   Object.defineProperty(window, 'innerHeight', { value: Math.max(600, width * 0.6), writable: true })
 }
 
-// ─── Audio Player Mock Factory ───────────────────────────────────────
-// Returns reactive refs + mock methods matching useAudioPlayer's real interface.
-// Use this in vi.mock() callbacks for component tests that depend on useAudioPlayer.
+// ─── Audio Module Mock Factory ───────────────────────────────────────
+// Returns reactive refs + mock methods matching useAudioModule's real interface.
+// Use this in vi.mock() callbacks for component tests that depend on useAudioModule.
 
-export const createMockUseAudioPlayer = () => {
+export const createMockUseAudioModule = () => {
   const audioRef: Ref<HTMLAudioElement | null> = ref(null)
   const audioUrl: Ref<string | null> = ref(null)
-  const blobRef: Ref<Blob | null> = ref(null)
   const duration: Ref<number> = ref(0)
   const currentTime: Ref<number> = ref(0)
   const isPlaying: Ref<boolean> = ref(false)
   const isPaused: Ref<boolean> = ref(false)
   const isLoading: Ref<boolean> = ref(false)
   const error: Ref<string | null> = ref(null)
+  const formattedCurrentTime: Ref<string> = ref('0:00')
+  const formattedDuration: Ref<string> = ref('0:00')
 
   return {
     audioRef,
     audioUrl,
-    blobRef,
     duration,
     currentTime,
     isPlaying,
     isPaused,
     isLoading,
     error,
-    loadAudio: vi.fn().mockReturnValue('blob:http://test'),
+    formattedCurrentTime,
+    formattedDuration,
+    load: vi.fn(),
     play: vi.fn().mockResolvedValue(undefined),
     pause: vi.fn(),
-    togglePlayPause: vi.fn(),
-    getDownloadUrl: vi.fn().mockReturnValue(null),
-    downloadAudio: vi.fn(),
-    cleanup: vi.fn()
+    seek: vi.fn(),
+    download: vi.fn(),
+    dispose: vi.fn()
   }
 }
 
