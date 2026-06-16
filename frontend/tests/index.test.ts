@@ -264,11 +264,10 @@ describe('index.vue — responsive layout tests', () => {
     it('main has overflow-hidden (not overflow-y-auto)', () => {
       const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
       const source = fs.readFileSync(indexPath, 'utf-8')
-      // Extract the main element's class string and verify it has overflow-hidden, not overflow-y-auto
-      const mainMatch = source.match(/'w-full md:w-\[65%\].*?'\s*,/)
-      expect(mainMatch).not.toBeNull()
-      expect(mainMatch![0]).toContain('overflow-hidden')
-      expect(mainMatch![0]).not.toContain('overflow-y-auto')
+      // Verify the main element class string contains overflow-hidden, not overflow-y-auto
+      const mainClassMatch = source.match(/class="[^"]*w-full md:w-\[65%\][^"]*overflow-hidden[^"]*"/)
+      expect(mainClassMatch).not.toBeNull()
+      expect(mainClassMatch![0]).not.toContain('overflow-y-auto')
     })
 
     it('main has responsive border: md:border-l', () => {

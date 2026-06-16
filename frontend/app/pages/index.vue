@@ -2,13 +2,14 @@
 // Full-page TTS Studio — complete integration of all 6 components
 // Two-panel layout: Left (Control Deck) + Right (Canvas)
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
+import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
 import PanelToggle from '../components/PanelToggle.vue'
 import { computed, nextTick, shallowRef, watch, onUnmounted } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
 import { showToast } from '../composables/useToast'
 
-const { activePanel, isMobile, togglePanel } = usePanelToggle()
+const { activePanel, togglePanel } = usePanelToggle()
 
 const audioModule = useAudioModule({
   onPlaybackEnd: () => {
@@ -50,7 +51,6 @@ const validationState = computed(() =>
 
 // Panel announcement for screen readers
 const panelAnnouncement = computed(() => {
-  if (!isMobile.value) return ''
   return activePanel.value === 'control-deck'
     ? 'Switched to voice settings panel'
     : 'Switched to text editor panel'
@@ -139,7 +139,7 @@ function handleClosePlayer() {
       class="absolute -translate-x-9999 -translate-y-9999 opacity-0 overflow-hidden h-0 w-0"
       aria-live="polite"
     >
-      {{ isMobile && panelAnnouncement }}
+      {{ panelAnnouncement }}
     </div>
 
     <!-- Panel Toggle FAB (mobile only) -->
@@ -155,13 +155,27 @@ function handleClosePlayer() {
       aria-labelledby="control-deck-heading"
       data-panel="control-deck"
       :class="[
-        'w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 transition-all duration-300 order-2 md:order-1',
-        isMobile && activePanel === 'control-deck' ? 'panel-slide-enter' : '',
-        isMobile && activePanel !== 'control-deck' ? 'panel-slide-leave' : ''
+        'w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 transition-all duration-300 order-2 md:order-1'
       ]"
-      style="padding-top: env(safe-area-inset-top);"
     >
-      <!-- Header with gradient fade (matches sample exactly) -->
+      <!-- Mobile Header (logo + status, visible below 768px) -->
+      <header
+        class="flex md:hidden justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700 shrink-0 z-30 shadow-md"
+        style="padding-top: env(safe-area-inset-top);"
+      >
+        <div class="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            class="i-lucide-audio-waveform text-sunrise-orange text-xl"
+          />
+          <h1 class="text-lg font-bold text-white tracking-tight">
+            Lughat<span class="text-sunrise-magenta">Chat</span>
+          </h1>
+        </div>
+        <MobileStatusIndicator />
+      </header>
+
+      <!-- Desktop Header (hidden on mobile) -->
       <header
         class="hidden md:flex p-6 border-b border-studio-700 justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent shrink-0"
       >
@@ -234,9 +248,7 @@ function handleClosePlayer() {
       aria-labelledby="canvas-heading"
       data-panel="canvas"
       :class="[
-        'w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden md:border-l border-studio-700 p-4 md:p-6 lg:p-8 pb-2 md:pb-4 order-1 md:order-2',
-        isMobile && activePanel === 'canvas' ? 'panel-slide-enter' : '',
-        isMobile && activePanel !== 'canvas' ? 'panel-slide-leave' : ''
+        'w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden md:border-l border-studio-700 p-4 md:p-6 lg:p-8 pb-2 md:pb-4 order-1 md:order-2'
       ]"
       style="padding-bottom: env(safe-area-inset-bottom);"
     >
@@ -361,12 +373,5 @@ html, body {
 
 .canvas-halo.active {
   opacity: 1;
-}
-
-/* ===================================
-   Hidden utility
-   =================================== */
-.hidden {
-  @apply hidden;
 }
 </style>
