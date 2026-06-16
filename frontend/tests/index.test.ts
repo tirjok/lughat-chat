@@ -200,30 +200,113 @@ describe('index.vue — responsive layout tests', () => {
     })
   })
 
-  describe('root container scroll behavior', () => {
-    it('root container allows scroll (not overflow-hidden)', () => {
+  describe('root container responsive layout', () => {
+    it('root container uses flex flex-col md:flex-row h-dvh w-full overflow-hidden', () => {
       const wrapper = shallowMount(Index)
       const rootContainer = wrapper.find('div.h-dvh')
       expect(rootContainer.exists()).toBe(true)
-      // The root container should NOT have overflow-hidden
-      const classes = rootContainer.classes()
-      expect(classes).not.toContain('overflow-hidden')
-      // Verify the source uses overflow-y-auto for scrolling
+      // Verify the source uses flex flex-col md:flex-row h-dvh w-full overflow-hidden
       const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
       const source = fs.readFileSync(indexPath, 'utf-8')
-      expect(source).toContain('overflow-y-auto')
+      expect(source).toContain('flex flex-col md:flex-row')
+      expect(source).toContain('overflow-hidden')
+    })
+  })
+
+  describe('aside (Control Deck) responsive layout', () => {
+    it('aside has responsive widths: md:w-[35%] lg:w-[30%] xl:w-[25%]', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('md:w-[35%]')
+      expect(source).toContain('lg:w-[30%]')
+      expect(source).toContain('xl:w-[25%]')
     })
 
-    it('main panel allows scroll on mobile (overflow-y-auto)', () => {
+    it('aside has Control Deck height: h-[45dvh] md:h-full', () => {
       const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
       const source = fs.readFileSync(indexPath, 'utf-8')
-      expect(source).toContain('md:overflow-y-auto')
+      expect(source).toContain('h-[45dvh]')
+      expect(source).toContain('md:h-full')
     })
 
-    it('canvas panel has overflow-y-auto on mobile, hidden on desktop', () => {
+    it('aside has responsive border: border-t md:border-t-0 md:border-r', () => {
       const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
       const source = fs.readFileSync(indexPath, 'utf-8')
-      expect(source).toContain('md:overflow-hidden')
+      expect(source).toContain('border-t')
+      expect(source).toContain('md:border-t-0')
+      expect(source).toContain('md:border-r')
+    })
+
+    it('aside has responsive shadow: shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('shadow-[0_-10px_30px_rgba(0,0,0,0.4)]')
+      expect(source).toContain('md:shadow-2xl')
+    })
+
+    it('aside has responsive order: order-2 md:order-1', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('order-2')
+      expect(source).toContain('md:order-1')
+    })
+  })
+
+  describe('main (Canvas) responsive layout', () => {
+    it('main has responsive widths: md:w-[65%] lg:w-[70%] xl:w-[75%]', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('md:w-[65%]')
+      expect(source).toContain('lg:w-[70%]')
+      expect(source).toContain('xl:w-[75%]')
+    })
+
+    it('main has overflow-hidden (not overflow-y-auto)', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      // Extract the main element's class string and verify it has overflow-hidden, not overflow-y-auto
+      const mainMatch = source.match(/'w-full md:w-\[65%\].*?'\s*,/)
+      expect(mainMatch).not.toBeNull()
+      expect(mainMatch![0]).toContain('overflow-hidden')
+      expect(mainMatch![0]).not.toContain('overflow-y-auto')
+    })
+
+    it('main has responsive border: md:border-l', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('md:border-l')
+    })
+
+    it('main has responsive order: order-1 md:order-2', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('order-1')
+      expect(source).toContain('md:order-2')
+    })
+  })
+
+  describe('textarea responsive font', () => {
+    it('textarea has responsive font sizes: text-2xl md:text-4xl lg:text-5xl', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('text-2xl')
+      expect(source).toContain('md:text-4xl')
+      expect(source).toContain('lg:text-5xl')
+    })
+
+    it('textarea has responsive line height: leading-relaxed md:leading-[1.6]', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('leading-relaxed')
+      expect(source).toContain('md:leading-[1.6]')
+    })
+  })
+
+  describe('desktop header visibility', () => {
+    it('desktop header is hidden on mobile: hidden md:flex', () => {
+      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
+      const source = fs.readFileSync(indexPath, 'utf-8')
+      expect(source).toContain('hidden md:flex')
     })
   })
 })
