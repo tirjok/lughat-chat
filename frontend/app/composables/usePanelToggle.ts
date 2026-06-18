@@ -1,9 +1,21 @@
 import { nextTick, ref, watch } from 'vue'
+import { useEventListener, tryOnMounted } from '@vueuse/core'
 
 export type PanelName = 'control-deck' | 'canvas'
 
+export const BREAKPOINT_MOBILE = 768
+
 export function usePanelToggle() {
   const activePanel = ref<PanelName>('control-deck')
+  const isMobile = ref(false)
+
+  function updateMobileStatus() {
+    if (typeof window === 'undefined') return
+    isMobile.value = window.innerWidth < BREAKPOINT_MOBILE
+  }
+
+  useEventListener(window, 'resize', updateMobileStatus, { passive: true })
+  tryOnMounted(updateMobileStatus) // initial check (SSR-safe)
 
   function togglePanel() {
     activePanel.value = activePanel.value === 'control-deck' ? 'canvas' : 'control-deck'
@@ -27,6 +39,7 @@ export function usePanelToggle() {
 
   return {
     activePanel,
+    isMobile,
     togglePanel,
     focusFirstInteractiveElement
   }

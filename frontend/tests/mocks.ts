@@ -2,13 +2,25 @@ import { vi } from 'vitest'
 import { ref, computed, type Ref } from 'vue'
 
 // ─── Breakpoint Simulation Helper ─────────────────────────────────────
-// Sets window.innerWidth to simulate a specific device breakpoint.
-// Call this before mounting components that depend on responsive state.
+// Sets window.innerWidth and matchMedia to simulate a specific device breakpoint.
+// Call this before mounting components or calling composables that depend on responsive state.
 //
 // Common breakpoints: 375 (iPhone SE), 414 (iPhone Max), 768 (iPad), 1024 (tablet)
 export function setBreakpoint(width: number): void {
   Object.defineProperty(window, 'innerWidth', { value: width, writable: true })
   Object.defineProperty(window, 'innerHeight', { value: Math.max(600, width * 0.6), writable: true })
+  // Also update matchMedia so VueUse's useMediaQuery works in tests
+  Object.defineProperty(window, 'matchMedia', {
+    value: (query: string) => {
+      const widthMatch = query.match(/\(max-width:\s*(\d+)px\)/)
+      if (widthMatch) {
+        const breakpoint = parseInt(widthMatch[1], 10)
+        return { matches: width <= breakpoint, media: query } as MediaQueryList
+      }
+      return { matches: false, media: query } as MediaQueryList
+    },
+    writable: true
+  })
 }
 
 // ─── Audio Module Mock Factory ───────────────────────────────────────
