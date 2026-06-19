@@ -31,7 +31,7 @@ function formatTime(seconds: number): string {
   <Transition name="slide-up-player">
     <div
       v-if="visible"
-      class="absolute bottom-0 left-0 w-full md:right-0 bg-studio-800 border-t border-studio-700 p-6 flex flex-col gap-4 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+      class="absolute bottom-0 left-0 w-full md:w-[65%] lg:w-[70%] xl:w-[75%] md:right-0 bg-studio-800 border-t md:border-l border-studio-700 p-6 flex flex-col gap-4 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
       style="border-left: 1px solid #333333; border-right: 1px solid #333333"
     >
       <!-- Mobile: narrower bottom sheet so it doesn't cover the entire textarea -->

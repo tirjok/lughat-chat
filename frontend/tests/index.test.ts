@@ -168,28 +168,28 @@ describe('index.vue — responsive layout tests', () => {
   })
 
   describe('shortcut hint visibility', () => {
-    it('shortcut hint is hidden below sm: (375px) — hidden sm:flex not rendered', () => {
+    it('shortcut hint is hidden below md: (375px) — hidden md:flex not rendered', () => {
       setBreakpoint(375)
       shallowMount(Index)
-      // The shortcut hint uses "hidden sm:flex" — at 375px (below sm:),
+      // The shortcut hint uses "hidden md:flex" — at 375px (below md:),
       // the element should have the "hidden" class applied.
       // Check that the hint container exists in the source with hidden class.
       const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
       const source = fs.readFileSync(indexPath, 'utf-8')
-      expect(source).toContain('hidden sm:flex')
+      expect(source).toContain('hidden md:flex')
     })
 
-    it('shortcut hint is visible at sm: and above (414px+) — hidden sm:flex shows on small+', () => {
-      setBreakpoint(414)
+    it('shortcut hint is visible at md: and above (768px+) — hidden md:flex shows on medium+', () => {
+      setBreakpoint(768)
       shallowMount(Index)
-      // At 414px (≥ sm: breakpoint), the shortcut hint should be visible.
-      // The "hidden sm:flex" class means: hidden by default, flex at sm: and up.
+      // At 768px (≥ md: breakpoint), the shortcut hint should be visible.
+      // The "hidden md:flex" class means: hidden by default, flex at md: and up.
       const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
       const source = fs.readFileSync(indexPath, 'utf-8')
       // Verify the shortcut hint element exists in source with the responsive classes
       expect(source).toContain('Ctrl')
       expect(source).toContain('Enter')
-      expect(source).toContain('hidden sm:flex')
+      expect(source).toContain('hidden md:flex')
     })
 
     it('shortcut hint contains keyboard shortcut text', () => {

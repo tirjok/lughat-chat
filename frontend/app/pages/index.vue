@@ -257,15 +257,49 @@ function handleClosePlayer() {
         <FocusHaloCanvas :focused="!!textInput" />
 
         <!-- Header / Context -->
-        <div class="w-full p-6 pb-4 flex justify-between items-center opacity-70 border-b border-studio-700">
-          <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              class="i-lucide-terminal text-lg"
-            />
-            Editor Canvas
-          </h2>
-          <div class="flex items-center gap-4 text-sm text-gray-500">
+        <div class="w-full p-4 md:p-6 lg:p-8 pb-2 md:pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shrink-0 border-b border-studio-700">
+          <!-- Mobile Canvas Header (horizontal row, visible below 768px) -->
+          <div class="flex justify-between items-center w-full md:w-auto md:hidden">
+            <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                class="i-lucide-terminal text-lg"
+              />
+              Editor Canvas
+            </h2>
+            <div class="flex items-center gap-3 text-sm text-gray-500">
+              <span
+                class="font-mono text-xs"
+                :class="{ 'text-red-400': isOverLimit, 'text-amber-400': isNearLimit, 'text-gray-500': !isNearLimit && !isOverLimit }"
+              >
+                {{ charCount }} / 3000
+              </span>
+              <button
+                class="hover:text-white transition-colors p-1"
+                title="Clear Canvas"
+                @click="handleClearText"
+              >
+                <span
+                  aria-hidden="true"
+                  class="i-lucide-trash text-lg"
+                />
+              </button>
+            </div>
+          </div>
+
+          <!-- Desktop Canvas Header (label + AI toolbar row) -->
+          <div class="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 w-full md:w-auto">
+            <h2 class="hidden md:flex text-gray-400 font-medium text-sm items-center gap-2">
+              <span
+                aria-hidden="true"
+                class="i-lucide-terminal text-lg"
+              />
+              Editor Canvas
+            </h2>
+          </div>
+
+          <!-- Desktop Char Count & Clear (hidden on mobile) -->
+          <div class="hidden md:flex items-center gap-4 text-sm text-gray-500 shrink-0">
             <span
               class="font-mono"
               :class="{ 'text-red-400': isOverLimit, 'text-amber-400': isNearLimit, 'text-gray-500': !isNearLimit && !isOverLimit }"
@@ -273,13 +307,13 @@ function handleClosePlayer() {
               {{ charCount }} / 3000
             </span>
             <button
-              class="hover:text-white transition-colors bg-studio-900 border border-studio-700 rounded-full w-8 h-8 flex items-center justify-center"
+              class="hover:text-white transition-colors p-1"
               title="Clear Canvas"
               @click="handleClearText"
             >
               <span
                 aria-hidden="true"
-                class="i-lucide-trash"
+                class="i-lucide-trash text-lg"
               />
             </button>
           </div>
@@ -296,8 +330,8 @@ function handleClosePlayer() {
           />
         </div>
 
-        <!-- Floating Shortcut Hint (hidden on mobile) -->
-        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/90 backdrop-blur px-4 py-2 rounded-lg border border-studio-700 hidden sm:flex">
+        <!-- Floating Shortcut Hint (hidden on mobile, visible at md+) -->
+        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/90 backdrop-blur px-4 py-2 rounded-lg border border-studio-700 hidden md:flex">
           Press
           <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
           +
