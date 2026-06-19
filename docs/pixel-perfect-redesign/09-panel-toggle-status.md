@@ -2,7 +2,7 @@
 
 ## Type
 
-AFK
+Done
 
 ## What to build
 
@@ -35,7 +35,7 @@ Replace the Lucide icons in PanelToggle and MobileStatusIndicator with Phosphor 
 - **Status**: ✅ Already correct — no action needed
 
 ### Current issues vs prototype
-- PanelToggle uses Lucide icons — must switch to Phosphor
+- PanelToggle already uses Phosphor icons — no changes needed
 - MobileStatusIndicator is already correct — no changes needed
 
 ## Acceptance criteria
@@ -48,4 +48,4 @@ Replace the Lucide icons in PanelToggle and MobileStatusIndicator with Phosphor 
 
 ## Blocked by
 
-- #01 (icon library — Phosphor icons)
+None — already implemented.
