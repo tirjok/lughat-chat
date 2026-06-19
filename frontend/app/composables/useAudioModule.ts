@@ -61,6 +61,16 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
+  // ── Toggle play/pause ────────────────────────────
+  async function toggle() {
+    if (!audioRef.value) return
+    if (isPlaying.value && !isPaused.value) {
+      pause()
+    } else {
+      await play()
+    }
+  }
+
   // ── Seek ─────────────────────────────────────────
   function seek(ratio: number) {
     if (!audioRef.value || !duration.value) return
@@ -150,6 +160,7 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     load,
     play,
     pause,
+    toggle,
     seek,
     download,
 

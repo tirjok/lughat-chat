@@ -8,6 +8,8 @@ const props = defineProps<{
   duration: number
 }>()
 
+const emit = defineEmits<{ (e: 'seek', ratio: number): void }>()
+
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationFrameId: ReturnType<typeof requestAnimationFrame> | null = null
 const numBars = 60
@@ -54,8 +56,11 @@ function drawWaveform() {
   const barWidth = (canvas.width / numBars) - 2
   const centerY = canvas.height / 2
 
+  const progress = props.duration > 0 ? props.currentTime / props.duration : 0
+
   bars.forEach((bar, index) => {
     const x = index * (barWidth + 2)
+    const barProgress = index / numBars
 
     if (props.isPlaying) {
       bar.phase += 0.1
@@ -74,16 +79,19 @@ function drawWaveform() {
     const g = Math.round(36 + (81 - 36) * ratio)
     const b = Math.round(118 + (47 - 118) * ratio)
 
-    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+    // Color bars differently based on whether they've been played
+    if (barProgress <= progress) {
+      // Played portion: orange-to-magenta gradient
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+    } else {
+      // Unplayed portion: dim gray
+      ctx.fillStyle = 'rgba(100, 100, 100, 0.3)'
+    }
 
     ctx.beginPath()
     ctx.roundRect(x, y, barWidth, height, 4)
     ctx.fill()
   })
-
-  if (props.isPlaying) {
-    animationFrameId = requestAnimationFrame(drawWaveform)
-  }
 }
 
 function startAnimation() {
@@ -106,6 +114,15 @@ async function ensureCanvasReady() {
     await new Promise(resolve => setTimeout(resolve, 50))
     resizeCanvas()
   }
+}
+
+function handleCanvasClick(e: MouseEvent) {
+  const canvas = canvasRef.value
+  if (!canvas) return
+  const rect = canvas.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const ratio = Math.max(0, Math.min(1, x / rect.width))
+  emit('seek', ratio)
 }
 
 onMounted(async () => {
@@ -139,11 +156,16 @@ watch(() => props.visible, async (val) => {
     drawWaveform()
   }
 })
+
+watch(() => props.currentTime, async () => {
+  drawWaveform()
+})
 </script>
 
 <template>
   <canvas
     ref="canvasRef"
-    class="w-full h-8 md:h-12 min-w-[100px]"
+    class="w-full h-8 md:h-12 min-w-[100px] cursor-pointer"
+    @click="handleCanvasClick"
   />
 </template>

@@ -5,6 +5,7 @@
 // Desktop: side-by-side panels
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
+import WaveformCanvas from '../components/WaveformCanvas.vue'
 import { computed, nextTick, shallowRef, watch, onUnmounted, ref } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
@@ -54,6 +55,13 @@ const { audioRef, audioUrl, duration, currentTime, isPlaying, isPaused } = audio
 const { synthesize } = useTtsApi()
 const { status: modelStatus } = useHealthPoll()
 const { voices: speakerVoices } = useVoices()
+
+function formatTime(seconds: number): string {
+  if (!seconds || isNaN(seconds)) return '0:00'
+  const minutes = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${minutes}:${secs.toString().padStart(2, '0')}`
+}
 
 // Safety net: dispose on unmount
 onUnmounted(() => audioModule.dispose())
@@ -176,6 +184,22 @@ function handleClosePlayer() {
 
     <!-- Mobile: Split-screen (hidden on desktop) -->
     <div class="flex md:hidden flex-col h-dvh w-full overflow-hidden">
+      <!-- Mobile Top Bar (logo + status, matching prototype) -->
+      <header
+        class="flex justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700/40 shrink-0 z-40"
+      >
+        <div class="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            class="ph-fill ph-waves text-sunrise-orange text-xl"
+          />
+          <h1 class="text-lg font-bold text-white tracking-tight">
+            Lughat<span class="text-sunrise-magenta">Chat</span>
+          </h1>
+        </div>
+        <MobileStatusIndicator />
+      </header>
+
       <!-- Mobile: Canvas (top half) -->
       <main
         role="region"
@@ -219,8 +243,8 @@ function handleClosePlayer() {
             </div>
           </div>
 
-          <!-- Mobile: AI Toolbar (compact, no extra padding) -->
-          <div class="flex items-center gap-2 w-full overflow-x-auto hide-scrollbar">
+          <!-- Mobile: AI Toolbar (compact, no extra padding) hide it for now -->
+          <div class="hidden items-center gap-2 w-full overflow-x-auto hide-scrollbar">
             <button
               class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg border border-studio-700/60 hover:border-gray-500 group"
               title="Type in any language and translate to Arabic"
@@ -277,22 +301,6 @@ function handleClosePlayer() {
         class="flex-1 w-full bg-studio-800 flex flex-col overflow-hidden"
         :style="{ height: `${(1 - canvasRatio) * 100}%` }"
       >
-        <!-- Mobile Header (compact, matching prototype) -->
-        <header
-          class="flex justify-between items-center px-3 py-2 bg-studio-800 border-b border-studio-700/40 shrink-0 z-30"
-        >
-          <div class="flex items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              class="ph-fill ph-waves text-sunrise-orange text-base"
-            />
-            <h1 class="text-base font-bold text-white tracking-tight">
-              Lughat<span class="text-sunrise-magenta">Chat</span>
-            </h1>
-          </div>
-          <MobileStatusIndicator />
-        </header>
-
         <!-- Controls Container (compact spacing for mobile) -->
         <div class="flex-1 p-3 overflow-y-auto flex flex-col gap-4">
           <!-- Voice Selection -->
@@ -333,6 +341,92 @@ function handleClosePlayer() {
             :disabled="!isValid || isGenerating || modelStatus === 'loading'"
             @click="handleSynthesize"
           />
+        </div>
+
+        <!-- Mobile: Generated Audio Card (appears after generation) -->
+        <div
+          v-if="playerVisible && audioUrl"
+          class="p-3 border-t border-studio-700/40 bg-studio-800 shrink-0"
+        >
+          <div class="flex items-center gap-3">
+            <!-- Gradient music icon -->
+            <div
+              class="w-9 h-9 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg shrink-0"
+            >
+              <span
+                aria-hidden="true"
+                class="ph-fill ph-music-notes text-white text-sm"
+              />
+            </div>
+            <!-- Title + subtitle -->
+            <div class="overflow-hidden min-w-0 flex-1">
+              <h3 class="text-white font-semibold text-xs truncate">
+                Generated Audio
+              </h3>
+              <p class="text-[10px] text-gray-400 truncate">
+                {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
+              </p>
+            </div>
+            <!-- Action buttons -->
+            <div class="flex items-center gap-2 shrink-0">
+              <button
+                class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                title="Download MP3"
+                @click="handleDownload"
+              >
+                <span
+                  aria-hidden="true"
+                  class="ph ph-download-simple text-lg"
+                />
+              </button>
+              <button
+                class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors"
+                title="Close Player"
+                @click="handleClosePlayer"
+              >
+                <span
+                  aria-hidden="true"
+                  class="ph ph-x text-lg"
+                />
+              </button>
+            </div>
+          </div>
+
+          <!-- Waveform + Play -->
+          <div class="mt-2 bg-studio-900 rounded-lg border border-studio-700/60 p-2 flex items-center gap-2">
+            <!-- Play/Pause button -->
+            <button
+              class="w-9 h-9 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0"
+              @click="audioModule.toggle"
+            >
+              <span
+                v-if="isPlaying && !isPaused"
+                aria-hidden="true"
+                class="ph-fill ph-pause text-base"
+              />
+              <span
+                v-else
+                aria-hidden="true"
+                class="ph-fill ph-play text-base ml-0.5"
+              />
+            </button>
+
+            <!-- Waveform canvas -->
+            <div class="flex-1 h-7 relative w-full overflow-hidden min-w-[80px]">
+              <WaveformCanvas
+                :visible="playerVisible"
+                :is-playing="isPlaying"
+                :current-time="currentTime"
+                :duration="duration"
+                @seek="audioModule.seek"
+              />
+            </div>
+
+            <!-- Duration -->
+            <span class="text-[10px] font-mono text-gray-400 flex-shrink-0 w-8 text-right">
+              {{ formatTime(duration) }}
+            </span>
+          </div>
         </div>
       </aside>
     </div>
@@ -481,7 +575,7 @@ function handleClosePlayer() {
             </h2>
 
             <!-- AI Smart Tools Toolbar (mobile: visible, horizontally scrollable) -->
-            <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 md:border-l border-studio-700 shrink-0">
+            <div class="hidden items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 md:border-l border-studio-700 shrink-0">
               <button
                 class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-gray-500 group"
                 title="Type in any language and translate to Arabic"

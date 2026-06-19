@@ -114,6 +114,7 @@ const panelShown = computed(() => props.visible)
           :is-playing="isPlaying"
           :current-time="currentTime"
           :duration="duration"
+          @seek="(ratio) => emit('seek', ratio)"
         />
       </div>
 

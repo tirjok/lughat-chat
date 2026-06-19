@@ -354,7 +354,7 @@ describe('useAudioModule', () => {
         'isPlaying', 'isPaused', 'currentTime', 'duration',
         'audioUrl',
         'audioRef',
-        'load', 'play', 'pause', 'seek', 'download', 'dispose'
+        'load', 'play', 'pause', 'toggle', 'seek', 'download', 'dispose'
       ])
     })
   })
