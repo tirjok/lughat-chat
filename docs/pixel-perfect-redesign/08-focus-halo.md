@@ -2,7 +2,7 @@
 
 ## Type
 
-AFK
+Done
 
 ## What to build
 
@@ -60,7 +60,7 @@ arabicInput.addEventListener('blur', () => {
 **Logic fix**
 1. On `focus`: always add `active` class (regardless of content)
 2. On `blur`: only remove `active` class if `textarea.value.trim() === ''`
-3. Remove the `updateHalo()` function's content check — it's the wrong logic
+3. Use the `focused` prop from parent instead of DOM queries
 
 **Current issues vs prototype**
 - `updateHalo()` checks `textarea.value.trim() === ''` on focus and hides — prototype shows on focus
@@ -77,5 +77,4 @@ arabicInput.addEventListener('blur', () => {
 
 ## Blocked by
 
-- #01 (icon library — not directly affected, but needs global styles)
-- #02 (global styles — textarea focus handling)
+None — resolved by fixing focus/blur logic and using the `focused` prop.

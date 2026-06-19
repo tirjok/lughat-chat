@@ -1,27 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-
-const _props = defineProps<{
+const props = defineProps<{
   focused?: boolean
 }>()
 
 const haloRef = ref<HTMLDivElement | null>(null)
 
-function updateHalo() {
-  if (!haloRef.value) return
-  const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
-  if (textarea && textarea.value.trim() === '') {
-    haloRef.value.classList.remove('active')
-  } else {
+function handleFocus() {
+  if (haloRef.value) {
     haloRef.value.classList.add('active')
   }
 }
 
-function handleTextareaFocus() {
-  updateHalo()
-}
-
-function handleTextareaBlur() {
+function handleBlur() {
   const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
   if (textarea && textarea.value.trim() === '') {
     haloRef.value?.classList.remove('active')
@@ -29,19 +19,18 @@ function handleTextareaBlur() {
 }
 
 onMounted(() => {
-  updateHalo()
   const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
   if (textarea) {
-    textarea.addEventListener('focus', handleTextareaFocus)
-    textarea.addEventListener('blur', handleTextareaBlur)
+    textarea.addEventListener('focus', handleFocus)
+    textarea.addEventListener('blur', handleBlur)
   }
 })
 
 onUnmounted(() => {
   const textarea = document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
   if (textarea) {
-    textarea.removeEventListener('focus', handleTextareaFocus)
-    textarea.removeEventListener('blur', handleTextareaBlur)
+    textarea.removeEventListener('focus', handleFocus)
+    textarea.removeEventListener('blur', handleBlur)
   }
 })
 </script>
