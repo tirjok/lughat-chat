@@ -28,7 +28,9 @@ const emit = defineEmits<{
         class="i-lucide-play text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"
         style="filter: drop-shadow(0 0 6px rgba(221,36,118,0.5));"
       />
-      <span class="font-bold text-white tracking-wide">Generate Speech</span>
+      <span class="font-bold text-white tracking-wide text-sm md:text-base">
+        Generate Speech
+      </span>
     </div>
 
     <!-- Loading/Generating state -->
@@ -37,7 +39,7 @@ const emit = defineEmits<{
       class="btn-content"
     >
       <div class="loader" />
-      <span class="font-medium text-sunrise-orange animate-pulse">
+      <span class="font-medium text-sunrise-orange animate-pulse text-sm md:text-base">
         Processing Model...
       </span>
     </div>
@@ -54,7 +56,8 @@ const emit = defineEmits<{
   transition: all 0.3s ease;
   display: block;
   width: 100%;
-  padding: 1rem 1.5rem;
+  /* Prototype: py-3.5 md:py-4 */
+  padding: 0.875rem 1.5rem;
   min-height: 3.5rem;
   cursor: pointer;
   border: 1px solid #333333;

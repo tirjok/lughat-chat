@@ -108,9 +108,11 @@ describe('index.vue — full page integration (Slice 8)', () => {
   it('applies Sunrise color palette (orange + magenta) to the page', () => {
     const wrapper = shallowMount(Index)
     const html = wrapper.html()
-    // jsdom converts hex colors to rgb()
+    // Check for UnoCSS utility classes (jsdom doesn't process CSS)
+    expect(html).toContain('text-sunrise-orange')
+    expect(html).toContain('text-sunrise-magenta')
+    // jsdom converts hex to rgb() for inline styles
     expect(html).toContain('rgb(255, 81, 47)')
-    expect(html).toContain('rgb(221, 36, 118)')
   })
 
   it('applies charcoal background (#121212) to the page', () => {
@@ -253,9 +255,9 @@ describe('index.vue — responsive layout tests', () => {
   })
 
   describe('main (Canvas) responsive layout', () => {
-    it('main has responsive widths: md:w-[65%] lg:w-[70%] xl:w-[75%]', () => {
-      const indexPath = path.resolve(__dirname, '../app/pages/index.vue')
-      const source = fs.readFileSync(indexPath, 'utf-8')
+    it('AudioPlayerPanel has responsive widths: md:w-[65%] lg:w-[70%] xl:w-[75%]', () => {
+      const panelPath = path.resolve(__dirname, '../app/components/AudioPlayerPanel.vue')
+      const source = fs.readFileSync(panelPath, 'utf-8')
       expect(source).toContain('md:w-[65%]')
       expect(source).toContain('lg:w-[70%]')
       expect(source).toContain('xl:w-[75%]')

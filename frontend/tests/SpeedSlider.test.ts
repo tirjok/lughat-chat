@@ -22,23 +22,26 @@ describe('SpeedSlider component', () => {
     })
   }
 
-  // ─── Desktop: Horizontal Slider (≥768px) ──────────────────────────────
+  // ─── Prototype: Native Range Input (≥768px) ───────────────────────────
 
-  it('renders the desktop slider track', () => {
+  it('renders a native <input type="range"> element', () => {
     const wrapper = mountSlider()
-    expect(wrapper.find('.speed-slider__track').exists()).toBe(true)
+    const input = wrapper.find('input[type="range"]')
+    expect(input.exists()).toBe(true)
   })
 
-  it('renders the desktop slider fill with correct width', () => {
+  it('native range input has correct min, max, step attributes', () => {
     const wrapper = mountSlider()
-    const fill = wrapper.find('.speed-slider__fill')
-    expect(fill.exists()).toBe(true)
+    const input = wrapper.find('input[type="range"]')
+    expect(input.attributes('min')).toBe('0.5')
+    expect(input.attributes('max')).toBe('2.0')
+    expect(input.attributes('step')).toBe('0.1')
   })
 
-  it('renders the desktop slider thumb', () => {
-    const wrapper = mountSlider()
-    const thumb = wrapper.find('.speed-slider__thumb')
-    expect(thumb.exists()).toBe(true)
+  it('native range input reflects current modelValue', () => {
+    const wrapper = mountSlider(1.5)
+    const input = wrapper.find('input[type="range"]')
+    expect(input.element.value).toBe('1.5')
   })
 
   it('renders desktop range markers (0.5x, 1.0x, 2.0x)', () => {
@@ -49,10 +52,19 @@ describe('SpeedSlider component', () => {
     expect(html).toContain('2.0x')
   })
 
-  it('renders pointer event handlers on the track', () => {
-    const wrapper = mountSlider()
-    const track = wrapper.find('.speed-slider__track')
-    expect(track.exists()).toBe(true)
+  it('range markers use text-[10px] font-mono (prototype)', () => {
+    const componentPath = path.join(__dirname, '../app/components/SpeedSlider.vue')
+    const source = fs.readFileSync(componentPath, 'utf-8')
+    expect(source).toContain('text-[10px]')
+    expect(source).toContain('font-mono')
+  })
+
+  // ─── Prototype: pt-2 pb-4 wrapper ─────────────────────────────────────
+
+  it('uses prototype: pt-2 pb-4 wrapper on desktop slider', () => {
+    const componentPath = path.join(__dirname, '../app/components/SpeedSlider.vue')
+    const source = fs.readFileSync(componentPath, 'utf-8')
+    expect(source).toContain('pt-2 pb-4')
   })
 
   // ─── Mobile: Stepper Buttons (<768px) ─────────────────────────────────
@@ -154,12 +166,13 @@ describe('SpeedSlider component', () => {
     expect(wrapper.emitted('update:modelValue')).toBeTruthy()
   })
 
-  it('preserves existing desktop slider when modelValue changes', () => {
-    const wrapper = mountSlider(1.8)
-    const track = wrapper.find('.speed-slider__track')
-    expect(track.exists()).toBe(true)
-    const fill = wrapper.find('.speed-slider__fill')
-    expect(fill.exists()).toBe(true)
+  it('native range input emits update:modelValue on input event', async () => {
+    const wrapper = mountSlider(1.0)
+    const input = wrapper.find('input[type="range"]')
+    await input.setValue('1.5')
+    await input.trigger('input')
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+    expect(wrapper.emitted('update:modelValue')![0]).toEqual([1.5])
   })
 
   // ─── displayValue Format ──────────────────────────────────────────────
@@ -174,24 +187,19 @@ describe('SpeedSlider component', () => {
     expect(wrapper.html()).toContain('0.5x')
   })
 
-  // ─── Desktop Slider Track Percent ─────────────────────────────────────
+  // ─── Prototype: Gradient Track Fill ───────────────────────────────────
 
-  it('calculates trackPercent correctly for mid value (1.25 → 50%)', () => {
-    const wrapper = mountSlider(1.25)
-    const fill = wrapper.find('.speed-slider__fill')
-    expect(fill.attributes('style')).toContain('50%')
+  it('native range input uses gradient background for track fill (prototype)', () => {
+    const componentPath = path.join(__dirname, '../app/components/SpeedSlider.vue')
+    const source = fs.readFileSync(componentPath, 'utf-8')
+    expect(source).toContain('linear-gradient(to right, #DD2476, #FF512F')
   })
 
-  it('calculates trackPercent correctly for min value (0.5 → 0%)', () => {
-    const wrapper = mountSlider(0.5)
-    const fill = wrapper.find('.speed-slider__fill')
-    expect(fill.attributes('style')).toContain('0%')
-  })
-
-  it('calculates trackPercent correctly for max value (2.0 → 100%)', () => {
-    const wrapper = mountSlider(2.0)
-    const fill = wrapper.find('.speed-slider__fill')
-    expect(fill.attributes('style')).toContain('100%')
+  it('native range input has custom thumb styling (prototype)', () => {
+    const componentPath = path.join(__dirname, '../app/components/SpeedSlider.vue')
+    const source = fs.readFileSync(componentPath, 'utf-8')
+    expect(source).toContain('::-webkit-slider-thumb')
+    expect(source).toContain('#FF512F')
   })
 
   // ─── Responsive Breakpoint Tests ──────────────────────────────────────
@@ -201,57 +209,33 @@ describe('SpeedSlider component', () => {
       setBreakpoint(375)
       const wrapper = mountSlider()
       const html = wrapper.html()
-      // Stepper buttons are in a container with md:hidden (hidden on desktop)
-      // At 375px, the stepper section is visible
       expect(html).toContain('md:hidden flex items-center justify-center gap-4')
-      // Verify stepper buttons exist
       const buttons = wrapper.findAll('button')
       expect(buttons.length).toBeGreaterThanOrEqual(2)
-      // Verify minus and plus icons exist in stepper
       const hasMinus = html.includes('i-lucide-minus')
       const hasPlus = html.includes('i-lucide-plus')
       expect(hasMinus).toBe(true)
       expect(hasPlus).toBe(true)
     })
 
-    it('horizontal slider renders on desktop widths (≥768px)', () => {
+    it('native range slider renders on desktop widths (≥768px)', () => {
       setBreakpoint(1024)
       const wrapper = mountSlider()
       const html = wrapper.html()
-      // Desktop slider track is always rendered (hidden on mobile via md:hidden)
-      expect(html).toContain('speed-slider__track')
-      expect(html).toContain('speed-slider__fill')
-      expect(html).toContain('speed-slider__thumb')
+      expect(html).toContain('type="range"')
     })
 
     it('stepper buttons are hidden on desktop (md:hidden)', () => {
       setBreakpoint(1024)
       const wrapper = mountSlider()
       const html = wrapper.html()
-      // The stepper container has md:hidden — hidden on desktop
       expect(html).toContain('md:hidden')
-    })
-
-    it('desktop slider is hidden on mobile (hidden md:)', () => {
-      setBreakpoint(375)
-      mountSlider()
-      // The desktop slider track is always rendered in markup (no display:none).
-      // The mobile stepper has md:hidden — so on mobile, the stepper is hidden
-      // and the desktop slider becomes visible.
-      // Verify both layouts exist in the source for responsive switching.
-      const componentPath = path.resolve(__dirname, '../app/components/SpeedSlider.vue')
-      const source = fs.readFileSync(componentPath, 'utf-8')
-      // Desktop slider track (always rendered)
-      expect(source).toContain('speed-slider__track')
-      // Mobile stepper (hidden on desktop via md:hidden)
-      expect(source).toContain('md:hidden')
     })
 
     it('both stepper and slider markup exist in component source', () => {
       const componentPath = path.resolve(__dirname, '../app/components/SpeedSlider.vue')
       const source = fs.readFileSync(componentPath, 'utf-8')
-      // Both layouts exist in the source for responsive switching
-      expect(source).toContain('speed-slider__track')
+      expect(source).toContain('type="range"')
       expect(source).toContain('i-lucide-minus')
       expect(source).toContain('i-lucide-plus')
     })

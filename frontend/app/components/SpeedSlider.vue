@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 interface Props {
   modelValue?: number
@@ -19,41 +19,27 @@ const clampedValue = computed(() =>
 
 const displayValue = computed(() => `${clampedValue.value.toFixed(1)}x`)
 
-const trackPercent = computed(() => {
-  const ratio = (clampedValue.value - 0.5) / (2.0 - 0.5)
-  return ratio * 100
-})
+const sliderRef = ref<HTMLInputElement | null>(null)
 
-const sliderRef = ref<HTMLElement | null>(null)
-let isDragging = false
-
-function handlePointerDown(event: PointerEvent) {
-  isDragging = true
-  const target = event.target as HTMLElement
-  target.setPointerCapture(event.pointerId)
-  updateFromEvent(event)
-}
-
-function handlePointerMove(event: PointerEvent) {
-  if (!isDragging)
-    return
-  updateFromEvent(event)
-}
-
-function handlePointerUp() {
-  isDragging = false
-}
-
-function updateFromEvent(event: PointerEvent) {
+// Update gradient fill on the native range input (prototype style)
+function updateSliderFill() {
   const el = sliderRef.value
-  if (!el)
-    return
-  const rect = el.getBoundingClientRect()
-  const ratio = (event.clientX - rect.left) / rect.width
-  const clampedRatio = Math.max(0, Math.min(1, ratio))
-  const value = 0.5 + clampedRatio * (2.0 - 0.5)
+  if (!el) return
+  const min = parseFloat(el.min)
+  const max = parseFloat(el.max)
+  const val = clampedValue.value
+  const percentage = ((val - min) / (max - min)) * 100
+  el.style.background = `linear-gradient(to right, #DD2476, #FF512F ${percentage}%, #2A2A2A ${percentage}%, #2A2A2A 100%)`
+}
+
+watch(clampedValue, updateSliderFill, { immediate: true })
+
+function handleInput(event: Event) {
+  const el = event.target as HTMLInputElement
+  const value = parseFloat(el.value)
   const stepped = Math.round(value / 0.1) * 0.1
   emit('update:modelValue', Math.max(0.5, Math.min(2.0, stepped)))
+  updateSliderFill()
 }
 
 function adjustSpeed(delta: number) {
@@ -64,7 +50,7 @@ function adjustSpeed(delta: number) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 border-b border-studio-700 pb-6">
+  <div class="flex flex-col gap-4">
     <div class="flex justify-between items-end">
       <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
         <span
@@ -78,42 +64,24 @@ function adjustSpeed(delta: number) {
       </span>
     </div>
 
-    <!-- Desktop: Horizontal slider (≥768px) -->
-    <div
-      ref="sliderRef"
-      class="speed-slider__track relative h-6 cursor-pointer select-none"
-      :style="{ touchAction: 'pan-y' }"
-      @pointerdown="handlePointerDown"
-      @pointermove="handlePointerMove"
-      @pointerup="handlePointerUp"
-      @pointercancel="handlePointerUp"
-    >
-      <!-- Track background -->
-      <div
-        class="speed-slider__bg absolute left-0 top-1/2 -translate-y-1/2 h-1 w-full rounded-full"
-        style="background: #2A2A2A;"
-      />
-      <!-- Filled track -->
-      <div
-        class="speed-slider__fill absolute left-0 top-1/2 -translate-y-1/2 h-1 rounded-full"
-        style="background: linear-gradient(to right, #DD2476, #FF512F);"
-        :style="{ width: `${trackPercent}%` }"
-      />
-      <!-- Thumb knob (centered on track) -->
-      <div
-        class="speed-slider__thumb absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full shadow-lg transition-transform duration-100"
-        style="background: #FF512F; box-shadow: 0 0 10px rgba(255, 81, 47, 0.8);"
-        :style="{ left: `calc(${trackPercent}% - 8px)` }"
-        :class="{ 'scale-125': isDragging }"
-      />
-      <!-- Range markers -->
-      <div class="relative text-[10px] text-gray-500 font-mono mt-5 pointer-events-none">
-        <span class="absolute left-0">0.5x</span>
-        <span
-          class="absolute"
-          :style="{ left: ((1.0 - 0.5) / (2.0 - 0.5)) * 100 + '%' }"
-        >1.0x</span>
-        <span class="absolute right-0">2.0x</span>
+    <!-- Prototype: native <input type=range> with gradient track, pt-2 pb-4 wrapper -->
+    <div class="relative w-full pt-2 pb-4">
+      <input
+        ref="sliderRef"
+        type="range"
+        min="0.5"
+        max="2.0"
+        step="0.1"
+        :value="clampedValue"
+        class="w-full"
+        style="-webkit-appearance: none; width: 100%; background: transparent;"
+        @input="handleInput"
+      >
+      <!-- Range markers (prototype: text-[10px], mt-2 absolute) -->
+      <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-2 absolute w-full">
+        <span>0.5x</span>
+        <span>1.0x</span>
+        <span>2.0x</span>
       </div>
     </div>
 
@@ -149,3 +117,55 @@ function adjustSpeed(delta: number) {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Native range input styling to match prototype */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #FF512F;
+  cursor: pointer;
+  margin-top: -6px;
+  box-shadow: 0 0 10px rgba(255, 81, 47, 0.8);
+  transition: transform 0.1s;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: #2A2A2A;
+  border-radius: 2px;
+}
+
+/* Firefox */
+input[type='range'] {
+  appearance: none;
+  width: 100%;
+  background: transparent;
+}
+
+input[type='range']::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #FF512F;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(255, 81, 47, 0.8);
+}
+
+input[type='range']::-moz-range-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: #2A2A2A;
+  border-radius: 2px;
+}
+</style>

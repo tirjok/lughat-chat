@@ -123,13 +123,15 @@ function handleClosePlayer() {
 
 <template>
   <div
-    class="flex flex-col md:flex-row h-dvh w-full overflow-hidden text-studio-text antialiased"
+    class="flex flex-col md:flex-row h-[100dvh] w-full overflow-hidden text-studio-text antialiased bg-studio-900"
     style="background-color: #121212;"
     dir="ltr"
     @keydown="handleKeyDown"
   >
-    <!-- Toast Notification Container -->
-    <ToastNotification />
+    <!-- Toast Notification Container (prototype positioning) -->
+    <div class="fixed top-20 md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none">
+      <ToastNotification />
+    </div>
 
     <!-- Screen reader live region for panel announcements -->
     <div
@@ -157,12 +159,11 @@ function handleClosePlayer() {
         role="region"
         aria-labelledby="control-deck-heading"
         data-panel="control-deck"
-        class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 order-2 md:order-1"
+        class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 order-2 md:order-1 transition-all duration-300"
       >
         <!-- Mobile Header (logo + status, visible below 768px) -->
         <header
           class="flex md:hidden justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700 shrink-0 z-30 shadow-md"
-          style="padding-top: env(safe-area-inset-top);"
         >
           <div class="flex items-center gap-2">
             <span
@@ -185,9 +186,8 @@ function handleClosePlayer() {
               <span
                 aria-hidden="true"
                 class="i-lucide-audio-waveform text-sunrise-orange"
-                style="filter: drop-shadow(0 0 6px rgba(255,81,47,0.6));"
               />
-              Lughat<span style="color: #DD2476;">Chat</span>
+              Lughat<span class="text-sunrise-magenta">Chat</span>
             </h1>
             <p class="text-xs text-gray-400 mt-1 uppercase tracking-wider">
               Premium Audio Studio
@@ -198,8 +198,8 @@ function handleClosePlayer() {
           <ModelStatusIndicator />
         </header>
 
-        <!-- Controls Container -->
-        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-6 border-b border-studio-700">
+        <!-- Controls Container (prototype: p-4 md:p-6, gap-6 md:gap-8, no border-b) -->
+        <div class="flex-1 p-4 md:p-6 overflow-y-auto flex flex-col gap-6 md:gap-8">
           <!-- Voice Selection -->
           <VoiceSelector
             v-model="selectedSpeaker"
@@ -232,8 +232,8 @@ function handleClosePlayer() {
           </div>
         </div>
 
-        <!-- Action Area -->
-        <div class="p-6 border-t border-studio-700 bg-studio-800">
+        <!-- Action Area (prototype: p-4 md:p-6, shrink-0) -->
+        <div class="p-4 md:p-6 border-t border-studio-700 bg-studio-800 shrink-0">
           <GenerateButton
             :is-generating="isGenerating"
             :model-status="modelStatus"
@@ -248,14 +248,13 @@ function handleClosePlayer() {
         role="region"
         aria-labelledby="canvas-heading"
         data-panel="canvas"
-        class="flex-1 w-full bg-studio-900 relative flex flex-col overflow-hidden md:w-[65%] lg:w-[70%] xl:w-[75%] md:border-l border-studio-700 p-4 md:p-6 lg:p-8 pb-2 md:pb-4 order-1 md:order-2"
-        style="padding-bottom: env(safe-area-inset-bottom);"
+        class="flex-1 w-full bg-studio-900 relative flex flex-col overflow-hidden order-1 md:order-2"
       >
         <!-- Focus Halo (radial gradient glow behind textarea) -->
         <FocusHaloCanvas :focused="!!textInput" />
 
-        <!-- Header / Context -->
-        <div class="w-full p-4 md:p-6 lg:p-8 pb-2 md:pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shrink-0 border-b border-studio-700">
+        <!-- Header / Context (prototype: no border-b, AI toolbar inline) -->
+        <div class="w-full p-4 md:p-6 lg:p-8 pb-2 md:pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shrink-0">
           <!-- Mobile Canvas Header (horizontal row, visible below 768px) -->
           <div class="flex justify-between items-center w-full md:w-auto md:hidden">
             <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
@@ -285,7 +284,6 @@ function handleClosePlayer() {
             </div>
           </div>
 
-          <!-- Desktop Canvas Header (label + AI toolbar row) -->
           <div class="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 w-full md:w-auto">
             <h2 class="hidden md:flex text-gray-400 font-medium text-sm items-center gap-2">
               <span
@@ -294,6 +292,28 @@ function handleClosePlayer() {
               />
               Editor Canvas
             </h2>
+
+            <!-- AI Smart Tools Toolbar (prototype: hide-scrollbar, overflow-x-auto, pb-1 md:pb-0 md:pl-4 md:border-l) -->
+            <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 md:border-l border-studio-700 shrink-0">
+              <button
+                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-gray-500 group"
+                title="Type in any language and translate to Arabic"
+              >
+                <span class="group-hover:animate-pulse">✨</span> Translate
+              </button>
+              <button
+                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-sunrise-orange group"
+                title="Add Harakat (diacritics) for perfect TTS pronunciation"
+              >
+                <span class="group-hover:animate-pulse">✨</span> Add Diacritics
+              </button>
+              <button
+                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-sunrise-magenta group"
+                title="Let AI write the next few sentences"
+              >
+                <span class="group-hover:animate-pulse">✨</span> Continue Script
+              </button>
+            </div>
           </div>
 
           <!-- Desktop Char Count & Clear (hidden on mobile) -->
@@ -317,8 +337,8 @@ function handleClosePlayer() {
           </div>
         </div>
 
-        <!-- Text Input Area -->
-        <div class="flex-1 relative w-full max-w-5xl mx-auto px-8 pb-32 flex flex-col border-b border-studio-700">
+        <!-- Text Input Area (prototype: px-4 md:px-8, pb-4 md:pb-32, no border-b) -->
+        <div class="flex-1 relative w-full max-w-5xl mx-auto px-4 md:px-8 pb-4 md:pb-32 flex flex-col">
           <textarea
             v-model="textInput"
             dir="rtl"
