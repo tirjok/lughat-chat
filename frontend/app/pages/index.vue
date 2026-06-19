@@ -32,6 +32,7 @@ const selectedSpeaker = shallowRef('')
 const speedValue = shallowRef(1.0)
 const isGenerating = shallowRef(false)
 const playerVisible = shallowRef(false)
+const hqAudioEnabled = shallowRef(true)
 
 // Track selected voice for display
 const selectedVoiceName = computed(() => {
@@ -168,7 +169,7 @@ function handleClosePlayer() {
           <div class="flex items-center gap-2">
             <span
               aria-hidden="true"
-              class="i-lucide-audio-waveform text-sunrise-orange text-xl"
+              class="ph-fill ph-waves text-sunrise-orange text-xl"
             />
             <h1 class="text-lg font-bold text-white tracking-tight">
               Lughat<span class="text-sunrise-magenta">Chat</span>
@@ -185,7 +186,7 @@ function handleClosePlayer() {
             <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <span
                 aria-hidden="true"
-                class="i-lucide-audio-waveform text-sunrise-orange"
+                class="ph-fill ph-waves text-sunrise-orange"
               />
               Lughat<span class="text-sunrise-magenta">Chat</span>
             </h1>
@@ -210,22 +211,20 @@ function handleClosePlayer() {
           <SpeedSlider v-model="speedValue" />
 
           <!-- Output Settings (matches sample design) -->
-          <div class="flex flex-col gap-3 border-b border-studio-700 pb-6">
+          <div class="flex flex-col gap-3">
             <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                class="i-lucide-sliders-horizontal text-lg"
-              />
-              Output Settings
+              <span class="ph ph-sliders-horizontal text-lg" /> Output Settings
             </label>
-            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700 shadow-inner">
+            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700">
               <span class="text-sm text-gray-400">High Quality Audio</span>
               <button
-                class="w-8 h-4 bg-sunrise-orange rounded-full relative transition-colors duration-300 ease-in-out"
-                title="High Quality Audio (placeholder)"
+                class="w-10 h-5 bg-sunrise-orange rounded-full relative cursor-pointer transition-colors duration-300 ease-in-out hover:bg-sunrise-orange/90 active:scale-95"
+                style="box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);"
+                @click="hqAudioEnabled = !hqAudioEnabled"
               >
-                <span
-                  class="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"
+                <div
+                  class="w-4 h-4 bg-white rounded-full absolute top-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out shadow-md"
+                  :class="hqAudioEnabled ? 'right-0.5' : 'left-0.5'"
                 />
               </button>
             </div>
@@ -260,7 +259,7 @@ function handleClosePlayer() {
             <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
               <span
                 aria-hidden="true"
-                class="i-lucide-terminal text-lg"
+                class="ph ph-terminal text-lg"
               />
               Editor Canvas
             </h2>
@@ -278,7 +277,7 @@ function handleClosePlayer() {
               >
                 <span
                   aria-hidden="true"
-                  class="i-lucide-trash text-lg"
+                  class="ph ph-trash text-lg"
                 />
               </button>
             </div>
@@ -288,7 +287,7 @@ function handleClosePlayer() {
             <h2 class="hidden md:flex text-gray-400 font-medium text-sm items-center gap-2">
               <span
                 aria-hidden="true"
-                class="i-lucide-terminal text-lg"
+                class="ph ph-terminal text-lg"
               />
               Editor Canvas
             </h2>
@@ -331,7 +330,7 @@ function handleClosePlayer() {
             >
               <span
                 aria-hidden="true"
-                class="i-lucide-trash text-lg"
+                class="ph ph-trash text-lg"
               />
             </button>
           </div>

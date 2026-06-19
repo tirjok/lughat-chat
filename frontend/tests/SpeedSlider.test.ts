@@ -78,14 +78,14 @@ describe('SpeedSlider component', () => {
   it('renders minus button in stepper', () => {
     const wrapper = mountSlider()
     const buttons = wrapper.findAll('button')
-    const minusBtn = buttons.find(b => b.find('[class*="i-lucide-minus"]').exists())
+    const minusBtn = buttons.find(b => b.find('[class*="ph ph-minus"]').exists())
     expect(minusBtn).toBeDefined()
   })
 
   it('renders plus button in stepper', () => {
     const wrapper = mountSlider()
     const buttons = wrapper.findAll('button')
-    const plusBtn = buttons.find(b => b.find('[class*="i-lucide-plus"]').exists())
+    const plusBtn = buttons.find(b => b.find('[class*="ph ph-plus"]').exists())
     expect(plusBtn).toBeDefined()
   })
 
@@ -125,7 +125,7 @@ describe('SpeedSlider component', () => {
   it('minus button clamps to 0.5 minimum', async () => {
     const wrapper = mountSlider(0.5)
     const buttons = wrapper.findAll('button')
-    const minusBtn = buttons.find(b => b.find('[class*="i-lucide-minus"]').exists())
+    const minusBtn = buttons.find(b => b.find('[class*="ph ph-minus"]').exists())
     expect(minusBtn).toBeDefined()
     await minusBtn!.trigger('click')
     expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
@@ -135,7 +135,7 @@ describe('SpeedSlider component', () => {
   it('plus button clamps to 2.0 maximum', async () => {
     const wrapper = mountSlider(2.0)
     const buttons = wrapper.findAll('button')
-    const plusBtn = buttons.find(b => b.find('[class*="i-lucide-plus"]').exists())
+    const plusBtn = buttons.find(b => b.find('[class*="ph ph-plus"]').exists())
     expect(plusBtn).toBeDefined()
     await plusBtn!.trigger('click')
     expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
@@ -145,14 +145,14 @@ describe('SpeedSlider component', () => {
   it('minus button shows disabled styling at minimum (0.5)', () => {
     const wrapper = mountSlider(0.5)
     const buttons = wrapper.findAll('button')
-    const minusBtn = buttons.find(b => b.find('[class*="i-lucide-minus"]').exists())!
+    const minusBtn = buttons.find(b => b.find('[class*="ph ph-minus"]').exists())!
     expect(minusBtn.classes()).toContain('opacity-40')
   })
 
   it('plus button shows disabled styling at maximum (2.0)', () => {
     const wrapper = mountSlider(2.0)
     const buttons = wrapper.findAll('button')
-    const plusBtn = buttons.find(b => b.find('[class*="i-lucide-plus"]').exists())!
+    const plusBtn = buttons.find(b => b.find('[class*="ph ph-plus"]').exists())!
     expect(plusBtn.classes()).toContain('opacity-40')
   })
 
@@ -161,7 +161,7 @@ describe('SpeedSlider component', () => {
   it('emits update:modelValue on stepper click', async () => {
     const wrapper = mountSlider(1.0)
     const buttons = wrapper.findAll('button')
-    const plusBtn = buttons.find(b => b.find('[class*="i-lucide-plus"]').exists())!
+    const plusBtn = buttons.find(b => b.find('[class*="ph ph-plus"]').exists())!
     await plusBtn.trigger('click')
     expect(wrapper.emitted('update:modelValue')).toBeTruthy()
   })
@@ -212,8 +212,8 @@ describe('SpeedSlider component', () => {
       expect(html).toContain('md:hidden flex items-center justify-center gap-4')
       const buttons = wrapper.findAll('button')
       expect(buttons.length).toBeGreaterThanOrEqual(2)
-      const hasMinus = html.includes('i-lucide-minus')
-      const hasPlus = html.includes('i-lucide-plus')
+      const hasMinus = html.includes('ph ph-minus')
+      const hasPlus = html.includes('ph ph-plus')
       expect(hasMinus).toBe(true)
       expect(hasPlus).toBe(true)
     })
@@ -236,8 +236,8 @@ describe('SpeedSlider component', () => {
       const componentPath = path.resolve(__dirname, '../app/components/SpeedSlider.vue')
       const source = fs.readFileSync(componentPath, 'utf-8')
       expect(source).toContain('type="range"')
-      expect(source).toContain('i-lucide-minus')
-      expect(source).toContain('i-lucide-plus')
+      expect(source).toContain('ph ph-minus')
+      expect(source).toContain('ph ph-plus')
     })
   })
 })

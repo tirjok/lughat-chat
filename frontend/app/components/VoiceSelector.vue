@@ -100,7 +100,7 @@ onUnmounted(() => {
     <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
       <span
         aria-hidden="true"
-        class="i-lucide-headphones text-lg"
+        class="ph ph-user-sound text-lg"
       />
       Voice Model
     </label>
@@ -123,7 +123,7 @@ onUnmounted(() => {
       >
         <span
           aria-hidden="true"
-          class="i-lucide-audio-waveform text-2xl"
+          class="ph-fill ph-waves text-2xl"
           :class="getVoiceColorClass(displayVoice)"
           :style="`filter: drop-shadow(0 0 8px ${getShadowColor(displayVoice)});`"
         />
@@ -145,18 +145,19 @@ onUnmounted(() => {
       </span>
 
       <span
-        class="i-lucide-chevron-down text-gray-400"
+        class="ph ph-caret-down text-gray-400"
         :class="{ 'rotate-180': isOpen }"
         style="transition: transform 0.3s;"
       />
     </button>
 
-    <!-- Dropdown Menu (Teleported to body) -->
+    <!-- Dropdown Menu (Teleported to body, animated) -->
     <Teleport to="body">
       <div
-        v-if="isOpen"
+        v-show="isOpen"
         ref="menuRef"
-        class="fixed z-50 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden"
+        class="fixed z-50 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden opacity-0 scale-95 pointer-events-none transition-all duration-200 origin-top"
+        :class="{ 'opacity-100 scale-100 pointer-events-auto': isOpen }"
         :style="menuPositionStyle"
       >
         <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
@@ -164,6 +165,10 @@ onUnmounted(() => {
             v-for="voice in voices"
             :key="voice.id"
             class="voice-option w-full text-left p-3 rounded-lg flex items-center justify-between transition-colors group"
+            :data-voice="voice.id"
+            :data-name="voice.name"
+            :data-tag="voice.tag"
+            :data-color="getVoiceColorClass(voice)"
             :class="[
               voice.id === modelValue
                 ? 'bg-[#2a1a1a] border border-studio-600/50'
@@ -183,7 +188,7 @@ onUnmounted(() => {
               >
                 <span
                   aria-hidden="true"
-                  class="i-lucide-audio-waveform text-gray-500 transition-colors text-lg"
+                  class="ph-fill ph-waves text-gray-500 transition-colors text-lg"
                   :class="[
                     voice.id === modelValue
                       ? 'text-sunrise-orange'
@@ -211,7 +216,7 @@ onUnmounted(() => {
             >
               <span
                 aria-hidden="true"
-                class="i-lucide-play text-sm"
+                class="ph-fill ph-play text-sm"
               />
             </span>
           </button>

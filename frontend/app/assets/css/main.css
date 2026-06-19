@@ -20,6 +20,16 @@ body {
   overflow: visible;
 }
 
+/* Textarea caret color (orange, matches prototype) */
+textarea {
+  caret-color: #FF512F;
+}
+
+/* Placeholder color (gray-700) */
+::placeholder {
+  color: #404040;
+}
+
 /* Custom scrollbar for dark UI */
 ::-webkit-scrollbar {
   width: 8px;

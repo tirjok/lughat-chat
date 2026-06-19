@@ -51,7 +51,7 @@ const panelShown = computed(() => props.visible)
         >
           <span
             aria-hidden="true"
-            class="i-lucide-music text-white text-sm md:text-base"
+            class="ph-fill ph-music-notes text-white text-sm md:text-base"
           />
         </div>
         <div class="overflow-hidden min-w-0">
@@ -72,7 +72,7 @@ const panelShown = computed(() => props.visible)
         >
           <span
             aria-hidden="true"
-            class="i-lucide-download text-lg"
+            class="ph ph-download-simple text-lg"
           />
         </button>
         <button
@@ -82,7 +82,7 @@ const panelShown = computed(() => props.visible)
         >
           <span
             aria-hidden="true"
-            class="i-lucide-x text-lg"
+            class="ph ph-x text-lg"
           />
         </button>
       </div>
@@ -98,12 +98,12 @@ const panelShown = computed(() => props.visible)
         <span
           v-if="isPlaying && !isPaused"
           aria-hidden="true"
-          class="i-lucide-pause text-lg md:text-xl"
+          class="ph-fill ph-pause text-lg md:text-xl"
         />
         <span
           v-else
           aria-hidden="true"
-          class="i-lucide-play text-lg md:text-xl ml-1"
+          class="ph-fill ph-play text-lg md:text-xl ml-1"
         />
       </button>
 

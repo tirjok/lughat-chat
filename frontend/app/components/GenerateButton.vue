@@ -25,8 +25,7 @@ const emit = defineEmits<{
     >
       <span
         aria-hidden="true"
-        class="i-lucide-play text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"
-        style="filter: drop-shadow(0 0 6px rgba(221,36,118,0.5));"
+        class="ph-fill ph-play-circle text-xl text-sunrise-magenta group-hover:text-sunrise-orange"
       />
       <span class="font-bold text-white tracking-wide text-sm md:text-base">
         Generate Speech
@@ -36,7 +35,7 @@ const emit = defineEmits<{
     <!-- Loading/Generating state -->
     <div
       v-else
-      class="btn-content"
+      class="btn-content loading-state"
     >
       <div class="loader" />
       <span class="font-medium text-sunrise-orange animate-pulse text-sm md:text-base">
@@ -111,7 +110,7 @@ const emit = defineEmits<{
 }
 
 .btn-content {
-  @apply flex items-center justify-center gap-2 relative z-10;
+  @apply flex items-center justify-center gap-2 relative z-10 w-full;
 }
 
 .loader {

@@ -10,6 +10,7 @@ export default defineNuxtConfig({
   },
 
   // Inter font for UI labels (Cairo already loaded for Arabic)
+  // Phosphor Icons for sleek, modern icons (matches prototype)
   app: {
     head: {
       meta: [
@@ -31,6 +32,12 @@ export default defineNuxtConfig({
         {
           href: 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap',
           rel: 'stylesheet'
+        }
+      ],
+      script: [
+        {
+          src: 'https://unpkg.com/@phosphor-icons/web',
+          type: 'text/javascript'
         }
       ]
     }

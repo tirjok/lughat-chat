@@ -69,7 +69,7 @@ describe('VoiceSelector', () => {
 
     it('renders a headphones icon next to the label', () => {
       const wrapper = getVoiceSelectorWrapper({ modelValue: 'aisha' })
-      const userIcon = wrapper.find('[class*="i-lucide-headphones"]')
+      const userIcon = wrapper.find('[class*="ph ph-user-sound"]')
       expect(userIcon.exists()).toBe(true)
     })
   })
@@ -225,7 +225,7 @@ describe('VoiceSelector', () => {
       expect(teleportedMenu!.className).toContain('z-50')
     })
 
-    it('dropdown portal is removed when closed', async () => {
+    it('dropdown portal hides when closed (v-show, not v-if)', async () => {
       const wrapper = getVoiceSelectorWrapper({ modelValue: '' })
       const triggerButton = getTriggerButton(wrapper)
 
@@ -238,9 +238,13 @@ describe('VoiceSelector', () => {
       comp.handleOutsideMousedown(new MouseEvent('mousedown', { bubbles: true }))
       await nextTick()
 
-      // Menu should no longer be in the body
+      // Menu stays in DOM but hidden (v-show) — should have animation classes
       const teleportedMenu = document.querySelector('[class*="fixed"]')
-      expect(teleportedMenu).toBeNull()
+      expect(teleportedMenu).not.toBeNull()
+      // Should be hidden with animation classes
+      expect(teleportedMenu!.className).toContain('opacity-0')
+      expect(teleportedMenu!.className).toContain('scale-95')
+      expect(teleportedMenu!.className).toContain('pointer-events-none')
     })
 
     it('voice options have minimum 48px height on mobile (WCAG compliance)', () => {

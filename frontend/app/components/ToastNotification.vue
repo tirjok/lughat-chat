@@ -6,9 +6,9 @@ const toasts = useToast()
 
 function toastIconClass(type: ToastType): string {
   switch (type) {
-    case 'error': return 'text-red-400 i-lucide-alert-circle text-lg'
-    case 'info': return 'text-blue-400 i-lucide-badge-info text-lg'
-    default: return 'text-green-400 i-lucide-check-circle text-lg'
+    case 'error': return 'text-red-400 ph ph-alert-circle text-lg'
+    case 'info': return 'text-blue-400 ph ph-badge-info text-lg'
+    default: return 'text-green-400 ph ph-check-circle text-lg'
   }
 }
 
@@ -48,7 +48,7 @@ function toastBgClass(type: ToastType): string {
         >
           <span
             aria-hidden="true"
-            class="i-lucide-x text-sm"
+            class="ph ph-x text-sm"
           />
         </button>
       </div>

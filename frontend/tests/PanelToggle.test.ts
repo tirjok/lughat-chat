@@ -39,13 +39,13 @@ describe('PanelToggle component', () => {
 
   it('shows sliders-horizontal icon when in canvas mode', () => {
     const wrapper = mountComponent({ activePanel: 'canvas' })
-    const icon = wrapper.find('[class*="i-lucide-sliders-horizontal"]')
+    const icon = wrapper.find('[class*="ph ph-sliders-horizontal"]')
     expect(icon.exists()).toBe(true)
   })
 
   it('shows terminal icon when in control-deck mode', () => {
     const wrapper = mountComponent({ activePanel: 'control-deck' })
-    const icon = wrapper.find('[class*="i-lucide-terminal"]')
+    const icon = wrapper.find('[class*="ph ph-terminal"]')
     expect(icon.exists()).toBe(true)
   })
 

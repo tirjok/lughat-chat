@@ -20,12 +20,12 @@ const emit = defineEmits<{
     <span
       v-if="isPlaying"
       aria-hidden="true"
-      class="i-lucide-pause text-xl"
+      class="ph-fill ph-pause text-xl"
     />
     <span
       v-else
       aria-hidden="true"
-      class="i-lucide-play text-xl ml-1"
+      class="ph-fill ph-play text-xl ml-1"
     />
   </button>
 </template>

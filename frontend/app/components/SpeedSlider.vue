@@ -55,7 +55,7 @@ function adjustSpeed(delta: number) {
       <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
         <span
           aria-hidden="true"
-          class="i-lucide-gauge text-lg"
+          class="ph ph-gauge text-lg"
         />
         Speech Speed
       </label>
@@ -95,7 +95,7 @@ function adjustSpeed(delta: number) {
       >
         <span
           aria-hidden="true"
-          class="i-lucide-minus text-lg"
+          class="ph ph-minus text-lg"
         />
       </button>
 
@@ -111,7 +111,7 @@ function adjustSpeed(delta: number) {
       >
         <span
           aria-hidden="true"
-          class="i-lucide-plus text-lg"
+          class="ph ph-plus text-lg"
         />
       </button>
     </div>
