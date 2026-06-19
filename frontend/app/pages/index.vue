@@ -250,7 +250,7 @@ function handleClosePlayer() {
         role="region"
         aria-labelledby="canvas-heading"
         data-panel="canvas"
-        class="w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden md:border-l border-studio-700 p-4 md:p-6 lg:p-8 pb-2 md:pb-4 order-1 md:order-2"
+        class="flex-1 w-full bg-studio-900 relative flex flex-col overflow-hidden md:w-[65%] lg:w-[70%] xl:w-[75%] md:border-l border-studio-700 p-4 md:p-6 lg:p-8 pb-2 md:pb-4 order-1 md:order-2"
         style="padding-bottom: env(safe-area-inset-bottom);"
       >
         <!-- Focus Halo (radial gradient glow behind textarea) -->
@@ -421,10 +421,13 @@ html, body {
 }
 
 /* ===================================
-   Panel Sliding Transitions (CSS-only via :has(), mobile only)
+   Panel Sliding Transitions (mobile only)
+   When one panel is active, the inactive panel
+   is taken out of the flex flow and positioned
+   off-screen. The active panel fills the space.
    =================================== */
 @media (max-width: 767px) {
-  /* Both panels always in DOM; CSS decides which slides */
+  /* Both panels: full width, relative positioning */
   [data-panel="control-deck"],
   [data-panel="canvas"] {
     width: 100%;
@@ -432,7 +435,7 @@ html, body {
                 opacity 500ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Control deck active → it's visible, canvas slides away */
+  /* --- Control deck active --- */
   [data-active-panel="control-deck"] [data-panel="control-deck"] {
     transform: translateY(0);
     opacity: 1;
@@ -444,7 +447,7 @@ html, body {
     pointer-events: none;
   }
 
-  /* Canvas active → it's visible, control deck slides away */
+  /* --- Canvas active --- */
   [data-active-panel="canvas"] [data-panel="canvas"] {
     transform: translateY(0);
     opacity: 1;
@@ -454,6 +457,22 @@ html, body {
     transform: translateY(150%);
     opacity: 0;
     pointer-events: none;
+  }
+
+  /* Take the inactive panel out of the flex flow
+     so the active panel gets all remaining space. */
+  [data-active-panel="control-deck"] [data-panel="canvas"],
+  [data-active-panel="canvas"] [data-panel="control-deck"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  /* Active panel: fill the flex container */
+  [data-active-panel="control-deck"] [data-panel="control-deck"],
+  [data-active-panel="canvas"] [data-panel="canvas"] {
+    position: relative;
+    height: 100%;
   }
 }
 </style>
