@@ -1,15 +1,46 @@
 <script setup lang="ts">
 // Full-page TTS Studio — complete integration of all 6 components
 // Two-panel layout: Left (Control Deck) + Right (Canvas)
+// Mobile: both panels stacked vertically (canvas top, controls bottom)
+// Desktop: side-by-side panels
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
-import PanelToggle from '../components/PanelToggle.vue'
-import { computed, nextTick, shallowRef, watch, onUnmounted } from 'vue'
+import { computed, nextTick, shallowRef, watch, onUnmounted, ref } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
 import { showToast } from '../composables/useToast'
 
-const { activePanel, togglePanel } = usePanelToggle()
+const { activePanel } = usePanelToggle()
+
+// Mobile split-screen: ratio of canvas height (0.0–1.0)
+const canvasRatio = ref(0.55)
+const isDragging = ref(false)
+let startY = 0
+let startRatio = 0
+
+function getClientY(e: TouchEvent | MouseEvent): number {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ('touches' in e ? (e as any).touches[0].clientY : e.clientY)
+}
+
+function onDragStart(e: TouchEvent | MouseEvent) {
+  startY = getClientY(e)
+  startRatio = canvasRatio.value
+  isDragging.value = true
+  document.body.classList.add('dragging')
+}
+
+function onDragMove(e: TouchEvent | MouseEvent) {
+  if (!isDragging.value) return
+  const clientY = getClientY(e)
+  const delta = (startY - clientY) / window.innerHeight
+  canvasRatio.value = Math.max(0.25, Math.min(0.85), startRatio + delta)
+}
+
+function onDragEnd() {
+  isDragging.value = false
+  document.body.classList.remove('dragging')
+}
 
 const audioModule = useAudioModule({
   onPlaybackEnd: () => {
@@ -143,16 +174,172 @@ function handleClosePlayer() {
       {{ panelAnnouncement }}
     </div>
 
-    <!-- Panel Toggle FAB (mobile only) -->
-    <PanelToggle
-      :active-panel="activePanel"
-      :toggle-panel="togglePanel"
-    />
+    <!-- Mobile: Split-screen (hidden on desktop) -->
+    <div class="flex md:hidden flex-col h-dvh w-full overflow-hidden">
+      <!-- Mobile: Canvas (top half) -->
+      <main
+        role="region"
+        aria-labelledby="canvas-heading"
+        data-panel="canvas"
+        class="w-full bg-studio-900 relative flex flex-col overflow-hidden"
+        :style="{ height: `${canvasRatio * 100}%` }"
+      >
+        <!-- Focus Halo (radial gradient glow behind textarea) -->
+        <FocusHaloCanvas :focused="!!textInput" />
 
-    <!-- Two-Panel Layout (CSS-only sliding via :has() on mobile) -->
+        <!-- Header / Context (mobile: compact layout matching prototype) -->
+        <div
+          class="w-full px-4 pt-3 pb-2 flex flex-col gap-2 shrink-0"
+        >
+          <!-- Mobile: Title + Char Count (full width row) -->
+          <div class="flex justify-between items-center w-full">
+            <h2 class="text-gray-400 font-medium text-xs flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                class="ph ph-keyboard"
+              />
+              <span class="inline">Editor Canvas</span>
+            </h2>
+            <div class="flex items-center gap-2 text-xs text-gray-500">
+              <span
+                class="font-mono"
+                :class="{ 'text-red-400': isOverLimit, 'text-amber-400': isNearLimit, 'text-gray-500': !isNearLimit && !isOverLimit }"
+              >
+                {{ charCount }} / 3000
+              </span>
+              <button
+                class="text-gray-500 bg-transparent hover:text-white p-0.5"
+                @click="handleClearText"
+              >
+                <span
+                  aria-hidden="true"
+                  class="ph ph-trash"
+                />
+              </button>
+            </div>
+          </div>
+
+          <!-- Mobile: AI Toolbar (compact, no extra padding) -->
+          <div class="flex items-center gap-2 w-full overflow-x-auto hide-scrollbar">
+            <button
+              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg border border-studio-700/60 hover:border-gray-500 group"
+              title="Type in any language and translate to Arabic"
+            >
+              <span class="group-hover:animate-pulse">✨</span> Translate
+            </button>
+            <button
+              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-colors bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg border border-studio-700/60 hover:border-sunrise-orange group"
+              title="Add Harakat (diacritics) for perfect TTS pronunciation"
+            >
+              <span class="group-hover:animate-pulse">✨</span> Add Diacritics
+            </button>
+            <button
+              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-colors bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg border border-studio-700/60 hover:border-sunrise-magenta group"
+              title="Let AI write the next few sentences"
+            >
+              <span class="group-hover:animate-pulse">✨</span> Continue Script
+            </button>
+          </div>
+        </div>
+
+        <!-- Text Input Area (mobile: full width, text-3xl, generous spacing) -->
+        <div class="flex-1 relative w-full px-4 flex flex-col min-h-0">
+          <textarea
+            v-model="textInput"
+            dir="rtl"
+            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-3xl leading-relaxed text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+            style="caret-color: #FF512F;"
+            placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
+          />
+        </div>
+      </main>
+
+      <!-- Mobile drag divider (compact, minimal visual presence) -->
+      <div
+        class="relative z-30 flex items-center justify-center"
+        style="height: 16px;"
+        @touchstart="onDragStart"
+        @touchmove="onDragMove"
+        @touchend="onDragEnd"
+        @mousedown="onDragStart"
+        @mousemove="onDragMove"
+        @mouseup="onDragEnd"
+        @mouseleave="onDragEnd"
+      >
+        <div class="w-full h-px bg-studio-700/40" />
+      </div>
+
+      <!-- Mobile: Control Deck (bottom half) -->
+      <aside
+        role="region"
+        aria-labelledby="control-deck-heading"
+        data-panel="control-deck"
+        class="flex-1 w-full bg-studio-800 flex flex-col overflow-hidden"
+        :style="{ height: `${(1 - canvasRatio) * 100}%` }"
+      >
+        <!-- Mobile Header (compact, matching prototype) -->
+        <header
+          class="flex justify-between items-center px-3 py-2 bg-studio-800 border-b border-studio-700/40 shrink-0 z-30"
+        >
+          <div class="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              class="ph-fill ph-waves text-sunrise-orange text-base"
+            />
+            <h1 class="text-base font-bold text-white tracking-tight">
+              Lughat<span class="text-sunrise-magenta">Chat</span>
+            </h1>
+          </div>
+          <MobileStatusIndicator />
+        </header>
+
+        <!-- Controls Container (compact spacing for mobile) -->
+        <div class="flex-1 p-3 overflow-y-auto flex flex-col gap-4">
+          <!-- Voice Selection -->
+          <VoiceSelector
+            v-model="selectedSpeaker"
+            :voices="speakerVoices"
+          />
+
+          <!-- Speed Control -->
+          <SpeedSlider v-model="speedValue" />
+
+          <!-- Output Settings (matches sample design) -->
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+              <span class="ph ph-sliders-horizontal" /> Output Settings
+            </label>
+            <div class="flex items-center justify-between bg-studio-900 px-3 py-2 rounded-lg border border-studio-700/60">
+              <span class="text-xs text-gray-400">High Quality Audio</span>
+              <button
+                class="w-8 h-4 bg-sunrise-orange rounded-full relative cursor-pointer transition-colors duration-300 ease-in-out hover:bg-sunrise-orange/90 active:scale-95"
+                style="box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);"
+                @click="hqAudioEnabled = !hqAudioEnabled"
+              >
+                <div
+                  class="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"
+                  :class="hqAudioEnabled ? 'right-0.5' : 'left-0.5'"
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Area (compact) -->
+        <div class="p-3 border-t border-studio-700/40 bg-studio-800 shrink-0">
+          <GenerateButton
+            :is-generating="isGenerating"
+            :model-status="modelStatus"
+            :disabled="!isValid || isGenerating || modelStatus === 'loading'"
+            @click="handleSynthesize"
+          />
+        </div>
+      </aside>
+    </div>
+
+    <!-- Desktop: Side-by-side (hidden on mobile) -->
     <div
-      :data-active-panel="activePanel"
-      class="relative flex flex-col md:flex-row h-dvh w-full overflow-hidden text-studio-text antialiased"
+      class="hidden md:flex flex-row h-dvh w-full"
       style="background-color: #121212;"
     >
       <!-- LEFT PANEL: The Control Deck (35% md, 30% lg, 25% xl) -->
@@ -252,9 +439,11 @@ function handleClosePlayer() {
         <!-- Focus Halo (radial gradient glow behind textarea) -->
         <FocusHaloCanvas :focused="!!textInput" />
 
-        <!-- Header / Context (prototype: no border-b, AI toolbar inline) -->
-        <div class="w-full p-4 md:p-6 lg:p-8 pb-2 md:pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shrink-0">
-          <!-- Mobile Canvas Header (horizontal row, visible below 768px) -->
+        <!-- Header / Context -->
+        <div
+          class="w-full p-4 md:p-6 lg:p-8 pb-2 md:pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shrink-0"
+        >
+          <!-- Mobile: Title + Char Count (stacked, full width) -->
           <div class="flex justify-between items-center w-full md:w-auto md:hidden">
             <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
               <span
@@ -276,7 +465,7 @@ function handleClosePlayer() {
               >
                 <span
                   aria-hidden="true"
-                  class="ph ph-trash text-xl"
+                  class="ph ph-trash text-lg"
                 />
               </button>
             </div>
@@ -291,7 +480,7 @@ function handleClosePlayer() {
               <span>Editor Canvas</span>
             </h2>
 
-            <!-- AI Smart Tools Toolbar (prototype: hide-scrollbar, overflow-x-auto, pb-1 md:pb-0 md:pl-4 md:border-l) -->
+            <!-- AI Smart Tools Toolbar (mobile: visible, horizontally scrollable) -->
             <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 md:border-l border-studio-700 shrink-0">
               <button
                 class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-gray-500 group"
@@ -328,13 +517,13 @@ function handleClosePlayer() {
             >
               <span
                 aria-hidden="true"
-                class="ph ph-trash text-xl"
+                class="ph ph-trash text-lg"
               />
             </button>
           </div>
         </div>
 
-        <!-- Text Input Area (prototype: px-4 md:px-8, pb-4 md:pb-32, no border-b) -->
+        <!-- Text Input Area (mobile: px-4 pb-4, no max-width; desktop: px-4 md:px-8 pb-4 md:pb-32 max-w-5xl) -->
         <div class="flex-1 relative w-full max-w-5xl mx-auto px-4 md:px-8 pb-4 md:pb-32 flex flex-col">
           <textarea
             v-model="textInput"
@@ -437,58 +626,22 @@ html, body {
 }
 
 /* ===================================
-   Panel Sliding Transitions (mobile only)
-   When one panel is active, the inactive panel
-   is taken out of the flex flow and positioned
-   off-screen. The active panel fills the space.
+   Mobile Split-Screen: Panel Sliding Transitions
+   When dragging the divider, panels resize
+   via inline styles. When not dragging,
+   panels snap to their default ratio.
    =================================== */
 @media (max-width: 767px) {
-  /* Both panels: full width, relative positioning */
-  [data-panel="control-deck"],
-  [data-panel="canvas"] {
-    width: 100%;
-    transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
-                opacity 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Prevent text selection during drag */
+  body.dragging {
+    user-select: none !important;
+    -webkit-user-select: none !important;
   }
 
-  /* --- Control deck active --- */
-  [data-active-panel="control-deck"] [data-panel="control-deck"] {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-  [data-active-panel="control-deck"] [data-panel="canvas"] {
-    transform: translateY(150%);
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  /* --- Canvas active --- */
-  [data-active-panel="canvas"] [data-panel="canvas"] {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-  [data-active-panel="canvas"] [data-panel="control-deck"] {
-    transform: translateY(150%);
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  /* Take the inactive panel out of the flex flow
-     so the active panel gets all remaining space. */
-  [data-active-panel="control-deck"] [data-panel="canvas"],
-  [data-active-panel="canvas"] [data-panel="control-deck"] {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
-  /* Active panel: fill the flex container */
-  [data-active-panel="control-deck"] [data-panel="control-deck"],
-  [data-active-panel="canvas"] [data-panel="canvas"] {
-    position: relative;
-    height: 100%;
+  /* Smooth height transitions when not dragging */
+  [data-panel="canvas"],
+  [data-panel="control-deck"] {
+    transition: height 200ms ease-out;
   }
 }
 </style>

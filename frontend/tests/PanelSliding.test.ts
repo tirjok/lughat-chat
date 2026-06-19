@@ -10,19 +10,28 @@ import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll,
 const getSource = () =>
   fs.readFileSync(path.resolve(__dirname, '../app/pages/index.vue'), 'utf-8')
 
-// ─── Template: data attributes for :has() selectors ────────────────────
+// ─── Template: mobile split-screen bindings ────────────────────────────
 
-describe('Panel sliding — template bindings', () => {
-  it('outer container has :data-active-panel bound to activePanel', () => {
-    expect(getSource()).toContain(':data-active-panel="activePanel"')
+describe('Mobile split-screen — template bindings', () => {
+  it('mobile split-screen wrapper exists (md:hidden flex-col)', () => {
+    expect(getSource()).toContain('md:hidden flex-col')
   })
 
-  it('aside panel has data-panel="control-deck"', () => {
-    expect(getSource()).toContain('data-panel="control-deck"')
+  it('canvas panel has dynamic height via canvasRatio', () => {
+    expect(getSource()).toContain('canvasRatio')
   })
 
-  it('main panel has data-panel="canvas"', () => {
-    expect(getSource()).toContain('data-panel="canvas"')
+  it('control-deck panel has dynamic height via canvasRatio', () => {
+    expect(getSource()).toContain('(1 - canvasRatio)')
+  })
+
+  it('drag divider exists with touch/mouse handlers', () => {
+    expect(getSource()).toContain('@touchstart')
+    expect(getSource()).toContain('@touchmove')
+    expect(getSource()).toContain('@touchend')
+    expect(getSource()).toContain('@mousedown')
+    expect(getSource()).toContain('@mousemove')
+    expect(getSource()).toContain('@mouseup')
   })
 
   it('no panelSlideClass function in source (CSS-only)', () => {
@@ -33,57 +42,47 @@ describe('Panel sliding — template bindings', () => {
     expect(getSource()).not.toContain('hidden-slide')
     expect(getSource()).not.toContain('visible-slide')
   })
+
+  it('no :data-active-panel binding (replaced by split-screen)', () => {
+    expect(getSource()).not.toContain(':data-active-panel')
+  })
+
+  it('panelToggle FAB removed from template', () => {
+    expect(getSource()).not.toMatch(/<PanelToggle/)
+  })
 })
 
-// ─── CSS: mobile-only sliding via :has() ──────────────────────────────
+// ─── CSS: mobile split-screen styles ──────────────────────────────────
 
-describe('Panel sliding — CSS selectors (mobile <768px)', () => {
+describe('Mobile split-screen — CSS selectors', () => {
   it('scoped to @media (max-width: 767px)', () => {
     expect(getSource()).toContain('@media (max-width: 767px)')
   })
 
-  it('both panels get width: 100% on mobile', () => {
-    expect(getSource()).toContain('width: 100%')
+  it('body.dragging class for user-select prevention', () => {
+    expect(getSource()).toContain('body.dragging')
   })
 
-  it('both panels get transition on transform and opacity', () => {
-    expect(getSource()).toContain('transition: transform')
-    expect(getSource()).toContain('opacity')
+  it('panels get transition on height', () => {
+    expect(getSource()).toContain('transition: height')
   })
 
-  it('transition uses 500ms cubic-bezier(0.16, 1, 0.3, 1)', () => {
-    expect(getSource()).toContain('500ms cubic-bezier(0.16, 1, 0.3, 1)')
+  it('no transform/opacity transitions (replaced by height)', () => {
+    const source = getSource()
+    const mediaBlock = source.substring(source.indexOf('@media (max-width: 767px)'))
+    expect(mediaBlock).not.toContain('translateY')
+    expect(mediaBlock).not.toContain('opacity: 0')
+    expect(mediaBlock).not.toContain('opacity: 1')
   })
 
-  it('control-deck active selector exists', () => {
-    expect(getSource()).toContain('[data-active-panel="control-deck"] [data-panel="control-deck"]')
-  })
-
-  it('control-deck visible: translateY(0), opacity: 1, pointer-events: auto', () => {
-    expect(getSource()).toContain('translateY(0)')
-    expect(getSource()).toContain('opacity: 1')
-    expect(getSource()).toContain('pointer-events: auto')
-  })
-
-  it('control-deck active → canvas hidden: translateY(150%), opacity: 0, pointer-events: none', () => {
-    expect(getSource()).toContain('[data-active-panel="control-deck"] [data-panel="canvas"]')
-    expect(getSource()).toContain('translateY(150%)')
-    expect(getSource()).toContain('opacity: 0')
-    expect(getSource()).toContain('pointer-events: none')
-  })
-
-  it('canvas active selector exists', () => {
-    expect(getSource()).toContain('[data-active-panel="canvas"] [data-panel="canvas"]')
-  })
-
-  it('canvas active → control-deck hidden selector exists', () => {
-    expect(getSource()).toContain('[data-active-panel="canvas"] [data-panel="control-deck"]')
+  it('no :data-active-panel selectors (replaced by split-screen)', () => {
+    expect(getSource()).not.toContain('[data-active-panel=')
   })
 })
 
 // ─── No dead code from old JS approach ────────────────────────────────
 
-describe('Panel sliding — no dead code', () => {
+describe('Mobile split-screen — no dead code', () => {
   it('no .hidden-slide class', () => {
     expect(getSource()).not.toContain('.hidden-slide')
   })
@@ -100,18 +99,22 @@ describe('Panel sliding — no dead code', () => {
     expect(getSource()).not.toContain('.panel-slide-leave-active')
   })
 
-  it('no @media (min-width: 768px) desktop override (not needed)', () => {
-    expect(getSource()).not.toContain('@media (min-width: 768px)')
+  it('no PanelToggle component import in source', () => {
+    expect(getSource()).not.toMatch(/import.*PanelToggle.*from.*components/i)
   })
 
-  it('no !important overrides in CSS', () => {
-    expect(getSource()).not.toContain('!important')
+  it('no togglePanel function in source', () => {
+    expect(getSource()).not.toContain('togglePanel')
+  })
+
+  it('no isMobile destructured from usePanelToggle', () => {
+    expect(getSource()).not.toMatch(/isMobile\s*\}/)
   })
 })
 
 // ─── Mounted component test (mocked) ──────────────────────────────────
 
-describe('Panel sliding — mounted component', () => {
+describe('Mobile split-screen — mounted component', () => {
   const mockAudio = createMockUseAudioModule()
   const mockTts = createMockUseTtsApi()
   const mockHealth = createMockUseHealthPoll()
@@ -141,13 +144,22 @@ describe('Panel sliding — mounted component', () => {
 
   it('renders both panels with correct data attributes', () => {
     const wrapper = shallowMount(Index)
-    const container = wrapper.find('[data-active-panel]')
-    expect(container.exists()).toBe(true)
-
     const controlDeck = wrapper.find('[data-panel="control-deck"]')
     expect(controlDeck.exists()).toBe(true)
 
     const canvas = wrapper.find('[data-panel="canvas"]')
     expect(canvas.exists()).toBe(true)
+  })
+
+  it('mobile split-screen wrapper renders (md:hidden)', () => {
+    const wrapper = shallowMount(Index)
+    const mobileWrapper = wrapper.find('.md\\:hidden.flex-col')
+    expect(mobileWrapper.exists()).toBe(true)
+  })
+
+  it('drag divider renders', () => {
+    const wrapper = shallowMount(Index)
+    const divider = wrapper.find('[style*="height: 16px"]')
+    expect(divider.exists()).toBe(true)
   })
 })
