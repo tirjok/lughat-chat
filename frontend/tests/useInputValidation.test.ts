@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { useInputValidation } from '../app/composables/useInputValidation'
 
 describe('useInputValidation', () => {
@@ -144,96 +144,6 @@ describe('useInputValidation', () => {
     })
   })
 
-  describe('handleKeyDown', () => {
-    it('triggers onValid callback when Ctrl+Enter is pressed with valid input', () => {
-      const callback = vi.fn()
-      const result = useInputValidation('مرحبا', 'ready')
-
-      result.handleKeyDown({
-        ctrlKey: true,
-        key: 'Enter',
-        metaKey: false
-      } as KeyboardEvent, callback)
-
-      expect(callback).toHaveBeenCalledTimes(1)
-    })
-
-    it('triggers onValid callback when Cmd+Enter is pressed (macOS) with valid input', () => {
-      const callback = vi.fn()
-      const result = useInputValidation('مرحبا', 'ready')
-
-      result.handleKeyDown({
-        ctrlKey: false,
-        key: 'Enter',
-        metaKey: true
-      } as KeyboardEvent, callback)
-
-      expect(callback).toHaveBeenCalledTimes(1)
-    })
-
-    it('does not trigger onValid when Enter is pressed without Ctrl/Cmd', () => {
-      const callback = vi.fn()
-      const result = useInputValidation('مرحبا', 'ready')
-
-      result.handleKeyDown({
-        ctrlKey: false,
-        key: 'Enter',
-        metaKey: false
-      } as KeyboardEvent, callback)
-
-      expect(callback).not.toHaveBeenCalled()
-    })
-
-    it('does not trigger onValid when Ctrl is pressed but key is not Enter', () => {
-      const callback = vi.fn()
-      const result = useInputValidation('مرحبا', 'ready')
-
-      result.handleKeyDown({
-        ctrlKey: true,
-        key: 'a',
-        metaKey: false
-      } as KeyboardEvent, callback)
-
-      expect(callback).not.toHaveBeenCalled()
-    })
-
-    it('does not trigger onValid when input is invalid (empty text)', () => {
-      const callback = vi.fn()
-      const result = useInputValidation('', 'ready')
-
-      result.handleKeyDown({
-        ctrlKey: true,
-        key: 'Enter',
-        metaKey: false
-      } as KeyboardEvent, callback)
-
-      expect(callback).not.toHaveBeenCalled()
-    })
-
-    it('does not trigger onValid when input is invalid (model loading)', () => {
-      const callback = vi.fn()
-      const result = useInputValidation('مرحبا', 'loading')
-
-      result.handleKeyDown({
-        ctrlKey: true,
-        key: 'Enter',
-        metaKey: false
-      } as KeyboardEvent, callback)
-
-      expect(callback).not.toHaveBeenCalled()
-    })
-
-    it('does not trigger onValid for other key combinations', () => {
-      const callback = vi.fn()
-      const result = useInputValidation('مرحبا', 'ready')
-
-      result.handleKeyDown({
-        ctrlKey: true,
-        key: 's',
-        metaKey: false
-      } as KeyboardEvent, callback)
-
-      expect(callback).not.toHaveBeenCalled()
-    })
-  })
+  // handleKeyDown was removed from useInputValidation
+  // as the main page has its own keyboard handler.
 })

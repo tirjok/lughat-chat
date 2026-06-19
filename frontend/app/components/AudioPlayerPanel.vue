@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import WaveformCanvas from './WaveformCanvas.vue'
+import PlayPauseButton from './PlayPauseButton.vue'
+import SeekableProgressBar from './SeekableProgressBar.vue'
+import TimeDisplay from './TimeDisplay.vue'
 
 interface Props {
   visible: boolean
@@ -14,9 +17,10 @@ interface Props {
 
 interface Emits {
   (e: 'close' | 'toggle' | 'download'): void
+  (e: 'seek', ratio: number): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 function formatTime(seconds: number): string {
@@ -85,21 +89,12 @@ function formatTime(seconds: number): string {
         class="w-full bg-studio-900 rounded-lg border border-studio-700 p-4 flex flex-col md:flex-row items-center gap-3 md:gap-4"
       >
         <!-- Play/Pause button — centered on mobile, left-aligned on desktop -->
-        <button
-          class="w-12 h-12 mx-auto md:mx-0 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0"
-          @click="emit('toggle')"
-        >
-          <span
-            v-if="props.isPlaying && !props.isPaused"
-            aria-hidden="true"
-            class="i-lucide-pause text-xl"
-          />
-          <span
-            v-else
-            aria-hidden="true"
-            class="i-lucide-play text-xl ml-1"
-          />
-        </button>
+        <PlayPauseButton
+          :is-playing="isPlaying"
+          :is-paused="isPaused"
+          :is-loading="false"
+          @toggle="emit('toggle')"
+        />
 
         <!-- Waveform canvas -->
         <div class="w-full h-12 relative overflow-hidden">
@@ -112,10 +107,24 @@ function formatTime(seconds: number): string {
         </div>
 
         <!-- Duration display -->
-        <span class="text-xs font-mono text-gray-400 flex-shrink-0 w-10 text-right">
-          {{ formatTime(duration) }}
-        </span>
+        <TimeDisplay
+          :current-time="formatTime(currentTime)"
+          :duration="formatTime(duration)"
+        />
       </div>
+
+      <!-- Seekable progress bar -->
+      <SeekableProgressBar
+        :current-time="currentTime"
+        :duration="duration"
+        @seek="emit('seek', $event)"
+      />
+
+      <!-- Time display -->
+      <TimeDisplay
+        :current-time="formatTime(currentTime)"
+        :duration="formatTime(duration)"
+      />
     </div>
   </div>
 </template>

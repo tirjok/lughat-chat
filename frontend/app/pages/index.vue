@@ -18,10 +18,10 @@ const audioModule = useAudioModule({
   }
 })
 
-const { audioRef, audioUrl: _audioUrl, duration: _duration, currentTime: _currentTime, isPlaying: _isPlaying, isPaused: _isPaused, isLoading: _isLoading, error: audioError } = audioModule
+const { audioRef, audioUrl, duration, currentTime, isPlaying, isPaused } = audioModule
 
-const { synthesize, healthCheck: _healthCheck } = useTtsApi()
-const { status: modelStatus, modelLoaded: _modelLoaded } = useHealthPoll()
+const { synthesize } = useTtsApi()
+const { status: modelStatus } = useHealthPoll()
 const { voices: speakerVoices } = useVoices()
 
 // Safety net: dispose on unmount
@@ -65,8 +65,6 @@ const isNearLimit = computed(() => {
 const isOverLimit = computed(() => charCount.value > 3000)
 
 async function handleSynthesize() {
-  audioError.value = null
-
   if (!isValid.value) {
     showToast(validationError.value ?? 'Invalid text')
     return
@@ -341,17 +339,18 @@ function handleClosePlayer() {
 
         <!-- Audio Player Panel (slides up from bottom) -->
         <AudioPlayerPanel
-          :visible="playerVisible && !!audioModule.audioUrl.value"
-          :is-playing="audioModule.isPlaying.value"
-          :is-paused="audioModule.isPaused.value"
-          :current-time="audioModule.currentTime.value"
-          :duration="audioModule.duration.value"
-          :audio-url="audioModule.audioUrl.value"
+          :visible="playerVisible && !!audioUrl"
+          :is-playing="isPlaying"
+          :is-paused="isPaused"
+          :current-time="currentTime"
+          :duration="duration"
+          :audio-url="audioUrl"
           :selected-voice-name="selectedVoiceName"
           :speed-value="speedValue"
           @close="handleClosePlayer"
           @toggle="audioModule.pause"
           @download="handleDownload"
+          @seek="audioModule.seek"
         />
       </main>
 

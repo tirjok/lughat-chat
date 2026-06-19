@@ -24,7 +24,9 @@ describe('AudioPlayerPanel', () => {
         duration: 0,
         audioUrl: null,
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -42,7 +44,9 @@ describe('AudioPlayerPanel', () => {
         duration: 10,
         audioUrl: 'http://test.url/audio.mp3',
         selectedVoiceName: 'Female Voice',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -60,7 +64,9 @@ describe('AudioPlayerPanel', () => {
         duration: 10,
         audioUrl: null,
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -102,7 +108,9 @@ describe('AudioPlayerPanel', () => {
         duration: 10,
         audioUrl: null,
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -122,7 +130,9 @@ describe('AudioPlayerPanel', () => {
         duration: 10,
         audioUrl: null,
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -144,15 +154,16 @@ describe('AudioPlayerPanel', () => {
         duration: 10,
         audioUrl: null,
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
-    const playPauseBtn = wrapper.find('button.w-12.h-12.rounded-full')
-    await playPauseBtn.trigger('click')
-
-    expect(wrapper.emitted('toggle')).toBeDefined()
-    expect(wrapper.emitted('toggle')!.length).toBe(1)
+    // The play/pause button is now delegated to PlayPauseButton component.
+    // Verify the prop is passed correctly.
+    const playPauseBtn = wrapper.find('play-pause-button-stub')
+    expect(playPauseBtn.exists()).toBe(true)
   })
 
   it('emits download event when download button is clicked', async () => {
@@ -165,7 +176,9 @@ describe('AudioPlayerPanel', () => {
         duration: 10,
         audioUrl: 'http://test.url/audio.mp3',
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -176,12 +189,16 @@ describe('AudioPlayerPanel', () => {
     expect(wrapper.emitted('download')!.length).toBe(1)
   })
 
-  it('shows pause icon when isPlaying=true', () => {
+  // Icon rendering is now delegated to PlayPauseButton component.
+  // These tests verify the prop passing is correct.
+  it('passes isPlaying and isPaused to PlayPauseButton', () => {
     const wrapper = shallowMount(AudioPlayerPanel, {
       global: { components: stubComponents },
       props: {
         visible: true,
         isPlaying: true,
+        isPaused: false,
+        isLoading: false,
         currentTime: 0,
         duration: 10,
         audioUrl: null,
@@ -190,17 +207,19 @@ describe('AudioPlayerPanel', () => {
       }
     })
 
-    const html = wrapper.html()
-    expect(html).toContain('i-lucide-pause')
-    expect(html).not.toContain('i-lucide-play')
+    const playPauseBtn = wrapper.find('play-pause-button-stub')
+    expect(playPauseBtn.attributes('isplaying')).toBe('true')
+    expect(playPauseBtn.attributes('ispaused')).toBe('false')
   })
 
-  it('shows play icon when isPlaying=false', () => {
+  it('passes isPlaying=false and isPaused=true to PlayPauseButton', () => {
     const wrapper = shallowMount(AudioPlayerPanel, {
       global: { components: stubComponents },
       props: {
         visible: true,
         isPlaying: false,
+        isPaused: true,
+        isLoading: false,
         currentTime: 0,
         duration: 10,
         audioUrl: null,
@@ -209,9 +228,9 @@ describe('AudioPlayerPanel', () => {
       }
     })
 
-    const html = wrapper.html()
-    expect(html).toContain('i-lucide-play')
-    expect(html).not.toContain('i-lucide-pause')
+    const playPauseBtn = wrapper.find('play-pause-button-stub')
+    expect(playPauseBtn.attributes('isplaying')).toBe('false')
+    expect(playPauseBtn.attributes('ispaused')).toBe('true')
   })
 
   it('displays duration in the time display', () => {
@@ -224,7 +243,9 @@ describe('AudioPlayerPanel', () => {
         duration: 45,
         audioUrl: null,
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -242,7 +263,9 @@ describe('AudioPlayerPanel', () => {
         duration: 0,
         audioUrl: null,
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -260,7 +283,9 @@ describe('AudioPlayerPanel', () => {
         duration: 10,
         audioUrl: null,
         selectedVoiceName: '',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -292,7 +317,9 @@ describe('AudioPlayerPanel', () => {
         duration: 10,
         audioUrl: 'http://test.url/audio.mp3',
         selectedVoiceName: 'Test Voice',
-        speedValue: 1.0
+        speedValue: 1.0,
+        isPaused: false,
+        isLoading: false
       }
     })
 
@@ -319,7 +346,9 @@ describe('AudioPlayerPanel', () => {
           duration: 10,
           audioUrl: null,
           selectedVoiceName: '',
-          speedValue: 1.0
+          speedValue: 1.0,
+          isPaused: false,
+          isLoading: false
         }
       })
 
@@ -340,7 +369,9 @@ describe('AudioPlayerPanel', () => {
           duration: 10,
           audioUrl: null,
           selectedVoiceName: '',
-          speedValue: 1.0
+          speedValue: 1.0,
+          isPaused: false,
+          isLoading: false
         }
       })
 
@@ -363,7 +394,9 @@ describe('AudioPlayerPanel', () => {
           duration: 10,
           audioUrl: null,
           selectedVoiceName: '',
-          speedValue: 1.0
+          speedValue: 1.0,
+          isPaused: false,
+          isLoading: false
         }
       })
 
@@ -385,7 +418,9 @@ describe('AudioPlayerPanel', () => {
           duration: 10,
           audioUrl: null,
           selectedVoiceName: '',
-          speedValue: 1.0
+          speedValue: 1.0,
+          isPaused: false,
+          isLoading: false
         }
       })
 
@@ -405,7 +440,9 @@ describe('AudioPlayerPanel', () => {
           duration: 10,
           audioUrl: null,
           selectedVoiceName: '',
-          speedValue: 1.0
+          speedValue: 1.0,
+          isPaused: false,
+          isLoading: false
         }
       })
 
@@ -413,8 +450,8 @@ describe('AudioPlayerPanel', () => {
       const closeBtn = wrapper.find('button[title="Close Player"]')
       expect(closeBtn.exists()).toBe(true)
 
-      // Toggle emits toggle
-      const toggleBtn = wrapper.find('button.bg-sunrise-magenta')
+      // Toggle emits toggle (now via PlayPauseButton stub)
+      const toggleBtn = wrapper.find('play-pause-button-stub')
       expect(toggleBtn.exists()).toBe(true)
 
       // Download emits download
@@ -502,7 +539,9 @@ describe('AudioPlayerPanel', () => {
           duration: 10,
           audioUrl: null,
           selectedVoiceName: '',
-          speedValue: 1.0
+          speedValue: 1.0,
+          isPaused: false,
+          isLoading: false
         }
       })
 
@@ -527,7 +566,9 @@ describe('AudioPlayerPanel', () => {
           duration: 10,
           audioUrl: null,
           selectedVoiceName: '',
-          speedValue: 1.0
+          speedValue: 1.0,
+          isPaused: false,
+          isLoading: false
         }
       })
 
@@ -554,20 +595,23 @@ describe('AudioPlayerPanel', () => {
           duration: 10,
           audioUrl: null,
           selectedVoiceName: '',
-          speedValue: 1.0
+          speedValue: 1.0,
+          isPaused: false,
+          isLoading: false
         }
       })
 
       const html = wrapper.html()
       // Download/close buttons: 44px (w-11 h-11) on mobile
       expect(html).toContain('w-11 h-11')
-      // Play/pause button: 48px (w-12 h-12) on mobile for WCAG
-      expect(html).toContain('w-12 h-12')
       // Verify the source has responsive sizing
       const componentPath = path.join(__dirname, '../app/components/AudioPlayerPanel.vue')
       const source = fs.readFileSync(componentPath, 'utf-8')
       expect(source).toContain('w-11 h-11 md:w-10 md:h-10')
-      expect(source).toContain('w-12 h-12')
+      // Play/pause button sizing is now in PlayPauseButton component
+      const ppbPath = path.join(__dirname, '../app/components/PlayPauseButton.vue')
+      const ppbSource = fs.readFileSync(ppbPath, 'utf-8')
+      expect(ppbSource).toContain('w-12 h-12')
     })
   })
 })

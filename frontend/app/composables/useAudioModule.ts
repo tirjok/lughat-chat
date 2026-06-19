@@ -1,4 +1,4 @@
-import { ref, watch, computed, type Ref } from 'vue'
+import { ref, watch, type Ref } from 'vue'
 
 export interface AudioModuleOptions {
   onPlaybackEnd?: () => void
@@ -18,18 +18,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   const blobRef = ref<Blob | null>(null)
   let currentObjectUrl: string | null = null
   const audioRef = ref<HTMLAudioElement | null>(null) as Ref<HTMLAudioElement | null>
-
-  // ── Absorbed formatTime (useTimeDisplay deleted) ─
-  function formatTime(seconds: number): string {
-    if (!seconds || isNaN(seconds) || seconds < 0) return '0:00'
-    const minutes = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${minutes}:${secs.toString().padStart(2, '0')}`
-  }
-
-  // ── Formatted output (exposed to components) ────
-  const formattedCurrentTime = computed(() => formatTime(currentTime.value))
-  const formattedDuration = computed(() => formatTime(duration.value))
 
   // ── Internal: revoke previous object URL ─────────
   function revokePrevious() {
@@ -153,8 +141,7 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   return {
     // State
     isPlaying, isPaused, currentTime, duration,
-    error, isLoading, audioUrl,
-    formattedCurrentTime, formattedDuration,
+    audioUrl,
 
     // Template binding
     audioRef,

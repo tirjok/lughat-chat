@@ -1,7 +1,7 @@
 <script setup lang="ts">
 interface Props {
-  currentTime: number
-  duration: number
+  currentTime: string
+  duration: string
 }
 
 defineProps<Props>()

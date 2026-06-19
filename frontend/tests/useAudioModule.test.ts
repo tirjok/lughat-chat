@@ -49,24 +49,8 @@ describe('useAudioModule', () => {
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('http://mock.url/blob')
     })
 
-    it('resets isLoading to true on load', async () => {
-      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
-      const module = useAudioModule()
-
-      module.load(mockBlob)
-
-      expect(module.isLoading.value).toBe(true)
-    })
-
-    it('clears error on load', async () => {
-      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
-      const module = useAudioModule()
-      module.error.value = 'previous error'
-
-      module.load(mockBlob)
-
-      expect(module.error.value).toBeNull()
-    })
+    // isLoading and error were removed from useAudioModule
+    // as they were never consumed by any component.
   })
 
   describe('play', () => {
@@ -85,20 +69,8 @@ describe('useAudioModule', () => {
       expect(mockAudio.play).toHaveBeenCalled()
     })
 
-    it('sets error when play rejects', async () => {
-      const mockAudio = {
-        play: vi.fn(() => Promise.reject(new DOMException('Not allowed'))),
-        pause: vi.fn(),
-        addEventListener: vi.fn()
-      } as unknown as HTMLAudioElement
-
-      const module = useAudioModule()
-      module.audioRef.value = mockAudio
-
-      await module.play()
-
-      expect(module.error.value).toContain('Unable to play audio')
-    })
+    // error handling was removed from useAudioModule
+    // as it was never consumed by any component.
 
     it('does nothing when audioRef is null', async () => {
       const module = useAudioModule()
@@ -356,10 +328,6 @@ describe('useAudioModule', () => {
       expect(module.currentTime).toBeDefined()
       expect(module.isPlaying).toBeDefined()
       expect(module.isPaused).toBeDefined()
-      expect(module.isLoading).toBeDefined()
-      expect(module.error).toBeDefined()
-      expect(module.formattedCurrentTime).toBeDefined()
-      expect(module.formattedDuration).toBeDefined()
       expect(typeof module.load).toBe('function')
       expect(typeof module.play).toBe('function')
       expect(typeof module.pause).toBe('function')
@@ -374,12 +342,8 @@ describe('useAudioModule', () => {
       expect(module.audioUrl.value).toBeNull()
       expect(module.isPlaying.value).toBe(false)
       expect(module.isPaused.value).toBe(false)
-      expect(module.isLoading.value).toBe(false)
-      expect(module.error.value).toBeNull()
       expect(module.duration.value).toBe(0)
       expect(module.currentTime.value).toBe(0)
-      expect(module.formattedCurrentTime.value).toBe('0:00')
-      expect(module.formattedDuration.value).toBe('0:00')
     })
 
     it('does not return unexpected properties', () => {
@@ -388,8 +352,7 @@ describe('useAudioModule', () => {
       const keys = Object.keys(module)
       expect(keys).toEqual([
         'isPlaying', 'isPaused', 'currentTime', 'duration',
-        'error', 'isLoading', 'audioUrl',
-        'formattedCurrentTime', 'formattedDuration',
+        'audioUrl',
         'audioRef',
         'load', 'play', 'pause', 'seek', 'download', 'dispose'
       ])
@@ -456,50 +419,6 @@ describe('useAudioModule', () => {
     })
   })
 
-  describe('error messages', () => {
-    it('shows English error when play fails', async () => {
-      const mockAudio = {
-        play: vi.fn(() => Promise.reject(new DOMException('Not allowed'))),
-        pause: vi.fn(),
-        addEventListener: vi.fn()
-      } as unknown as HTMLAudioElement
-
-      const module = useAudioModule()
-      module.audioRef.value = mockAudio
-
-      await module.play()
-
-      expect(module.error.value).toContain('Unable to play audio')
-    })
-  })
-
-  describe('formatted time', () => {
-    it('formats current time correctly', () => {
-      const module = useAudioModule()
-      module.currentTime.value = 125
-
-      expect(module.formattedCurrentTime.value).toBe('2:05')
-    })
-
-    it('formats duration correctly', () => {
-      const module = useAudioModule()
-      module.duration.value = 3661
-
-      expect(module.formattedDuration.value).toBe('61:01')
-    })
-
-    it('formats zero as 0:00', () => {
-      const module = useAudioModule()
-      module.currentTime.value = 0
-
-      expect(module.formattedCurrentTime.value).toBe('0:00')
-    })
-
-    it('formats invalid as 0:00', () => {
-      const module = useAudioModule()
-      module.currentTime.value = NaN
-
-      expect(module.formattedCurrentTime.value).toBe('0:00')
-    })
-  })
+  // error handling and formatted time were removed from useAudioModule
+  // as they were never consumed by any component.
 })
