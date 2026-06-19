@@ -23,7 +23,7 @@ function toastBgClass(type: ToastType): string {
 
 <template>
   <div
-    class="fixed top-20 md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2"
+    class="fixed top-20 md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none"
     dir="ltr"
   >
     <TransitionGroup name="toast-slide">

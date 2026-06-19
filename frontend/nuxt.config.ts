@@ -49,11 +49,11 @@ export default defineNuxtConfig({
     // In production, Nginx handles all proxying (see Dockerfile).
     devProxy: {
       '/api/': {
-        target: 'http://localhost:8090/api/',
+        target: 'http://localhost:9000/api/',
         changeOrigin: true
       },
       '/health': {
-        target: 'http://localhost:8090/health',
+        target: 'http://localhost:9000/health',
         changeOrigin: true
       }
     }

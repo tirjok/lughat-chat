@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: lughat-backend
     ports:
-      - "8090:8000"  # Host port 8090 → container port 8000
+      - "9000:8000"  # Host port 9000 → container port 8000
     volumes:
       # Persist model cache across restarts (avoids re-downloading)
       - tts-model-cache:/root/.local/share/tts
@@ -37,7 +37,7 @@ services:
       dockerfile: Dockerfile
     container_name: lughat-frontend
     ports:
-      - "80:80"  # Single port for everything!
+      - "9001:80"  # Host port 9001 → container port 80
     depends_on:
       backend:
         condition: service_healthy  # Wait until backend is ready (or at least started)

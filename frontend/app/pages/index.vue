@@ -331,7 +331,7 @@ function handleClosePlayer() {
         </div>
 
         <!-- Floating Shortcut Hint (hidden on mobile, visible at md+) -->
-        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/90 backdrop-blur px-4 py-2 rounded-lg border border-studio-700 hidden md:flex">
+        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50 hidden md:flex">
           Press
           <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
           +
@@ -388,6 +388,15 @@ html, body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #3A3A3A;
+}
+
+/* Hide scrollbar for horizontal toolbars but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ===================================
