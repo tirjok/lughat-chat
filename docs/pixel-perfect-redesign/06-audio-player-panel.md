@@ -2,7 +2,7 @@
 
 ## Type
 
-AFK
+Done
 
 ## What to build
 
