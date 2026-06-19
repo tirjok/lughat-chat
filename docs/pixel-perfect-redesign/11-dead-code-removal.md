@@ -2,7 +2,7 @@
 
 ## Type
 
-AFK
+Done
 
 ## What to build
 
@@ -61,4 +61,4 @@ Remove the 4 dead code components that are not referenced in `pages/index.vue` a
 
 ## Blocked by
 
-- #01 (icon library — some dead components may reference Lucide icons)
+None — completed.
