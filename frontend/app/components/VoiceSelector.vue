@@ -154,10 +154,9 @@ onUnmounted(() => {
     <!-- Dropdown Menu (Teleported to body, animated) -->
     <Teleport to="body">
       <div
-        v-show="isOpen"
+        v-if="isOpen"
         ref="menuRef"
-        class="fixed z-50 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden opacity-0 scale-95 pointer-events-none transition-all duration-200 origin-top"
-        :class="{ 'opacity-100 scale-100 pointer-events-auto': isOpen }"
+        class="fixed z-50 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-200 origin-top opacity-100 scale-100 pointer-events-auto"
         :style="menuPositionStyle"
       >
         <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">

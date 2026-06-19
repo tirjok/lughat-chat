@@ -225,7 +225,7 @@ describe('VoiceSelector', () => {
       expect(teleportedMenu!.className).toContain('z-50')
     })
 
-    it('dropdown portal hides when closed (v-show, not v-if)', async () => {
+    it('dropdown portal is removed from DOM when closed (v-if)', async () => {
       const wrapper = getVoiceSelectorWrapper({ modelValue: '' })
       const triggerButton = getTriggerButton(wrapper)
 
@@ -233,18 +233,18 @@ describe('VoiceSelector', () => {
       await triggerButton.trigger('click')
       await nextTick()
 
+      // Verify menu exists when open
+      const teleportedMenuOpen = document.querySelector('[class*="fixed"]')
+      expect(teleportedMenuOpen).not.toBeNull()
+
       // Close it via the outside click handler
       const comp = getComponent(wrapper.vm) as { isOpen: boolean, handleOutsideMousedown: (e: MouseEvent) => void }
       comp.handleOutsideMousedown(new MouseEvent('mousedown', { bubbles: true }))
       await nextTick()
 
-      // Menu stays in DOM but hidden (v-show) — should have animation classes
-      const teleportedMenu = document.querySelector('[class*="fixed"]')
-      expect(teleportedMenu).not.toBeNull()
-      // Should be hidden with animation classes
-      expect(teleportedMenu!.className).toContain('opacity-0')
-      expect(teleportedMenu!.className).toContain('scale-95')
-      expect(teleportedMenu!.className).toContain('pointer-events-none')
+      // Menu is removed from DOM when closed (v-if)
+      const teleportedMenuClosed = document.querySelector('[class*="fixed"]')
+      expect(teleportedMenuClosed).toBeNull()
     })
 
     it('voice options have minimum 48px height on mobile (WCAG compliance)', () => {

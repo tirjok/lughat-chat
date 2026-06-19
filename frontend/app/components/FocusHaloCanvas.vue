@@ -1,8 +1,4 @@
 <script setup lang="ts">
-const props = defineProps<{
-  focused?: boolean
-}>()
-
 const haloRef = ref<HTMLDivElement | null>(null)
 
 function handleFocus() {

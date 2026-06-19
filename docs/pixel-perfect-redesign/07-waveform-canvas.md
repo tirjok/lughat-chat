@@ -2,7 +2,7 @@
 
 ## Type
 
-AFK
+Done
 
 ## What to build
 
@@ -61,8 +61,7 @@ Verify the WaveformCanvas matches the prototype's canvas rendering exactly. The 
 - **Decision needed**: Prototype does NOT use DPR scaling. Should we match the prototype exactly (no DPR) or use DPR for crisp rendering on Retina displays?
 
 ### Current issues vs prototype
-- DPR scaling may make bars appear thinner on high-DPR screens (prototype does not use DPR)
-- Verify canvas container: `h-8 md:h-12 relative w-full overflow-hidden min-w-[100px]`
+- Canvas container: `h-8 md:h-12 min-w-[100px]` — fixed to use container height instead of `absolute inset-0`
 
 ## Acceptance criteria
 
@@ -76,4 +75,4 @@ Verify the WaveformCanvas matches the prototype's canvas rendering exactly. The 
 
 ## Blocked by
 
-- #02 (global styles — canvas container sizing)
+None — resolved by removing DPR scaling and fixing canvas container sizing.

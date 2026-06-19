@@ -39,7 +39,7 @@ describe('VoiceSelector animation', () => {
     expect(menuClass).toContain('origin-top')
   })
 
-  it('dropdown menu stays in DOM when closed (v-show), with animation classes for transition', async () => {
+  it('dropdown menu is removed from DOM when closed (v-if), re-added when opened', async () => {
     const container = document.createElement('div')
     container.id = 'test-root'
     document.body.appendChild(container)
@@ -49,17 +49,9 @@ describe('VoiceSelector animation', () => {
       attachTo: container
     })
 
-    // With v-show, menu IS in DOM when closed (hidden with display:none)
+    // With v-if, menu is NOT in DOM when closed
     const menuBefore = document.querySelector('[class*="fixed"]')
-    expect(menuBefore).not.toBeNull()
-
-    // Should have animation classes even when hidden
-    expect(menuBefore!.className).toContain('opacity-0')
-    expect(menuBefore!.className).toContain('scale-95')
-    expect(menuBefore!.className).toContain('pointer-events-none')
-    expect(menuBefore!.className).toContain('transition-all')
-    expect(menuBefore!.className).toContain('duration-200')
-    expect(menuBefore!.className).toContain('origin-top')
+    expect(menuBefore).toBeNull()
 
     // Open the dropdown
     const trigger = wrapper.find('button')
@@ -72,6 +64,10 @@ describe('VoiceSelector animation', () => {
     // The menu should have animation classes when visible
     expect(menuAfter!.className).toContain('transition-all')
     expect(menuAfter!.className).toContain('duration-200')
+    expect(menuAfter!.className).toContain('origin-top')
+    expect(menuAfter!.className).toContain('opacity-100')
+    expect(menuAfter!.className).toContain('scale-100')
+    expect(menuAfter!.className).toContain('pointer-events-auto')
   })
 
   it('chevron rotates 180deg when dropdown is open', async () => {

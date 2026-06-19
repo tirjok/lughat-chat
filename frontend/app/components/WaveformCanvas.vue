@@ -24,9 +24,8 @@ function resizeCanvas() {
   if (!canvas) return
   const parent = canvas.parentElement
   if (parent) {
-    const dpr = window.devicePixelRatio
-    canvas.width = parent.clientWidth * dpr
-    canvas.height = parent.clientHeight * dpr
+    canvas.width = parent.clientWidth
+    canvas.height = parent.clientHeight
   }
   isCanvasVisible = true
   initBars()
@@ -50,10 +49,6 @@ function drawWaveform() {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   if (!isCanvasVisible) return
-
-  const dpr = window.devicePixelRatio
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.scale(dpr, dpr)
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   const barWidth = (canvas.width / numBars) - 2
@@ -149,6 +144,6 @@ watch(() => props.visible, async (val) => {
 <template>
   <canvas
     ref="canvasRef"
-    class="absolute inset-0 w-full h-full"
+    class="w-full h-8 md:h-12 min-w-[100px]"
   />
 </template>
