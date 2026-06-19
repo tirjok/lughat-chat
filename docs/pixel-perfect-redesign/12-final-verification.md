@@ -2,7 +2,7 @@
 
 ## Type
 
-HITL (requires human sign-off)
+Pending human visual sign-off
 
 ## What to build
 
@@ -65,4 +65,4 @@ A screenshot comparison document (or live browser session) showing:
 
 ## Blocked by
 
-- #01 through #11 (all visual work must be complete)
+None — all visual work (#01–#11) complete. Awaiting human visual sign-off via side-by-side prototype vs. app comparison.
