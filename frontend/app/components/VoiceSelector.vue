@@ -94,7 +94,7 @@ onUnmounted(() => {
 <template>
   <div
     ref="dropdownRef"
-    class="flex flex-col gap-3 border-b border-studio-700 pb-6"
+    class="flex flex-col gap-3 border-b border-studio-700/60 pb-6"
   >
     <!-- Label -->
     <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
@@ -108,7 +108,7 @@ onUnmounted(() => {
     <!-- Dropdown Trigger -->
     <button
       ref="triggerRef"
-      class="w-full bg-studio-900 border border-studio-700 hover:border-sunrise-orange/50 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group shadow-inner"
+      class="w-full bg-studio-900 border border-studio-700/60 hover:border-sunrise-orange/50 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group shadow-inner"
       @click="toggleDropdown"
     >
       <div
@@ -156,7 +156,7 @@ onUnmounted(() => {
       <div
         v-if="isOpen"
         ref="menuRef"
-        class="fixed z-50 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-200 origin-top opacity-100 scale-100 pointer-events-auto"
+        class="fixed z-50 bg-studio-800 border border-studio-700/60 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-200 origin-top opacity-100 scale-100 pointer-events-auto"
         :style="menuPositionStyle"
       >
         <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
@@ -177,7 +177,7 @@ onUnmounted(() => {
           >
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center transition-colors"
+                class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center transition-colors"
                 :class="[
                   voice.id === modelValue
                     ? 'border-sunrise-orange'
@@ -205,7 +205,7 @@ onUnmounted(() => {
 
             <!-- Preview play button (visible on hover) -->
             <span
-              class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:scale-110 text-gray-500"
+              class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:scale-110 text-gray-500"
               :class="{
                 'hover:text-sunrise-orange hover:border-sunrise-orange': getVoiceColorClass(voice).includes('orange'),
                 'hover:text-sunrise-magenta hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta')

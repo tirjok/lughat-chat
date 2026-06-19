@@ -160,11 +160,11 @@ function handleClosePlayer() {
         role="region"
         aria-labelledby="control-deck-heading"
         data-panel="control-deck"
-        class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 order-2 md:order-1 transition-all duration-300"
+        class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700/60 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 order-2 md:order-1 transition-all duration-300"
       >
         <!-- Mobile Header (logo + status, visible below 768px) -->
         <header
-          class="flex md:hidden justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700 shrink-0 z-30 shadow-md"
+          class="flex md:hidden justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700/60 shrink-0 z-30 shadow-md"
         >
           <div class="flex items-center gap-2">
             <span
@@ -180,7 +180,7 @@ function handleClosePlayer() {
 
         <!-- Desktop Header (hidden on mobile) -->
         <header
-          class="hidden md:flex p-6 border-b border-studio-700 justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent shrink-0"
+          class="hidden md:flex p-6 border-b border-studio-700/60 justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent shrink-0"
         >
           <div>
             <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -215,7 +215,7 @@ function handleClosePlayer() {
             <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
               <span class="ph ph-sliders-horizontal text-lg" /> Output Settings
             </label>
-            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700">
+            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700/60">
               <span class="text-sm text-gray-400">High Quality Audio</span>
               <button
                 class="w-10 h-5 bg-sunrise-orange rounded-full relative cursor-pointer transition-colors duration-300 ease-in-out hover:bg-sunrise-orange/90 active:scale-95"
@@ -232,7 +232,7 @@ function handleClosePlayer() {
         </div>
 
         <!-- Action Area (prototype: p-4 md:p-6, shrink-0) -->
-        <div class="p-4 md:p-6 border-t border-studio-700 bg-studio-800 shrink-0">
+        <div class="p-4 md:p-6 border-t border-studio-700/60 bg-studio-800 shrink-0">
           <GenerateButton
             :is-generating="isGenerating"
             :model-status="modelStatus"
@@ -259,9 +259,9 @@ function handleClosePlayer() {
             <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
               <span
                 aria-hidden="true"
-                class="ph ph-terminal text-lg"
+                class="ph ph-keyboard text-lg"
               />
-              Editor Canvas
+              <span class="inline">Editor Canvas</span>
             </h2>
             <div class="flex items-center gap-3 text-sm text-gray-500">
               <span
@@ -271,13 +271,12 @@ function handleClosePlayer() {
                 {{ charCount }} / 3000
               </span>
               <button
-                class="hover:text-white transition-colors p-1"
-                title="Clear Canvas"
+                class="text-gray-500 bg-transparent hover:bg-studio-700"
                 @click="handleClearText"
               >
                 <span
                   aria-hidden="true"
-                  class="ph ph-trash text-lg"
+                  class="ph ph-trash text-xl"
                 />
               </button>
             </div>
@@ -287,9 +286,9 @@ function handleClosePlayer() {
             <h2 class="hidden md:flex text-gray-400 font-medium text-sm items-center gap-2">
               <span
                 aria-hidden="true"
-                class="ph ph-terminal text-lg"
+                class="ph ph-keyboard text-lg"
               />
-              Editor Canvas
+              <span>Editor Canvas</span>
             </h2>
 
             <!-- AI Smart Tools Toolbar (prototype: hide-scrollbar, overflow-x-auto, pb-1 md:pb-0 md:pl-4 md:border-l) -->
@@ -324,13 +323,12 @@ function handleClosePlayer() {
               {{ charCount }} / 3000
             </span>
             <button
-              class="hover:text-white transition-colors p-1"
-              title="Clear Canvas"
+              class="text-gray-500 bg-transparent hover:bg-studio-700"
               @click="handleClearText"
             >
               <span
                 aria-hidden="true"
-                class="ph ph-trash text-lg"
+                class="ph ph-trash text-xl"
               />
             </button>
           </div>
@@ -350,9 +348,9 @@ function handleClosePlayer() {
         <!-- Floating Shortcut Hint (hidden on mobile, visible at md+) -->
         <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50 hidden md:flex">
           Press
-          <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
+          <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700/60 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
           +
-          <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Enter</kbd>
+          <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700/60 font-mono text-gray-400 shadow-sm">Enter</kbd>
           to generate
         </div>
 

@@ -19,7 +19,7 @@ export default defineConfig({
       studio: {
         900: '#121212',
         800: '#1A1A1A',
-        700: '#2A2A2A'
+        700: '#333333'
       },
       sunrise: {
         orange: '#FF512F',

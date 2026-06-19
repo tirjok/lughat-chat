@@ -6,7 +6,7 @@ const { status, modelLoaded } = useHealthPoll()
 
 <template>
   <div
-    class="flex items-center gap-1.5 bg-studio-900 px-2.5 py-1 rounded-full border border-studio-700"
+    class="flex items-center gap-1.5 bg-studio-900 px-2.5 py-1 rounded-full border border-studio-700/60"
     title="Model XTTS-v2 Ready"
   >
     <!-- Loading state: pulsing orange dot -->

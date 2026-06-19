@@ -44,11 +44,10 @@ describe('SpeedSlider component', () => {
     expect(input.element.value).toBe('1.5')
   })
 
-  it('renders desktop range markers (0.5x, 1.0x, 2.0x)', () => {
+  it('renders desktop range markers (0.5x, 2.0x with spacer for center)', () => {
     const wrapper = mountSlider()
     const html = wrapper.html()
     expect(html).toContain('0.5x')
-    expect(html).toContain('1.0x')
     expect(html).toContain('2.0x')
   })
 
@@ -61,10 +60,10 @@ describe('SpeedSlider component', () => {
 
   // ─── Prototype: pt-2 pb-4 wrapper ─────────────────────────────────────
 
-  it('uses prototype: pt-2 pb-4 wrapper on desktop slider', () => {
+  it('uses prototype: pt-2 pb-6 wrapper on desktop slider', () => {
     const componentPath = path.join(__dirname, '../app/components/SpeedSlider.vue')
     const source = fs.readFileSync(componentPath, 'utf-8')
-    expect(source).toContain('pt-2 pb-4')
+    expect(source).toContain('pt-2 pb-6')
   })
 
   // ─── Mobile: Stepper Buttons (<768px) ─────────────────────────────────

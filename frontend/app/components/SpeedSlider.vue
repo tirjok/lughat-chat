@@ -50,7 +50,9 @@ function adjustSpeed(delta: number) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div
+    class="flex flex-col gap-4 bg-studio-900 rounded-xl border border-studio-700/60 p-4"
+  >
     <div class="flex justify-between items-end">
       <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
         <span
@@ -59,13 +61,13 @@ function adjustSpeed(delta: number) {
         />
         Speech Speed
       </label>
-      <span class="text-xs font-mono text-sunrise-orange bg-studio-900 px-2 py-1 rounded border border-studio-700">
+      <span class="text-xs font-mono text-sunrise-orange bg-studio-800 px-2 py-1 rounded border border-studio-700/60">
         {{ displayValue }}
       </span>
     </div>
 
-    <!-- Prototype: native <input type=range> with gradient track, pt-2 pb-4 wrapper -->
-    <div class="relative w-full pt-2 pb-4">
+    <!-- Prototype: native <input type=range> with gradient track, pt-2 pb-6 wrapper -->
+    <div class="relative w-full pt-2 pb-6">
       <input
         ref="sliderRef"
         type="range"
@@ -77,10 +79,10 @@ function adjustSpeed(delta: number) {
         style="-webkit-appearance: none; width: 100%; background: transparent;"
         @input="handleInput"
       >
-      <!-- Range markers (prototype: text-[10px], mt-2 absolute) -->
-      <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-2 absolute w-full">
+      <!-- Range markers (prototype: text-[10px], mt-4 absolute) -->
+      <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-4 absolute w-full">
         <span>0.5x</span>
-        <span>1.0x</span>
+        <span>&nbsp;</span>
         <span>2.0x</span>
       </div>
     </div>
@@ -99,7 +101,7 @@ function adjustSpeed(delta: number) {
         />
       </button>
 
-      <span class="text-xl font-mono text-sunrise-orange bg-studio-900 px-4 py-2 rounded-lg border border-studio-700 min-w-[4rem] text-center">
+      <span class="text-xl font-mono text-sunrise-orange bg-studio-900 px-4 py-2 rounded-lg border border-studio-700/60 min-w-[4rem] text-center">
         {{ displayValue }}
       </span>
 

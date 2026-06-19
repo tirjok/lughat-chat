@@ -16,7 +16,7 @@ function toastBgClass(type: ToastType): string {
   switch (type) {
     case 'error': return 'bg-red-500/10 border-red-500/50'
     case 'info': return 'bg-blue-500/10 border-blue-500/50'
-    default: return 'bg-studio-800 border-studio-700'
+    default: return 'bg-studio-800 border-studio-700/60'
   }
 }
 </script>

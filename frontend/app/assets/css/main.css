@@ -1,4 +1,9 @@
 /* ===================================
+   Global CSS Reset (Tailwind-style preflight)
+   =================================== */
+@import '@unocss/reset/tailwind-compat.css';
+
+/* ===================================
    Global Styles (fixed dark theme — "Sunrise Surge")
    =================================== */
 
