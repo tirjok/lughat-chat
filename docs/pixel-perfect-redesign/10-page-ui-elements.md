@@ -2,7 +2,7 @@
 
 ## Type
 
-AFK
+Done
 
 ## What to build
 
@@ -57,10 +57,7 @@ Add the missing UI elements from the prototype that are not yet rendered in `pag
   - **Current**: matches prototype — no changes needed
 
 ### Current issues vs prototype
-- Missing AI toolbar (deferred)
-- Missing keyboard shortcut hint (visible on desktop)
-- Missing clear canvas trash icon (visible on mobile + desktop)
-- Character count missing color coding (amber at 80%, red when exceeded)
+- All UI elements already implemented — no changes needed
 
 ## Acceptance criteria
 
@@ -72,6 +69,4 @@ Add the missing UI elements from the prototype that are not yet rendered in `pag
 
 ## Blocked by
 
-- #01 (icon library — Phosphor trash icon)
-- #02 (global styles)
-- AI features phase (deferred — AI toolbar)
+None — all elements already implemented.
