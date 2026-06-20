@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { usePanelToggle } from '../app/composables/usePanelToggle'
+import { setBreakpoint } from './mocks'
 
 describe('usePanelToggle composable', () => {
   let originalInnerWidth: number
@@ -17,52 +18,44 @@ describe('usePanelToggle composable', () => {
     expect(activePanel.value).toBe('control-deck')
   })
 
-  // ─── isMobile Breakpoint Tests ──────────────────────────────────────
+  // ─── isMobile Tests ─────────────────────────────────────────────────
 
-  describe('isMobile breakpoint simulation', () => {
-    it.each([
-      [375, true, 'iPhone SE (mobile)'],
-      [414, true, 'iPhone Max (mobile)'],
-      [767, true, 'iPad portrait (tablet, below breakpoint)']
-    ])('returns isMobile as %p at %dpx', (width, expected) => {
-      Object.defineProperty(window, 'innerWidth', { value: width, writable: true })
+  describe('isMobile', () => {
+    it('returns true at 375px (mobile)', () => {
+      setBreakpoint(375)
       const { isMobile } = usePanelToggle()
-      expect(isMobile.value).toBe(expected)
+      expect(isMobile.value).toBe(true)
     })
 
-    it.each([
-      [768, false, 'iPad portrait (at breakpoint)'],
-      [1024, false, 'tablet landscape'],
-      [1920, false, 'desktop']
-    ])('returns isMobile as %p at %dpx', (width, expected) => {
-      Object.defineProperty(window, 'innerWidth', { value: width, writable: true })
+    it('returns true at 414px (mobile)', () => {
+      setBreakpoint(414)
       const { isMobile } = usePanelToggle()
-      expect(isMobile.value).toBe(expected)
+      expect(isMobile.value).toBe(true)
     })
-  })
 
-  it('returns isMobile as false on desktop (width >= 768px)', () => {
-    Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true })
-    const { isMobile } = usePanelToggle()
-    expect(isMobile.value).toBe(false)
-  })
+    it('returns true at 767px (just below breakpoint)', () => {
+      setBreakpoint(767)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(true)
+    })
 
-  it('returns isMobile as true on mobile (width < 768px)', () => {
-    Object.defineProperty(window, 'innerWidth', { value: 375, writable: true })
-    const { isMobile } = usePanelToggle()
-    expect(isMobile.value).toBe(true)
-  })
-
-  it('returns isMobile as false when window is undefined (SSR)', () => {
-    const originalWindow = globalThis.window
-    // @ts-expect-error - intentionally testing SSR
-    delete globalThis.window
-    try {
+    it('returns false at 768px (desktop breakpoint)', () => {
+      setBreakpoint(768)
       const { isMobile } = usePanelToggle()
       expect(isMobile.value).toBe(false)
-    } finally {
-      globalThis.window = originalWindow
-    }
+    })
+
+    it('returns false at 1024px (tablet landscape)', () => {
+      setBreakpoint(1024)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(false)
+    })
+
+    it('returns false at 1920px (desktop)', () => {
+      setBreakpoint(1920)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(false)
+    })
   })
 
   // ─── togglePanel Tests ──────────────────────────────────────────────
@@ -105,5 +98,45 @@ describe('usePanelToggle composable', () => {
       'togglePanel',
       'focusFirstInteractiveElement'
     ])
+  })
+
+  // ─── isMobile is reactive via useMediaQuery (VueUse) ────────────────
+
+  describe('isMobile (useMediaQuery)', () => {
+    it('returns true at 375px (mobile)', () => {
+      setBreakpoint(375)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(true)
+    })
+
+    it('returns true at 414px (mobile)', () => {
+      setBreakpoint(414)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(true)
+    })
+
+    it('returns true at 767px (just below breakpoint)', () => {
+      setBreakpoint(767)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(true)
+    })
+
+    it('returns false at 768px (desktop breakpoint)', () => {
+      setBreakpoint(768)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(false)
+    })
+
+    it('returns false at 1024px (tablet landscape)', () => {
+      setBreakpoint(1024)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(false)
+    })
+
+    it('returns false at 1920px (desktop)', () => {
+      setBreakpoint(1920)
+      const { isMobile } = usePanelToggle()
+      expect(isMobile.value).toBe(false)
+    })
   })
 })

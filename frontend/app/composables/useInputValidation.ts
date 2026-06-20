@@ -9,7 +9,6 @@ export type ModelStatus = 'loading' | 'ready' | 'error'
 interface UseInputValidationResult {
   isValid: boolean
   error: string | null
-  handleKeyDown: (event: KeyboardEvent, onValid?: () => void) => void
 }
 
 export function useInputValidation(
@@ -38,11 +37,6 @@ export function useInputValidation(
 
   return {
     isValid,
-    error,
-    handleKeyDown: (event: KeyboardEvent, onValid?: () => void) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && isValid && onValid) {
-        onValid()
-      }
-    }
+    error
   }
 }

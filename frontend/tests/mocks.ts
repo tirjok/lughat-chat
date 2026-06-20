@@ -2,47 +2,60 @@ import { vi } from 'vitest'
 import { ref, computed, type Ref } from 'vue'
 
 // ─── Breakpoint Simulation Helper ─────────────────────────────────────
-// Sets window.innerWidth to simulate a specific device breakpoint.
-// Call this before mounting components that depend on responsive state.
+// Sets window.innerWidth and matchMedia to simulate a specific device breakpoint.
+// Call this before mounting components or calling composables that depend on responsive state.
 //
 // Common breakpoints: 375 (iPhone SE), 414 (iPhone Max), 768 (iPad), 1024 (tablet)
 export function setBreakpoint(width: number): void {
   Object.defineProperty(window, 'innerWidth', { value: width, writable: true })
   Object.defineProperty(window, 'innerHeight', { value: Math.max(600, width * 0.6), writable: true })
+  // Also update matchMedia so VueUse's useMediaQuery works in tests
+  Object.defineProperty(window, 'matchMedia', {
+    value: (query: string) => {
+      const widthMatch = query.match(/\(max-width:\s*(\d+)px\)/)
+      if (widthMatch) {
+        const breakpoint = parseInt(widthMatch[1], 10)
+        return { matches: width <= breakpoint, media: query } as MediaQueryList
+      }
+      return { matches: false, media: query } as MediaQueryList
+    },
+    writable: true
+  })
 }
 
-// ─── Audio Player Mock Factory ───────────────────────────────────────
-// Returns reactive refs + mock methods matching useAudioPlayer's real interface.
-// Use this in vi.mock() callbacks for component tests that depend on useAudioPlayer.
+// ─── Audio Module Mock Factory ───────────────────────────────────────
+// Returns reactive refs + mock methods matching useAudioModule's real interface.
+// Use this in vi.mock() callbacks for component tests that depend on useAudioModule.
 
-export const createMockUseAudioPlayer = () => {
+export const createMockUseAudioModule = () => {
   const audioRef: Ref<HTMLAudioElement | null> = ref(null)
   const audioUrl: Ref<string | null> = ref(null)
-  const blobRef: Ref<Blob | null> = ref(null)
   const duration: Ref<number> = ref(0)
   const currentTime: Ref<number> = ref(0)
   const isPlaying: Ref<boolean> = ref(false)
   const isPaused: Ref<boolean> = ref(false)
   const isLoading: Ref<boolean> = ref(false)
   const error: Ref<string | null> = ref(null)
+  const formattedCurrentTime: Ref<string> = ref('0:00')
+  const formattedDuration: Ref<string> = ref('0:00')
 
   return {
     audioRef,
     audioUrl,
-    blobRef,
     duration,
     currentTime,
     isPlaying,
     isPaused,
     isLoading,
     error,
-    loadAudio: vi.fn().mockReturnValue('blob:http://test'),
+    formattedCurrentTime,
+    formattedDuration,
+    load: vi.fn(),
     play: vi.fn().mockResolvedValue(undefined),
     pause: vi.fn(),
-    togglePlayPause: vi.fn(),
-    getDownloadUrl: vi.fn().mockReturnValue(null),
-    downloadAudio: vi.fn(),
-    cleanup: vi.fn()
+    seek: vi.fn(),
+    download: vi.fn(),
+    dispose: vi.fn()
   }
 }
 

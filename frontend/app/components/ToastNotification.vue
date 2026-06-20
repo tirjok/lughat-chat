@@ -6,9 +6,9 @@ const toasts = useToast()
 
 function toastIconClass(type: ToastType): string {
   switch (type) {
-    case 'error': return 'text-red-400 i-lucide-alert-circle text-lg'
-    case 'info': return 'text-blue-400 i-lucide-badge-info text-lg'
-    default: return 'text-green-400 i-lucide-check-circle text-lg'
+    case 'error': return 'text-red-400 ph ph-alert-circle text-lg'
+    case 'info': return 'text-blue-400 ph ph-badge-info text-lg'
+    default: return 'text-green-400 ph ph-check-circle text-lg'
   }
 }
 
@@ -16,14 +16,14 @@ function toastBgClass(type: ToastType): string {
   switch (type) {
     case 'error': return 'bg-red-500/10 border-red-500/50'
     case 'info': return 'bg-blue-500/10 border-blue-500/50'
-    default: return 'bg-studio-800 border-studio-700'
+    default: return 'bg-studio-800 border-studio-700/60'
   }
 }
 </script>
 
 <template>
   <div
-    class="fixed top-4 right-4 z-50 flex flex-col gap-2"
+    class="fixed top-20 md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none"
     dir="ltr"
   >
     <TransitionGroup name="toast-slide">
@@ -48,7 +48,7 @@ function toastBgClass(type: ToastType): string {
         >
           <span
             aria-hidden="true"
-            class="i-lucide-x text-sm"
+            class="ph ph-x text-sm"
           />
         </button>
       </div>

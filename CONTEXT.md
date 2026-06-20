@@ -12,9 +12,11 @@ A **text-to-speech (TTS) web app** for Arabic speech synthesis using Coqui XTTS-
                                        Coqui XTTS-v2
 ```
 
-- **Frontend**: Nuxt 4 + Vue 3 + UnoCSS (runs on port 80 via Nginx)
-- **Backend**: Python FastAPI + Coqui TTS (runs on port 8000)
+- **Frontend**: Nuxt 4.4+ + Vue 3.5+ + UnoCSS 66 (runs on port 80 via Nginx)
+- **Backend**: Python FastAPI 0.115.6 + Coqui TTS 0.27.5 (runs on port 8000)
 - **TTS Model**: XTTS-v2 (multilingual, Arabic-focused)
+- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN) — NOT Lucide or Simple Icons
+- **Fonts**: Google Fonts — "Inter" (UI labels) + "Cairo" (Arabic text)
 
 ---
 
@@ -26,7 +28,7 @@ A **text-to-speech (TTS) web app** for Arabic speech synthesis using Coqui XTTS-
 - **Package Manager**: pnpm 10.33.4
 - **Styling**: UnoCSS (with presetIcons, presetTypography, presetWebFonts)
 - **UI Config**: `app.config.ts` — primary: green, neutral: slate
-- **Icons**: Lucide + Simple Icons (via `@iconify-json/*`)
+- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script)
 - **Fonts**: Google Fonts — "Cairo" (sans-serif)
 
 ### Key Files
@@ -42,21 +44,27 @@ A **text-to-speech (TTS) web app** for Arabic speech synthesis using Coqui XTTS-
 app/
 ├── app.config.ts          # UI theme config
 ├── app.vue                # Root component
-├── assets/css/main.css    # Global BEM styles (@apply)
-├── pages/index.vue        # Single-page TTS app (main page)
-├── components/            # 6 Vue components
-│   ├── ArabicTextarea.vue       # RTL Arabic text input with char count
-│   ├── ModelStatusIndicator.vue  # Shows TTS model loading status
-│   ├── PlayPauseButton.vue       # Audio play/pause toggle
-│   ├── SeekableProgressBar.vue   # Draggable audio progress bar
-│   ├── TimeDisplay.vue           # Audio time formatting (mm:ss)
-│   └── ToastNotification.vue     # Toast messages (success/error/info)
-└── composables/           # 5 composables (+ test files)
-    ├── useAudioPlayer.ts     # Audio playback state management
+├── assets/css/main.css    # Global styles (@apply)
+├── pages/index.vue        # Full-page TTS Studio (two-panel layout)
+├── components/            # 10 Vue components
+│   ├── AudioPlayerPanel.vue       # Audio playback panel (waveform + controls)
+│   ├── FocusHaloCanvas.vue        # Focus halo effect for textarea
+│   ├── GenerateButton.vue         # Generate speech button with loading states
+│   ├── MobileStatusIndicator.vue  # Compact model status (mobile FAB)
+│   ├── ModelStatusIndicator.vue   # Desktop model status indicator
+│   ├── PanelToggle.vue            # Mobile panel toggle FAB
+│   ├── SpeedSlider.vue            # Speed adjustment slider (0.5×–2.0×)
+│   ├── ToastNotification.vue      # Toast messages (success/error/info)
+│   ├── VoiceSelector.vue          # Voice/dialect selector dropdown
+│   └── WaveformCanvas.vue         # Animated waveform visualization
+└── composables/           # 7 composables (+ test files)
+    ├── useAudioModule.ts     # Audio playback state management (replaces useAudioPlayer)
     ├── useHealthPoll.ts      # Backend health check polling
     ├── useInputValidation.ts # Text input validation logic
-    ├── useTimeDisplay.ts     # Time formatting utilities
-    └── useTtsApi.ts          # TTS API calls (synthesize, healthCheck)
+    ├── usePanelToggle.ts     # Panel toggle state (control-deck ↔ canvas)
+    ├── useToast.ts           # Toast notification management
+    ├── useTtsApi.ts          # TTS API calls (synthesize, healthCheck)
+    └── useVoices.ts          # Voice list fetching and management
 ```
 
 ### ESLint Config
@@ -92,7 +100,7 @@ npx vitest --config vitest.component.config.ts
 
 **Test files location:** `frontend/tests/`
 - Naming: `<name>.test.ts`
-- Also has inline `.test.ts` files inside `app/composables/`
+- All 23 test files live in `frontend/tests/` (no inline test files in source directories).
 
 ---
 
@@ -115,8 +123,9 @@ npx vitest --config vitest.component.config.ts
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/health` | GET | Health check + model loading status |
-| `/voices` | GET | List available voices/speakers |
-| `/synthesize` | POST | Generate speech from text (returns audio file) |
+| `/api/voices` | GET | List available voices/speakers |
+| `/api/generate` | POST | Generate speech from text (returns MP3 binary) |
+| `/api/history` | GET | List previously generated audio files |
 
 ### Model Loading
 - Model: `tts_models/multilingual/xtts_v2` (loaded on startup via lifespan)
@@ -126,19 +135,20 @@ npx vitest --config vitest.component.config.ts
 
 ### Test Setup (Pytest)
 ```bash
-# Run backend tests
-cd backend && pytest
+# Run backend tests (inside Docker — no host Python needed)
+./scripts/run-backend-tests.sh
 ```
 
 **Run all tests (backend + frontend) from project root:**
 ```bash
-./run-tests.sh     # Runs pytest (backend) then pnpm test (frontend)
+./run-tests.sh     # Runs backend tests in Docker, then pnpm test (frontend)
 ```
 
 **Test files:** `backend/tests/`
 - `test_generate.py` — synthesis endpoint tests
 - `test_generate_blob.py` — blob response tests
 - `test_health.py` — health check endpoint tests
+- `test_history.py` — audio history endpoint tests
 - `test_voices.py` — voices listing tests
 
 ---
@@ -148,8 +158,8 @@ cd backend && pytest
 ### Services
 | Service | Image | Ports | Notes |
 |---------|-------|-------|-------|
-| `backend` | Python (custom Dockerfile) | 8000:8000 | Health check waits for model load (start_period: 60s) |
-| `frontend` | Nuxt + Nginx (custom Dockerfile) | 80:80 | Depends on backend being healthy |
+| `backend` | Python (custom Dockerfile) | 9000:8000 | Health check: start_period 120s, 200 retries (15s interval) |
+| `frontend` | Nuxt + Nginx (custom Dockerfile) | 9001:80 | Depends on backend being healthy (service_healthy condition) |
 
 ### Volumes
 | Volume | Purpose |
@@ -159,11 +169,14 @@ cd backend && pytest
 
 ### Environment Variables (`.env`)
 ```
-BACKEND_PORT=8000, BACKEND_HOST=backend
-FRONTEND_PORT=3000, FRONTEND_HOST=localhost
+BACKEND_PORT=9000, BACKEND_HOST=backend
+FRONTEND_PORT=9001, FRONTEND_HOST=localhost
 NGINX_PORT=80, NGINX_HOST=localhost
-API_BASE_URL=http://backend:8000
+API_BASE_URL=http://backend:9000
 TTS_MODEL_CACHE=/app/.cache/tts
+COQUI_TOS_AGREED=1
+MODEL_VOLUME_NAME=arabic-tts-models
+AUDIO_CACHE_VOLUME_NAME=arabic-tts-audio
 ```
 
 ---
@@ -193,7 +206,7 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 ### Audio Playback Timing Issue (Fixed 2026-06-05)
 **Symptom**: Audio doesn't play after first "Generate Speech" click, but works on second click.
 **Root cause**: Vue's DOM updates are async. `loadAudio()` sets `audioUrl.value` which triggers a `<Transition>` to mount `<audio ref="audioRef">`, but the element doesn't exist in DOM yet when `play()` is called immediately after. The guard `if (audioRef.value && url)` fails because `audioRef.value` is still `null`.
-**Fix**: Add `await nextTick()` between `loadAudio()` and `play()` in `index.vue`. Also added `{ flush: 'post' }` to the `watch(audioUrl)` in `useAudioPlayer.ts` as a safety net.
+**Fix**: Add `await nextTick()` between `loadAudio()` and `play()` in `index.vue`. Also added `{ flush: 'post' }` to the `watch(audioUrl)` in `useAudioModule.ts` as a safety net.
 **Pattern to watch for**: Anytime you call a method that depends on a `ref` bound to an element inside a `<Transition>` or conditional (`v-if`), you need `await nextTick()` first.
 
 ---
@@ -202,6 +215,8 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 1. **Nuxt file-based routing**: pages go in `app/pages/`, auto-imported
 2. **Composables** in `app/composables/` are auto-imported (no explicit imports needed)
 3. **Components** in `app/components/` are auto-imported by name
-4. **Tests mirror source**: composables have `.test.ts` alongside them in `app/composables/`, plus additional tests in `tests/`
+4. **Tests mirror source**: all test files live in `frontend/tests/` (no inline test files)
 5. **Dark mode**: all BEM classes have `dark:` variants defined in main.css
-6. **RTL support**: ArabicTextarea component handles RTL text input
+6. **RTL support**: Arabic text handled via Cairo font + RTL direction
+7. **Phosphor Icons**: Uses `ph ph-<name>` classes (via CDN), NOT Lucide or Simple Icons
+8. **Host ports**: Docker backend on 9000, frontend on 9001. Local dev proxies to localhost:9000.

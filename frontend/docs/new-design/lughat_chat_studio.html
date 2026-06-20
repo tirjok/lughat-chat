@@ -193,18 +193,39 @@
         textarea {
             caret-color: #FF512F;
         }
+
+        /* Hide scrollbar for horizontal toolbars but keep functionality */
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
     </style>
 </head>
-<body class="flex flex-col md:flex-row h-screen w-screen text-studio-text antialiased">
+<body class="flex flex-col md:flex-row h-[100dvh] w-full text-studio-text antialiased bg-studio-900 overflow-hidden relative">
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+    <!-- Toast Notification Container (Updated for Mobile Positioning) -->
+    <div id="toast-container" class="fixed top-20 md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- LEFT PANEL: The Control Deck (30%) -->
-    <aside class="w-full md:w-[30%] lg:w-[25%] bg-studio-800 border-r border-studio-700 flex flex-col h-full z-20 shadow-2xl">
+    <!-- MOBILE HEADER (Visible only on sm screens) -->
+    <header class="md:hidden flex justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700 shrink-0 z-30 shadow-md">
+        <div class="flex items-center gap-2">
+            <i class="ph-fill ph-waves text-sunrise-orange text-xl"></i>
+            <h1 class="text-lg font-bold text-white tracking-tight">Lughat<span class="text-sunrise-magenta">Chat</span></h1>
+        </div>
+        <div class="flex items-center gap-1.5 bg-studio-900 px-2.5 py-1 rounded-full border border-studio-700">
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></div>
+            <span class="text-[10px] font-medium text-gray-300">Ready</span>
+        </div>
+    </header>
+
+    <!-- LEFT PANEL: The Control Deck (Transforms to Bottom Sheet on Mobile) -->
+    <aside class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 order-2 md:order-1 transition-all duration-300">
         
-        <!-- Header -->
-        <div class="p-6 border-b border-studio-700 flex justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent">
+        <!-- Desktop Header (Hidden on Mobile) -->
+        <div class="hidden md:flex p-6 border-b border-studio-700 justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent shrink-0">
             <div>
                 <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                     <i class="ph-fill ph-waves text-sunrise-orange"></i>
@@ -221,7 +242,7 @@
         </div>
 
         <!-- Controls Container -->
-        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-8">
+        <div class="flex-1 p-4 md:p-6 overflow-y-auto flex flex-col gap-6 md:gap-8">
             
             <!-- Voice Selection -->
             <div class="flex flex-col gap-3 relative" id="voice-dropdown-container">
@@ -331,92 +352,122 @@
         </div>
 
         <!-- Action Area -->
-        <div class="p-6 border-t border-studio-700 bg-studio-800">
-            <button id="generate-btn" class="btn-glow-border w-full py-4 flex items-center justify-center gap-2 group">
+        <div class="p-4 md:p-6 border-t border-studio-700 bg-studio-800 shrink-0">
+            <button id="generate-btn" class="btn-glow-border w-full py-3.5 md:py-4 flex items-center justify-center gap-2 group">
                 <!-- Inner content wrapper to sit above the pseudo-element background -->
                 <div class="relative z-10 flex items-center justify-center gap-2 w-full" id="btn-content">
                     <i class="ph-fill ph-play-circle text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"></i>
-                    <span class="font-bold text-white tracking-wide">Generate Speech</span>
+                    <span class="font-bold text-white tracking-wide text-sm md:text-base">Generate Speech</span>
                 </div>
                 <!-- Loading State (Hidden by default) -->
                 <div class="relative z-10 hidden flex items-center justify-center gap-3 w-full" id="btn-loading">
                     <div class="loader"></div>
-                    <span class="font-medium text-sunrise-orange animate-pulse">Processing Model...</span>
+                    <span class="font-medium text-sunrise-orange animate-pulse text-sm md:text-base">Processing Model...</span>
                 </div>
             </button>
         </div>
     </aside>
 
-    <!-- RIGHT PANEL: The Canvas (70%) -->
-    <main class="w-full md:w-[70%] lg:w-[75%] bg-studio-900 relative flex flex-col h-full overflow-hidden">
+    <!-- RIGHT PANEL: The Canvas (Transforms to Top Panel on Mobile) -->
+    <main class="flex-1 w-full bg-studio-900 relative flex flex-col overflow-hidden order-1 md:order-2">
         
         <!-- The Sunrise Halo Effect -->
         <div id="focus-halo" class="canvas-halo"></div>
 
         <!-- Header / Context -->
-        <div class="w-full p-8 pb-4 flex justify-between items-center opacity-70">
-            <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
-                <i class="ph ph-keyboard text-lg"></i> Editor Canvas
-            </h2>
-            <div class="flex items-center gap-4 text-sm text-gray-500">
+        <div class="w-full p-4 md:p-6 lg:p-8 pb-2 md:pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shrink-0">
+            
+            <!-- Title & Clear Container (Stacked on mobile, row on desktop) -->
+            <div class="flex justify-between items-center w-full md:w-auto md:hidden">
+                <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
+                    <i class="ph ph-keyboard text-lg"></i> <span class="inline">Editor Canvas</span>
+                </h2>
+                <div class="flex items-center gap-3 text-sm text-gray-500">
+                    <span id="char-count-mobile" class="font-mono text-xs">0 / 3000</span>
+                    <button class="clear-text-btn hover:text-white transition-colors p-1" title="Clear Canvas"><i class="ph ph-trash text-lg"></i></button>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 w-full md:w-auto">
+                <h2 class="hidden md:flex text-gray-400 font-medium text-sm items-center gap-2">
+                    <i class="ph ph-keyboard text-lg"></i> <span>Editor Canvas</span>
+                </h2>
+                
+                <!-- AI Smart Tools Toolbar (Scrollable horizontally on mobile) -->
+                <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 md:border-l border-studio-700 shrink-0">
+                    <button id="ai-translate" class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-gray-500 group" title="Type in any language and translate to Arabic">
+                        <span class="group-hover:animate-pulse">✨</span> Translate
+                    </button>
+                    <button id="ai-tashkeel" class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-sunrise-orange group" title="Add Harakat (diacritics) for perfect TTS pronunciation">
+                        <span class="group-hover:animate-pulse">✨</span> Add Diacritics
+                    </button>
+                    <button id="ai-continue" class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-sunrise-magenta group" title="Let AI write the next few sentences">
+                        <span class="group-hover:animate-pulse">✨</span> Continue Script
+                    </button>
+                </div>
+            </div>
+
+            <!-- Desktop Char Count & Clear -->
+            <div class="hidden md:flex items-center gap-4 text-sm text-gray-500 shrink-0">
                 <span id="char-count" class="font-mono">0 / 3000</span>
-                <button id="clear-text" class="hover:text-white transition-colors" title="Clear Canvas"><i class="ph ph-trash"></i></button>
+                <button class="clear-text-btn hover:text-white transition-colors p-1" title="Clear Canvas"><i class="ph ph-trash text-lg"></i></button>
             </div>
         </div>
 
         <!-- Text Input Area -->
-        <div class="flex-1 relative w-full max-w-5xl mx-auto px-8 pb-32 flex flex-col">
+        <div class="flex-1 relative w-full max-w-5xl mx-auto px-4 md:px-8 pb-4 md:pb-32 flex flex-col">
             <textarea 
                 id="arabic-input" 
                 dir="rtl" 
-                class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-3xl md:text-5xl leading-relaxed text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+                class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-2xl md:text-4xl lg:text-5xl leading-relaxed md:leading-[1.6] text-gray-200 placeholder-gray-700 scroll-smooth z-10"
                 placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
             ></textarea>
         </div>
 
-        <!-- Floating Shortcut Hint -->
-        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50">
+        <!-- Floating Shortcut Hint (Hidden on Mobile) -->
+        <div class="hidden md:flex absolute bottom-6 right-8 text-gray-600 text-sm font-medium items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50">
             Press <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd> + <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Enter</kbd> to generate
         </div>
 
-        <!-- THE PLAYER (Slides up from bottom) -->
-        <div id="audio-player-panel" class="absolute bottom-0 left-0 w-full bg-studio-800 border-t border-studio-700 p-6 flex flex-col gap-4 hidden-slide transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-            
-            <div class="flex justify-between items-center mb-2">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg">
-                        <i class="ph-fill ph-music-notes text-white"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-white font-semibold text-sm">Generated Audio</h3>
-                        <p id="player-voice-label" class="text-xs text-gray-400">Female Voice • 1.0x Speed</p>
-                    </div>
+    </main>
+
+    <!-- THE PLAYER (Fixed to bottom, responsive width) -->
+    <div id="audio-player-panel" class="fixed bottom-0 right-0 w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-800 border-t md:border-l border-studio-700 p-4 md:p-6 flex flex-col gap-3 md:gap-4 hidden-slide transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
+        
+        <div class="flex justify-between items-center mb-1 md:mb-2 gap-2">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg shrink-0">
+                    <i class="ph-fill ph-music-notes text-white text-sm md:text-base"></i>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-white text-gray-400 transition-colors" title="Download MP3">
-                        <i class="ph ph-download-simple"></i>
-                    </button>
-                    <button id="close-player" class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-red-400 text-gray-400 transition-colors" title="Close Player">
-                        <i class="ph ph-x"></i>
-                    </button>
+                <div class="overflow-hidden min-w-0">
+                    <h3 class="text-white font-semibold text-xs md:text-sm truncate">Generated Audio</h3>
+                    <p id="player-voice-label" class="text-[10px] md:text-xs text-gray-400 truncate">Female Voice • 1.0x Speed</p>
                 </div>
             </div>
-
-            <!-- Heatmap Waveform Container -->
-            <div class="w-full bg-studio-900 rounded-lg border border-studio-700 p-4 flex items-center gap-4">
-                <button id="play-pause-btn" class="w-12 h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0">
-                    <i class="ph-fill ph-play text-xl ml-1" id="play-icon"></i>
+            <div class="flex items-center gap-1 md:gap-2 shrink-0">
+                <button class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-white text-gray-400 transition-colors" title="Download MP3">
+                    <i class="ph ph-download-simple"></i>
                 </button>
-                
-                <!-- Canvas for dynamic waveform -->
-                <div class="flex-1 h-12 relative w-full overflow-hidden">
-                    <canvas id="waveform-canvas" class="absolute inset-0 w-full h-full"></canvas>
-                </div>
-                
-                <span class="text-xs font-mono text-gray-400 flex-shrink-0 w-10 text-right">0:04</span>
+                <button id="close-player" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-red-400 text-gray-400 transition-colors" title="Close Player">
+                    <i class="ph ph-x"></i>
+                </button>
             </div>
         </div>
-    </main>
+
+        <!-- Heatmap Waveform Container -->
+        <div class="w-full bg-studio-900 rounded-lg border border-studio-700 p-2 md:p-4 flex items-center gap-2 md:gap-4">
+            <button id="play-pause-btn" class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0">
+                <i class="ph-fill ph-play text-lg md:text-xl ml-1" id="play-icon"></i>
+            </button>
+            
+            <!-- Canvas for dynamic waveform -->
+            <div class="flex-1 h-8 md:h-12 relative w-full overflow-hidden min-w-[100px]">
+                <canvas id="waveform-canvas" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+            
+            <span class="text-[10px] md:text-xs font-mono text-gray-400 flex-shrink-0 w-8 md:w-10 text-right">0:04</span>
+        </div>
+    </div>
 
     <script>
         // --- DOM Elements ---
@@ -437,8 +488,9 @@
         const btnLoading = document.getElementById('btn-loading');
         const arabicInput = document.getElementById('arabic-input');
         const focusHalo = document.getElementById('focus-halo');
-        const charCount = document.getElementById('char-count');
-        const clearTextBtn = document.getElementById('clear-text');
+        const charCountDesktop = document.getElementById('char-count');
+        const charCountMobile = document.getElementById('char-count-mobile');
+        const clearTextBtns = document.querySelectorAll('.clear-text-btn');
         
         const audioPlayerPanel = document.getElementById('audio-player-panel');
         const closePlayerBtn = document.getElementById('close-player');
@@ -454,6 +506,101 @@
         let isGenerating = false;
         let animationFrameId = null;
 
+        // --- Gemini API Setup ---
+        const apiKey = ""; // API key is injected by the environment at runtime
+
+        async function callGeminiAPI(prompt, retries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            for (let attempt = 0; attempt < retries; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: "You are an expert Arabic linguist and scriptwriter helping a user prepare text for a Text-to-Speech engine. Provide ONLY the requested Arabic text. Do not include markdown formatting, quotes, or conversational explanations." }] }
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                } catch (error) {
+                    if (attempt === retries - 1) {
+                        showToast('AI Service Error. Please try again later.', 'error');
+                        throw error;
+                    }
+                    await new Promise(res => setTimeout(res, delays[attempt]));
+                }
+            }
+        }
+
+        // --- AI Tool Event Listeners ---
+        const aiTranslateBtn = document.getElementById('ai-translate');
+        const aiTashkeelBtn = document.getElementById('ai-tashkeel');
+        const aiContinueBtn = document.getElementById('ai-continue');
+
+        async function handleAIAction(button, promptPrefix, actionName) {
+            const text = arabicInput.value.trim();
+            if (!text) {
+                showToast("Please enter some text first.", "error");
+                return;
+            }
+
+            // UI Loading State
+            const originalContent = button.innerHTML;
+            button.innerHTML = `<div class="loader" style="width: 14px; height: 14px; border-width: 2px;"></div> ${actionName}...`;
+            button.disabled = true;
+            button.classList.add('opacity-70', 'cursor-not-allowed');
+
+            try {
+                const prompt = `${promptPrefix}\n\nText: ${text}`;
+                const result = await callGeminiAPI(prompt);
+                
+                if (result) {
+                    arabicInput.value = result.trim();
+                    // Trigger input event to update character count and styling
+                    arabicInput.dispatchEvent(new Event('input'));
+                    showToast(`${actionName} complete!`);
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                // Restore UI
+                button.innerHTML = originalContent;
+                button.disabled = false;
+                button.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        }
+
+        aiTranslateBtn.addEventListener('click', () => {
+            handleAIAction(
+                aiTranslateBtn, 
+                "Translate the following text into highly natural, modern Arabic suitable for a voiceover. Provide ONLY the Arabic text.", 
+                "Translating"
+            );
+        });
+
+        aiTashkeelBtn.addEventListener('click', () => {
+            handleAIAction(
+                aiTashkeelBtn, 
+                "Add complete and highly accurate Arabic diacritics (Tashkeel/Harakat) to the following Arabic text to ensure perfect pronunciation by a Text-to-Speech engine. Return ONLY the diacritized Arabic text.", 
+                "Adding Diacritics"
+            );
+        });
+
+        aiContinueBtn.addEventListener('click', () => {
+            handleAIAction(
+                aiContinueBtn, 
+                "Continue the following Arabic script naturally for about 2-3 more sentences. Ensure the tone matches the provided text. Return the original text combined with your continuation. Provide ONLY the Arabic text.", 
+                "Continuing"
+            );
+        });
+
+
         // --- Toast Notification System (Replacing Alert) ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
@@ -462,7 +609,7 @@
             const colors = type === 'error' ? 'bg-red-500/10 border-red-500/50 text-red-200' : 'bg-studio-800 border-studio-700 text-white';
             const icon = type === 'error' ? '<i class="ph ph-warning-circle text-red-400"></i>' : '<i class="ph ph-check-circle text-green-400"></i>';
 
-            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl transform translate-x-full transition-all duration-300 ease-out ${colors}`;
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl transform translate-x-full transition-all duration-300 ease-out pointer-events-auto ${colors}`;
             toast.innerHTML = `${icon} <span class="text-sm font-medium">${message}</span>`;
             
             container.appendChild(toast);
@@ -561,16 +708,27 @@
         
         arabicInput.addEventListener('input', () => {
             const length = arabicInput.value.length;
-            charCount.textContent = `${length} / 3000`;
-            if (length > 3000) charCount.classList.add('text-red-400');
-            else charCount.classList.remove('text-red-400');
+            const text = `${length} / 3000`;
+            if(charCountDesktop) charCountDesktop.textContent = text;
+            if(charCountMobile) charCountMobile.textContent = text;
+            
+            if (length > 3000) {
+                if(charCountDesktop) charCountDesktop.classList.add('text-red-400');
+                if(charCountMobile) charCountMobile.classList.add('text-red-400');
+            } else {
+                if(charCountDesktop) charCountDesktop.classList.remove('text-red-400');
+                if(charCountMobile) charCountMobile.classList.remove('text-red-400');
+            }
         });
 
-        clearTextBtn.addEventListener('click', () => {
-            arabicInput.value = '';
-            charCount.textContent = '0 / 3000';
-            focusHalo.classList.remove('active');
-            arabicInput.focus();
+        clearTextBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                arabicInput.value = '';
+                if(charCountDesktop) charCountDesktop.textContent = '0 / 3000';
+                if(charCountMobile) charCountMobile.textContent = '0 / 3000';
+                focusHalo.classList.remove('active');
+                arabicInput.focus();
+            });
         });
 
         // Keyboard Shortcut Ctrl+Enter

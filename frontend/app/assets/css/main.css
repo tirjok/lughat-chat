@@ -1,4 +1,9 @@
 /* ===================================
+   Global CSS Reset (Tailwind-style preflight)
+   =================================== */
+@import '@unocss/reset/tailwind-compat.css';
+
+/* ===================================
    Global Styles (fixed dark theme — "Sunrise Surge")
    =================================== */
 
@@ -18,6 +23,16 @@ body {
   padding-right: env(safe-area-inset-right);
   /* On desktop, no overflow; on mobile, allow scrolling via parent containers */
   overflow: visible;
+}
+
+/* Textarea caret color (orange, matches prototype) */
+textarea {
+  caret-color: #FF512F;
+}
+
+/* Placeholder color (gray-700) */
+::placeholder {
+  color: #404040;
 }
 
 /* Custom scrollbar for dark UI */

@@ -10,17 +10,20 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "clean": "find . \\( -name 'node_modules' -o -name '.data' -o -name '.nuxt' -o -name '.pnpm-store' -o -name '.dist' -o -name '.output' \\) -type d -prune -exec rm -rf '{}' +"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.106",
     "@iconify-json/simple-icons": "^1.2.81",
     "@nuxt/image": "2.0.0",
     "@unocss/nuxt": "66.6.8",
+    "@vueuse/core": "^14.3.0",
     "nuxt": "^4.4.5"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
+    "@unocss/reset": "^66.7.2",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/test-utils": "^2.4.10",
     "eslint": "^10.3.0",

@@ -1,7 +1,6 @@
 import {
   defineConfig,
   presetWind3,
-  presetIcons,
   presetTypography,
   presetWebFonts,
   transformerDirectives
@@ -20,7 +19,7 @@ export default defineConfig({
       studio: {
         900: '#121212',
         800: '#1A1A1A',
-        700: '#525252'
+        700: '#333333'
       },
       sunrise: {
         orange: '#FF512F',
@@ -44,16 +43,6 @@ export default defineConfig({
   },
   presets: [
     presetWind3(),
-    presetIcons({
-      extraProperties: {
-        display: 'inline-block',
-        verticalAlign: 'middle'
-      },
-      collections: {
-        'lucide': () => import('@iconify-json/lucide/icons.json').then(i => i.default as object),
-        'simple-icons': () => import('@iconify-json/simple-icons/icons.json').then(i => i.default as object)
-      }
-    }),
     presetTypography({
       extend: {
         h1: {
@@ -65,7 +54,7 @@ export default defineConfig({
     presetWebFonts({
       provider: 'google',
       fonts: {
-        sans: 'Cairo'
+        arabic: 'Cairo'
       }
     })
   ],

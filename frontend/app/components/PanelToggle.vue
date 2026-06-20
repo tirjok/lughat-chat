@@ -21,13 +21,13 @@ defineProps<Props>()
     <span
       v-if="activePanel === 'canvas'"
       aria-hidden="true"
-      class="i-lucide-sliders-horizontal text-xl"
+      class="ph ph-sliders-horizontal text-xl"
     />
     <!-- Icon: terminal (from control deck → canvas) -->
     <span
       v-else
       aria-hidden="true"
-      class="i-lucide-terminal text-xl"
+      class="ph ph-terminal text-xl"
     />
     <!-- Label (visible on hover/tap for accessibility) -->
     <span class="text-xs font-medium pr-1">
