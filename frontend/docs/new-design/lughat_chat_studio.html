@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lughat Chat | Premium Studio</title>
+    
+    <!-- Load Google Fonts: Inter for UI, Cairo for Arabic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons for sleek, modern icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configure Tailwind theme colors to match the "Sunrise Surge" palette -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arabic: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        studio: {
+                            900: '#121212', // Deep charcoal background
+                            800: '#1A1A1A', // Slightly lighter for panels
+                            700: '#2A2A2A', // Borders and inactive elements
+                            text: '#E0E0E0',
+                        },
+                        sunrise: {
+                            orange: '#FF512F',
+                            magenta: '#DD2476',
+                        }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 4s linear infinite',
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: 1, filter: 'brightness(1)' },
+                            '50%': { opacity: .8, filter: 'brightness(1.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base configuration and custom scrollbar for dark UI */
+        body {
+            background-color: #121212;
+            color: #E0E0E0;
+            overflow: hidden; /* Prevent body scroll, handle internally */
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121212; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2A2A2A; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3A3A3A; 
+        }
+
+        /* Custom styling for the speed slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #FF512F;
+            cursor: pointer;
+            margin-top: -6px; /* Centers the thumb on the track */
+            box-shadow: 0 0 10px rgba(255, 81, 47, 0.8);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #2A2A2A;
+            border-radius: 2px;
+        }
+        /* Dynamic track fill will be handled via JS setting a CSS variable */
+        .slider-track {
+            background: linear-gradient(to right, #DD2476, #FF512F 0%, #2A2A2A 0%, #2A2A2A 100%);
+        }
+
+        /* Focus Halo for the Canvas */
+        .canvas-halo {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 100px;
+            background: radial-gradient(ellipse at center, rgba(255, 81, 47, 0.15) 0%, rgba(221, 36, 118, 0.05) 50%, transparent 70%);
+            filter: blur(20px);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
+        }
+        .canvas-halo.active {
+            opacity: 1;
+        }
+
+        /* Animated Glowing Border Button */
+        .btn-glow-border {
+            position: relative;
+            background: #1A1A1A;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        .btn-glow-border::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent 0%, transparent 70%, #DD2476 85%, #FF512F 100%);
+            animation: spin 4s linear infinite;
+            z-index: -2;
+        }
+        .btn-glow-border::after {
+            content: '';
+            position: absolute;
+            inset: 2px; /* Border thickness */
+            background: #1A1A1A;
+            border-radius: 0.7rem;
+            z-index: -1;
+            transition: background 0.3s ease;
+        }
+        .btn-glow-border:hover::after {
+            background: #1f1f1f;
+        }
+        .btn-glow-border:active {
+            transform: scale(0.98);
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid rgba(255, 81, 47, 0.3);
+            border-top: 3px solid #FF512F;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Hide elements cleanly */
+        .hidden-slide {
+            transform: translateY(150%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .visible-slide {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Textarea active trail simulation */
+        textarea {
+            caret-color: #FF512F;
+        }
+
+        /* Hide scrollbar for horizontal toolbars but keep functionality */
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row h-[100dvh] w-full text-studio-text antialiased bg-studio-900 overflow-hidden relative">
+
+    <!-- Toast Notification Container (Updated for Mobile Positioning) -->
+    <div id="toast-container" class="fixed top-20 md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- MOBILE HEADER (Visible only on sm screens) -->
+    <header class="md:hidden flex justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700 shrink-0 z-30 shadow-md">
+        <div class="flex items-center gap-2">
+            <i class="ph-fill ph-waves text-sunrise-orange text-xl"></i>
+            <h1 class="text-lg font-bold text-white tracking-tight">Lughat<span class="text-sunrise-magenta">Chat</span></h1>
+        </div>
+        <div class="flex items-center gap-1.5 bg-studio-900 px-2.5 py-1 rounded-full border border-studio-700">
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></div>
+            <span class="text-[10px] font-medium text-gray-300">Ready</span>
+        </div>
+    </header>
+
+    <!-- LEFT PANEL: The Control Deck (Transforms to Bottom Sheet on Mobile) -->
+    <aside class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 order-2 md:order-1 transition-all duration-300">
+        
+        <!-- Desktop Header (Hidden on Mobile) -->
+        <div class="hidden md:flex p-6 border-b border-studio-700 justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent shrink-0">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <i class="ph-fill ph-waves text-sunrise-orange"></i>
+                    Lughat<span class="text-sunrise-magenta">Chat</span>
+                </h1>
+                <p class="text-xs text-gray-400 mt-1 uppercase tracking-wider">Premium Audio Studio</p>
+            </div>
+            
+            <!-- Status Indicator -->
+            <div class="flex items-center gap-2 bg-studio-900 px-3 py-1.5 rounded-full border border-studio-700" title="Model XTTS-v2 Ready">
+                <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></div>
+                <span class="text-xs font-medium text-gray-300">Ready</span>
+            </div>
+        </div>
+
+        <!-- Controls Container -->
+        <div class="flex-1 p-4 md:p-6 overflow-y-auto flex flex-col gap-6 md:gap-8">
+            
+            <!-- Voice Selection -->
+            <div class="flex flex-col gap-3 relative" id="voice-dropdown-container">
+                <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+                    <i class="ph ph-user-sound text-lg"></i> Voice Model
+                </label>
+                
+                <!-- Dropdown Trigger Button -->
+                <button id="voice-dropdown-trigger" class="w-full bg-studio-900 border border-studio-700 hover:border-sunrise-orange/50 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none focus:border-sunrise-orange relative overflow-hidden group shadow-inner">
+                    <div class="absolute inset-0 bg-gradient-to-r from-sunrise-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="flex items-center gap-3 relative z-10">
+                        <i class="ph-fill ph-waveform text-sunrise-orange text-2xl drop-shadow-[0_0_8px_rgba(255,81,47,0.5)]" id="selected-voice-icon"></i>
+                        <div class="flex flex-col items-start">
+                            <span class="text-sm font-bold text-white tracking-wide" id="selected-voice-name">Aisha - Conversational</span>
+                            <span class="text-xs text-gray-400 font-medium" id="selected-voice-tag">Egyptian Arabic [AR-EG]</span>
+                        </div>
+                    </div>
+                    <i class="ph ph-caret-down text-gray-400 transition-transform duration-300" id="dropdown-chevron"></i>
+                </button>
+
+                <!-- Dropdown Menu (Hidden by default) -->
+                <div id="voice-dropdown-menu" class="absolute top-[100%] left-0 w-full mt-2 bg-studio-800 border border-studio-700 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] z-50 overflow-hidden transform opacity-0 scale-95 pointer-events-none transition-all duration-200 origin-top">
+                    <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
+                        
+                        <!-- Voice Option 1 -->
+                        <button class="voice-option w-full text-left p-3 rounded-lg flex items-center justify-between hover:bg-studio-700/70 transition-colors group" data-voice="aisha" data-name="Aisha - Conversational" data-tag="Egyptian Arabic [AR-EG]" data-color="text-sunrise-orange">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center group-hover:border-sunrise-orange transition-colors">
+                                    <i class="ph ph-waveform text-gray-400 group-hover:text-sunrise-orange transition-colors text-lg"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-white">Aisha - Conversational</span>
+                                    <span class="text-xs text-gray-500 font-medium">Egyptian Arabic [AR-EG]</span>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:text-sunrise-orange hover:border-sunrise-orange text-gray-400" title="Preview Voice">
+                                <i class="ph-fill ph-play text-sm"></i>
+                            </div>
+                        </button>
+
+                        <!-- Voice Option 2 -->
+                        <button class="voice-option w-full text-left p-3 rounded-lg flex items-center justify-between hover:bg-studio-700/70 transition-colors group" data-voice="tariq" data-name="Tariq - News Anchor" data-tag="Modern Standard Arabic [MSA]" data-color="text-sunrise-magenta">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center group-hover:border-sunrise-magenta transition-colors">
+                                    <i class="ph ph-waveform text-gray-400 group-hover:text-sunrise-magenta transition-colors text-lg"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-white">Tariq - News Anchor</span>
+                                    <span class="text-xs text-gray-500 font-medium">Modern Standard Arabic [MSA]</span>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:text-sunrise-magenta hover:border-sunrise-magenta text-gray-400" title="Preview Voice">
+                                <i class="ph-fill ph-play text-sm"></i>
+                            </div>
+                        </button>
+
+                        <!-- Voice Option 3 -->
+                        <button class="voice-option w-full text-left p-3 rounded-lg flex items-center justify-between hover:bg-studio-700/70 transition-colors group" data-voice="laila" data-name="Laila - Storyteller" data-tag="Levantine Arabic [AR-LB]" data-color="text-sunrise-orange">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center group-hover:border-sunrise-orange transition-colors">
+                                    <i class="ph ph-waveform text-gray-400 group-hover:text-sunrise-orange transition-colors text-lg"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-white">Laila - Storyteller</span>
+                                    <span class="text-xs text-gray-500 font-medium">Levantine Arabic [AR-LB]</span>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:text-sunrise-orange hover:border-sunrise-orange text-gray-400" title="Preview Voice">
+                                <i class="ph-fill ph-play text-sm"></i>
+                            </div>
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Speed Control -->
+            <div class="flex flex-col gap-4">
+                <div class="flex justify-between items-end">
+                    <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+                        <i class="ph ph-gauge text-lg"></i> Speech Speed
+                    </label>
+                    <span id="speed-value" class="text-xs font-mono text-sunrise-orange bg-studio-900 px-2 py-1 rounded border border-studio-700">1.0x</span>
+                </div>
+                <div class="relative w-full pt-2 pb-4">
+                    <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full slider-track">
+                    <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-2 absolute w-full">
+                        <span>0.5x</span>
+                        <span>1.0x</span>
+                        <span>2.0x</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Settings (Placeholders for realism) -->
+            <div class="flex flex-col gap-3">
+                <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+                    <i class="ph ph-sliders-horizontal text-lg"></i> Output Settings
+                </label>
+                <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700">
+                    <span class="text-sm text-gray-400">High Quality Audio</span>
+                    <button class="w-8 h-4 bg-sunrise-orange rounded-full relative transition-colors duration-300 ease-in-out">
+                        <div class="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Area -->
+        <div class="p-4 md:p-6 border-t border-studio-700 bg-studio-800 shrink-0">
+            <button id="generate-btn" class="btn-glow-border w-full py-3.5 md:py-4 flex items-center justify-center gap-2 group">
+                <!-- Inner content wrapper to sit above the pseudo-element background -->
+                <div class="relative z-10 flex items-center justify-center gap-2 w-full" id="btn-content">
+                    <i class="ph-fill ph-play-circle text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-colors"></i>
+                    <span class="font-bold text-white tracking-wide text-sm md:text-base">Generate Speech</span>
+                </div>
+                <!-- Loading State (Hidden by default) -->
+                <div class="relative z-10 hidden flex items-center justify-center gap-3 w-full" id="btn-loading">
+                    <div class="loader"></div>
+                    <span class="font-medium text-sunrise-orange animate-pulse text-sm md:text-base">Processing Model...</span>
+                </div>
+            </button>
+        </div>
+    </aside>
+
+    <!-- RIGHT PANEL: The Canvas (Transforms to Top Panel on Mobile) -->
+    <main class="flex-1 w-full bg-studio-900 relative flex flex-col overflow-hidden order-1 md:order-2">
+        
+        <!-- The Sunrise Halo Effect -->
+        <div id="focus-halo" class="canvas-halo"></div>
+
+        <!-- Header / Context -->
+        <div class="w-full p-4 md:p-6 lg:p-8 pb-2 md:pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shrink-0">
+            
+            <!-- Title & Clear Container (Stacked on mobile, row on desktop) -->
+            <div class="flex justify-between items-center w-full md:w-auto md:hidden">
+                <h2 class="text-gray-400 font-medium text-sm flex items-center gap-2">
+                    <i class="ph ph-keyboard text-lg"></i> <span class="inline">Editor Canvas</span>
+                </h2>
+                <div class="flex items-center gap-3 text-sm text-gray-500">
+                    <span id="char-count-mobile" class="font-mono text-xs">0 / 3000</span>
+                    <button class="clear-text-btn hover:text-white transition-colors p-1" title="Clear Canvas"><i class="ph ph-trash text-lg"></i></button>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 w-full md:w-auto">
+                <h2 class="hidden md:flex text-gray-400 font-medium text-sm items-center gap-2">
+                    <i class="ph ph-keyboard text-lg"></i> <span>Editor Canvas</span>
+                </h2>
+                
+                <!-- AI Smart Tools Toolbar (Scrollable horizontally on mobile) -->
+                <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 md:border-l border-studio-700 shrink-0">
+                    <button id="ai-translate" class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-gray-500 group" title="Type in any language and translate to Arabic">
+                        <span class="group-hover:animate-pulse">✨</span> Translate
+                    </button>
+                    <button id="ai-tashkeel" class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-sunrise-orange group" title="Add Harakat (diacritics) for perfect TTS pronunciation">
+                        <span class="group-hover:animate-pulse">✨</span> Add Diacritics
+                    </button>
+                    <button id="ai-continue" class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-sunrise-magenta group" title="Let AI write the next few sentences">
+                        <span class="group-hover:animate-pulse">✨</span> Continue Script
+                    </button>
+                </div>
+            </div>
+
+            <!-- Desktop Char Count & Clear -->
+            <div class="hidden md:flex items-center gap-4 text-sm text-gray-500 shrink-0">
+                <span id="char-count" class="font-mono">0 / 3000</span>
+                <button class="clear-text-btn hover:text-white transition-colors p-1" title="Clear Canvas"><i class="ph ph-trash text-lg"></i></button>
+            </div>
+        </div>
+
+        <!-- Text Input Area -->
+        <div class="flex-1 relative w-full max-w-5xl mx-auto px-4 md:px-8 pb-4 md:pb-32 flex flex-col">
+            <textarea 
+                id="arabic-input" 
+                dir="rtl" 
+                class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-2xl md:text-4xl lg:text-5xl leading-relaxed md:leading-[1.6] text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+                placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
+            ></textarea>
+        </div>
+
+        <!-- Floating Shortcut Hint (Hidden on Mobile) -->
+        <div class="hidden md:flex absolute bottom-6 right-8 text-gray-600 text-sm font-medium items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50">
+            Press <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Ctrl</kbd> + <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700 font-mono text-gray-400 shadow-sm">Enter</kbd> to generate
+        </div>
+
+    </main>
+
+    <!-- THE PLAYER (Fixed to bottom, responsive width) -->
+    <div id="audio-player-panel" class="fixed bottom-0 right-0 w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-800 border-t md:border-l border-studio-700 p-4 md:p-6 flex flex-col gap-3 md:gap-4 hidden-slide transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
+        
+        <div class="flex justify-between items-center mb-1 md:mb-2 gap-2">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg shrink-0">
+                    <i class="ph-fill ph-music-notes text-white text-sm md:text-base"></i>
+                </div>
+                <div class="overflow-hidden min-w-0">
+                    <h3 class="text-white font-semibold text-xs md:text-sm truncate">Generated Audio</h3>
+                    <p id="player-voice-label" class="text-[10px] md:text-xs text-gray-400 truncate">Female Voice • 1.0x Speed</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1 md:gap-2 shrink-0">
+                <button class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-white text-gray-400 transition-colors" title="Download MP3">
+                    <i class="ph ph-download-simple"></i>
+                </button>
+                <button id="close-player" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-studio-900 border border-studio-700 flex items-center justify-center hover:text-red-400 text-gray-400 transition-colors" title="Close Player">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Heatmap Waveform Container -->
+        <div class="w-full bg-studio-900 rounded-lg border border-studio-700 p-2 md:p-4 flex items-center gap-2 md:gap-4">
+            <button id="play-pause-btn" class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0">
+                <i class="ph-fill ph-play text-lg md:text-xl ml-1" id="play-icon"></i>
+            </button>
+            
+            <!-- Canvas for dynamic waveform -->
+            <div class="flex-1 h-8 md:h-12 relative w-full overflow-hidden min-w-[100px]">
+                <canvas id="waveform-canvas" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+            
+            <span class="text-[10px] md:text-xs font-mono text-gray-400 flex-shrink-0 w-8 md:w-10 text-right">0:04</span>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const speedSlider = document.getElementById('speed-slider');
+        const speedValue = document.getElementById('speed-value');
+        
+        const dropdownContainer = document.getElementById('voice-dropdown-container');
+        const dropdownTrigger = document.getElementById('voice-dropdown-trigger');
+        const dropdownMenu = document.getElementById('voice-dropdown-menu');
+        const dropdownChevron = document.getElementById('dropdown-chevron');
+        const voiceOptions = document.querySelectorAll('.voice-option');
+        const selectedVoiceName = document.getElementById('selected-voice-name');
+        const selectedVoiceTag = document.getElementById('selected-voice-tag');
+        const selectedVoiceIcon = document.getElementById('selected-voice-icon');
+
+        const generateBtn = document.getElementById('generate-btn');
+        const btnContent = document.getElementById('btn-content');
+        const btnLoading = document.getElementById('btn-loading');
+        const arabicInput = document.getElementById('arabic-input');
+        const focusHalo = document.getElementById('focus-halo');
+        const charCountDesktop = document.getElementById('char-count');
+        const charCountMobile = document.getElementById('char-count-mobile');
+        const clearTextBtns = document.querySelectorAll('.clear-text-btn');
+        
+        const audioPlayerPanel = document.getElementById('audio-player-panel');
+        const closePlayerBtn = document.getElementById('close-player');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const playerVoiceLabel = document.getElementById('player-voice-label');
+        
+        // --- State ---
+        let currentVoice = 'aisha';
+        let currentVoiceName = 'Aisha - Conversational';
+        let currentSpeed = 1.0;
+        let isPlaying = false;
+        let isGenerating = false;
+        let animationFrameId = null;
+
+        // --- Gemini API Setup ---
+        const apiKey = ""; // API key is injected by the environment at runtime
+
+        async function callGeminiAPI(prompt, retries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            for (let attempt = 0; attempt < retries; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: "You are an expert Arabic linguist and scriptwriter helping a user prepare text for a Text-to-Speech engine. Provide ONLY the requested Arabic text. Do not include markdown formatting, quotes, or conversational explanations." }] }
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                } catch (error) {
+                    if (attempt === retries - 1) {
+                        showToast('AI Service Error. Please try again later.', 'error');
+                        throw error;
+                    }
+                    await new Promise(res => setTimeout(res, delays[attempt]));
+                }
+            }
+        }
+
+        // --- AI Tool Event Listeners ---
+        const aiTranslateBtn = document.getElementById('ai-translate');
+        const aiTashkeelBtn = document.getElementById('ai-tashkeel');
+        const aiContinueBtn = document.getElementById('ai-continue');
+
+        async function handleAIAction(button, promptPrefix, actionName) {
+            const text = arabicInput.value.trim();
+            if (!text) {
+                showToast("Please enter some text first.", "error");
+                return;
+            }
+
+            // UI Loading State
+            const originalContent = button.innerHTML;
+            button.innerHTML = `<div class="loader" style="width: 14px; height: 14px; border-width: 2px;"></div> ${actionName}...`;
+            button.disabled = true;
+            button.classList.add('opacity-70', 'cursor-not-allowed');
+
+            try {
+                const prompt = `${promptPrefix}\n\nText: ${text}`;
+                const result = await callGeminiAPI(prompt);
+                
+                if (result) {
+                    arabicInput.value = result.trim();
+                    // Trigger input event to update character count and styling
+                    arabicInput.dispatchEvent(new Event('input'));
+                    showToast(`${actionName} complete!`);
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                // Restore UI
+                button.innerHTML = originalContent;
+                button.disabled = false;
+                button.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        }
+
+        aiTranslateBtn.addEventListener('click', () => {
+            handleAIAction(
+                aiTranslateBtn, 
+                "Translate the following text into highly natural, modern Arabic suitable for a voiceover. Provide ONLY the Arabic text.", 
+                "Translating"
+            );
+        });
+
+        aiTashkeelBtn.addEventListener('click', () => {
+            handleAIAction(
+                aiTashkeelBtn, 
+                "Add complete and highly accurate Arabic diacritics (Tashkeel/Harakat) to the following Arabic text to ensure perfect pronunciation by a Text-to-Speech engine. Return ONLY the diacritized Arabic text.", 
+                "Adding Diacritics"
+            );
+        });
+
+        aiContinueBtn.addEventListener('click', () => {
+            handleAIAction(
+                aiContinueBtn, 
+                "Continue the following Arabic script naturally for about 2-3 more sentences. Ensure the tone matches the provided text. Return the original text combined with your continuation. Provide ONLY the Arabic text.", 
+                "Continuing"
+            );
+        });
+
+
+        // --- Toast Notification System (Replacing Alert) ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = type === 'error' ? 'bg-red-500/10 border-red-500/50 text-red-200' : 'bg-studio-800 border-studio-700 text-white';
+            const icon = type === 'error' ? '<i class="ph ph-warning-circle text-red-400"></i>' : '<i class="ph ph-check-circle text-green-400"></i>';
+
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl transform translate-x-full transition-all duration-300 ease-out pointer-events-auto ${colors}`;
+            toast.innerHTML = `${icon} <span class="text-sm font-medium">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-full');
+            });
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Event Listeners ---
+        
+        // Speed Slider Logic & Gradient Track
+        function updateSliderFill() {
+            const min = speedSlider.min;
+            const max = speedSlider.max;
+            const val = speedSlider.value;
+            const percentage = ((val - min) / (max - min)) * 100;
+            // Update the CSS variable for the gradient fill
+            speedSlider.style.background = `linear-gradient(to right, #DD2476, #FF512F ${percentage}%, #2A2A2A ${percentage}%, #2A2A2A 100%)`;
+            speedValue.textContent = `${parseFloat(val).toFixed(1)}x`;
+            currentSpeed = val;
+        }
+        
+        speedSlider.addEventListener('input', updateSliderFill);
+        // Initialize slider fill
+        updateSliderFill();
+
+        // --- Custom Dropdown Logic ---
+        function toggleDropdown() {
+            const isOpen = !dropdownMenu.classList.contains('pointer-events-none');
+            if (isOpen) {
+                // Close
+                dropdownMenu.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                dropdownChevron.classList.remove('rotate-180');
+                dropdownTrigger.classList.remove('border-sunrise-orange');
+                dropdownTrigger.classList.add('border-studio-700');
+            } else {
+                // Open
+                dropdownMenu.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                dropdownChevron.classList.add('rotate-180');
+                dropdownTrigger.classList.remove('border-studio-700');
+                dropdownTrigger.classList.add('border-sunrise-orange');
+            }
+        }
+
+        dropdownTrigger.addEventListener('click', toggleDropdown);
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dropdownContainer.contains(e.target) && !dropdownMenu.classList.contains('pointer-events-none')) {
+                toggleDropdown();
+            }
+        });
+
+        // Handle voice selection
+        voiceOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                // Prevent trigger click if preview play button is clicked
+                if(e.target.closest('div[title="Preview Voice"]')) {
+                    showToast("Playing 1-second preview...", "success");
+                    return; 
+                }
+
+                const voiceId = option.dataset.voice;
+                const name = option.dataset.name;
+                const tag = option.dataset.tag;
+                const colorClass = option.dataset.color;
+
+                currentVoice = voiceId;
+                currentVoiceName = name;
+
+                // Update Trigger UI
+                selectedVoiceName.textContent = name;
+                selectedVoiceTag.textContent = tag;
+                
+                // Update Icon color and add glowing shadow based on color
+                let shadowColor = colorClass.includes('orange') ? 'rgba(255,81,47,0.5)' : 'rgba(221,36,118,0.5)';
+                selectedVoiceIcon.className = `ph-fill ph-waveform text-2xl ${colorClass} drop-shadow-[0_0_8px_${shadowColor}]`;
+                
+                toggleDropdown();
+            });
+        });
+
+        // Textarea Focus Halo Effect & Character Count
+        arabicInput.addEventListener('focus', () => focusHalo.classList.add('active'));
+        arabicInput.addEventListener('blur', () => {
+            if (arabicInput.value.trim() === '') focusHalo.classList.remove('active');
+        });
+        
+        arabicInput.addEventListener('input', () => {
+            const length = arabicInput.value.length;
+            const text = `${length} / 3000`;
+            if(charCountDesktop) charCountDesktop.textContent = text;
+            if(charCountMobile) charCountMobile.textContent = text;
+            
+            if (length > 3000) {
+                if(charCountDesktop) charCountDesktop.classList.add('text-red-400');
+                if(charCountMobile) charCountMobile.classList.add('text-red-400');
+            } else {
+                if(charCountDesktop) charCountDesktop.classList.remove('text-red-400');
+                if(charCountMobile) charCountMobile.classList.remove('text-red-400');
+            }
+        });
+
+        clearTextBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                arabicInput.value = '';
+                if(charCountDesktop) charCountDesktop.textContent = '0 / 3000';
+                if(charCountMobile) charCountMobile.textContent = '0 / 3000';
+                focusHalo.classList.remove('active');
+                arabicInput.focus();
+            });
+        });
+
+        // Keyboard Shortcut Ctrl+Enter
+        arabicInput.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                handleGenerate();
+            }
+        });
+
+        // Generate Button Click
+        generateBtn.addEventListener('click', handleGenerate);
+
+        // Player Controls
+        closePlayerBtn.addEventListener('click', () => {
+            audioPlayerPanel.classList.remove('visible-slide');
+            audioPlayerPanel.classList.add('hidden-slide');
+            stopPlayback();
+        });
+
+        playPauseBtn.addEventListener('click', togglePlayback);
+
+        // --- Heatmap Waveform Canvas Logic ---
+        const canvas = document.getElementById('waveform-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Mock data for waveform bars
+        const numBars = 60;
+        let bars = [];
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            initBars();
+            drawWaveform();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function initBars() {
+            bars = [];
+            for (let i = 0; i < numBars; i++) {
+                // Random target height between 10% and 90%
+                bars.push({
+                    targetHeight: Math.random() * 0.8 + 0.1,
+                    currentHeight: 0.1,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function drawWaveform(progress = 0) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const barWidth = (canvas.width / numBars) - 2;
+            const centerY = canvas.height / 2;
+
+            bars.forEach((bar, index) => {
+                const x = index * (barWidth + 2);
+                
+                // If playing, animate bars based on a sine wave + random noise to simulate audio
+                if (isPlaying) {
+                    // Update current height smoothly towards target, modulated by phase
+                    bar.phase += 0.1;
+                    const noise = Math.sin(bar.phase) * 0.3;
+                    bar.currentHeight = bar.targetHeight + noise;
+                    // Clamp
+                    bar.currentHeight = Math.max(0.1, Math.min(1.0, bar.currentHeight));
+                } else {
+                    // Settle down to static height
+                    bar.currentHeight += (bar.targetHeight - bar.currentHeight) * 0.1;
+                }
+
+                const height = bar.currentHeight * canvas.height * 0.8;
+                const y = centerY - (height / 2);
+
+                // Heatmap Color Logic: Taller bars are orange, shorter bars are magenta
+                const ratio = bar.currentHeight; // 0.1 to 1.0
+                
+                // Interpolate between Magenta (DD2476) and Orange (FF512F)
+                const r = Math.round(221 + (255 - 221) * ratio);
+                const g = Math.round(36 + (81 - 36) * ratio);
+                const b = Math.round(118 + (47 - 118) * ratio);
+                
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                
+                // Draw rounded rect
+                ctx.beginPath();
+                ctx.roundRect(x, y, barWidth, height, 4);
+                ctx.fill();
+            });
+
+            if (isPlaying) {
+                animationFrameId = requestAnimationFrame(() => drawWaveform(progress));
+            }
+        }
+
+        // --- Playback Logic ---
+        function togglePlayback() {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playIcon.classList.replace('ph-play', 'ph-pause');
+                drawWaveform(); // Start animation loop
+            } else {
+                playIcon.classList.replace('ph-pause', 'ph-play');
+                cancelAnimationFrame(animationFrameId);
+                drawWaveform(); // Draw static
+            }
+        }
+
+        function stopPlayback() {
+            isPlaying = false;
+            playIcon.classList.replace('ph-pause', 'ph-play');
+            cancelAnimationFrame(animationFrameId);
+        }
+
+        // --- Generation Logic ---
+        function handleGenerate() {
+            const text = arabicInput.value.trim();
+            
+            if (!text) {
+                showToast("Please enter some Arabic text to generate.", "error");
+                arabicInput.focus();
+                return;
+            }
+
+            if (isGenerating) return;
+
+            // Start Generation UI State
+            isGenerating = true;
+            btnContent.classList.add('hidden');
+            btnLoading.classList.remove('hidden');
+            generateBtn.classList.add('opacity-80', 'cursor-not-allowed');
+            generateBtn.style.transform = 'scale(0.98)';
+            
+            // Hide player if open
+            audioPlayerPanel.classList.remove('visible-slide');
+            audioPlayerPanel.classList.add('hidden-slide');
+            stopPlayback();
+
+            // Simulate API Call delay (2.5 seconds)
+            setTimeout(() => {
+                // Reset Button UI
+                isGenerating = false;
+                btnContent.classList.remove('hidden');
+                btnLoading.classList.add('hidden');
+                generateBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+                generateBtn.style.transform = 'scale(1)';
+                
+                showToast("Speech generated successfully!");
+                
+                // Update Player Meta
+                playerVoiceLabel.textContent = `${currentVoiceName} • ${parseFloat(currentSpeed).toFixed(1)}x Speed`;
+
+                // Show Player
+                audioPlayerPanel.classList.remove('hidden-slide');
+                audioPlayerPanel.classList.add('visible-slide');
+                
+                // Initialize canvas sizes and draw static waveform
+                setTimeout(() => {
+                    resizeCanvas();
+                }, 300); // wait for slide up transition
+                
+            }, 2500);
+        }
+
+        // Initialize canvas sizing on load
+        window.addEventListener('load', () => {
+            // Need a dummy size initially so it doesn't error before showing
+            canvas.width = 100; 
+            canvas.height = 48;
+            initBars();
+        });
+
+    </script>
+</body>
+</html>

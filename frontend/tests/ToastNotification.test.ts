@@ -1,38 +1,50 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import ToastNotification from '../app/components/ToastNotification.vue'
 import { useToast, showToast } from '../app/composables/useToast'
 
 describe('ToastNotification', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    const toast = useToast()
+    toast.value = []
+  })
+
   it('renders the error message when showToast is called', async () => {
-    // Call showToast before mounting so toast renders visible
     const toast = useToast()
     showToast('حدث خطأ في التوليد')
 
     const wrapper = mount(ToastNotification)
+    await nextTick()
 
-    // Toast should be visible with the message
-    expect(toast.value.visible).toBe(true)
-    const toastEl = wrapper.find('.tts-toast')
+    expect(toast.value.length).toBe(1)
+    const toastEl = wrapper.find('[class*="fixed"]')
     expect(toastEl.exists()).toBe(true)
     expect(toastEl.text()).toContain('حدث خطأ في التوليد')
   })
 
   it('can be dismissed by clicking the close button', async () => {
     const wrapper = mount(ToastNotification)
+    await nextTick()
 
-    // Trigger the toast
     const toast = useToast()
-    showToast('حدث خطأ في التوليد')
+    showToast('Test message')
+    await nextTick()
 
-    await wrapper.vm.$nextTick()
+    expect(toast.value.length).toBe(1)
 
     // Click the close button
-    const closeButton = wrapper.find('.tts-toast__close')
+    const closeButton = wrapper.find('button[aria-label="Close notification"]')
+    expect(closeButton.exists()).toBe(true)
     await closeButton.trigger('click')
+    await nextTick()
 
-    // Toast should be hidden again
-    expect(toast.value.visible).toBe(false)
+    expect(toast.value.length).toBe(0)
   })
 
   describe('Issue 23: aria-live on toast root', () => {
@@ -41,9 +53,11 @@ describe('ToastNotification', () => {
       showToast('Test message')
 
       const wrapper = mount(ToastNotification)
-      await wrapper.vm.$nextTick()
+      await nextTick()
 
-      expect(wrapper.find('.tts-toast').attributes('aria-live')).toBe('polite')
+      const rootEl = wrapper.find('[aria-live="polite"]')
+      expect(rootEl.exists()).toBe(true)
+      expect(rootEl.attributes('aria-live')).toBe('polite')
     })
   })
 
@@ -53,9 +67,11 @@ describe('ToastNotification', () => {
       showToast('Test message')
 
       const wrapper = mount(ToastNotification)
-      await wrapper.vm.$nextTick()
+      await nextTick()
 
-      expect(wrapper.find('.tts-toast__close').attributes('aria-label')).toBe('Close notification')
+      const btn = wrapper.find('button[aria-label="Close notification"]')
+      expect(btn.exists()).toBe(true)
+      expect(btn.attributes('aria-label')).toBe('Close notification')
     })
   })
 })

@@ -1,0 +1,19 @@
+repos:
+  # ── Python (backend) ────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.16
+    hooks:
+      - id: ruff
+        args: [--fix, --show-fixes]
+      - id: ruff-format
+
+  # ── Full check (lint + typecheck + tests) ───────────
+  - repo: local
+    hooks:
+      - id: full-check
+        name: full pre-commit check
+        entry: bash ./run-tests.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

@@ -4,18 +4,26 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# ── Backend tests (pytest) ─────────────────────────────
+# ── Backend tests (pytest inside Docker) ───────────────
 echo "▶ Running backend tests..."
-cd backend
-python -m pytest "$@"
-cd ..
+./scripts/run-backend-tests.sh "$@"
+
+# ── Frontend: lint ─────────────────────────────────────
+echo ""
+echo "▶ Running frontend lint..."
+cd frontend
+pnpm lint "$@"
+
+# ── Frontend: typecheck ────────────────────────────────
+echo ""
+echo "▶ Running frontend typecheck..."
+pnpm typecheck "$@"
 
 # ── Frontend tests (vitest via pnpm) ───────────────────
 echo ""
 echo "▶ Running frontend tests..."
-cd frontend
 pnpm test "$@"
 cd ..
 
 echo ""
-echo "✓ All tests passed!"
+echo "✓ All checks passed!"

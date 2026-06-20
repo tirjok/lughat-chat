@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -15,6 +15,7 @@ from typing import Optional
 # Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
 # This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
 import os as _os
+
 _torchcodec_env = "0"
 for _env_key in ["TORCHAUDIO_USE_TORCHCODEC", "TORCHCODEC_ENABLED"]:
     _os.environ.setdefault(_env_key, _torchcodec_env)
@@ -47,9 +48,11 @@ def _validate_speaker_wav(wav_path: str) -> None:
             detail=f"Failed to validate speaker WAV file '{wav_path}': {e}",
         )
 
+
 # Compatibility shim: isin_mps_friendly was removed in newer transformers
 # Lazy import so tests can run without torch installed.
 _torch_loaded = False
+
 
 def _ensure_torch():
     """Ensure torch is imported and patched. Called lazily on first use."""
@@ -58,13 +61,17 @@ def _ensure_torch():
         return
     import torch
     import transformers.pytorch_utils as _pytorch_utils
-    if not hasattr(_pytorch_utils, 'isin_mps_friendly'):
+
+    if not hasattr(_pytorch_utils, "isin_mps_friendly"):
+
         def _isin_mps_friendly(elements, test_elements, **kwargs):
             return torch.isin(elements, test_elements)
+
         _pytorch_utils.isin_mps_friendly = _isin_mps_friendly
 
     # Patch torch.ops.load_library to suppress missing NVIDIA library errors
     global _original_load_library
+
     def _patched_load_library(path):
         try:
             return _original_load_library(path)
@@ -77,10 +84,12 @@ def _ensure_torch():
             raise
 
     import torch.ops  # noqa: F401
-    if hasattr(torch.ops, 'load_library'):
+
+    if hasattr(torch.ops, "load_library"):
         _original_load_library = torch.ops.load_library
         torch.ops.load_library = _patched_load_library
     _torch_loaded = True
+
 
 # Ensure torch is loaded and patched (lazy import for test compatibility)
 # Silently skip if torch isn't installed (e.g., in CI test environments).
@@ -96,9 +105,11 @@ except ImportError:
     TTS = None  # type: ignore[misc, assignment]
 
 # Configuration
-AUDIO_DIR = os.path.join(os.path.dirname(__file__), "downloads")
+AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
 MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
-SPEAKER_WAV_DIR = os.path.join(os.path.dirname(__file__), "speaker_wavs")
+SPEAKER_WAV_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "speaker_wavs"
+)
 
 
 def discover_voices(directory: str) -> list[dict]:
@@ -115,6 +126,7 @@ def discover_voices(directory: str) -> list[dict]:
             name = filename[:-4]  # strip .wav extension
             voices.append({"id": name, "name": name})
     return voices
+
 
 # Create directories if writable (skip on read-only filesystems like Docker host mounts)
 for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
@@ -143,7 +155,9 @@ async def lifespan(app: FastAPI):
                 print("TTS model already loaded — skipping")
                 return
             if TTS is None:
-                print("TTS library not available (torch not installed) — skipping model load")
+                print(
+                    "TTS library not available (torch not installed) — skipping model load"
+                )
                 model_load_status = "error"
                 tts_model = None
                 return
@@ -169,7 +183,7 @@ app = FastAPI(
     title="Lughat Chat TTS API",
     description="Text-to-Speech API with XTTS-v2 (Arabic & English)",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware - allow frontend container to call API
@@ -194,11 +208,15 @@ app.mount("/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker
 class SynthesisRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=3000)
     language: str = Field(default="ar", pattern="^(ar|en)$")
-    voice: Optional[str] = Field(default=None)  # any string accepted; validated at runtime via file existence
-    speaker: Optional[str] = None  # Alias for voice (accepts "default", "female", "male")
+    voice: Optional[str] = Field(
+        default=None
+    )  # any string accepted; validated at runtime via file existence
+    speaker: Optional[str] = Field(
+        default=None  # Alias for voice (any string accepted)
+    )
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
     pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
-    seed: Optional[int] = Field(default=None, ge=0)  # Deterministic seed (optional, defaults to fixed per voice)
+    seed: Optional[int] = Field(default=None, ge=0)  # Deterministic seed (optional)
 
 
 class SynthesisResponse(BaseModel):
@@ -212,25 +230,18 @@ class HealthResponse(BaseModel):
     model_loaded: bool
 
 
-# Voice presets
-VOICES = [
-    {"id": "female", "name": "Female Voice", "language": "multilingual"},
-    {"id": "male", "name": "Male Voice", "language": "multilingual"},
-]
-
-
 @app.get("/health", response_model=HealthResponse)
 async def health():
     """Health check endpoint - returns model load status."""
     return {
         "status": model_load_status,
-        "model_loaded": tts_model is not None and model_load_status == "ready"
+        "model_loaded": tts_model is not None and model_load_status == "ready",
     }
 
 
 @app.get("/api/voices")
 async def list_voices():
-    """List available voices discovered from speaker_wavs directory."""
+    """List available voices discovered from speaker_wavs/ directory."""
     return discover_voices(SPEAKER_WAV_DIR)
 
 
@@ -245,10 +256,8 @@ async def generate_speech(request: SynthesisRequest):
         timestamp = uuid.uuid4().hex[:8]
         lang_code = request.language
 
-        # Resolve voice: accept both "voice" and "speaker" fields, map "default" to "female"
+        # Resolve voice: accept both "voice" and "speaker" fields; default to "female"
         voice = request.speaker if request.speaker else (request.voice or "female")
-        if voice == "default":
-            voice = "female"
 
         filename = f"{lang_code}_{voice}_{timestamp}.mp3"
         wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
@@ -257,28 +266,28 @@ async def generate_speech(request: SynthesisRequest):
         # Generate WAV first (XTTS native format)
         print(f"Generating speech: {request.text[:50]}...")
 
-        # Dynamic resolution: speaker_wavs/{voice}.wav
+        # Use the voice ID directly as the WAV filename
         speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
 
         if not os.path.exists(speaker_wav):
             raise HTTPException(
                 status_code=500,
-                detail=f"Speaker WAV file not found for voice '{voice}'. Please add {speaker_wav}"
+                detail=f"Speaker WAV file not found for voice '{voice}' (expected at '{speaker_wav}'). Add it to speaker_wavs/.",
             )
 
         # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
         _validate_speaker_wav(speaker_wav)
 
         # Generate audio with speaker reference for voice cloning
-        # Use deterministic seed per voice preset for consistent voice output
-        voice_seeds = {"female": 42, "male": 123}
-        seed = request.seed if request.seed is not None else voice_seeds.get(voice, 42)
+        # Use deterministic seed if provided
+        seed = request.seed if request.seed is not None else 42
 
         # Set PyTorch random seed for deterministic XTTS generation.
         # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
         # seeding must be done at the PyTorch level before inference.
         try:
             import torch
+
             torch.manual_seed(seed)
         except ImportError:
             pass  # torch not available (e.g. in tests) — skip seeding
@@ -298,14 +307,18 @@ async def generate_speech(request: SynthesisRequest):
         try:
             subprocess.run(
                 [
-                    "ffmpeg", "-y",
-                    "-i", wav_path,
-                    "-filter:a", f"atempo={request.speed}",
-                    "-b:a", "192k",
-                    mp3_path
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    wav_path,
+                    "-filter:a",
+                    f"atempo={request.speed}",
+                    "-b:a",
+                    "192k",
+                    mp3_path,
                 ],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
         except subprocess.CalledProcessError as e:
             print(f"FFmpeg error: {e.stderr}")
@@ -313,11 +326,7 @@ async def generate_speech(request: SynthesisRequest):
             shutil.copy2(wav_path, mp3_path)
 
         # Return MP3 file as binary response
-        return FileResponse(
-            path=mp3_path,
-            media_type="audio/mpeg",
-            filename=filename
-        )
+        return FileResponse(path=mp3_path, media_type="audio/mpeg", filename=filename)
 
     except HTTPException:
         raise
@@ -332,24 +341,26 @@ async def get_history():
     try:
         items = []
         for filename in sorted(os.listdir(AUDIO_DIR), reverse=True):
-            if filename.endswith(('.mp3', '.wav')):
+            if filename.endswith((".mp3", ".wav")):
                 filepath = os.path.join(AUDIO_DIR, filename)
                 stat = os.stat(filepath)
 
                 # Parse metadata from filename if possible
-                parts = filename.split('_')
+                parts = filename.split("_")
                 language = parts[0] if len(parts) > 0 else "unknown"
                 voice = parts[1] if len(parts) > 1 else "default"
 
-                items.append({
-                    "filename": filename,
-                    "text": "",  # We don't store the original text in this simple version
-                    "language": language,
-                    "voice": voice,
-                    "speed": 1.0,
-                    "pitch": 0.0,
-                    "created_at": str(int(stat.st_mtime))
-                })
+                items.append(
+                    {
+                        "filename": filename,
+                        "text": "",  # We don't store the original text in this simple version
+                        "language": language,
+                        "voice": voice,
+                        "speed": 1.0,
+                        "pitch": 0.0,
+                        "created_at": str(int(stat.st_mtime)),
+                    }
+                )
 
         return items
 

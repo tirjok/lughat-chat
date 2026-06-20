@@ -11,7 +11,6 @@ Usage:
 import os
 import sys
 import wave
-import struct
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -76,12 +75,12 @@ def fallback_generate_silence():
             os.remove(output_path)
 
         print(f"Creating silent fallback: {voice_name}.wav")
-        with wave.open(output_path, 'w') as wav_file:
+        with wave.open(output_path, "w") as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(2)
             wav_file.setframerate(22050)  # XTTS default sample rate
             # Write 3 seconds of silence (enough for voice cloning)
-            samples = b'\x00\x00' * 22050 * 3
+            samples = b"\x00\x00" * 22050 * 3
             wav_file.writeframes(samples)
 
     print("Fallback silent WAV files created.")

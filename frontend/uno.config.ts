@@ -1,7 +1,6 @@
 import {
   defineConfig,
-  presetUno,
-  presetIcons,
+  presetWind3,
   presetTypography,
   presetWebFonts,
   transformerDirectives
@@ -11,14 +10,39 @@ export default defineConfig({
   transformers: [
     transformerDirectives()
   ],
-  presets: [
-    presetUno(),
-    presetIcons({
-      extraProperties: {
-        display: 'inline-block',
-        verticalAlign: 'middle'
+  theme: {
+    fontFamily: {
+      sans: ['Inter', 'sans-serif'],
+      arabic: ['Cairo', 'sans-serif']
+    },
+    colors: {
+      studio: {
+        900: '#121212',
+        800: '#1A1A1A',
+        700: '#333333'
+      },
+      sunrise: {
+        orange: '#FF512F',
+        magenta: '#DD2476'
       }
-    }),
+    },
+    // Match Tailwind CSS v3 (sample design) shadow values exactly
+    // UnoCSS presetWind3 uses slightly different values for shadow-2xl
+    boxShadow: {
+      '2xl': '0 35px 60px -15px rgba(0, 0, 0, 0.3)'
+    },
+    // Phone-specific breakpoints for responsive design
+    breakpoints: {
+      'xs': '375px',
+      'sm': '414px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px'
+    }
+  },
+  presets: [
+    presetWind3(),
     presetTypography({
       extend: {
         h1: {
@@ -30,7 +54,7 @@ export default defineConfig({
     presetWebFonts({
       provider: 'google',
       fonts: {
-        sans: 'Cairo'
+        arabic: 'Cairo'
       }
     })
   ],
