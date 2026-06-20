@@ -9,7 +9,7 @@ A **text-to-speech (TTS) web application** for Arabic speech synthesis, powered 
 - **Download MP3** — save generated audio files locally
 - **Keyboard shortcut** — press `Ctrl+Enter` to generate without clicking
 - **Dark mode** — full dark theme support with automatic toggle
-- **RTL text input** — ArabicTextarea handles right-to-left direction automatically
+- **RTL text input** — Arabic text handled via Cairo font with RTL direction
 - **Health monitoring** — auto-polling backend status with loading indicator
 
 [![Frontend CI](https://github.com/tirjok/lughat-chat/actions/workflows/frontend.yml/badge.svg)](https://github.com/tirjok/lughat-chat/actions/workflows/frontend.yml)
@@ -26,9 +26,11 @@ A **text-to-speech (TTS) web application** for Arabic speech synthesis, powered 
                                        Coqui XTTS-v2
 ```
 
-- **Frontend**: Nuxt 4 + Vue 3 + UnoCSS (served via Nginx on port 80)
-- **Backend**: Python FastAPI + Coqui TTS (port 8000)
+- **Frontend**: Nuxt 4.4+ + Vue 3.5+ + UnoCSS 66 (served via Nginx on port 80)
+- **Backend**: Python FastAPI 0.115.6 + Coqui TTS 0.27.5 (port 8000)
 - **TTS Model**: XTTS-v2 — multilingual with Arabic focus
+- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN)
+- **Fonts**: Google Fonts — "Inter" (UI labels) + "Cairo" (Arabic text)
 
 ## Quick Start
 
@@ -78,8 +80,9 @@ pnpm dev
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/health` | GET | Health check + model loading status |
-| `/voices` | GET | List available voices/speakers |
+| `/api/voices` | GET | List available voices/speakers |
 | `/api/generate` | POST | Generate speech from text (returns MP3 audio blob) |
+| `/api/history` | GET | List previously generated audio files |
 
 ### Generate Example
 
@@ -96,9 +99,10 @@ curl -X POST http://localhost:8000/api/generate \
 |-------|------|----------|---------|-------------|
 | `text` | string | Yes | — | Arabic or English text to synthesize |
 | `language` | string | No | `"ar"` | Language code (`"ar"` or `"en"`) |
-| `speaker` | string | No | `"female"` | Voice preset (`"female"` or `"male"`) |
+| `speaker` | string | No | `"female"` | Voice preset (any string, resolved dynamically) |
+| `voice` | string | No | `"female"` | Alias for speaker (any string, resolved dynamically) |
 | `speed` | float | No | `1.0` | Speech speed (range: 0.5–2.0) |
-| `seed` | int | No | — | Random seed for deterministic output (optional) |
+| `seed` | int | No | 42 | Random seed for deterministic output (optional) |
 
 #### Response
 
@@ -107,7 +111,7 @@ Returns `audio/mpeg` (MP3 binary). On error:
 | Status | Meaning |
 |--------|---------|
 | 400    | Invalid text (empty or too long) |
-| 503    | TTS model not ready yet (still loading — ~60s startup) |
+| 503    | TTS model not ready yet (still loading — ~120s startup) |
 | 500    | Server error (missing speaker WAV, generation failure) |
 
 ## Project Structure
@@ -116,16 +120,17 @@ Returns `audio/mpeg` (MP3 binary). On error:
 ├── backend/                  # Python FastAPI server
 │   ├── app.py               # Main app: model loading, endpoints
 │   ├── requirements.txt     # Python dependencies
-│   └── tests/               # Pytest test suite
-├── frontend/                 # Nuxt 4 + Vue 3 SPA
+│   ├── requirements-test.txt # Test dependencies (no coqui-tts)
+│   └── tests/               # Pytest test suite (5 tests)
+├── frontend/                 # Nuxt 4.4+ + Vue 3.5+ SPA
 │   ├── app/
-│   │   ├── pages/index.vue  # Main TTS page
-│   │   ├── components/      # Vue UI components (6)
-│   │   └── composables/     # Reusable logic hooks (5)
+│   │   ├── pages/index.vue  # Full-page TTS Studio (two-panel layout)
+│   │   ├── components/      # Vue UI components (10)
+│   │   └── composables/     # Reusable logic hooks (7)
 │   ├── nuxt.config.ts       # Nuxt configuration
-│   ├── uno.config.ts        # UnoCSS presets & shortcuts
-│   └── tests/               # Vitest test suite
-├── docker-compose.yml        # Docker deployment config
+│   ├── uno.config.ts        # UnoCSS presets (presetWind3) & shortcuts
+│   └── tests/               # Vitest test suite (23 tests)
+├── docker-compose.yml        # Docker deployment config (backend: 9000, frontend: 9001)
 └── nginx/                    # Nginx reverse proxy (routes frontend → backend)
 ```
 
@@ -177,15 +182,17 @@ All UI components support dark mode via CSS `dark:` variants. Toggle with the cl
 
 ## RTL Support
 
-The Arabic text input component (`ArabicTextarea`) handles right-to-left text direction automatically.
+Arabic text is handled via Cairo font with RTL direction on the textarea.
 
 ## Key Conventions
 
 1. **Nuxt file-based routing**: pages in `app/pages/` are auto-imported
 2. **Composables** in `app/composables/` are auto-imported (no explicit imports needed)
 3. **Components** in `app/components/` are auto-imported by PascalCase name
-4. **Tests mirror source**: composables have `.test.ts` alongside them, plus additional tests in `tests/`
+4. **Tests mirror source**: all test files live in `frontend/tests/` (no inline test files)
 5. **ESLint**: flat config via `@nuxt/eslint`, rules: `commaDangle: 'never'`, `braceStyle: '1tbs'`
+6. **Phosphor Icons**: Uses `ph ph-<name>` classes (via CDN), NOT Lucide or Simple Icons
+7. **Host ports**: Docker backend on 9000, frontend on 9001. Local dev proxies to localhost:9000.
 
 ## Custom Voices
 
@@ -200,14 +207,19 @@ Requirements:
 - Duration: ≥ 0.33 seconds (XTTS-v2 minimum)
 - Content: Clear speech in the target language
 
-After adding a file, restart the backend container. The new voice will appear in the `/api/voices` response.
+After adding a file, restart the backend container. The new voice will appear in the `/api/voices` response (voices are dynamically discovered).
+
+**Current voices:**
+- `KSA Hamed - Male.wav` — Male voice reference (KSA dialect)
+- `KSA Zariyah - Female.wav` — Female voice reference (KSA dialect)
 
 ## Known Limitations
 
-- **Model loading takes ~60 seconds** — The first request after startup returns 503. Health polling handles this automatically.
+- **Model loading takes ~120 seconds** — The first request after startup returns 503. Health polling handles this automatically (Docker health check: `start_period: 120s`, 200 retries).
 - **CPU-only inference** — No GPU support; generation takes several seconds per request.
 - **Language support** — Only `ar` (Arabic) and `en` (English) are accepted.
 - **Audio file persistence** — Generated MP3s accumulate in `tts-audio-cache`. No automatic cleanup.
+- **Host ports** — Backend on 9000, frontend on 9001 (not 8000/80).
 
 ## Contributing
 

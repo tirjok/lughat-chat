@@ -24,39 +24,45 @@ A **text-to-speech (TTS) web app** for Arabic speech synthesis using Coqui XTTS-
 - **Framework**: Nuxt 4.4+ (file-based routing, auto-imports)
 - **Language**: TypeScript
 - **Package Manager**: pnpm 10.33.4
-- **Styling**: UnoCSS (with presetIcons, presetTypography, presetWebFonts)
+- **Styling**: UnoCSS 66 (presetWind3, presetTypography, presetWebFonts, transformerDirectives)
 - **UI Config**: `app.config.ts` — primary: green, neutral: slate
-- **Icons**: Lucide + Simple Icons (via `@iconify-json/*`)
-- **Fonts**: Google Fonts — "Cairo" (sans-serif)
+- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script)
+- **Fonts**: Google Fonts — "Inter" (UI labels) + "Cairo" (Arabic text)
 
 ### Key Files
 | File | Purpose |
 |------|---------|
-| `nuxt.config.ts` | Nuxt config with modules, ESLint, UnoCSS, CSS import |
-| `uno.config.ts` | UnoCSS presets + shortcuts (`btn`, `card`, `flex-center`, etc.) |
+| `nuxt.config.ts` | Nuxt config with modules, ESLint, UnoCSS, CSS import, Nitro devProxy |
+| `uno.config.ts` | UnoCSS presets (presetWind3) + shortcuts + custom theme (studio colors, breakpoints) |
 | `app/app.config.ts` | UI theme config (green primary, slate neutral) |
-| `app/assets/css/main.css` | Global BEM styles using UnoCSS `@apply` directives |
+| `app/assets/css/main.css` | Global styles using UnoCSS `@apply` (dark theme, scrollbar, safe-area insets) |
 
 ### App Structure (`app/`)
 ```
 app/
 ├── app.config.ts          # UI theme config
 ├── app.vue                # Root component
-├── assets/css/main.css    # Global BEM styles (@apply)
-├── pages/index.vue        # Single-page TTS app (main page)
-├── components/            # 6 Vue components
-│   ├── ArabicTextarea.vue       # RTL Arabic text input with char count
-│   ├── ModelStatusIndicator.vue  # Shows TTS model loading status
-│   ├── PlayPauseButton.vue       # Audio play/pause toggle
-│   ├── SeekableProgressBar.vue   # Draggable audio progress bar
-│   ├── TimeDisplay.vue           # Audio time formatting (mm:ss)
-│   └── ToastNotification.vue     # Toast messages (success/error/info)
-└── composables/           # 5 composables (+ test files)
-    ├── useAudioPlayer.ts     # Audio playback state management
+├── assets/css/main.css    # Global styles (@apply)
+├── pages/index.vue        # Full-page TTS Studio (two-panel layout)
+├── components/            # 10 Vue components
+│   ├── AudioPlayerPanel.vue       # Audio playback panel (waveform + controls)
+│   ├── FocusHaloCanvas.vue        # Focus halo effect for textarea
+│   ├── GenerateButton.vue         # Generate speech button with loading states
+│   ├── MobileStatusIndicator.vue  # Compact model status (mobile FAB)
+│   ├── ModelStatusIndicator.vue   # Desktop model status indicator
+│   ├── PanelToggle.vue            # Mobile panel toggle FAB
+│   ├── SpeedSlider.vue            # Speed adjustment slider (0.5×–2.0×)
+│   ├── ToastNotification.vue      # Toast messages (success/error/info)
+│   ├── VoiceSelector.vue          # Voice/dialect selector dropdown
+│   └── WaveformCanvas.vue         # Animated waveform visualization
+└── composables/           # 7 composables (+ test files)
+    ├── useAudioModule.ts     # Audio playback state management (replaces useAudioPlayer)
     ├── useHealthPoll.ts      # Backend health check polling
     ├── useInputValidation.ts # Text input validation logic
-    ├── useTimeDisplay.ts     # Time formatting utilities
-    └── useTtsApi.ts          # TTS API calls (synthesize, healthCheck)
+    ├── usePanelToggle.ts     # Panel toggle state (control-deck ↔ canvas)
+    ├── useToast.ts           # Toast notification management
+    ├── useTtsApi.ts          # TTS API calls (synthesize, healthCheck)
+    └── useVoices.ts          # Voice list fetching and management
 ```
 
 ### ESLint Config
@@ -94,6 +100,29 @@ npx vitest --config vitest.component.config.ts
 - Naming: `<name>.test.ts`
 - All test files MUST live in `frontend/tests/`. Never create test files inside `app/` or any source directory.
 
+**Test files (23 total):**
+- `app.test.ts` — Root app integration test
+- `AudioPlayerPanel.test.ts` — Audio player panel tests
+- `index.test.ts` — Main page integration test
+- `ModelStatusIndicator.test.ts` — Model status indicator tests
+- `PanelSliding.test.ts` — Panel sliding animation tests
+- `PanelToggle.test.ts` — Panel toggle logic tests
+- `SpeedSlider.test.ts` — Speed slider interaction tests
+- `ToastNotification.test.ts` — Toast notification rendering tests
+- `ToastShortcut.test.ts` — Toast keyboard shortcut tests
+- `useAudioModule.test.ts` — Audio module logic tests
+- `useHealthPoll.test.ts` — Health polling logic tests
+- `useInputValidation.test.ts` — Input validation logic tests
+- `usePanelToggle.test.ts` — Panel toggle composable tests
+- `useToast.test.ts` — Toast composable tests
+- `useTtsApi.test.ts` — TTS API composable tests
+- `useVoices.test.ts` — Voices composable tests
+- `VoiceSelector.test.ts` — Voice selector basic tests
+- `VoiceSelector.animation.test.ts` — Voice selector animation tests
+- `VoiceSelector.click.test.ts` — Voice selector click interaction tests
+- `VoiceSelector.data-attrs.test.ts` — Voice selector data attributes tests
+- `VoiceSelector.debug.test.ts` — Voice selector debug tests
+
 ---
 
 ## Backend (`backend/`)
@@ -115,8 +144,9 @@ npx vitest --config vitest.component.config.ts
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/health` | GET | Health check + model loading status |
-| `/voices` | GET | List available voices/speakers |
+| `/api/voices` | GET | List available voices/speakers |
 | `/api/generate` | POST | Generate speech from text (returns MP3 binary) |
+| `/api/history` | GET | List previously generated audio files |
 
 ### Model Loading
 - Model: `tts_models/multilingual/xtts_v2` (loaded on startup via lifespan)
@@ -140,6 +170,7 @@ npx vitest --config vitest.component.config.ts
 - `test_generate.py` — synthesis endpoint tests
 - `test_generate_blob.py` — blob response tests
 - `test_health.py` — health check endpoint tests
+- `test_history.py` — audio history endpoint tests
 - `test_voices.py` — voices listing tests
 
 ---
@@ -149,8 +180,8 @@ npx vitest --config vitest.component.config.ts
 ### Services
 | Service | Image | Ports | Notes |
 |---------|-------|-------|-------|
-| `backend` | Python (custom Dockerfile) | 8000:8000 | Health check waits for model load (start_period: 60s) |
-| `frontend` | Nuxt + Nginx (custom Dockerfile) | 80:80 | Depends on backend being healthy |
+| `backend` | Python (custom Dockerfile) | 9000:8000 | Health check: start_period 120s, 200 retries (15s interval) |
+| `frontend` | Nuxt + Nginx (custom Dockerfile) | 9001:80 | Depends on backend being healthy (service_healthy condition) |
 
 ### Volumes
 | Volume | Purpose |
@@ -160,12 +191,21 @@ npx vitest --config vitest.component.config.ts
 
 ### Environment Variables (`.env`)
 ```
-BACKEND_PORT=8000, BACKEND_HOST=backend
-FRONTEND_PORT=3000, FRONTEND_HOST=localhost
+BACKEND_PORT=9000, BACKEND_HOST=backend
+FRONTEND_PORT=9001, FRONTEND_HOST=localhost
 NGINX_PORT=80, NGINX_HOST=localhost
-API_BASE_URL=http://backend:8000
+API_BASE_URL=http://backend:9000
 TTS_MODEL_CACHE=/app/.cache/tts
+COQUI_TOS_AGREED=1
+MODEL_VOLUME_NAME=arabic-tts-models
+AUDIO_CACHE_VOLUME_NAME=arabic-tts-audio
 ```
+
+**Docker environment (backend service):**
+- `TZ=UTC`
+- `TTS_MODEL_CACHE=/app/.cache/tts`
+- `COQUI_TOS_AGREED=1`
+- `LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/x86_64-linux-gnu`
 
 ---
 
@@ -194,7 +234,7 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 4. **Tests mirror source**: additional tests go in `tests/` alongside their source counterparts
 5. **TEST FILES NEVER LEAVE `tests/`**: All test files (`.test.ts`, `*.test.py`) MUST live inside `frontend/tests/` or `backend/tests/`. Never create test files inside `app/`, `components/`, `composables/`, or any other source directory. If you find inline `.test.ts` files in source directories, move them to `tests/`.
 5. **Dark mode**: all BEM classes have `dark:` variants defined in main.css
-6. **RTL support**: ArabicTextarea component handles RTL text input
+6. **RTL support**: Arabic text handled via Cairo font + RTL direction
 
 ---
 
@@ -228,13 +268,14 @@ docker compose up --build -d
 
 ### Frontend Scripts (from `frontend/`)
 ```bash
-pnpm dev          # Start dev server (port 3000)
+pnpm dev          # Start dev server (port 3000, proxies to localhost:9000)
 pnpm build        # Production build
 pnpm preview      # Preview production build locally
 pnpm lint         # Run ESLint
 pnpm typecheck    # TypeScript type checking
 pnpm test         # Run Vitest unit tests
 pnpm test:coverage  # Tests with coverage report
+pnpm clean        # Remove build artifacts
 ```
 
 ### Pre-commit & Full Check (from project root)
@@ -270,16 +311,18 @@ uvicorn backend/app:app --reload  # Start backend dev server (port 8000)
 {
   "text": "مرحبا بك في لغةات",
   "language": "ar",        // optional, default: "ar" | allowed: "ar" | "en"
-  "voice": "female",       // optional, default: "female" | allowed: "female" | "male"
-  "speaker": "female",     // alias for `voice` (accepts "default" → maps to "female")
+  "voice": "female",       // optional, any string accepted (validated at runtime)
+  "speaker": "female",     // alias for `voice` (any string accepted)
   "speed": 1.0,            // optional, default: 1.0 | range: 0.5 – 2.0
   "pitch": 0.0,            // optional, default: 0.0 | range: -4.0 – 4.0
-  "seed": 42               // optional, deterministic seed (defaults to fixed per voice: female=42, male=123)
+  "seed": 42               // optional, deterministic seed (defaults to 42)
 }
 ```
 **Response:** Returns `audio/mpeg` (MP3 binary blob via `FileResponse`). The frontend loads this into an `<audio>` element via `URL.createObjectURL()`.
 
 > **Note:** The `SynthesisResponse` Pydantic model (audio_url, filename, duration_seconds) is defined but **not used** — the endpoint returns a raw file response instead of JSON.
+
+> **Note:** The `SynthesisRequest` model accepts `voice` and `speaker` as optional strings (not restricted to "female"/"male"). The voice is resolved as `speaker ?? voice ?? "female"`. Speaker WAV files are discovered dynamically from `speaker_wavs/` directory.
 
 **Error responses:**
 | Status | Meaning |
@@ -298,23 +341,24 @@ uvicorn backend/app:app --reload  # Start backend dev server (port 8000)
 ```
 
 ### `GET /api/voices` — List Voices
-**Response:**
+**Response:** Array of voices discovered from `speaker_wavs/` directory.
 ```json
 [
-  { "id": "female", "name": "Female Voice" },
-  { "id": "male", "name": "Male Voice" }
+  { "id": "ksa_hamed", "name": "ksa_hamed" },
+  { "id": "ksa_zariyah", "name": "ksa_zariyah" }
 ]
 ```
+> **Note:** Voices are dynamically discovered from `.wav` files in `backend/speaker_wavs/`. Each file produces `{ id: name: filename_without_extension }`.
 
 ### `GET /api/history` — Audio History
-**Response:** Array of previously generated audio files with metadata (filename, language, voice, created_at).
+**Response:** Array of previously generated audio files with metadata (filename, language, voice, speed, pitch, created_at).
 
 ---
 
 ## Local Development Setup
 
 ### Prerequisites
-- Node.js 20+ (or via nvm)
+- Node.js 24 (or via nvm)
 - pnpm 10.33.4
 - Docker & Docker Compose (backend runs entirely inside containers)
 - Git (for pre-commit hooks)
@@ -326,17 +370,17 @@ uvicorn backend/app:app --reload  # Start backend dev server (port 8000)
 # Terminal 1 — Backend (port 8000)
 cd backend && uvicorn app:app --reload
 
-# Terminal 2 — Frontend (port 3000, proxies to localhost:8000)
+# Terminal 2 — Frontend (port 3000, proxies to localhost:9000)
 cd frontend && pnpm dev
 ```
-> **Note:** When running locally, the frontend dev server proxies API calls to `localhost:8000`. In Docker, Nginx handles this proxying.
+> **Note:** When running locally, the frontend dev server proxies API calls to `localhost:9000` (configured in `nuxt.config.ts` Nitro devProxy). In Docker, Nginx handles this proxying.
 
 ### Speaker WAV Files
 Voice presets use reference audio files stored in `backend/speaker_wavs/`:
-- `female.wav` — Female voice reference
-- `male.wav` — Male voice reference
+- `KSA Hamed - Male.wav` — Male voice reference (KSA dialect)
+- `KSA Zariyah - Female.wav` — Female voice reference (KSA dialect)
 
-These must be ≥ 0.33 seconds (XTTS-v2 minimum). Add custom voices by placing WAV files here.
+These must be ≥ 0.33 seconds (XTTS-v2 minimum). Add custom voices by placing WAV files here. Voices are dynamically discovered from the directory.
 
 ---
 
@@ -351,19 +395,20 @@ These must be ≥ 0.33 seconds (XTTS-v2 minimum). Add custom voices by placing W
 ### Backend (FastAPI)
 - **HTTPException**: Used for all business errors with descriptive `detail` messages
 - **CORS**: All origins allowed (`*`) — restrict in production to frontend container IP
-- **Model readiness**: 503 returned if synthesis called before model finishes loading (~60s startup)
+- **Model readiness**: 503 returned if synthesis called before model finishes loading (~120s startup)
 
 ---
 
 ## Known Gotchas & Limitations
 
-1. **Model loading takes ~60 seconds** — The first request after startup will get 503. Health polling (`useHealthPoll`) handles this by checking `/health` every few seconds.
+1. **Model loading takes ~120 seconds** — The first request after startup will get 503. Health polling (`useHealthPoll`) handles this by checking `/health` every 2 seconds (max 10 retries). Docker health check has `start_period: 120s` with 200 retries at 15s intervals.
 2. **TTS model is ~2GB** — Persisted in `tts-model-cache` volume. Docker rebuilds won't re-download.
 3. **CPU-only inference** — No GPU support; generation takes several seconds per request.
 4. **Speaker WAV validation** — XTTS-v2 requires ≥ 0.33s reference audio. Shorter files raise a 500 error.
 5. **Audio file persistence** — Generated MP3s accumulate in `tts-audio-cache`. No cleanup mechanism.
 6. **Language support** — Only `ar` (Arabic) and `en` (English) are accepted. Other languages will be rejected.
-7. **Deterministic output** — Seeds are fixed per voice preset (female=42, male=123) for consistent results. Override via `seed` field in request.
+7. **Deterministic output** — Seed defaults to 42 (not per-voice). Override via `seed` field in request.
+8. **Host ports** — Backend runs on host port 9000, frontend on 9001 (not 8000/80). Local dev proxies to localhost:9000.
 
 ---
 
@@ -384,11 +429,12 @@ Two separate workflows — one per service. Both run on `ubuntu-latest` and trig
 - **Triggers**: Push/PR to `main` or `develop` when files under `frontend/**` change
 - **Steps**:
   1. Checkout (actions/checkout@v5)
-  2. pnpm v4 action, Node.js 24 (cached via `pnpm`)
+  2. pnpm v4 action (version: 10.33.4), Node.js 24 (cached via `pnpm`)
   3. `pnpm install --frozen-lockfile`
   4. `pnpm lint` (ESLint)
   5. `pnpm typecheck` (TypeScript)
   6. `pnpm test -- --coverage`
+  7. Working directory: `frontend`
 
 ### Requirements Files
 - **Backend**: `backend/requirements-test.txt` (test deps separate from runtime)
@@ -409,3 +455,7 @@ When the user asks about building features, modifying existing code, or understa
 8. **Quality gate:** `./run-tests.sh` is the single source of truth — runs backend tests, lint, typecheck, and frontend tests. Pre-commit hooks call it automatically. Use it before every commit/push.
 9. Backend tests: `./scripts/run-backend-tests.sh` runs pytest inside Docker, no host Python needed.
 10. **TEST FILES MUST STAY IN `tests/`**: Frontend tests → `frontend/tests/`. Backend tests → `backend/tests/`. Never create a `.test.ts` or `*_test.py` file inside `app/`, `components/`, `composables/`, or any source directory. If existing inline test files exist in source directories, move them to `tests/`.
+11. **Phosphor Icons** — The app uses Phosphor Icons (via `@phosphor-icons/web` CDN), NOT Lucide or Simple Icons. Icon classes use `ph ph-<name>` or `ph-fill ph-<name>` format.
+12. **Two-panel layout** — The main page uses a split layout: Control Deck (left) + Waveform Canvas (right). On mobile (<768px), panels stack vertically with a draggable divider.
+13. **Dynamic voice discovery** — Voices are discovered from `backend/speaker_wavs/` directory at runtime. The `/api/voices` endpoint returns all `.wav` files found. Current voices: `KSA Hamed - Male`, `KSA Zariyah - Female`.
+14. **Host ports** — Docker: backend on 9000, frontend on 9001. Local dev: frontend proxies to `localhost:9000`.
