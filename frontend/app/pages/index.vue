@@ -45,8 +45,8 @@ function onDragEnd() {
 
 const audioModule = useAudioModule({
   onPlaybackEnd: () => {
-    audioModule.isPlaying.value = false
-    audioModule.isPaused.value = false
+    // State (isPlaying, isPaused, currentTime=0) is already reset by the composable's 'ended' handler.
+    // This callback is intentionally left as a hook for future use (e.g., auto-close panel).
   }
 })
 
@@ -648,7 +648,7 @@ function handleClosePlayer() {
           :selected-voice-name="selectedVoiceName"
           :speed-value="speedValue"
           @close="handleClosePlayer"
-          @toggle="audioModule.pause"
+          @toggle="audioModule.toggle"
           @download="handleDownload"
           @seek="audioModule.seek"
         />
