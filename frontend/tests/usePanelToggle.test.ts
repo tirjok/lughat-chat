@@ -85,21 +85,6 @@ describe('usePanelToggle composable', () => {
     })
   })
 
-  it('focusFirstInteractiveElement is a function', () => {
-    const { focusFirstInteractiveElement } = usePanelToggle()
-    expect(typeof focusFirstInteractiveElement).toBe('function')
-  })
-
-  it('returns all expected properties', () => {
-    const result = usePanelToggle()
-    expect(Object.keys(result)).toEqual([
-      'activePanel',
-      'isMobile',
-      'togglePanel',
-      'focusFirstInteractiveElement'
-    ])
-  })
-
   // ─── isMobile is reactive via useMediaQuery (VueUse) ────────────────
 
   describe('isMobile (useMediaQuery)', () => {

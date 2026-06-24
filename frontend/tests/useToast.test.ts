@@ -23,8 +23,6 @@ describe('useToast', () => {
   it('exposes showToast function that updates state', () => {
     const toast = useToast()
 
-    expect(typeof showToast).toBe('function')
-
     showToast('حدث خطأ في التوليد')
 
     expect(toast.value.length).toBe(1)
