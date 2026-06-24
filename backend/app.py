@@ -325,6 +325,12 @@ async def generate_speech(request: SynthesisRequest):
             # Fallback: just use WAV if MP3 conversion fails
             shutil.copy2(wav_path, mp3_path)
 
+        # Clean up intermediate WAV file — it's 5–10× larger than the MP3
+        try:
+            os.remove(wav_path)
+        except OSError:
+            pass  # Already gone (e.g. race condition) — ignore
+
         # Return MP3 file as binary response
         return FileResponse(path=mp3_path, media_type="audio/mpeg", filename=filename)
 

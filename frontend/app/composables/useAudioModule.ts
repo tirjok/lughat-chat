@@ -107,6 +107,9 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     audio.addEventListener('ended', () => {
       isPlaying.value = false
       isPaused.value = false
+      if (audioRef.value) {
+        audioRef.value.currentTime = 0
+      }
       options.onPlaybackEnd?.()
     })
 
