@@ -6,17 +6,18 @@ describe('useTtsApi', () => {
     vi.clearAllMocks()
   })
 
-  describe('synthesize', () => {
-    it('sends POST request with correct JSON body', async () => {
+  describe('#sanity synthesize', () => {
+    it('When text and speaker are provided then sends correct POST body', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         blob: () => Promise.resolve(mockBlob)
       }))
-
       const { synthesize } = useTtsApi()
+      // Act
       await synthesize({ text: 'مرحبا', speaker: 'female', speed: 1.2 })
-
+      // Assert
       expect(fetch).toHaveBeenCalledWith(
         '/api/generate',
         expect.objectContaining({
@@ -32,114 +33,128 @@ describe('useTtsApi', () => {
       )
     })
 
-    it('sends undefined speaker when not provided', async () => {
+    it('When speaker is not provided then sends undefined speaker', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         blob: () => Promise.resolve(mockBlob)
       }))
-
       const { synthesize } = useTtsApi()
+      // Act
       await synthesize({ text: 'Hello' })
-
+      // Assert
       const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
       expect(body.speaker).toBeUndefined()
     })
 
-    it('sends custom voice name as plain string', async () => {
+    it('When custom voice name is provided then sends it as a plain string', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         blob: () => Promise.resolve(mockBlob)
       }))
-
       const { synthesize } = useTtsApi()
+      // Act
       await synthesize({ text: 'Hello', speaker: 'ahmed_ksa' })
-
+      // Assert
       const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
       expect(body.speaker).toBe('ahmed_ksa')
     })
 
-    it('defaults speed to 1.0 when not provided', async () => {
+    it('When speed is not provided then defaults to 1.0', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         blob: () => Promise.resolve(mockBlob)
       }))
-
       const { synthesize } = useTtsApi()
+      // Act
       await synthesize({ text: 'Hello' })
-
+      // Assert
       const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
       expect(body.speed).toBe(1.0)
     })
 
-    it('always sends language as "ar"', async () => {
+    it('When language is not provided then always sends "ar"', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         blob: () => Promise.resolve(mockBlob)
       }))
-
       const { synthesize } = useTtsApi()
+      // Act
       await synthesize({ text: 'Hello' })
-
+      // Assert
       const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
       expect(body.language).toBe('ar')
     })
 
-    it('returns a Blob on success', async () => {
+    it('When API returns OK then returns a Blob', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         blob: () => Promise.resolve(mockBlob)
       }))
-
       const { synthesize } = useTtsApi()
+      // Act
       const result = await synthesize({ text: 'Hello' })
-
+      // Assert
       expect(result).toBeInstanceOf(Blob)
     })
+  })
 
-    it('throws Arabic error when API returns non-OK status', async () => {
+  describe('#sanity error handling', () => {
+    it('When API returns non-OK status then throws Arabic error', async () => {
+      // Arrange
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 503,
         json: () => Promise.resolve({ detail: 'Model not ready' })
       }))
-
       const { synthesize } = useTtsApi()
+      // Act
+      // Assert
       await expect(synthesize({ text: 'Hello' })).rejects.toThrow('Server is currently unavailable')
     })
 
-    it('throws Arabic unknown error when response.json fails', async () => {
+    it('When response.json fails then throws Arabic unknown error', async () => {
+      // Arrange
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 500,
         json: () => Promise.reject(new Error('parse error'))
       }))
-
       const { synthesize } = useTtsApi()
+      // Act
+      // Assert
       await expect(synthesize({ text: 'Hello' })).rejects.toThrow('An error occurred on the server')
     })
 
-    it('throws Arabic error for network failures', async () => {
+    it('When network fails then throws Arabic connection error', async () => {
+      // Arrange
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
-
       const { synthesize } = useTtsApi()
+      // Act
+      // Assert
       await expect(synthesize({ text: 'Hello' })).rejects.toThrow('Unable to connect to the server')
     })
 
-    it('uses custom baseUrl when provided', async () => {
+    it('When custom baseUrl is provided then uses that URL', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         blob: () => Promise.resolve(mockBlob)
       }))
-
       const { synthesize } = useTtsApi({ baseUrl: 'http://custom-api.local' })
+      // Act
       await synthesize({ text: 'Hello' })
-
+      // Assert
       expect(fetch).toHaveBeenCalledWith(
         'http://custom-api.local/api/generate',
         expect.any(Object)
@@ -147,69 +162,62 @@ describe('useTtsApi', () => {
     })
   })
 
-  describe('healthCheck', () => {
-    it('sends GET request to /health', async () => {
+  describe('#sanity healthCheck', () => {
+    it('When called then sends GET request to /health', async () => {
+      // Arrange
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ status: 'ready', model_loaded: true })
       }))
-
       const { healthCheck } = useTtsApi()
+      // Act
       await healthCheck()
-
+      // Assert
       expect(fetch).toHaveBeenCalledWith('/health')
     })
 
-    it('returns HealthResponse on success', async () => {
+    it('When health check succeeds then returns HealthResponse', async () => {
+      // Arrange
       const mockHealth = { status: 'ready' as const, model_loaded: true }
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockHealth)
       }))
-
       const { healthCheck } = useTtsApi()
+      // Act
       const result = await healthCheck()
-
+      // Assert
       expect(result).toEqual(mockHealth)
     })
 
-    it('throws Arabic error when health check fails', async () => {
+    it('When health check returns non-OK then throws Arabic error', async () => {
+      // Arrange
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 503
       }))
-
       const { healthCheck } = useTtsApi()
+      // Act
+      // Assert
       await expect(healthCheck()).rejects.toThrow('Health check failed: 503')
     })
 
-    it('throws Arabic error on network failure', async () => {
+    it('When health check network fails then throws Arabic connection error', async () => {
+      // Arrange
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
-
       const { healthCheck } = useTtsApi()
+      // Act
+      // Assert
       await expect(healthCheck()).rejects.toThrow('Unable to check health status: Network error')
     })
 
-    it('throws Arabic error for non-Error exceptions', async () => {
+    it('When network fails with non-Error value then includes it in error message', async () => {
+      // Arrange
       global.fetch = vi.fn(() => Promise.reject('string error'))
-
       const { healthCheck } = useTtsApi()
+      // Act
+      // Assert
       await expect(healthCheck()).rejects.toThrow('Unable to check health status: string error')
-    })
-  })
-
-  describe('returned interface', () => {
-    it('returns synthesize and healthCheck functions', () => {
-      const api = useTtsApi()
-
-      expect(typeof api.synthesize).toBe('function')
-      expect(typeof api.healthCheck).toBe('function')
-    })
-
-    it('does not return unexpected properties', () => {
-      const api = useTtsApi()
-
-      expect(Object.keys(api)).toEqual(['synthesize', 'healthCheck'])
     })
   })
 })

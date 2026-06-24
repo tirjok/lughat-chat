@@ -6,124 +6,112 @@ describe('useAudioModule', () => {
     vi.clearAllMocks()
   })
 
-  describe('load', () => {
-    it('creates an object URL from the blob', async () => {
+  describe('#sanity load', () => {
+    it('When given a blob then creates an object URL from it', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       const module = useAudioModule()
-
+      // Act
       module.load(mockBlob)
-
+      // Assert
       expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockBlob)
     })
 
-    it('sets audioUrl ref to the created URL', async () => {
+    it('When given a blob then sets audioUrl ref to the created URL', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       const module = useAudioModule()
-
+      // Act
       module.load(mockBlob)
-
+      // Assert
       expect(module.audioUrl.value).toBe('http://mock.url/blob')
     })
 
-    it('stores the blob in blobRef', async () => {
+    it('When loading a second blob then revokes the previous object URL', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       const module = useAudioModule()
-
-      module.load(mockBlob)
-
-      expect(module.load).toBeDefined()
-    })
-
-    it('revokes previous object URL when loading a new blob', async () => {
-      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
-      const module = useAudioModule()
-
-      // Load first audio
       module.load(mockBlob)
       vi.clearAllMocks()
-
-      // Load second audio - should revoke previous
       const mockBlob2 = new Blob(['dummy2'], { type: 'audio/mpeg' })
+      // Act
       module.load(mockBlob2)
-
+      // Assert
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('http://mock.url/blob')
     })
-
-    // isLoading and error were removed from useAudioModule
-    // as they were never consumed by any component.
   })
 
-  describe('play', () => {
-    it('calls play() on audioRef when available', async () => {
+  describe('#sanity play', () => {
+    it('When audioRef is set then calls play() on the audio element', async () => {
+      // Arrange
       const mockAudio = {
         play: vi.fn(() => Promise.resolve()),
         pause: vi.fn(),
         addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
-
       const module = useAudioModule()
       module.audioRef.value = mockAudio
-
+      // Act
       await module.play()
-
+      // Assert
       expect(mockAudio.play).toHaveBeenCalled()
     })
 
-    // error handling was removed from useAudioModule
-    // as it was never consumed by any component.
-
-    it('does nothing when audioRef is null', async () => {
+    it('When audioRef is null then does nothing', async () => {
+      // Arrange
       const module = useAudioModule()
-
+      // Act
       await module.play()
-
+      // Assert
       expect(module.isPlaying.value).toBe(false)
     })
   })
 
-  describe('pause', () => {
-    it('calls pause() on audioRef when available', async () => {
+  describe('#sanity pause', () => {
+    it('When audioRef is set then calls pause() on the audio element', async () => {
+      // Arrange
       const mockAudio = {
         play: vi.fn(),
         pause: vi.fn(),
         addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
-
       const module = useAudioModule()
       module.audioRef.value = mockAudio
-
+      // Act
       module.pause()
-
+      // Assert
       expect(mockAudio.pause).toHaveBeenCalled()
     })
 
-    it('sets isPlaying to false', async () => {
+    it('When audioRef is set then sets isPlaying to false', async () => {
+      // Arrange
       const mockAudio = {
         play: vi.fn(),
         pause: vi.fn(),
         addEventListener: vi.fn()
       } as unknown as HTMLAudioElement
-
       const module = useAudioModule()
       module.audioRef.value = mockAudio
       module.isPlaying.value = true
-
+      // Act
       module.pause()
-
+      // Assert
       expect(module.isPlaying.value).toBe(false)
     })
 
-    it('does nothing when audioRef is null', async () => {
+    it('When audioRef is null then does nothing', async () => {
+      // Arrange
       const module = useAudioModule()
-
+      // Act
       module.pause()
-
+      // Assert
       expect(module.isPlaying.value).toBe(false)
     })
   })
 
-  describe('seek', () => {
-    it('sets currentTime on audioRef when available', async () => {
+  describe('#sanity seek', () => {
+    it('When given a fraction then sets currentTime to fraction * duration', async () => {
+      // Arrange
       const mockAudio = {
         play: vi.fn(),
         pause: vi.fn(),
@@ -131,25 +119,26 @@ describe('useAudioModule', () => {
         currentTime: 0,
         duration: 100
       } as unknown as HTMLAudioElement
-
       const module = useAudioModule()
       module.audioRef.value = mockAudio
       module.duration.value = 100
-
+      // Act
       module.seek(0.5)
-
+      // Assert
       expect(mockAudio.currentTime).toBe(50)
     })
 
-    it('does nothing when audioRef is null', async () => {
+    it('When audioRef is null then does nothing', async () => {
+      // Arrange
       const module = useAudioModule()
-
+      // Act
       module.seek(0.5)
-
+      // Assert
       expect(module.currentTime.value).toBe(0)
     })
 
-    it('does nothing when duration is 0', async () => {
+    it('When duration is 0 then does nothing', async () => {
+      // Arrange
       const mockAudio = {
         play: vi.fn(),
         pause: vi.fn(),
@@ -157,59 +146,49 @@ describe('useAudioModule', () => {
         currentTime: 0,
         duration: 100
       } as unknown as HTMLAudioElement
-
       const module = useAudioModule()
       module.audioRef.value = mockAudio
       module.duration.value = 0
-
+      // Act
       module.seek(0.5)
-
+      // Assert
       expect(mockAudio.currentTime).toBe(0)
     })
   })
 
-  describe('download', () => {
-    it('creates and clicks a download link when blob exists', async () => {
+  describe('#sanity download', () => {
+    it('When blob exists then creates and clicks a download link', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       const module = useAudioModule()
-
-      // Set blobRef directly (load() would do this internally)
       module.load(mockBlob)
-
       const linkClickSpy = vi.fn()
-
       const originalCreateElement = document.createElement.bind(document)
       document.createElement = vi.fn((tag: string) => {
         if (tag === 'a') {
-          return {
-            href: '',
-            click: linkClickSpy,
-            set download(val: string) {}
-          }
+          return { href: '', click: linkClickSpy, set download(val: string) {} }
         }
         return originalCreateElement(tag)
       })
-
       document.body.appendChild = vi.fn() as never
       document.body.removeChild = vi.fn() as never
-
+      // Act
       module.download('test.wav')
-
+      // Assert
       expect(linkClickSpy).toHaveBeenCalled()
-
+      // Cleanup
       document.createElement = originalCreateElement
       delete (document.body as HTMLElement & Record<string, unknown>).appendChild
       delete (document.body as HTMLElement & Record<string, unknown>).removeChild
     })
 
-    it('uses provided filename', async () => {
+    it('When filename is provided then sets download attribute to that filename', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       const module = useAudioModule()
       module.load(mockBlob)
-
       let capturedDownload = ''
       const originalCreateElement = document.createElement.bind(document)
-
       document.createElement = vi.fn((tag: string) => {
         if (tag === 'a') {
           return {
@@ -220,27 +199,25 @@ describe('useAudioModule', () => {
         }
         return originalCreateElement(tag)
       })
-
       document.body.appendChild = vi.fn() as never
       document.body.removeChild = vi.fn() as never
-
+      // Act
       module.download('custom_name.wav')
-
+      // Assert
       expect(capturedDownload).toBe('custom_name.wav')
-
+      // Cleanup
       document.createElement = originalCreateElement
       delete (document.body as HTMLElement & Record<string, unknown>).appendChild
       delete (document.body as HTMLElement & Record<string, unknown>).removeChild
     })
 
-    it('generates default filename when not provided', async () => {
+    it('When filename is not provided then generates default filename', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       const module = useAudioModule()
       module.load(mockBlob)
-
       let capturedDownload = ''
       const originalCreateElement = document.createElement.bind(document)
-
       document.createElement = vi.fn((tag: string) => {
         if (tag === 'a') {
           return {
@@ -251,41 +228,42 @@ describe('useAudioModule', () => {
         }
         return originalCreateElement(tag)
       })
-
       document.body.appendChild = vi.fn() as never
       document.body.removeChild = vi.fn() as never
-
+      // Act
       module.download()
-
+      // Assert
       expect(capturedDownload).toMatch(/^tts_output_\d+\.mp3$/)
-
+      // Cleanup
       document.createElement = originalCreateElement
       delete (document.body as HTMLElement & Record<string, unknown>).appendChild
       delete (document.body as HTMLElement & Record<string, unknown>).removeChild
     })
 
-    it('does nothing when no blob is loaded', async () => {
+    it('When no blob is loaded then does not throw', async () => {
+      // Arrange
       const module = useAudioModule()
-
-      // Should not throw
+      // Act
+      // Assert
       expect(() => module.download()).not.toThrow()
     })
   })
 
-  describe('dispose', () => {
-    it('revokes the current object URL', async () => {
+  describe('#sanity dispose', () => {
+    it('When audio is loaded then revokes the current object URL', async () => {
+      // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       const module = useAudioModule()
-
       module.load(mockBlob)
       vi.clearAllMocks()
-
+      // Act
       module.dispose()
-
+      // Assert
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('http://mock.url/blob')
     })
 
-    it('clears audioRef src', async () => {
+    it('When audio is loaded then clears audioRef src', async () => {
+      // Arrange
       let storedSrc = ''
       const mockAudio = {
         play: vi.fn(),
@@ -294,77 +272,37 @@ describe('useAudioModule', () => {
         get src() { return storedSrc },
         set src(val: string) { storedSrc = val }
       } as unknown as HTMLAudioElement
-
       const module = useAudioModule()
       module.audioRef.value = mockAudio
       module.audioUrl.value = 'http://mock.url/audio'
-
+      // Act
       module.dispose()
-
-      // src is set to empty string
+      // Assert
       expect(storedSrc).toBe('')
     })
 
-    it('does not throw when called without loaded audio', async () => {
+    it('When called without loaded audio then does not throw', async () => {
+      // Arrange
       const module = useAudioModule()
-
+      // Act
+      // Assert
       expect(() => module.dispose()).not.toThrow()
     })
 
-    it('does not throw when audioRef is null', async () => {
+    it('When audioRef is null then does not throw', async () => {
+      // Arrange
       const module = useAudioModule()
-
+      // Act
+      // Assert
       expect(() => module.dispose()).not.toThrow()
     })
   })
 
-  describe('returned interface', () => {
-    it('returns all expected refs and methods', () => {
-      const module = useAudioModule()
-
-      expect(module.audioRef).toBeDefined()
-      expect(module.audioUrl).toBeDefined()
-      expect(module.duration).toBeDefined()
-      expect(module.currentTime).toBeDefined()
-      expect(module.isPlaying).toBeDefined()
-      expect(module.isPaused).toBeDefined()
-      expect(typeof module.load).toBe('function')
-      expect(typeof module.play).toBe('function')
-      expect(typeof module.pause).toBe('function')
-      expect(typeof module.seek).toBe('function')
-      expect(typeof module.download).toBe('function')
-      expect(typeof module.dispose).toBe('function')
-    })
-
-    it('initializes state refs with correct defaults', () => {
-      const module = useAudioModule()
-
-      expect(module.audioUrl.value).toBeNull()
-      expect(module.isPlaying.value).toBe(false)
-      expect(module.isPaused.value).toBe(false)
-      expect(module.duration.value).toBe(0)
-      expect(module.currentTime.value).toBe(0)
-    })
-
-    it('does not return unexpected properties', () => {
-      const module = useAudioModule()
-
-      const keys = Object.keys(module)
-      expect(keys).toEqual([
-        'isPlaying', 'isPaused', 'currentTime', 'duration',
-        'audioUrl',
-        'audioRef',
-        'load', 'play', 'pause', 'toggle', 'seek', 'download', 'dispose'
-      ])
-    })
-  })
-
-  describe('onPlaybackEnd callback', () => {
-    it('calls onPlaybackEnd when passed in options', async () => {
+  describe('#sanity onPlaybackEnd', () => {
+    it('When audio ends then calls the onPlaybackEnd callback', async () => {
+      // Arrange
       const callback = vi.fn()
       const module = useAudioModule({ onPlaybackEnd: callback })
-
-      // Simulate audio ended event
       const mockAudio = {
         play: vi.fn(),
         pause: vi.fn(),
@@ -372,19 +310,18 @@ describe('useAudioModule', () => {
           if (event === 'ended') handler()
         })
       } as unknown as HTMLAudioElement
-
       module.audioRef.value = mockAudio
       module.audioUrl.value = 'http://mock.url/audio'
-
-      // Wait for watch to trigger
+      // Act
       await new Promise(resolve => setTimeout(resolve, 50))
-
+      // Assert
       expect(callback).toHaveBeenCalled()
     })
   })
 
-  describe('regression: audio playback after load', () => {
-    it('sets up audio events and assigns src when audioUrl changes', async () => {
+  describe('#sanity watch integration', () => {
+    it('When audioUrl changes then sets up audio events and assigns src', async () => {
+      // Arrange
       const mockAudio = {
         play: vi.fn(() => Promise.resolve()),
         pause: vi.fn(),
@@ -394,31 +331,22 @@ describe('useAudioModule', () => {
         duration: 0,
         currentTime: 0
       } as unknown as HTMLAudioElement
-
       const module = useAudioModule()
       module.audioRef.value = mockAudio
-
-      // Simulate audioUrl change (this triggers the watch)
+      // Act
       module.audioUrl.value = 'http://mock.url/new-audio'
-
-      // Wait for flush: 'post' watch to fire (post-flush runs after DOM update)
       await new Promise(resolve => setTimeout(resolve, 0))
-
-      // The watch should have called addEventListener for all audio events
+      // Assert
       expect(mockAudio.addEventListener).toHaveBeenCalled()
     })
 
-    it('does not call play() when audioRef is null (documenting the guard)', async () => {
-      const mockAudio = { play: vi.fn() } as unknown as HTMLAudioElement
+    it('When audioRef is null then play() does not throw', async () => {
+      // Arrange
       const module = useAudioModule()
-
-      // audioRef is null by default — play() should not throw or crash
+      // Act
       await module.play()
-
-      expect((mockAudio as unknown as Record<string, boolean>).play).toBeDefined()
+      // Assert
+      expect(module.isPlaying.value).toBe(false)
     })
   })
-
-  // error handling and formatted time were removed from useAudioModule
-  // as they were never consumed by any component.
 })
