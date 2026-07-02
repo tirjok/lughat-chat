@@ -26,6 +26,9 @@ from synthesis import (
     get_module,
     AUDIO_DIR,
     SPEAKER_WAV_DIR,
+    CHUNK_SINGLE_PASS_MAX,
+    CHUNK_AUTO_THRESHOLD,
+    MAX_TEXT_LENGTH,
 )
 
 
@@ -85,7 +88,7 @@ app.mount("/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker
 
 
 class SynthesisRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=3000)
+    text: str = Field(..., min_length=1, max_length=MAX_TEXT_LENGTH)
     language: str = Field(default="ar", pattern="^(ar|en)$")
     voice: Optional[str] = Field(default=None)
     speaker: Optional[str] = Field(default=None)
@@ -120,6 +123,9 @@ async def generate_speech(request: SynthesisRequest):
     """Generate speech — returns job_id immediately (async).
 
     The frontend should poll GET /api/jobs/{job_id} for status and result.
+
+    Long text (above {CHUNK_AUTO_THRESHOLD} chars) is automatically
+    chunked into smaller pieces for efficient CPU processing.
     """
     # Build request dict for the SynthesisModule
     req_dict = {
@@ -134,7 +140,18 @@ async def generate_speech(request: SynthesisRequest):
 
     try:
         job_id = get_module().submit(req_dict)
-        return {"job_id": job_id, "status": "pending"}
+        # Include chunking metadata so the frontend can show progress
+        needs_chunking = len(request.text) > CHUNK_AUTO_THRESHOLD
+        return {
+            "job_id": job_id,
+            "status": "pending",
+            "chunking": {
+                "needs_chunking": needs_chunking,
+                "text_length": len(request.text),
+                "single_pass_max": CHUNK_SINGLE_PASS_MAX,
+                "auto_threshold": CHUNK_AUTO_THRESHOLD,
+            },
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
