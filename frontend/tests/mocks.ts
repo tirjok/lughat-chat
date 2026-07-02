@@ -68,7 +68,8 @@ export const createMockUseTtsApi = () => ({
 // ─── Health Poll Mock Factory ────────────────────────────────────────
 export const createMockUseHealthPoll = () => ({
   status: ref('loading' as const),
-  modelLoaded: computed(() => true)
+  modelLoaded: computed(() => true),
+  start: vi.fn()
 })
 
 // ─── Input Validation Mock Factory ───────────────────────────────────

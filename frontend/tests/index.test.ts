@@ -48,7 +48,8 @@ beforeEach(() => {
 
   ;(globalThis as Record<string, unknown>).useHealthPoll = mockUseHealthPoll.mockReturnValue({
     status: ref('ready'),
-    modelLoaded: computed(() => true)
+    modelLoaded: computed(() => true),
+    start: vi.fn()
   })
 
   ;(globalThis as Record<string, unknown>).useInputValidation = mockUseInputValidation.mockReturnValue({

@@ -6,7 +6,7 @@
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
 import WaveformCanvas from '../components/WaveformCanvas.vue'
-import { computed, nextTick, shallowRef, watch, onUnmounted, ref } from 'vue'
+import { computed, nextTick, shallowRef, watch, onUnmounted, onMounted, ref } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
 import { showToast } from '../composables/useToast'
@@ -53,7 +53,10 @@ const audioModule = useAudioModule({
 const { audioRef, audioUrl, duration, currentTime, isPlaying, isPaused } = audioModule
 
 const { synthesize } = useTtsApi()
-const { status: modelStatus } = useHealthPoll()
+const { status: modelStatus, start } = useHealthPoll()
+onMounted(() => {
+  start()
+})
 const { voices: speakerVoices } = useVoices()
 
 function formatTime(seconds: number): string {

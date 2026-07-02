@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useHealthPoll } from '../composables/useHealthPoll'
 
-const { status, modelLoaded } = useHealthPoll()
+const { status, modelLoaded, start } = useHealthPoll()
+onMounted(() => {
+  start()
+})
 </script>
 
 <template>

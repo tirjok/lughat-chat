@@ -1,5 +1,10 @@
 import { vi } from 'vitest'
 
+// Reset the health poll singleton before each test file
+import { _resetHealthPoll } from '../app/composables/useHealthPoll'
+
+_resetHealthPoll()
+
 // ─── Browser API Mocks ──────────────────────────────────────────────
 // These are shared across all tests (composable + component).
 

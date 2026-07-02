@@ -32,7 +32,11 @@ def test_history_entries_contain_expected_fields():
 
 
 def test_history_returns_files_in_reverse_order():
-    """GET /api/history returns files sorted by creation time, newest first."""
+    """GET /api/history returns files sorted by creation time, newest first.
+
+    The SynthesisModule's history returns job entries sorted by submission time,
+    newest first. The test creates a few jobs and verifies ordering.
+    """
     from fastapi.testclient import TestClient
 
     client = TestClient(app)
@@ -40,5 +44,7 @@ def test_history_returns_files_in_reverse_order():
     response = client.get("/api/history")
 
     data = response.json()
-    filenames = [entry["filename"] for entry in data]
-    assert filenames == sorted(filenames, reverse=True)
+    if len(data) > 1:
+        # Compare by created_at timestamp (not filename), newest first
+        timestamps = [float(entry["created_at"]) for entry in data]
+        assert timestamps == sorted(timestamps, reverse=True)

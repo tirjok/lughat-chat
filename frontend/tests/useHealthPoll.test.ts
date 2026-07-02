@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useHealthPoll } from '../app/composables/useHealthPoll'
-import { mountedCallbacks } from './setup'
+import { useHealthPoll, _resetHealthPoll } from '../app/composables/useHealthPoll'
 
 describe('useHealthPoll', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mountedCallbacks.length = 0
+    _resetHealthPoll()
   })
 
   describe('initial state', () => {
@@ -20,6 +19,12 @@ describe('useHealthPoll', () => {
 
       expect(poller.modelLoaded.value).toBe(false)
     })
+
+    it('exposes a start method', () => {
+      const poller = useHealthPoll()
+
+      expect(typeof poller.start).toBe('function')
+    })
   })
 
   describe('successful health check', () => {
@@ -30,11 +35,7 @@ describe('useHealthPoll', () => {
       }))
 
       const poller = useHealthPoll()
-
-      // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
-        cb()
-      }
+      poller.start()
 
       // Wait for the first polling cycle to complete
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -49,11 +50,7 @@ describe('useHealthPoll', () => {
       }))
 
       const poller = useHealthPoll()
-
-      // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
-        cb()
-      }
+      poller.start()
 
       await new Promise(resolve => setTimeout(resolve, 50))
 
@@ -69,11 +66,7 @@ describe('useHealthPoll', () => {
       }))
 
       const poller = useHealthPoll()
-
-      // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
-        cb()
-      }
+      poller.start()
 
       await new Promise(resolve => setTimeout(resolve, 50))
 
@@ -89,12 +82,8 @@ describe('useHealthPoll', () => {
       }))
       global.fetch = fetchSpy
 
-      useHealthPoll()
-
-      // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
-        cb()
-      }
+      const poller = useHealthPoll()
+      poller.start()
 
       // Wait for enough time to see if polling continues
       await new Promise(resolve => setTimeout(resolve, 4500))
@@ -109,15 +98,57 @@ describe('useHealthPoll', () => {
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
 
       const poller = useHealthPoll()
-
-      // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
-        cb()
-      }
+      poller.start()
 
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(poller.status.value).toBe('loading')
+    })
+  })
+
+  describe('singleton behavior', () => {
+    it('multiple calls return the same state object', () => {
+      const poller1 = useHealthPoll()
+      const poller2 = useHealthPoll()
+
+      expect(poller1).toBe(poller2)
+    })
+
+    it('multiple calls share the same status', async () => {
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: 'ready', model_loaded: true })
+      }))
+
+      const poller1 = useHealthPoll()
+      const poller2 = useHealthPoll()
+
+      // Only the first call should start polling
+      poller1.start()
+
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      // Both consumers see the same updated status
+      expect(poller1.status.value).toBe('ready')
+      expect(poller2.status.value).toBe('ready')
+    })
+
+    it('calling start() multiple times does not create duplicate intervals', async () => {
+      const fetchSpy = vi.fn(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: 'ready', model_loaded: true })
+      }))
+      global.fetch = fetchSpy
+
+      const poller = useHealthPoll()
+      poller.start()
+      poller.start() // Second start should be a no-op
+      poller.start() // Third start should also be a no-op
+
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      // Only 1 fetch call (from the first start), not 3
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
     })
   })
 })

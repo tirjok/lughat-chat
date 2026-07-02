@@ -1,6 +1,7 @@
 import os
 import tempfile
-from app import app, discover_voices, SPEAKER_WAV_DIR
+from app import app
+from synthesis import discover_voices, SPEAKER_WAV_DIR
 
 
 def test_discover_voices_returns_voice_entries_for_wav_files():

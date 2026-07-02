@@ -1,5 +1,11 @@
+"""Tests for the sync generate endpoint returning MP3 blob.
+
+These tests verify that the backwards-compatible sync endpoint
+(/api/generate_sync) returns valid MP3 audio.
+"""
+
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from app import app
 
@@ -30,45 +36,45 @@ def _mock_tts_model():
     return MockTTS()
 
 
-def _make_mock_wav():
-    """Build a MagicMock that looks like a valid WAV file for _validate_speaker_wav."""
-    mock = MagicMock()
-    mock.getnframes.return_value = int(22050 * 0.5)
-    mock.getframerate.return_value = 22050
-    mock.getnchannels.return_value = 1
-    mock.getsampwidth.return_value = 2
-    return mock
-
-
 def _setup_mock_model():
-    """Set up mock TTS model in app module without creating physical files.
-
-    Mocks os.path.exists so the backend's speaker_wav file check passes,
-    and mocks wave.open so _validate_speaker_wav() can read duration without
-    actual files on disk.
-    """
+    """Set up mock TTS model in SynthesisModule."""
     import app as main_app
+    from synthesis import get_module
 
-    speaker_wav_dir = os.path.join(os.path.dirname(main_app.__file__), "speaker_wavs")
-    _mock_wav = _make_mock_wav()
+    mock_tts = _mock_tts_model()
 
-    def _mock_path_exists(path):
-        if isinstance(path, str) and path.startswith(speaker_wav_dir + os.sep):
-            return True
-        return _original_path_exists(path)
+    # Patch the SynthesisModule's lifecycle to return the mock model
+    mod = get_module()
+    mod._lifecycle._model = mock_tts
+    mod._lifecycle._last_use = 0  # Force reload on next use
 
-    def _mock_wave_open(path, mode="r"):
-        return _mock_wav
+    # Patch the worker's _synthesize to create real WAV files
+    def _mock_synthesize(job):
+        import wave
+        import shutil
 
-    _original_path_exists = os.path.exists
-    with patch("os.path.exists", side_effect=_mock_path_exists):
-        with patch.object(main_app, "wave", open_side_effect=_mock_wave_open):
-            main_app.tts_model = _mock_tts_model()
-            main_app.model_load_status = "ready"
+        timestamp = __import__("uuid").uuid4().hex[:8]
+        lang_code = job.language
+        wav_path = os.path.join(
+            main_app.AUDIO_DIR, f"{lang_code}_{job.voice}_{timestamp}.wav"
+        )
+        mp3_path = wav_path.replace(".wav", ".mp3")
+        job.mp3_path = mp3_path
+
+        with wave.open(wav_path, "w") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(22050)
+            samples = b"\x00\x00" * 2205
+            wav_file.writeframes(samples)
+
+        shutil.copy2(wav_path, mp3_path)
+
+    mod._worker._synthesize = MagicMock(side_effect=_mock_synthesize)
 
 
-def test_generate_speech_returns_mp3_blob():
-    """POST /api/generate returns MP3 audio blob, not JSON."""
+def test_generate_sync_returns_mp3_blob():
+    """POST /api/generate_sync returns MP3 audio blob, not JSON."""
     _setup_mock_model()
 
     from fastapi.testclient import TestClient
@@ -76,7 +82,7 @@ def test_generate_speech_returns_mp3_blob():
     client = TestClient(app)
 
     response = client.post(
-        "/api/generate",
+        "/api/generate_sync",
         json={"text": "مرحبا بالعالم", "language": "ar", "voice": "female"},
     )
 
@@ -85,8 +91,8 @@ def test_generate_speech_returns_mp3_blob():
     assert "audio/mpeg" in response.headers["content-type"]
 
 
-def test_generate_speech_returns_valid_mp3_file():
-    """POST /api/generate returns a valid MP3 file that is not empty."""
+def test_generate_sync_returns_valid_mp3_file():
+    """POST /api/generate_sync returns a valid MP3 file that is not empty."""
     _setup_mock_model()
 
     from fastapi.testclient import TestClient
@@ -94,7 +100,7 @@ def test_generate_speech_returns_valid_mp3_file():
     client = TestClient(app)
 
     response = client.post(
-        "/api/generate",
+        "/api/generate_sync",
         json={"text": "مرحبا بالعالم", "language": "ar", "voice": "female"},
     )
 
