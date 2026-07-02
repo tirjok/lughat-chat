@@ -600,7 +600,6 @@ class Worker:
                 gpt_cond_latent=latents["gpt_cond_latent"],
                 speaker_embedding=latents["speaker_embedding"],
                 temperature=0.7,
-                seed=seed,
             )
         else:
             # No cached latents — standard call with optimized params
@@ -610,7 +609,6 @@ class Worker:
                 language=job.language,
                 file_path=wav_path,
                 temperature=0.7,
-                seed=seed,
             )
 
         if not os.path.exists(wav_path):

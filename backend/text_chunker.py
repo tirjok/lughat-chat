@@ -293,7 +293,9 @@ def merge_audio_files(file_paths: List[str], output_path: str) -> None:
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         for path in file_paths:
-            f.write(f"file {path}\n")
+            # FFmpeg concat demuxer requires single-quoted paths.
+            # Paths with spaces, special chars, etc. must be quoted.
+            f.write(f"file '{path}'\n")
         list_path = f.name
 
     try:
@@ -307,8 +309,8 @@ def merge_audio_files(file_paths: List[str], output_path: str) -> None:
                 "0",
                 "-i",
                 list_path,
-                "-c",
-                "copy",
+                "-b:a",
+                "192k",
                 output_path,
             ],
             check=True,
