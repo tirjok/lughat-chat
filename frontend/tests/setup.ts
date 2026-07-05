@@ -8,6 +8,48 @@ global.window.devicePixelRatio = 1
 global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob') as unknown as typeof global.URL.createObjectURL
 global.URL.revokeObjectURL = vi.fn()
 
+// matchMedia mock for useScrollReveal (prefers-reduced-motion check)
+global.window.matchMedia = vi.fn(() => ({ matches: false, media: '' })) as unknown as typeof global.window.matchMedia
+
+// IntersectionObserver mock for useScrollReveal
+const mockIntersectionObserver = vi.fn()
+const mockElements: Element[] = []
+global.IntersectionObserver = class IntersectionObserver extends EventTarget {
+  private callback_: IntersectionObserverCallback
+  private options_?: IntersectionObserverInit
+  constructor(
+    callback: IntersectionObserverCallback,
+    options?: IntersectionObserverInit
+  ) {
+    super()
+    this.callback_ = callback
+    this.options_ = options
+    mockIntersectionObserver(this, options)
+  }
+
+  observe(el: Element) {
+    mockElements.push(el)
+  }
+
+  unobserve(_el: Element) {}
+
+  disconnect() {
+    mockElements.length = 0
+  }
+
+  takeRecords(): IntersectionObserverEntry[] {
+    return []
+  }
+
+  rootEl: Element | null = null
+
+  rootMarginEl: string = '0px'
+
+  get options() {
+    return this.options_
+  }
+} as unknown as typeof IntersectionObserver
+
 // Track onMounted callbacks for testing composables that use lifecycle hooks
 const mountedCallbacks: (() => void)[] = []
 

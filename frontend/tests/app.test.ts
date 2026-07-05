@@ -23,7 +23,7 @@ beforeEach(() => {
 
 describe('app.vue — dark theme meta tags', () => {
   it('calls useHead with viewport and favicon meta tags', () => {
-    mount(App, { components: { ToastNotification: defineComponent({ template: '<div />' }), NuxtPage: defineComponent({ template: '<div />' }) } })
+    mount(App, { components: { NuxtPage: defineComponent({ template: '<div />' }) } })
 
     expect(mockUseHead).toHaveBeenCalledTimes(1)
     const callArgs = mockUseHead.mock.calls[0][0]
@@ -35,19 +35,17 @@ describe('app.vue — dark theme meta tags', () => {
     )
   })
 
-  it('renders ToastNotification component', () => {
+  it('does NOT render ToastNotification (rendered in index.vue instead)', () => {
     const wrapper = mount(App, {
       global: {
         components: {
-          ToastNotification: defineComponent({
-            template: '<div aria-live="polite"><slot /></div>'
-          }),
           NuxtPage: defineComponent({ template: '<div />' })
         }
       }
     })
 
-    // ToastNotification should be rendered (auto-imported by Nuxt)
-    expect(wrapper.find('[aria-live="polite"]').exists()).toBe(true)
+    // ToastNotification is no longer in app.vue (Phase 1: removed duplicate)
+    // It is rendered inside index.vue's page content
+    expect(wrapper.find('[aria-live="polite"]').exists()).toBe(false)
   })
 })

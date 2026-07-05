@@ -2,7 +2,6 @@ import {
   defineConfig,
   presetWind3,
   presetTypography,
-  presetWebFonts,
   transformerDirectives
 } from 'unocss'
 
@@ -12,8 +11,8 @@ export default defineConfig({
   ],
   theme: {
     fontFamily: {
-      sans: ['Inter', 'sans-serif'],
-      arabic: ['Cairo', 'sans-serif']
+      sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+      arabic: ['"Noto Sans Arabic"', 'Cairo', 'sans-serif']
     },
     colors: {
       studio: {
@@ -49,12 +48,6 @@ export default defineConfig({
           fontSize: '2.25rem',
           fontWeight: '700'
         }
-      }
-    }),
-    presetWebFonts({
-      provider: 'google',
-      fonts: {
-        arabic: 'Cairo'
       }
     })
   ],

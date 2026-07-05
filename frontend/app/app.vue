@@ -19,7 +19,6 @@ useSeoMeta({
 
 <template>
   <div>
-    <ToastNotification />
     <NuxtPage />
   </div>
 </template>

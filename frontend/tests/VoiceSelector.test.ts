@@ -218,7 +218,6 @@ describe('VoiceSelector', () => {
       // Assert
       const html = wrapper.html()
       expect(html).toContain('p-3')
-      expect(html).toContain('p-4')
     })
 
     it('When viewport is 767px then voice options have p-3 padding (WCAG compliance)', () => {
@@ -229,7 +228,6 @@ describe('VoiceSelector', () => {
       // Assert
       const html = wrapper.html()
       expect(html).toContain('p-3')
-      expect(html).toContain('p-4')
     })
   })
 })

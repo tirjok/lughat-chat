@@ -41,19 +41,11 @@ function handleInput(event: Event) {
   emit('update:modelValue', Math.max(0.5, Math.min(2.0, stepped)))
   updateSliderFill()
 }
-
-function adjustSpeed(delta: number) {
-  const stepped = Math.round(clampedValue.value / 0.1) * 0.1
-  const newValue = Math.max(0.5, Math.min(2.0, stepped + delta))
-  emit('update:modelValue', newValue)
-}
 </script>
 
 <template>
-  <div
-    class="flex flex-col gap-4 bg-studio-900 rounded-xl border border-studio-700/60 p-4"
-  >
-    <div class="flex justify-between items-end">
+  <div class="flex flex-col rounded-[0.875rem] ring-1 ring-white/[0.06] p-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] bg-white/[0.02]">
+    <div class="flex justify-between items-center mb-3">
       <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
         <span
           aria-hidden="true"
@@ -61,62 +53,23 @@ function adjustSpeed(delta: number) {
         />
         Speech Speed
       </label>
-      <span class="text-xs font-mono text-sunrise-orange bg-studio-800 px-2 py-1 rounded border border-studio-700/60">
+      <span class="text-sm font-mono text-sunrise-orange">
         {{ displayValue }}
       </span>
     </div>
 
-    <!-- Prototype: native <input type=range> with gradient track, pt-2 pb-6 wrapper -->
-    <div class="relative w-full pt-2 pb-6">
-      <input
-        ref="sliderRef"
-        type="range"
-        min="0.5"
-        max="2.0"
-        step="0.1"
-        :value="clampedValue"
-        class="w-full"
-        style="-webkit-appearance: none; width: 100%; background: transparent;"
-        @input="handleInput"
-      >
-      <!-- Range markers (prototype: text-[10px], mt-4 absolute) -->
-      <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-4 absolute w-full">
-        <span>0.5x</span>
-        <span>&nbsp;</span>
-        <span>2.0x</span>
-      </div>
-    </div>
-
-    <!-- Mobile: Stepper buttons (<768px) -->
-    <div class="md:hidden flex items-center justify-center gap-4">
-      <button
-        class="w-11 h-11 rounded-full bg-studio-700 border border-studio-600 text-white flex items-center justify-center shadow-md hover:bg-studio-600 active:scale-95 transition-all"
-        :class="{ 'opacity-40 cursor-not-allowed': clampedValue <= 0.5 }"
-        :aria-label="`Decrease speed to ${(clampedValue - 0.1).toFixed(1)}x`"
-        @click="adjustSpeed(-0.1)"
-      >
-        <span
-          aria-hidden="true"
-          class="ph ph-minus text-lg"
-        />
-      </button>
-
-      <span class="text-xl font-mono text-sunrise-orange bg-studio-900 px-4 py-2 rounded-lg border border-studio-700/60 min-w-[4rem] text-center">
-        {{ displayValue }}
-      </span>
-
-      <button
-        class="w-11 h-11 rounded-full bg-studio-700 border border-studio-600 text-white flex items-center justify-center shadow-md hover:bg-studio-600 active:scale-95 transition-all"
-        :class="{ 'opacity-40 cursor-not-allowed': clampedValue >= 2.0 }"
-        :aria-label="`Increase speed to ${(clampedValue + 0.1).toFixed(1)}x`"
-        @click="adjustSpeed(0.1)"
-      >
-        <span
-          aria-hidden="true"
-          class="ph ph-plus text-lg"
-        />
-      </button>
-    </div>
+    <!-- Native <input type=range> with gradient track -->
+    <input
+      ref="sliderRef"
+      type="range"
+      min="0.5"
+      max="2.0"
+      step="0.1"
+      :value="clampedValue"
+      class="w-full"
+      style="-webkit-appearance: none; width: 100%; background: transparent;"
+      @input="handleInput"
+    >
   </div>
 </template>
 
