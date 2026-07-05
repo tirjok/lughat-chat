@@ -92,13 +92,13 @@ function adjustSpeed(delta: number) {
         </div>
       </div>
 
-      <!-- Mobile: Stepper buttons (<768px): Double-Bezel -->
+      <!-- Mobile: Stepper buttons (<768px): Double-Bezel + Magnetic -->
       <div class="md:hidden flex items-center justify-center gap-4">
-        <!-- Outer Shell -->
-        <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-          <!-- Inner Core -->
+        <!-- Outer Shell: magnetic hover -->
+        <span class="magnetic-hover rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
+          <!-- Inner Core: spring scale -->
           <button
-            class="rounded-full bg-studio-700 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.2)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] hover:bg-studio-600 active:scale-95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] w-11 h-11"
+            class="rounded-full bg-studio-700 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.2)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] hover:bg-studio-600 hover:shadow-[0_6px_16px_rgba(0,0,0,0.3)] active:scale-95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] w-11 h-11"
             :class="{ 'opacity-40 cursor-not-allowed': clampedValue <= 0.5 }"
             :aria-label="`Decrease speed to ${(clampedValue - 0.1).toFixed(1)}x`"
             @click="adjustSpeed(-0.1)"
@@ -117,11 +117,11 @@ function adjustSpeed(delta: number) {
           </span>
         </span>
 
-        <!-- Outer Shell -->
-        <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-          <!-- Inner Core -->
+        <!-- Outer Shell: magnetic hover -->
+        <span class="magnetic-hover rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
+          <!-- Inner Core: spring scale -->
           <button
-            class="rounded-full bg-studio-700 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.2)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] hover:bg-studio-600 active:scale-95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] w-11 h-11"
+            class="rounded-full bg-studio-700 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.2)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] hover:bg-studio-600 hover:shadow-[0_6px_16px_rgba(0,0,0,0.3)] active:scale-95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] w-11 h-11"
             :class="{ 'opacity-40 cursor-not-allowed': clampedValue >= 2.0 }"
             :aria-label="`Increase speed to ${(clampedValue + 0.1).toFixed(1)}x`"
             @click="adjustSpeed(0.1)"

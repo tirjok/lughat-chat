@@ -110,10 +110,10 @@ onUnmounted(() => {
         Voice Model
       </label>
 
-      <!-- Dropdown Trigger -->
+      <!-- Dropdown Trigger: Magnetic -->
       <button
         ref="triggerRef"
-        class="w-full bg-studio-900 ring-1 ring-white/[0.06] hover:ring-sunrise-orange/30 rounded-[1.125rem] p-4 flex items-center justify-between focus:outline-none relative overflow-hidden group shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        class="magnetic-hover w-full bg-studio-900 ring-1 ring-white/[0.06] hover:ring-sunrise-orange/30 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-[1.125rem] p-4 flex items-center justify-between focus:outline-none relative overflow-hidden group shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
         @click="toggleDropdown"
       >
         <div
@@ -172,9 +172,9 @@ onUnmounted(() => {
       >
         <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
           <button
-            v-for="voice in voices"
+            v-for="(voice, index) in voices"
             :key="voice.id"
-            class="voice-option w-full text-left rounded-[0.875rem] ring-1 ring-white/[0.06] p-3 flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group"
+            class="voice-option w-full text-left rounded-[0.875rem] ring-1 ring-white/[0.06] p-3 flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group fade-up"
             :data-voice="voice.id"
             :data-name="voice.name"
             :data-tag="voice.tag"
@@ -184,6 +184,7 @@ onUnmounted(() => {
                 ? 'bg-[#2a1a1a]'
                 : 'bg-studio-700/40 hover:bg-studio-700/70'
             ]"
+            :style="{ transitionDelay: `${index * 50}ms` }"
             @click="selectVoice(voice)"
           >
             <div class="flex items-center gap-3">

@@ -6,12 +6,21 @@
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
 import WaveformCanvas from '../components/WaveformCanvas.vue'
-import { computed, nextTick, shallowRef, watch, onUnmounted, ref } from 'vue'
+import { computed, nextTick, shallowRef, watch, onUnmounted, ref, type Ref } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
+import { useScrollReveal } from '../composables/useScrollReveal'
 import { showToast } from '../composables/useToast'
 
 const { activePanel } = usePanelToggle()
+
+// Scroll-reveal: observe desktop control deck sections for fade-up
+const controlDeckDesktopRef = ref<HTMLElement | null>(null)
+useScrollReveal(controlDeckDesktopRef as Ref<HTMLElement | null>)
+
+// Scroll-reveal: observe desktop canvas header for fade-up
+const canvasHeaderRef = ref<HTMLElement | null>(null)
+useScrollReveal(canvasHeaderRef as Ref<HTMLElement | null>)
 
 // Mobile split-screen: ratio of canvas height (0.0–1.0)
 const canvasRatio = ref(0.55)
@@ -184,9 +193,9 @@ function handleClosePlayer() {
 
     <!-- Mobile: Split-screen (hidden on desktop) -->
     <div class="flex md:hidden flex-col h-dvh w-full overflow-hidden">
-      <!-- Mobile Top Bar (logo + status, matching prototype) -->
+      <!-- Mobile Top Bar (logo + status) — Floating Glass Pill -->
       <header
-        class="flex justify-between items-center px-4 py-3 bg-studio-800 border-b border-white/[0.06] shrink-0 z-40"
+        class="flex justify-between items-center px-3 py-2.5 bg-studio-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-3 mt-2.5 shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
       >
         <div class="flex items-center gap-2">
           <span
@@ -399,10 +408,10 @@ function handleClosePlayer() {
                     {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
                   </p>
                 </div>
-                <!-- Action buttons: Double-Bezel per button -->
+                <!-- Action buttons: Double-Bezel + Magnetic -->
                 <div class="flex items-center gap-2 shrink-0">
                   <button
-                    class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+                    class="magnetic-hover w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
                     title="Download MP3"
                     @click="handleDownload"
                   >
@@ -414,7 +423,7 @@ function handleClosePlayer() {
                     </span>
                   </button>
                   <button
-                    class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center text-gray-400 hover:text-red-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+                    class="magnetic-hover w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center text-gray-400 hover:text-red-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
                     title="Close Player"
                     @click="handleClosePlayer"
                   >
@@ -482,12 +491,13 @@ function handleClosePlayer() {
       class="hidden md:flex flex-row h-dvh w-full"
       style="background-color: #121212;"
     >
-      <!-- LEFT PANEL: The Control Deck (35% md, 30% lg, 25% xl) -->
+      <!-- LEFT PANEL: The Control Deck (35% md, 30% lg, 25% xl) — Fade-up -->
       <aside
+        ref="controlDeckDesktopRef"
         role="region"
         aria-labelledby="control-deck-heading"
         data-panel="control-deck"
-        class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-white/[0.06] flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-8px_32px_rgba(0,0,0,0.25)] md:shadow-[0_-16px_48px_rgba(0,0,0,0.35)] shrink-0 order-2 md:order-1 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-white/[0.06] flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-8px_32px_rgba(0,0,0,0.25)] md:shadow-[0_-16px_48px_rgba(0,0,0,0.35)] shrink-0 order-2 md:order-1 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] fade-up delay-100"
       >
         <!-- Mobile Header (logo + status, visible below 768px) -->
         <header
@@ -526,11 +536,11 @@ function handleClosePlayer() {
           <ModelStatusIndicator />
         </header>
 
-        <!-- Controls Container: Double-Bezel Architecture -->
+        <!-- Controls Container: Double-Bezel Architecture — Fade-up -->
         <!-- Outer Shell -->
         <div class="flex-1 p-4 md:p-5 overflow-y-auto flex flex-col">
-          <!-- Inner Core -->
-          <div class="rounded-[calc(1.125rem-0.25rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-4 md:p-6 flex flex-col gap-6 md:gap-8">
+          <!-- Inner Core — Fade-up -->
+          <div class="rounded-[calc(1.125rem-0.25rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-4 md:p-6 flex flex-col gap-6 md:gap-8 fade-up delay-200">
             <!-- Voice Selection -->
             <VoiceSelector
               v-model="selectedSpeaker"
@@ -588,12 +598,13 @@ function handleClosePlayer() {
         </div>
       </aside>
 
-      <!-- RIGHT PANEL: The Canvas (65% md, 70% lg, 75% xl) -->
+      <!-- RIGHT PANEL: The Canvas (65% md, 70% lg, 75% xl) — Fade-up -->
       <main
+        ref="canvasHeaderRef"
         role="region"
         aria-labelledby="canvas-heading"
         data-panel="canvas"
-        class="flex-1 w-full bg-studio-900 relative flex flex-col overflow-hidden order-1 md:order-2"
+        class="flex-1 w-full bg-studio-900 relative flex flex-col overflow-hidden order-1 md:order-2 fade-up delay-100"
       >
         <!-- Focus Halo (radial gradient glow behind textarea) -->
         <FocusHaloCanvas :focused="!!textInput" />

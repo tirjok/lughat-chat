@@ -7,6 +7,28 @@ global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob')
 global.URL.revokeObjectURL = vi.fn()
 global.fetch = vi.fn()
 
+// IntersectionObserver mock for useScrollReveal
+if (typeof (globalThis as unknown as Record<string, unknown>).IntersectionObserver !== 'function') {
+  global.IntersectionObserver = class IntersectionObserver extends EventTarget {
+    constructor(
+      _callback: IntersectionObserverCallback,
+      _options?: IntersectionObserverInit
+    ) {
+      super()
+    }
+
+    observe(_el: Element) {}
+
+    unobserve(_el: Element) {}
+
+    disconnect() {}
+
+    takeRecords(): IntersectionObserverEntry[] {
+      return []
+    }
+  } as unknown as typeof IntersectionObserver
+}
+
 // ─── Viewport / Responsive Mocks ──────────────────────────────────────
 // Used by responsive UI tests to simulate different viewport sizes.
 // Set `window.innerWidth` to the desired breakpoint width before mounting components.

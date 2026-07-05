@@ -36,6 +36,7 @@ const panelShown = computed(() => props.visible)
   <!--
     Outer Shell: subtle background + hairline ring + padding + large radius
     Always in DOM so CSS transitions fire when `visible` toggles.
+    Spring slide-in animation.
   -->
   <div
     class="fixed bottom-0 right-0 w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-800 border-t md:border-l ring-white/[0.06] p-1.5 flex flex-col z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
@@ -101,12 +102,12 @@ const panelShown = computed(() => props.visible)
       <div class="w-full rounded-[1.125rem] ring-1 ring-white/[0.06] p-1.5 flex items-center gap-2 md:gap-4 bg-white/[0.02]">
         <!-- Inner Core -->
         <div class="w-full rounded-[calc(1.125rem-0.375rem)] bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-2 md:p-4 flex items-center gap-2 md:gap-4">
-          <!-- Play/Pause button: Double-Bezel -->
-          <!-- Outer Shell -->
-          <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex-shrink-0">
-            <!-- Inner Core -->
+          <!-- Play/Pause button: Double-Bezel + Magnetic -->
+          <!-- Outer Shell: spring hover -->
+          <span class="magnetic-hover rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex-shrink-0">
+            <!-- Inner Core: scale on hover, press on active -->
             <button
-              class="group rounded-full bg-sunrise-magenta text-white flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.98] hover:scale-[1.02] w-10 h-10 md:w-12 md:h-12"
+              class="group rounded-full bg-sunrise-magenta text-white flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-10 h-10 md:w-12 md:h-12"
               @click="emit('toggle')"
             >
               <span

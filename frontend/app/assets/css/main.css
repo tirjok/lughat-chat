@@ -164,13 +164,70 @@ textarea {
   }
 }
 
-/* Panel transition classes (150ms ease-out) */
+/* Panel transition classes (spring easing) */
 .panel-slide-enter {
-  animation: slide-up 150ms ease-out forwards;
+  animation: slide-up 700ms var(--ease-slide) forwards;
 }
 
 .panel-slide-leave {
-  animation: fade-out 150ms ease-out forwards;
+  animation: fade-out 500ms var(--ease-spring) forwards;
+}
+
+/* ===================================
+   Scroll-Entry Fade-Up Animations
+   Elements fade up from translate-y-16 blur-md opacity-0
+   Triggered via IntersectionObserver — no scroll listeners
+   Elements are VISIBLE by default — fade-up only adds the
+   animated entrance when the observer fires.
+   =================================== */
+.fade-up {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+  transition:
+    opacity 800ms var(--ease-spring),
+    transform 800ms var(--ease-spring),
+    filter 800ms var(--ease-spring);
+}
+
+/* Staggered delays for sequential elements */
+.fade-up.delay-100 { transition-delay: 100ms; }
+.fade-up.delay-150 { transition-delay: 150ms; }
+.fade-up.delay-200 { transition-delay: 200ms; }
+.fade-up.delay-300 { transition-delay: 300ms; }
+
+/* Animated state: set by IntersectionObserver when element enters viewport */
+.fade-up.animate {
+  opacity: 0;
+  transform: translateY(24px);
+  filter: blur(4px);
+}
+
+.fade-up.animate.visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Staggered delays for sequential elements */
+.fade-up.delay-100 { transition-delay: 100ms; }
+.fade-up.delay-150 { transition-delay: 150ms; }
+.fade-up.delay-200 { transition-delay: 200ms; }
+.fade-up.delay-300 { transition-delay: 300ms; }
+
+/* Magnetic hover: scale down on active (physical press feel) */
+.magnetic-hover:active {
+  transform: scale(0.97);
+  transition: transform 300ms var(--ease-spring);
+}
+
+/* Magnetic hover: subtle lift on hover (kinetic tension) */
+.magnetic-hover {
+  transition: transform 500ms var(--ease-spring);
+}
+
+.magnetic-hover:hover {
+  transform: translateY(-2px);
 }
 
 /* Reduced motion: slow down or disable animations */
@@ -194,5 +251,20 @@ textarea {
   .panel-slide-leave {
     animation-duration: 50ms !important;
     animation-fill-mode: forwards;
+  }
+  /* Scroll fade-up: instant, no transform or blur */
+  .fade-up.animate {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+  /* Magnetic hover: no transform */
+  .magnetic-hover {
+    transform: none !important;
+    transition: none !important;
+  }
+  .magnetic-hover:hover {
+    transform: none !important;
   }
 }

@@ -67,7 +67,7 @@ function toastBgClass(type: ToastType): string {
 <style>
 .toast-slide-enter-active,
 .toast-slide-leave-active {
-  transition: transform 700ms cubic-bezier(0.32, 0.72, 0, 1), opacity 700ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toast-slide-enter-from,

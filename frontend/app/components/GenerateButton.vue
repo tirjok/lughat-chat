@@ -60,8 +60,8 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-/* Double-Bezel (Doppelrand) Architecture */
-/* Outer Shell */
+/* Double-Bezel (Doppelrand) + Magnetic Physics */
+/* Outer Shell: spring hover + press on active */
 .generate-btn {
   position: relative;
   background: #1A1A1A;
@@ -83,8 +83,9 @@ const emit = defineEmits<{
 .generate-btn:hover {
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    0 0 0 0.5px rgba(255, 255, 255, 0.1),
-    0 4px 16px rgba(221, 36, 118, 0.08);
+    0 0 0 0.5px rgba(255, 255, 255, 0.12),
+    0 8px 24px rgba(221, 36, 118, 0.1);
+  transform: translateY(-1px);
 }
 
 .generate-btn:active {

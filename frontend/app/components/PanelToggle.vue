@@ -10,17 +10,17 @@ defineProps<Props>()
 </script>
 
 <template>
-  <!-- Panel Toggle FAB: Double-Bezel Architecture -->
-  <!-- Outer Shell -->
+  <!-- Panel Toggle FAB: Double-Bezel + Magnetic Physics -->
+  <!-- Outer Shell: floating pill with spring hover -->
   <button
-    class="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-studio-700 ring-1 ring-white/[0.06] text-white shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:bg-studio-600 active:scale-95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] md:hidden p-1.5"
+    class="magnetic-hover fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-studio-700 ring-1 ring-white/[0.06] text-white shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:bg-studio-600 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] active:scale-95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] md:hidden p-1.5"
     :aria-label="activePanel === 'canvas' ? 'Switch to voice settings' : 'Switch to text editor'"
     style="min-width: 48px; min-height: 48px;"
     @click="togglePanel"
   >
-    <!-- Inner Core -->
+    <!-- Inner Core: spring scale on hover -->
     <div
-      class="rounded-full bg-studio-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] flex items-center gap-2"
+      class="rounded-full bg-studio-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] flex items-center gap-2 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
       style="min-width: 48px; min-height: 48px;"
     >
       <!-- Icon: slides-up (from canvas → control deck) -->
