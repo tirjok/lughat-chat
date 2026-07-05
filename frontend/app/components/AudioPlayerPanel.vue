@@ -38,7 +38,7 @@ const panelShown = computed(() => props.visible)
     Prototype: fixed bottom, responsive width, no inner wrapper.
   -->
   <div
-    class="fixed bottom-0 right-0 w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-800 border-t md:border-l border-studio-700/60 p-4 md:p-6 flex flex-col gap-3 md:gap-4 z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.6)]"
+    class="fixed bottom-0 right-0 w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-800 border-t md:border-l border-white/[0.06] p-4 md:p-6 flex flex-col gap-3 md:gap-4 z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
     :class="panelShown ? 'visible-slide' : 'hidden-slide'"
     style="transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), opacity 500ms cubic-bezier(0.16, 1, 0.3, 1);"
   >
@@ -47,7 +47,7 @@ const panelShown = computed(() => props.visible)
       <div class="flex items-center gap-3 min-w-0">
         <!-- Gradient audio icon (prototype: w-8 h-8 md:w-10 md:h-10) -->
         <div
-          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg shrink-0"
+          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
         >
           <span
             aria-hidden="true"
@@ -66,7 +66,7 @@ const panelShown = computed(() => props.visible)
       <!-- Action buttons (prototype: w-8 h-8 md:w-10 md:h-10) -->
       <div class="flex items-center gap-1 md:gap-2 shrink-0">
         <button
-          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center hover:text-white text-gray-400 transition-colors"
+          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-studio-900 ring-1 ring-white/[0.06] flex items-center justify-center hover:text-white text-gray-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
           title="Download MP3"
           @click="emit('download')"
         >
@@ -76,7 +76,7 @@ const panelShown = computed(() => props.visible)
           />
         </button>
         <button
-          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center hover:text-red-400 text-gray-400 transition-colors"
+          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-studio-900 ring-1 ring-white/[0.06] flex items-center justify-center hover:text-red-400 text-gray-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
           title="Close Player"
           @click="emit('close')"
         >
@@ -89,10 +89,10 @@ const panelShown = computed(() => props.visible)
     </div>
 
     <!-- Heatmap Waveform Container (prototype: p-2 md:p-4, gap-2 md:gap-4, h-8 md:h-12) -->
-    <div class="w-full bg-studio-900 rounded-lg border border-studio-700/60 p-2 md:p-4 flex items-center gap-2 md:gap-4">
+    <div class="w-full bg-studio-900 rounded-[0.875rem] ring-1 ring-white/[0.06] p-2 md:p-4 flex items-center gap-2 md:gap-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
       <!-- Play/Pause button (prototype: w-10 h-10 md:w-12 md:h-12) -->
       <button
-        class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0"
+        class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-sunrise-magenta text-white flex items-center justify-center transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(221,36,118,0.3)] flex-shrink-0 hover:scale-105"
         @click="emit('toggle')"
       >
         <span

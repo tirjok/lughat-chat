@@ -9,8 +9,8 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  // Inter font for UI labels (Cairo already loaded for Arabic)
-  // Phosphor Icons for sleek, modern icons (matches prototype)
+  // Plus Jakarta Sans for UI labels (Inter banned — premium agency font)
+  // Cairo for Arabic text + Phosphor Icons for sleek, modern icons
   app: {
     head: {
       meta: [
@@ -30,7 +30,7 @@ export default defineNuxtConfig({
           crossorigin: 'anonymous'
         },
         {
-          href: 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap',
           rel: 'stylesheet'
         }
       ],

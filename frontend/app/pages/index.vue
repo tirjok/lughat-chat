@@ -186,7 +186,7 @@ function handleClosePlayer() {
     <div class="flex md:hidden flex-col h-dvh w-full overflow-hidden">
       <!-- Mobile Top Bar (logo + status, matching prototype) -->
       <header
-        class="flex justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700/40 shrink-0 z-40"
+        class="flex justify-between items-center px-4 py-3 bg-studio-800 border-b border-white/[0.06] shrink-0 z-40"
       >
         <div class="flex items-center gap-2">
           <span
@@ -246,19 +246,19 @@ function handleClosePlayer() {
           <!-- Mobile: AI Toolbar (compact, no extra padding) hide it for now -->
           <div class="hidden items-center gap-2 w-full overflow-x-auto hide-scrollbar">
             <button
-              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg border border-studio-700/60 hover:border-gray-500 group"
+              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg ring-1 ring-white/[0.06] hover:ring-white/[0.12] group"
               title="Type in any language and translate to Arabic"
             >
               <span class="group-hover:animate-pulse">✨</span> Translate
             </button>
             <button
-              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-colors bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg border border-studio-700/60 hover:border-sunrise-orange group"
+              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg ring-1 ring-white/[0.06] hover:ring-sunrise-orange/40 group"
               title="Add Harakat (diacritics) for perfect TTS pronunciation"
             >
               <span class="group-hover:animate-pulse">✨</span> Add Diacritics
             </button>
             <button
-              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-colors bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg border border-studio-700/60 hover:border-sunrise-magenta group"
+              class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 rounded-lg ring-1 ring-white/[0.06] hover:ring-sunrise-magenta/40 group"
               title="Let AI write the next few sentences"
             >
               <span class="group-hover:animate-pulse">✨</span> Continue Script
@@ -290,7 +290,7 @@ function handleClosePlayer() {
         @mouseup="onDragEnd"
         @mouseleave="onDragEnd"
       >
-        <div class="w-full h-px bg-studio-700/40" />
+        <div class="w-full h-px bg-white/[0.06]" />
       </div>
 
       <!-- Mobile: Control Deck (bottom half) -->
@@ -298,7 +298,7 @@ function handleClosePlayer() {
         role="region"
         aria-labelledby="control-deck-heading"
         data-panel="control-deck"
-        class="flex-1 w-full bg-studio-800 flex flex-col overflow-hidden"
+        class="flex-1 w-full bg-studio-800 flex flex-col overflow-hidden border-t border-white/[0.06]"
         :style="{ height: `${(1 - canvasRatio) * 100}%` }"
       >
         <!-- Controls Container (compact spacing for mobile) -->
@@ -317,15 +317,15 @@ function handleClosePlayer() {
             <label class="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
               <span class="ph ph-sliders-horizontal" /> Output Settings
             </label>
-            <div class="flex items-center justify-between bg-studio-900 px-3 py-2 rounded-lg border border-studio-700/60">
+            <div class="flex items-center justify-between bg-studio-900 px-3 py-2 rounded-lg ring-1 ring-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
               <span class="text-xs text-gray-400">High Quality Audio</span>
               <button
-                class="w-8 h-4 bg-sunrise-orange rounded-full relative cursor-pointer transition-colors duration-300 ease-in-out hover:bg-sunrise-orange/90 active:scale-95"
+                class="w-8 h-4 bg-sunrise-orange rounded-full relative cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-sunrise-orange/90 active:scale-95"
                 style="box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);"
                 @click="hqAudioEnabled = !hqAudioEnabled"
               >
                 <div
-                  class="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"
+                  class="w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
                   :class="hqAudioEnabled ? 'right-0.5' : 'left-0.5'"
                 />
               </button>
@@ -334,7 +334,7 @@ function handleClosePlayer() {
         </div>
 
         <!-- Action Area (compact) -->
-        <div class="p-3 border-t border-studio-700/40 bg-studio-800 shrink-0">
+        <div class="p-3 border-t border-white/[0.06] bg-studio-800 shrink-0">
           <GenerateButton
             :is-generating="isGenerating"
             :model-status="modelStatus"
@@ -346,12 +346,12 @@ function handleClosePlayer() {
         <!-- Mobile: Generated Audio Card (appears after generation) -->
         <div
           v-if="playerVisible && audioUrl"
-          class="p-3 border-t border-studio-700/40 bg-studio-800 shrink-0"
+          class="p-3 border-t border-white/[0.06] bg-studio-800 shrink-0"
         >
           <div class="flex items-center gap-3">
             <!-- Gradient music icon -->
             <div
-              class="w-9 h-9 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-lg shrink-0"
+              class="w-9 h-9 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
             >
               <span
                 aria-hidden="true"
@@ -370,7 +370,7 @@ function handleClosePlayer() {
             <!-- Action buttons -->
             <div class="flex items-center gap-2 shrink-0">
               <button
-                class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                class="w-8 h-8 rounded-full bg-studio-900 ring-1 ring-white/[0.06] flex items-center justify-center text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
                 title="Download MP3"
                 @click="handleDownload"
               >
@@ -380,7 +380,7 @@ function handleClosePlayer() {
                 />
               </button>
               <button
-                class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors"
+                class="w-8 h-8 rounded-full bg-studio-900 ring-1 ring-white/[0.06] flex items-center justify-center text-gray-400 hover:text-red-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
                 title="Close Player"
                 @click="handleClosePlayer"
               >
@@ -393,10 +393,10 @@ function handleClosePlayer() {
           </div>
 
           <!-- Waveform + Play -->
-          <div class="mt-2 bg-studio-900 rounded-lg border border-studio-700/60 p-2 flex items-center gap-2">
+          <div class="mt-2 bg-studio-900 rounded-lg ring-1 ring-white/[0.06] p-2 flex items-center gap-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
             <!-- Play/Pause button -->
             <button
-              class="w-9 h-9 rounded-full bg-sunrise-magenta text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(221,36,118,0.4)] flex-shrink-0"
+              class="w-9 h-9 rounded-full bg-sunrise-magenta text-white flex items-center justify-center transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(221,36,118,0.3)] flex-shrink-0 hover:scale-105"
               @click="audioModule.toggle"
             >
               <span
@@ -441,11 +441,11 @@ function handleClosePlayer() {
         role="region"
         aria-labelledby="control-deck-heading"
         data-panel="control-deck"
-        class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-studio-700/60 flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.4)] md:shadow-2xl shrink-0 order-2 md:order-1 transition-all duration-300"
+        class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-studio-800 border-t md:border-t-0 md:border-r border-white/[0.06] flex flex-col h-[45dvh] md:h-full z-20 shadow-[0_-8px_32px_rgba(0,0,0,0.25)] md:shadow-[0_-16px_48px_rgba(0,0,0,0.35)] shrink-0 order-2 md:order-1 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
       >
         <!-- Mobile Header (logo + status, visible below 768px) -->
         <header
-          class="flex md:hidden justify-between items-center px-4 py-3 bg-studio-800 border-b border-studio-700/60 shrink-0 z-30 shadow-md"
+          class="flex md:hidden justify-between items-center px-4 py-3 bg-studio-800 border-b border-white/[0.06] shrink-0 z-30"
         >
           <div class="flex items-center gap-2">
             <span
@@ -461,7 +461,7 @@ function handleClosePlayer() {
 
         <!-- Desktop Header (hidden on mobile) -->
         <header
-          class="hidden md:flex p-6 border-b border-studio-700/60 justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent shrink-0"
+          class="hidden md:flex p-6 border-b border-white/[0.06] justify-between items-center bg-gradient-to-b from-[#1f1f1f] to-transparent shrink-0"
         >
           <div>
             <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -496,15 +496,15 @@ function handleClosePlayer() {
             <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
               <span class="ph ph-sliders-horizontal text-lg" /> Output Settings
             </label>
-            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg border border-studio-700/60">
+            <div class="flex items-center justify-between bg-studio-900 p-3 rounded-lg ring-1 ring-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
               <span class="text-sm text-gray-400">High Quality Audio</span>
               <button
-                class="w-10 h-5 bg-sunrise-orange rounded-full relative cursor-pointer transition-colors duration-300 ease-in-out hover:bg-sunrise-orange/90 active:scale-95"
+                class="w-10 h-5 bg-sunrise-orange rounded-full relative cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-sunrise-orange/90 active:scale-95"
                 style="box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);"
                 @click="hqAudioEnabled = !hqAudioEnabled"
               >
                 <div
-                  class="w-4 h-4 bg-white rounded-full absolute top-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out shadow-md"
+                  class="w-4 h-4 bg-white rounded-full absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
                   :class="hqAudioEnabled ? 'right-0.5' : 'left-0.5'"
                 />
               </button>
@@ -513,7 +513,7 @@ function handleClosePlayer() {
         </div>
 
         <!-- Action Area (prototype: p-4 md:p-6, shrink-0) -->
-        <div class="p-4 md:p-6 border-t border-studio-700/60 bg-studio-800 shrink-0">
+        <div class="p-4 md:p-6 border-t border-white/[0.06] bg-studio-800 shrink-0">
           <GenerateButton
             :is-generating="isGenerating"
             :model-status="modelStatus"
@@ -575,21 +575,21 @@ function handleClosePlayer() {
             </h2>
 
             <!-- AI Smart Tools Toolbar (mobile: visible, horizontally scrollable) -->
-            <div class="hidden items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 md:border-l border-studio-700 shrink-0">
+            <div class="hidden items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 border-l border-white/[0.06] shrink-0">
               <button
-                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-gray-500 group"
+                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg ring-1 ring-white/[0.06] hover:ring-white/[0.12] group"
                 title="Type in any language and translate to Arabic"
               >
                 <span class="group-hover:animate-pulse">✨</span> Translate
               </button>
               <button
-                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-sunrise-orange group"
+                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg ring-1 ring-white/[0.06] hover:ring-sunrise-orange/40 group"
                 title="Add Harakat (diacritics) for perfect TTS pronunciation"
               >
                 <span class="group-hover:animate-pulse">✨</span> Add Diacritics
               </button>
               <button
-                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-colors bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg border border-studio-700 hover:border-sunrise-magenta group"
+                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] bg-studio-800 hover:bg-studio-700 px-3 py-1.5 rounded-lg ring-1 ring-white/[0.06] hover:ring-sunrise-magenta/40 group"
                 title="Let AI write the next few sentences"
               >
                 <span class="group-hover:animate-pulse">✨</span> Continue Script
@@ -629,11 +629,11 @@ function handleClosePlayer() {
         </div>
 
         <!-- Floating Shortcut Hint (hidden on mobile, visible at md+) -->
-        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg border border-studio-700/50 hidden md:flex">
+        <div class="absolute bottom-6 right-8 text-gray-600 text-sm font-medium flex items-center gap-2 bg-studio-800/80 backdrop-blur px-4 py-2 rounded-lg ring-1 ring-white/[0.06] hidden md:flex">
           Press
-          <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700/60 font-mono text-gray-400 shadow-sm">Ctrl</kbd>
+          <kbd class="bg-studio-900 px-2 py-1 rounded ring-1 ring-white/[0.06] font-mono text-gray-400">Ctrl</kbd>
           +
-          <kbd class="bg-studio-900 px-2 py-1 rounded border border-studio-700/60 font-mono text-gray-400 shadow-sm">Enter</kbd>
+          <kbd class="bg-studio-900 px-2 py-1 rounded ring-1 ring-white/[0.06] font-mono text-gray-400">Enter</kbd>
           to generate
         </div>
 
@@ -702,17 +702,17 @@ html, body {
    Focus Halo (radial gradient glow)
    =================================== */
 .canvas-halo {
-  position: absolute;
+  position: fixed;
   bottom: -50px;
   left: 50%;
   transform: translateX(-50%);
   width: 60%;
   height: 100px;
   background: radial-gradient(ellipse at center, rgba(255, 81, 47, 0.15) 0%, rgba(221, 36, 118, 0.05) 50%, transparent 70%);
-  filter: blur(20px);
   opacity: 0;
-  transition: opacity 0.5s ease-in-out;
+  transition: opacity 700ms var(--ease-spring);
   pointer-events: none;
+  z-index: 0;
 }
 
 .canvas-halo.active {
@@ -735,7 +735,7 @@ html, body {
   /* Smooth height transitions when not dragging */
   [data-panel="canvas"],
   [data-panel="control-deck"] {
-    transition: height 200ms ease-out;
+    transition: height 700ms var(--ease-spring);
   }
 }
 </style>

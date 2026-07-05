@@ -12,7 +12,7 @@ export default defineConfig({
   ],
   theme: {
     fontFamily: {
-      sans: ['Inter', 'sans-serif'],
+      sans: ['"Plus Jakarta Sans"', 'sans-serif'],
       arabic: ['Cairo', 'sans-serif']
     },
     colors: {

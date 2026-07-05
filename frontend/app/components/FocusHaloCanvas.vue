@@ -40,17 +40,17 @@ onUnmounted(() => {
 
 <style scoped>
 .canvas-halo {
-  position: absolute;
+  position: fixed;
   bottom: -50px;
   left: 50%;
   transform: translateX(-50%);
   width: 60%;
   height: 100px;
   background: radial-gradient(ellipse at center, rgba(255, 81, 47, 0.15) 0%, rgba(221, 36, 118, 0.05) 50%, transparent 70%);
-  filter: blur(20px);
   opacity: 0;
-  transition: opacity 0.5s ease-in-out;
+  transition: opacity 700ms var(--ease-spring);
   pointer-events: none;
+  z-index: 0;
 }
 
 .canvas-halo.active {

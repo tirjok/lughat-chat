@@ -14,9 +14,9 @@ function toastIconClass(type: ToastType): string {
 
 function toastBgClass(type: ToastType): string {
   switch (type) {
-    case 'error': return 'bg-red-500/10 border-red-500/50'
-    case 'info': return 'bg-blue-500/10 border-blue-500/50'
-    default: return 'bg-studio-800 border-studio-700/60'
+    case 'error': return 'bg-red-500/10 ring-1 ring-red-500/30'
+    case 'info': return 'bg-blue-500/10 ring-1 ring-blue-500/30'
+    default: return 'bg-studio-800 ring-1 ring-white/[0.06]'
   }
 }
 </script>
@@ -30,7 +30,7 @@ function toastBgClass(type: ToastType): string {
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        class="flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl max-w-md"
+        class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.3)] max-w-md"
         :class="toastBgClass(toast.type)"
         aria-live="polite"
       >
