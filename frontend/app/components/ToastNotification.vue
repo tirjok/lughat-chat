@@ -30,27 +30,35 @@ function toastBgClass(type: ToastType): string {
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.3)] max-w-md"
+        class="flex items-center gap-3 rounded-[1.125rem] ring-1 ring-white/[0.06] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.25)] max-w-md bg-white/[0.02]"
         :class="toastBgClass(toast.type)"
         aria-live="polite"
       >
-        <span
-          aria-hidden="true"
-          :class="toastIconClass(toast.type)"
-        />
-        <p class="text-sm text-white flex-1">
-          {{ toast.message }}
-        </p>
-        <button
-          class="text-gray-500 hover:text-white transition-colors cursor-pointer"
-          aria-label="Close notification"
-          @click="toasts.splice(toasts.indexOf(toast), 1)"
+        <!-- Inner Core -->
+        <div
+          class="flex items-center gap-3 rounded-[calc(1.125rem-0.375rem)] px-4 py-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] max-w-md"
         >
           <span
             aria-hidden="true"
-            class="ph ph-x text-sm"
+            :class="toastIconClass(toast.type)"
           />
-        </button>
+          <p class="text-sm text-white flex-1">
+            {{ toast.message }}
+          </p>
+          <!-- Close button: Double-Bezel -->
+          <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
+            <button
+              class="rounded-full bg-studio-700 text-gray-500 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
+              aria-label="Close notification"
+              @click="toasts.splice(toasts.indexOf(toast), 1)"
+            >
+              <span
+                aria-hidden="true"
+                class="ph ph-x text-sm"
+              />
+            </button>
+          </span>
+        </div>
       </div>
     </TransitionGroup>
   </div>
@@ -59,7 +67,7 @@ function toastBgClass(type: ToastType): string {
 <style>
 .toast-slide-enter-active,
 .toast-slide-leave-active {
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 700ms cubic-bezier(0.32, 0.72, 0, 1), opacity 700ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .toast-slide-enter-from,
@@ -69,6 +77,6 @@ function toastBgClass(type: ToastType): string {
 }
 
 .toast-slide-leave-active {
-  transition-duration: 0.2s;
+  transition-duration: 0.5s;
 }
 </style>
