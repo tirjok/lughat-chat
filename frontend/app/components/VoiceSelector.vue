@@ -92,97 +92,109 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <!-- Outer Shell: subtle background + hairline ring + padding + large radius -->
   <div
     ref="dropdownRef"
-    class="flex flex-col gap-3 border-b border-studio-700/60 pb-6"
+    class="flex flex-col rounded-[1.375rem] ring-1 ring-white/[0.06] p-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] bg-white/[0.02]"
   >
-    <!-- Label -->
-    <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
-      <span
-        aria-hidden="true"
-        class="ph ph-user-sound text-lg"
-      />
-      Voice Model
-    </label>
-
-    <!-- Dropdown Trigger -->
-    <button
-      ref="triggerRef"
-      class="w-full bg-studio-900 border border-studio-700/60 hover:border-sunrise-orange/50 rounded-xl p-4 flex items-center justify-between transition-colors focus:outline-none relative overflow-hidden group shadow-inner"
-      @click="toggleDropdown"
+    <!-- Inner Core: distinct background + inner highlight + smaller radius -->
+    <div
+      class="flex flex-col gap-3 rounded-[calc(1.375rem-0.375rem)] bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-4"
     >
-      <div
-        class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-        style="background: linear-gradient(to right, rgba(255, 81, 47, 0.05), transparent);"
-      />
-
-      <!-- Selected voice -->
-      <div
-        v-if="displayVoice"
-        class="flex items-center gap-3 relative z-10"
-      >
+      <!-- Label -->
+      <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
         <span
           aria-hidden="true"
-          class="ph-fill ph-waves text-2xl"
-          :class="getVoiceColorClass(displayVoice)"
-          :style="`filter: drop-shadow(0 0 8px ${getShadowColor(displayVoice)});`"
+          class="ph ph-user-sound text-lg"
         />
-        <div class="flex flex-col items-start">
-          <span class="text-sm font-bold text-white tracking-wide">
-            {{ displayVoice.name }}
-          </span>
-          <span class="text-xs text-gray-400 font-medium">
-            {{ displayVoice.dialect }}
-          </span>
-        </div>
-      </div>
+        Voice Model
+      </label>
 
-      <span
-        v-else
-        class="text-sm text-gray-500 relative z-10"
+      <!-- Dropdown Trigger: Magnetic -->
+      <button
+        ref="triggerRef"
+        class="magnetic-hover w-full bg-studio-900 ring-1 ring-white/[0.06] hover:ring-sunrise-orange/30 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-[1.125rem] p-4 flex items-center justify-between focus:outline-none relative overflow-hidden group shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        @click="toggleDropdown"
       >
-        Select a voice
-      </span>
+        <div
+          class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          style="background: linear-gradient(to right, rgba(255, 81, 47, 0.05), transparent);"
+        />
 
-      <span
-        class="ph ph-caret-down text-gray-400"
-        :class="{ 'rotate-180': isOpen }"
-        style="transition: transform 0.3s;"
-      />
-    </button>
+        <!-- Selected voice -->
+        <div
+          v-if="displayVoice"
+          class="flex items-center gap-3 relative z-10"
+        >
+          <span
+            aria-hidden="true"
+            class="ph-fill ph-waves text-2xl"
+            :class="getVoiceColorClass(displayVoice)"
+            :style="`filter: drop-shadow(0 0 8px ${getShadowColor(displayVoice)});`"
+          />
+          <div class="flex flex-col items-start">
+            <span class="text-sm font-bold text-white tracking-wide">
+              {{ displayVoice.name }}
+            </span>
+            <span class="text-xs text-gray-400 font-medium">
+              {{ displayVoice.dialect }}
+            </span>
+          </div>
+        </div>
+
+        <span
+          v-else
+          class="text-sm text-gray-500 relative z-10"
+        >
+          Select a voice
+        </span>
+
+        <!-- Trailing chevron (button-in-button) -->
+        <span
+          class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105 shrink-0"
+          style="transition: transform 700ms cubic-bezier(0.32,0.72,0,1);"
+        >
+          <span
+            class="ph ph-caret-down text-gray-400"
+            :class="{ 'rotate-180': isOpen }"
+          />
+        </span>
+      </button>
+    </div>
 
     <!-- Dropdown Menu (Teleported to body, animated) -->
     <Teleport to="body">
       <div
         v-if="isOpen"
         ref="menuRef"
-        class="fixed z-50 bg-studio-800 border border-studio-700/60 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-200 origin-top opacity-100 scale-100 pointer-events-auto"
+        class="fixed z-50 bg-studio-800 ring-1 ring-white/[0.06] rounded-[1.125rem] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top opacity-100 scale-100 pointer-events-auto"
         :style="menuPositionStyle"
       >
         <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
           <button
-            v-for="voice in voices"
+            v-for="(voice, index) in voices"
             :key="voice.id"
-            class="voice-option w-full text-left p-3 rounded-lg flex items-center justify-between transition-colors group"
+            class="voice-option w-full text-left rounded-[0.875rem] ring-1 ring-white/[0.06] p-3 flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group fade-up"
             :data-voice="voice.id"
             :data-name="voice.name"
             :data-tag="voice.tag"
             :data-color="getVoiceColorClass(voice)"
             :class="[
               voice.id === modelValue
-                ? 'bg-[#2a1a1a] border border-studio-600/50'
-                : 'bg-studio-700/40 hover:bg-studio-700/70 border border-transparent'
+                ? 'bg-[#2a1a1a]'
+                : 'bg-studio-700/40 hover:bg-studio-700/70'
             ]"
+            :style="{ transitionDelay: `${index * 50}ms` }"
             @click="selectVoice(voice)"
           >
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center transition-colors"
+                class="w-10 h-10 rounded-full bg-studio-900 ring-1 ring-white/[0.06] flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]"
                 :class="[
                   voice.id === modelValue
-                    ? 'border-sunrise-orange'
-                    : 'group-hover:border-sunrise-orange',
-                  { 'group-hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }
+                    ? 'ring-sunrise-orange'
+                    : 'group-hover:ring-sunrise-orange',
+                  { 'group-hover:ring-sunrise-magenta': getVoiceColorClass(voice).includes('magenta') }
                 ]"
               >
                 <span
@@ -203,12 +215,12 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Preview play button (visible on hover) -->
+            <!-- Preview play button (visible on hover): Button-in-Button -->
             <span
-              class="w-8 h-8 rounded-full bg-studio-900 border border-studio-700/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:scale-110 text-gray-500"
+              class="w-8 h-8 rounded-full bg-studio-900 ring-1 ring-white/[0.06] flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-110 text-gray-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]"
               :class="{
-                'hover:text-sunrise-orange hover:border-sunrise-orange': getVoiceColorClass(voice).includes('orange'),
-                'hover:text-sunrise-magenta hover:border-sunrise-magenta': getVoiceColorClass(voice).includes('magenta')
+                'hover:text-sunrise-orange hover:ring-sunrise-orange': getVoiceColorClass(voice).includes('orange'),
+                'hover:text-sunrise-magenta hover:ring-sunrise-magenta': getVoiceColorClass(voice).includes('magenta')
               }"
               title="Preview Voice"
               @click.stop="previewVoice(voice)"
