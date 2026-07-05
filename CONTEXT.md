@@ -15,7 +15,7 @@ A **text-to-speech (TTS) web app** for Arabic speech synthesis using Coqui XTTS-
 - **Frontend**: Nuxt 4.4+ + Vue 3.5+ + UnoCSS 66 (runs on port 80 via Nginx)
 - **Backend**: Python FastAPI 0.115.6 + Coqui TTS 0.27.5 (runs on port 8000)
 - **TTS Model**: XTTS-v2 (multilingual, Arabic-focused)
-- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN) — NOT Lucide or Simple Icons
+- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script)
 - **Fonts**: Google Fonts — "Inter" (UI labels) + "Cairo" (Arabic text)
 
 ---
@@ -46,22 +46,22 @@ app/
 ├── app.vue                # Root component
 ├── assets/css/main.css    # Global styles (@apply)
 ├── pages/index.vue        # Full-page TTS Studio (two-panel layout)
-├── components/            # 10 Vue components
+├── components/            # 9 Vue components
 │   ├── AudioPlayerPanel.vue       # Audio playback panel (waveform + controls)
 │   ├── FocusHaloCanvas.vue        # Focus halo effect for textarea
 │   ├── GenerateButton.vue         # Generate speech button with loading states
 │   ├── MobileStatusIndicator.vue  # Compact model status (mobile FAB)
 │   ├── ModelStatusIndicator.vue   # Desktop model status indicator
-│   ├── PanelToggle.vue            # Mobile panel toggle FAB
 │   ├── SpeedSlider.vue            # Speed adjustment slider (0.5×–2.0×)
 │   ├── ToastNotification.vue      # Toast messages (success/error/info)
 │   ├── VoiceSelector.vue          # Voice/dialect selector dropdown
 │   └── WaveformCanvas.vue         # Animated waveform visualization
-└── composables/           # 7 composables (+ test files)
-    ├── useAudioModule.ts     # Audio playback state management (replaces useAudioPlayer)
+└── composables/           # 8 composables (+ test files)
+    ├── useAudioModule.ts     # Audio playback state management
     ├── useHealthPoll.ts      # Backend health check polling
     ├── useInputValidation.ts # Text input validation logic
     ├── usePanelToggle.ts     # Panel toggle state (control-deck ↔ canvas)
+    ├── useScrollReveal.ts    # Scroll-reveal fade-up animations
     ├── useToast.ts           # Toast notification management
     ├── useTtsApi.ts          # TTS API calls (synthesize, healthCheck)
     └── useVoices.ts          # Voice list fetching and management
@@ -100,7 +100,7 @@ npx vitest --config vitest.component.config.ts
 
 **Test files location:** `frontend/tests/`
 - Naming: `<name>.test.ts`
-- All 23 test files live in `frontend/tests/` (no inline test files in source directories).
+- All test files live in `frontend/tests/` (no inline test files in source directories).
 
 ---
 
@@ -129,7 +129,8 @@ npx vitest --config vitest.component.config.ts
 
 ### Model Loading
 - Model: `tts_models/multilingual/xtts_v2` (loaded on startup via lifespan)
-- Cache dir: `/app/.cache/tts` (persisted as named volume `tts-model-cache`)
+- Cache dir: `/app/.cache/tts` (env var `TTS_MODEL_CACHE`)
+- **Note:** The `tts-model-cache` named volume is mounted at `/root/.local/share/tts` in Docker Compose, but the application writes to `/app/.cache/tts`. The model cache volume is **not used for persistence** — the ~2GB TTS model is re-downloaded on each container restart.
 - Status states: `"loading"` → `"ready"` | `"error"`
 - Audio output dir: `/app/downloads` (persisted as `tts-audio-cache`)
 
@@ -216,7 +217,7 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 2. **Composables** in `app/composables/` are auto-imported (no explicit imports needed)
 3. **Components** in `app/components/` are auto-imported by name
 4. **Tests mirror source**: all test files live in `frontend/tests/` (no inline test files)
-5. **Dark mode**: all BEM classes have `dark:` variants defined in main.css
+5. **Dark mode**: all UnoCSS utility classes have `dark:` variants defined in main.css
 6. **RTL support**: Arabic text handled via Cairo font + RTL direction
-7. **Phosphor Icons**: Uses `ph ph-<name>` classes (via CDN), NOT Lucide or Simple Icons
+7. **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script) + Lucide + Simple Icons
 8. **Host ports**: Docker backend on 9000, frontend on 9001. Local dev proxies to localhost:9000.

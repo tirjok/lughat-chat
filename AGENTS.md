@@ -45,22 +45,22 @@ app/
 ├── app.vue                # Root component
 ├── assets/css/main.css    # Global styles (@apply)
 ├── pages/index.vue        # Full-page TTS Studio (two-panel layout)
-├── components/            # 10 Vue components
+├── components/            # 9 Vue components
 │   ├── AudioPlayerPanel.vue       # Audio playback panel (waveform + controls)
 │   ├── FocusHaloCanvas.vue        # Focus halo effect for textarea
 │   ├── GenerateButton.vue         # Generate speech button with loading states
 │   ├── MobileStatusIndicator.vue  # Compact model status (mobile FAB)
 │   ├── ModelStatusIndicator.vue   # Desktop model status indicator
-│   ├── PanelToggle.vue            # Mobile panel toggle FAB
 │   ├── SpeedSlider.vue            # Speed adjustment slider (0.5×–2.0×)
 │   ├── ToastNotification.vue      # Toast messages (success/error/info)
 │   ├── VoiceSelector.vue          # Voice/dialect selector dropdown
 │   └── WaveformCanvas.vue         # Animated waveform visualization
-└── composables/           # 7 composables (+ test files)
-    ├── useAudioModule.ts     # Audio playback state management (replaces useAudioPlayer)
+└── composables/           # 8 composables (+ test files)
+    ├── useAudioModule.ts     # Audio playback state management
     ├── useHealthPoll.ts      # Backend health check polling
     ├── useInputValidation.ts # Text input validation logic
     ├── usePanelToggle.ts     # Panel toggle state (control-deck ↔ canvas)
+    ├── useScrollReveal.ts    # Scroll-reveal fade-up animations
     ├── useToast.ts           # Toast notification management
     ├── useTtsApi.ts          # TTS API calls (synthesize, healthCheck)
     └── useVoices.ts          # Voice list fetching and management
@@ -101,13 +101,12 @@ npx vitest --config vitest.component.config.ts
 - Naming: `<name>.test.ts`
 - All test files MUST live in `frontend/tests/`. Never create test files inside `app/` or any source directory.
 
-**Test files (20 total):**
+**Test files (19 total):
 - `app.test.ts` — Root app integration test
 - `AudioPlayerPanel.test.ts` — Audio player panel tests
 - `index.test.ts` — Main page integration test
 - `ModelStatusIndicator.test.ts` — Model status indicator tests
 - `PanelSliding.test.ts` — Panel sliding animation tests
-- `PanelToggle.test.ts` — Panel toggle logic tests
 - `SpeedSlider.test.ts` — Speed slider interaction tests
 - `ToastNotification.test.ts` — Toast notification rendering tests
 - `ToastShortcut.test.ts` — Toast keyboard shortcut tests
