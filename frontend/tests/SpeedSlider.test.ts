@@ -66,13 +66,13 @@ describe('SpeedSlider', () => {
   })
 
   describe('mobile stepper buttons', () => {
-    it('When rendered then stepper buttons container exists (md:hidden)', () => {
+    it('When rendered then stepper buttons container exists (always visible)', () => {
       // Arrange
       const wrapper = mountSlider()
       // Act
       const html = wrapper.html()
       // Assert
-      expect(html).toContain('md:hidden')
+      expect(html).toContain('flex items-center justify-center gap-4')
     })
 
     it('When rendered then minus button exists in stepper', () => {
@@ -235,7 +235,7 @@ describe('SpeedSlider', () => {
       const wrapper = mountSlider()
       const html = wrapper.html()
       // Assert
-      expect(html).toContain('md:hidden flex items-center justify-center gap-4')
+      expect(html).toContain('flex items-center justify-center gap-4')
       const buttons = wrapper.findAll('button')
       expect(buttons.length).toBeGreaterThanOrEqual(2)
       const hasMinus = html.includes('ph ph-minus')
@@ -254,14 +254,14 @@ describe('SpeedSlider', () => {
       expect(html).toContain('type="range"')
     })
 
-    it('When viewport is 1024px then stepper buttons are hidden', () => {
+    it('When viewport is 1024px then stepper buttons are visible on all screens', () => {
       // Arrange
       setBreakpoint(1024)
       // Act
       const wrapper = mountSlider()
       const html = wrapper.html()
       // Assert
-      expect(html).toContain('md:hidden')
+      expect(html).toContain('flex items-center justify-center gap-4')
     })
   })
 })

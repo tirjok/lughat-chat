@@ -92,8 +92,8 @@ function adjustSpeed(delta: number) {
         </div>
       </div>
 
-      <!-- Mobile: Stepper buttons (<768px): Double-Bezel + Magnetic -->
-      <div class="md:hidden flex items-center justify-center gap-4">
+      <!-- Stepper buttons (mobile + desktop): Double-Bezel + Magnetic -->
+      <div class="flex items-center justify-center gap-4">
         <!-- Outer Shell: magnetic hover -->
         <span class="magnetic-hover rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
           <!-- Inner Core: spring scale -->

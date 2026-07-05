@@ -120,8 +120,8 @@ function handleCanvasClick(e: MouseEvent) {
   const canvas = canvasRef.value
   if (!canvas) return
   const rect = canvas.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const ratio = Math.max(0, Math.min(1, x / rect.width))
+  const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
+  const ratio = x / rect.width
   emit('seek', ratio)
 }
 
@@ -163,9 +163,14 @@ watch(() => props.currentTime, async () => {
 </script>
 
 <template>
-  <canvas
-    ref="canvasRef"
-    class="w-full h-8 md:h-12 min-w-[100px] cursor-pointer"
+  <!-- Hit-area wrapper: 44px minimum touch target (WCAG) -->
+  <div
+    class="relative w-full min-h-[44px] min-w-[100px] cursor-pointer"
     @click="handleCanvasClick"
-  />
+  >
+    <canvas
+      ref="canvasRef"
+      class="w-full h-8 md:h-12 absolute inset-0"
+    />
+  </div>
 </template>

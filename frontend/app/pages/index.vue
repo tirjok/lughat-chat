@@ -194,9 +194,9 @@ function handleClosePlayer() {
 
     <!-- Mobile: Split-screen (hidden on desktop) -->
     <div class="flex md:hidden flex-col h-dvh w-full overflow-hidden">
-      <!-- Mobile Top Bar (logo + status) — Floating Glass Pill -->
+      <!-- Mobile Top Bar (logo + status) — Floating Glass Pill (safe-area aware) -->
       <header
-        class="flex justify-between items-center px-3 py-2.5 bg-studio-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-3 mt-2.5 shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
+        class="flex justify-between items-center px-3 py-2.5 bg-studio-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-[max(0.75rem,env(safe-area-inset-left),env(safe-area-inset-right))] mt-[max(0.625rem,env(safe-area-inset-top))] shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
       >
         <div class="flex items-center gap-2">
           <span
@@ -254,34 +254,6 @@ function handleClosePlayer() {
                 </button>
               </span>
             </div>
-          </div>
-
-          <!-- Mobile: AI Toolbar (compact, visible on mobile; desktop has its own copy) -->
-          <div class="flex md:hidden items-center gap-2 w-full overflow-x-auto hide-scrollbar">
-            <span class="shrink-0 rounded-[0.625rem] ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-              <button
-                class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.625rem-0.125rem)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Type in any language and translate to Arabic"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Translate
-              </button>
-            </span>
-            <span class="shrink-0 rounded-[0.625rem] ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-              <button
-                class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.625rem-0.125rem)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Add Harakat (diacritics) for perfect TTS pronunciation"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Add Diacritics
-              </button>
-            </span>
-            <span class="shrink-0 rounded-[0.625rem] ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-              <button
-                class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.625rem-0.125rem)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Let AI write the next few sentences"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Continue Script
-              </button>
-            </span>
           </div>
         </div>
 
