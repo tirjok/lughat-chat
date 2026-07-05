@@ -465,3 +465,53 @@ When the user asks about building features, modifying existing code, or understa
 12. **Two-panel layout** — The main page uses a split layout: Control Deck (left) + Waveform Canvas (right). On mobile (<768px), panels stack vertically with a draggable divider.
 13. **Dynamic voice discovery** — Voices are discovered from `backend/speaker_wavs/` directory at runtime. The `/api/voices` endpoint returns all `.wav` files found. Current voices: `KSA Hamed - Male`, `KSA Zariyah - Female`.
 14. **Host ports** — Docker: backend on 9000, frontend on 9001. Local dev: frontend proxies to `localhost:9000`.
+
+---
+
+## UI/UX Feedback Workflow
+
+These skills handle **LLM-driven UI/UX review, audit, and improvement**. Use them when the user says "review the UI", "fix the UX", "audit accessibility", "make it look better", or reports visual/design issues.
+
+### Workflow: "This UI feels off" → Fix It
+
+```
+User: "This UI feels off" / "Make the UI better"
+    │
+    ▼
+ui-ux-reviewer        ← Audit: layout, spacing, typography, color contrast, interaction patterns
+    │
+    ▼
+design-review         ← Evaluate: does this follow design best practices?
+    │
+    ▼
+accessibility-auditor ← Check: WCAG barriers (contrast, focus, ARIA, screen reader)
+    │
+    ▼
+frontend-design       ← Direction: what should it look like? (aesthetic, palette, typography)
+    │
+    ▼
+ui-designer           ← Spec: component specs, design tokens, pixel-perfect implementation
+    │
+    ▼
+ux-architect          ← Structure: CSS systems, responsive layout, component architecture
+    │
+    ▼
+review                ← Verify: does the fix match the spec? (standards, spec, quality)
+    │
+    ▼
+qa                    ← Final: any remaining bugs? (file issues for fixes)
+```
+
+### When to Use Each Skill
+
+| User says... | Use this skill first |
+|-------------|---------------------|
+| "Review the UI" / "UI feels off" | `ui-ux-reviewer` |
+| "Does this look right?" / "Design feedback" | `design-review` |
+| "Check accessibility" / "WCAG issues" | `accessibility-auditor` |
+| "Make it look better" / "Improve design" | `frontend-design` |
+| "Design the component" / "Component library" | `ui-designer` |
+| "Fix the layout" / "Responsive issues" | `ux-architect` |
+| "Review since X" (code diff) | `review` |
+| "Report a bug" / "QA session" | `qa` |
+| "Make it feel premium" / "Polish the UI" | `high-end-visual-design` |
