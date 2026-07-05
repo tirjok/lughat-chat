@@ -39,7 +39,7 @@ const panelShown = computed(() => props.visible)
     Spring slide-in animation.
   -->
   <div
-    class="fixed bottom-0 right-0 w-full md:w-[65%] lg:w-[70%] xl:w-[75%] bg-studio-800 border-t md:border-l ring-white/[0.06] p-1.5 flex flex-col z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
+    class="fixed bottom-0 left-0 right-0 md:left-[35%] lg:left-[30%] xl:left-[25%] bg-studio-800 border-t md:border-l ring-white/[0.06] p-1.5 flex flex-col z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
     :class="panelShown ? 'visible-slide' : 'hidden-slide'"
     style="transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);"
   >

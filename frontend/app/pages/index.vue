@@ -80,7 +80,6 @@ const selectedSpeaker = shallowRef('')
 const speedValue = shallowRef(1.0)
 const isGenerating = shallowRef(false)
 const playerVisible = shallowRef(false)
-const hqAudioEnabled = shallowRef(true)
 
 // Track selected voice for display
 const selectedVoiceName = computed(() => {
@@ -194,9 +193,9 @@ function handleClosePlayer() {
 
     <!-- Mobile: Split-screen (hidden on desktop) -->
     <div class="flex md:hidden flex-col h-dvh w-full overflow-hidden">
-      <!-- Mobile Top Bar (logo + status) — Floating Glass Pill -->
+      <!-- Mobile Top Bar (logo + status) — Floating Glass Pill (safe-area aware) -->
       <header
-        class="flex justify-between items-center px-3 py-2.5 bg-studio-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-3 mt-2.5 shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
+        class="flex justify-between items-center px-3 py-2.5 bg-studio-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-[max(0.75rem,env(safe-area-inset-left),env(safe-area-inset-right))] mt-[max(0.625rem,env(safe-area-inset-top))] shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
       >
         <div class="flex items-center gap-2">
           <span
@@ -255,34 +254,6 @@ function handleClosePlayer() {
               </span>
             </div>
           </div>
-
-          <!-- Mobile: AI Toolbar (compact, visible on mobile; desktop has its own copy) -->
-          <div class="flex md:hidden items-center gap-2 w-full overflow-x-auto hide-scrollbar">
-            <span class="shrink-0 rounded-[0.625rem] ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-              <button
-                class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.625rem-0.125rem)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Type in any language and translate to Arabic"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Translate
-              </button>
-            </span>
-            <span class="shrink-0 rounded-[0.625rem] ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-              <button
-                class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-orange transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.625rem-0.125rem)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Add Harakat (diacritics) for perfect TTS pronunciation"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Add Diacritics
-              </button>
-            </span>
-            <span class="shrink-0 rounded-[0.625rem] ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-              <button
-                class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-sunrise-magenta transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.625rem-0.125rem)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Let AI write the next few sentences"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Continue Script
-              </button>
-            </span>
-          </div>
         </div>
 
         <!-- Text Input Area (mobile: full width, text-3xl, generous spacing) -->
@@ -320,11 +291,9 @@ function handleClosePlayer() {
         class="flex-1 w-full bg-studio-800 flex flex-col overflow-hidden border-t border-white/[0.06]"
         :style="{ height: `${(1 - canvasRatio) * 100}%` }"
       >
-        <!-- Controls Container: Double-Bezel -->
-        <!-- Outer Shell -->
-        <div class="flex-1 p-2.5 overflow-y-auto flex flex-col">
-          <!-- Inner Core -->
-          <div class="rounded-[calc(1.125rem-0.25rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex flex-col gap-4">
+        <!-- Controls Container — compact -->
+        <div class="flex-1 p-3 overflow-y-auto flex flex-col">
+          <div class="flex flex-col gap-4">
             <!-- Voice Selection -->
             <VoiceSelector
               v-model="selectedSpeaker"
@@ -333,51 +302,17 @@ function handleClosePlayer() {
 
             <!-- Speed Control -->
             <SpeedSlider v-model="speedValue" />
-
-            <!-- Output Settings: Double-Bezel -->
-            <div class="flex flex-col gap-2">
-              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] font-medium bg-white/[0.04] text-gray-400">
-                Audio Quality
-              </span>
-              <label class="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                <span class="ph ph-sliders-horizontal" /> Output Settings
-              </label>
-              <!-- Outer Shell -->
-              <div class="rounded-[0.75rem] ring-1 ring-white/[0.06] p-1 bg-white/[0.02]">
-                <!-- Inner Core -->
-                <div class="rounded-[calc(0.75rem-0.25rem)] bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-between px-3 py-2">
-                  <span class="text-xs text-gray-400">High Quality Audio</span>
-                  <!-- Toggle: Double-Bezel -->
-                  <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-                    <button
-                      class="rounded-full bg-sunrise-orange relative cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-sunrise-orange/90 active:scale-95"
-                      style="box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);"
-                      @click="hqAudioEnabled = !hqAudioEnabled"
-                    >
-                      <div
-                        class="w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                        :class="hqAudioEnabled ? 'right-0.5' : 'left-0.5'"
-                      />
-                    </button>
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-        <!-- Action Area: Double-Bezel -->
-        <!-- Outer Shell -->
-        <div class="p-2.5 border-t border-white/[0.06] bg-studio-800 shrink-0">
-          <!-- Inner Core -->
-          <div class="rounded-[calc(1.125rem-0.25rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3">
-            <GenerateButton
-              :is-generating="isGenerating"
-              :model-status="modelStatus"
-              :disabled="!isValid || isGenerating || modelStatus === 'loading'"
-              @click="handleSynthesize"
-            />
-          </div>
+        <!-- Generate Button -->
+        <div class="p-3 border-t border-white/[0.06] bg-studio-800 shrink-0">
+          <GenerateButton
+            :is-generating="isGenerating"
+            :model-status="modelStatus"
+            :disabled="!isValid || isGenerating || modelStatus === 'loading'"
+            @click="handleSynthesize"
+          />
         </div>
 
         <!-- Mobile: Generated Audio Card: Double-Bezel -->
@@ -537,65 +472,25 @@ function handleClosePlayer() {
           <ModelStatusIndicator />
         </header>
 
-        <!-- Controls Container: Double-Bezel Architecture — Fade-up -->
-        <!-- Outer Shell -->
-        <div class="flex-1 p-4 md:p-5 overflow-y-auto flex flex-col">
-          <!-- Inner Core — Fade-up -->
-          <div class="rounded-[calc(1.125rem-0.25rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-4 md:p-6 flex flex-col gap-6 md:gap-8 fade-up delay-200">
-            <!-- Voice Selection -->
+        <!-- Controls Container — unified, compact -->
+        <div class="flex-1 p-5 overflow-y-auto flex flex-col">
+          <div class="flex flex-col gap-5 fade-up delay-200">
             <VoiceSelector
               v-model="selectedSpeaker"
               :voices="speakerVoices"
             />
-
-            <!-- Speed Control -->
             <SpeedSlider v-model="speedValue" />
-
-            <!-- Output Settings: Double-Bezel -->
-            <!-- Eyebrow tag + label -->
-            <div class="flex flex-col gap-3">
-              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] font-medium bg-white/[0.04] text-gray-400">
-                Audio Quality
-              </span>
-              <label class="text-sm font-semibold text-gray-300 flex items-center gap-2">
-                <span class="ph ph-sliders-horizontal text-lg" /> Output Settings
-              </label>
-              <!-- Outer Shell -->
-              <div class="rounded-[0.875rem] ring-1 ring-white/[0.06] p-1 bg-white/[0.02]">
-                <!-- Inner Core -->
-                <div class="rounded-[calc(0.875rem-0.25rem)] bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-between p-3">
-                  <span class="text-sm text-gray-400">High Quality Audio</span>
-                  <!-- Toggle: Double-Bezel -->
-                  <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-                    <button
-                      class="rounded-full bg-sunrise-orange relative cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-sunrise-orange/90 active:scale-95"
-                      style="box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);"
-                      @click="hqAudioEnabled = !hqAudioEnabled"
-                    >
-                      <div
-                        class="w-4 h-4 bg-white rounded-full absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                        :class="hqAudioEnabled ? 'right-0.5' : 'left-0.5'"
-                      />
-                    </button>
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-        <!-- Action Area: Double-Bezel -->
-        <!-- Outer Shell -->
-        <div class="p-4 md:p-5 border-t border-white/[0.06] bg-studio-800 shrink-0">
-          <!-- Inner Core -->
-          <div class="rounded-[calc(1.125rem-0.25rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-4 md:p-6">
-            <GenerateButton
-              :is-generating="isGenerating"
-              :model-status="modelStatus"
-              :disabled="!isValid || isGenerating || modelStatus === 'loading'"
-              @click="handleSynthesize"
-            />
-          </div>
+        <!-- Generate Button — full-width anchor -->
+        <div class="p-5 border-t border-white/[0.06] bg-studio-800 shrink-0">
+          <GenerateButton
+            :is-generating="isGenerating"
+            :model-status="modelStatus"
+            :disabled="!isValid || isGenerating || modelStatus === 'loading'"
+            @click="handleSynthesize"
+          />
         </div>
       </aside>
 

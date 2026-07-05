@@ -4,13 +4,15 @@ A **text-to-speech (TTS) web application** for Arabic speech synthesis, powered 
 
 ## Features
 
-- **Instant Arabic TTS** — generate speech from Arabic text in seconds
-- **Two voice presets** — female and male voices with adjustable speed (0.5×–2.0×)
+- **Instant Arabic TTS** — generate speech from Arabic text using Coqui XTTS-v2
+- **Multiple voice presets** — dynamically discovered from `backend/speaker_wavs/`
+- **Adjustable speed** — 0.5× to 2.0× via slider
 - **Download MP3** — save generated audio files locally
-- **Keyboard shortcut** — press `Ctrl+Enter` to generate without clicking
-- **Dark mode** — full dark theme support with automatic toggle
-- **RTL text input** — Arabic text handled via Cairo font with RTL direction
+- **Keyboard shortcut** — `Ctrl+Enter` to generate
+- **Premium dark theme** — "Sunrise Surge" palette (orange → magenta gradients)
+- **RTL text input** — Arabic text via Cairo/Noto Sans Arabic fonts
 - **Health monitoring** — auto-polling backend status with loading indicator
+- **Two-panel layout** — Control Deck (left) + Editor Canvas (right), stacked on mobile
 
 [![Frontend CI](https://github.com/tirjok/lughat-chat/actions/workflows/frontend.yml/badge.svg)](https://github.com/tirjok/lughat-chat/actions/workflows/frontend.yml)
 [![Backend CI](https://github.com/tirjok/lughat-chat/actions/workflows/backend.yml/badge.svg)](https://github.com/tirjok/lughat-chat/actions/workflows/backend.yml)
@@ -26,10 +28,10 @@ A **text-to-speech (TTS) web application** for Arabic speech synthesis, powered 
                                        Coqui XTTS-v2
 ```
 
-- **Frontend**: Nuxt 4.4+ + Vue 3.5+ + UnoCSS 66 (served via Nginx on port 80)
+- **Frontend**: Nuxt 4.4+ + Vue 3.5+ + UnoCSS 66 (Nginx reverse proxy, port 80)
 - **Backend**: Python FastAPI 0.115.6 + Coqui TTS 0.27.5 (port 8000)
 - **TTS Model**: XTTS-v2 — multilingual with Arabic focus
-- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN)
+- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script)
 - **Fonts**: Google Fonts — "Inter" (UI labels) + "Cairo" (Arabic text)
 
 ## Quick Start
@@ -61,18 +63,13 @@ The TTS model is cached in a named volume (`tts-model-cache`) so it only downloa
 
 ### Run Locally (Development)
 
-#### Backend
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn app:app --reload --port 8000
-```
+> **Note:** Backend requires Docker (Coqui TTS dependencies are complex). Use `docker compose up backend` or run the full stack with `docker compose up --build -d`.
 
 #### Frontend
 ```bash
 cd frontend
 pnpm install
-pnpm dev
+pnpm dev  # Hot-reload dev server on port 3000, proxies API to localhost:9000
 ```
 
 ## API Endpoints
@@ -125,13 +122,13 @@ Returns `audio/mpeg` (MP3 binary). On error:
 ├── frontend/                 # Nuxt 4.4+ + Vue 3.5+ SPA
 │   ├── app/
 │   │   ├── pages/index.vue  # Full-page TTS Studio (two-panel layout)
-│   │   ├── components/      # Vue UI components (10)
-│   │   └── composables/     # Reusable logic hooks (7)
+│   │   ├── components/      # Vue UI components (9)
+│   │   └── composables/     # Reusable logic hooks (8)
 │   ├── nuxt.config.ts       # Nuxt configuration
 │   ├── uno.config.ts        # UnoCSS presets (presetWind3) & shortcuts
-│   └── tests/               # Vitest test suite (23 tests)
-├── docker-compose.yml        # Docker deployment config (backend: 9000, frontend: 9001)
-└── nginx/                    # Nginx reverse proxy (routes frontend → backend)
+│   └── tests/               # Vitest test suite
+├── docker-compose.yml        # Docker deployment (backend: 9000, frontend: 9001)
+└── scripts/                  # Backend test runner (Docker)
 ```
 
 ## Testing
@@ -176,14 +173,6 @@ git add . && git commit -m "fix: something"
 | `flex-center` | `flex items-center justify-center` |
 | `flex-between` | `flex items-center justify-between` |
 
-## Dark Mode
-
-All UI components support dark mode via CSS `dark:` variants. Toggle with the class on `<html>`.
-
-## RTL Support
-
-Arabic text is handled via Cairo font with RTL direction on the textarea.
-
 ## Key Conventions
 
 1. **Nuxt file-based routing**: pages in `app/pages/` are auto-imported
@@ -191,7 +180,7 @@ Arabic text is handled via Cairo font with RTL direction on the textarea.
 3. **Components** in `app/components/` are auto-imported by PascalCase name
 4. **Tests mirror source**: all test files live in `frontend/tests/` (no inline test files)
 5. **ESLint**: flat config via `@nuxt/eslint`, rules: `commaDangle: 'never'`, `braceStyle: '1tbs'`
-6. **Phosphor Icons**: Uses `ph ph-<name>` classes (via CDN), NOT Lucide or Simple Icons
+6. **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script) + Lucide + Simple Icons
 7. **Host ports**: Docker backend on 9000, frontend on 9001. Local dev proxies to localhost:9000.
 
 ## Custom Voices
