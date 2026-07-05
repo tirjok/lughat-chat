@@ -289,7 +289,7 @@ function handleClosePlayer() {
           <textarea
             v-model="textInput"
             dir="rtl"
-            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-3xl leading-relaxed text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg leading-loose text-gray-100 placeholder-gray-600 scroll-smooth z-10"
             style="caret-color: #FF512F;"
             placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           />
@@ -722,7 +722,7 @@ function handleClosePlayer() {
           <textarea
             v-model="textInput"
             dir="rtl"
-            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-2xl md:text-4xl lg:text-5xl leading-relaxed md:leading-[1.6] text-gray-200 placeholder-gray-700 scroll-smooth z-10"
+            class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg md:text-xl lg:text-2xl leading-relaxed text-gray-100 placeholder-gray-600 scroll-smooth z-10"
             style="caret-color: #FF512F;"
             placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           />
