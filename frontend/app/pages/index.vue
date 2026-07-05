@@ -178,7 +178,8 @@ function handleClosePlayer() {
     @keydown="handleKeyDown"
   >
     <!-- Toast Notification Container (prototype positioning) -->
-    <div class="fixed top-20 md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none">
+    <!-- Mobile: positioned below the floating header pill (~56px height + 10px margin = ~66px) -->
+    <div class="fixed top-[66px] md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none">
       <ToastNotification />
     </div>
 
@@ -255,8 +256,8 @@ function handleClosePlayer() {
             </div>
           </div>
 
-          <!-- Mobile: AI Toolbar (compact, no extra padding) hide it for now -->
-          <div class="hidden items-center gap-2 w-full overflow-x-auto hide-scrollbar">
+          <!-- Mobile: AI Toolbar (compact, visible on mobile; desktop has its own copy) -->
+          <div class="flex md:hidden items-center gap-2 w-full overflow-x-auto hide-scrollbar">
             <span class="shrink-0 rounded-[0.625rem] ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
               <button
                 class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.625rem-0.125rem)] bg-studio-800 hover:bg-studio-700 px-2.5 py-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
