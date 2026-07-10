@@ -22,6 +22,20 @@ Lughat Chat is a **text-to-speech (TTS) web application** focused on Arabic spee
 
 ---
 
+## Architecture Decision Records
+
+| ADR | Topic | Status |
+|-----|-------|--------|
+| [ADR-001](./ADR-001-language-learning-platform-architecture.md) | Platform Architecture (modular monolith vs microservices) | **Accepted** |
+| [ADR-002](./ADR-002-multi-user-support-and-data-model.md) | Multi-User Support and Data Model (SQLite → PostgreSQL) | **Superseded** — not being implemented, platform remains single-user
+| [ADR-003](./ADR-003-speech-recognition-and-pronunciation-scoring.md) | Speech Recognition and Pronunciation Scoring (local Whisper) | **Accepted** |
+| [ADR-004](./ADR-004-cloud-deployment-and-scalability.md) | Cloud Deployment and Scalability (local → cloud VM) | **Suspended** — platform stays local Docker Compose only
+| [ADR-005](./ADR-005-content-editor-and-version-control.md) | Content Editor and Version Control (keep JSON files) | **Accepted — Option A** |
+| [ADR-006](./ADR-006-activity-type-taxonomy-and-validation.md) | Activity Type Taxonomy and Validation (JSON Schema) | **Accepted — Option B** |
+| [ADR-007](./ADR-007-progress-scoring-and-competency-aggregation.md) | Progress Scoring and Competency Aggregation (weighted average) | **Accepted — Option A** |
+| [ADR-008](./ADR-008-audio-recording-ux-and-microphone-capture.md) | Audio Recording UX (microphone capture, MediaRecorder) | **Accepted — Option A** |
+| [ADR-009](./ADR-009-frontend-spa-architecture-routing-navigation-state.md) | Frontend SPA Architecture (routing, navigation, state) | **Accepted — Option A** |
+
 ## Diagram Index
 
 | Document | C4 Level | Description |
