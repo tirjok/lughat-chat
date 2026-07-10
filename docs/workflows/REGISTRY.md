@@ -1,6 +1,6 @@
 # Workflow Registry — Lughat Chat
 **Last updated**: 2026-07-10
-**Status**: Active discovery — initial audit complete
+**Status**: Active discovery — 4 new learning workflows specced
 
 ---
 
@@ -10,6 +10,11 @@
 |---|---|---|---|---|---|
 | Speech synthesis | WORKFLOW-speech-synthesis.md | **Draft** | User clicks "Generate Speech" or Ctrl+Enter | Frontend → Backend → XTTS | 2026-07-10 |
 | Model loading & readiness | WORKFLOW-model-loading-readiness.md | **Draft** | Container start / restart | Docker → Backend → Frontend health polling | 2026-07-10 |
+| Lesson browsing and access | WORKFLOW-lesson-browsing-and-access.md | **Draft** | User opens Dashboard (`/`) | Frontend → Backend → Content + Progress | 2026-07-10 |
+| Activity submission and scoring | WORKFLOW-activity-submission-and-scoring.md | **Draft** | User submits answer in lesson view | Frontend → Backend → Content + Progress | 2026-07-10 |
+| Lesson content serving | WORKFLOW-lesson-content-serving.md | **Draft** | API call (`GET /api/lessons*`) | Backend → Content Module → JSON files | 2026-07-10 |
+| Dashboard navigation and roadmap | WORKFLOW-dashboard-navigation-and-roadmap.md | **Draft** | User opens Dashboard (`/`) | Frontend (UI/UX) | 2026-07-10 |
+| Playground (TTS Studio) access | WORKFLOW-playground-access.md | **Draft** | User clicks "Playground" in nav bar | Frontend (existing TTS Studio) | 2026-07-10 |
 | Voice discovery | — | **Missing** | Page load (`onMounted` in `useVoices`) | Frontend → `/api/voices` | — |
 | Audio history browsing | — | **Missing** | User views history (not yet implemented in UI) | Frontend → `/api/history` | — |
 | Speaker WAV generation | — | **Missing** | Manual execution of `generate_speaker_wavs.py` | Operator (one-time setup) | — |
@@ -26,7 +31,7 @@
 | Nginx reverse proxy routing | — | **Missing** | Any HTTP request to frontend | Nginx | — |
 | Model cache persistence | — | **Missing** | Container restart (or lack thereof) | Docker volumes | — |
 
-**Summary**: 16 discovered workflows. 2 specced (Draft). 14 **Missing** (exist in code but have no spec).
+**Summary**: 22 discovered workflows. 8 specced (Draft). 14 **Missing** (exist in code but have no spec). 6 new learning workflows specced in this session.
 
 ---
 
@@ -48,6 +53,12 @@
 | Component | File(s) | Workflows it participates in |
 |---|---|---|
 | `index.vue` (main page) | `frontend/app/pages/index.vue` | Speech synthesis, Text input validation, Audio playback, Audio download, Panel toggle |
+| `index.vue` (Dashboard variant) | `frontend/app/pages/index.vue` (new) | Lesson browsing, Dashboard navigation |
+| `playground.vue` (new) | `frontend/app/pages/playground.vue` (new) | Playground access, Speech synthesis |
+| `LessonSidebar.vue` (new) | `frontend/app/components/LessonSidebar.vue` (new) | Dashboard navigation, Lesson browsing |
+| `NavigationBar.vue` (new) | `frontend/app/components/NavigationBar.vue` (new) | Dashboard navigation, Playground access |
+| `ActivityRenderer.vue` (new) | `frontend/app/components/ActivityRenderer.vue` (new) | Activity submission |
+| `useActivitySubmission.ts` (new) | `frontend/app/composables/useActivitySubmission.ts` (new) | Activity submission |
 | `useTtsApi` composable | `frontend/app/composables/useTtsApi.ts` | Speech synthesis |
 | `useHealthPoll` composable | `frontend/app/composables/useHealthPoll.ts` | Frontend health polling, Model loading |
 | `useVoices` composable | `frontend/app/composables/useVoices.ts` | Voice discovery |
@@ -87,6 +98,11 @@
 | What the customer experiences | Underlying workflow(s) | Entry point |
 |---|---|---|
 | Opens the app | Model loading, Frontend health polling | Page load |
+| Sees the roadmap | Lesson browsing, Dashboard navigation | `/` (Dashboard) |
+| Clicks a lesson | Lesson browsing, Lesson content serving | Dashboard lesson card |
+| Completes activities | Activity submission and scoring | `/lesson/:id` |
+| Returns to roadmap | Dashboard navigation (refresh) | `/` (Dashboard) |
+| Uses Playground | Playground access, Speech synthesis | Navigation bar → `/playground` |
 | Types Arabic/English text | Text input validation | Textarea input |
 | Selects a voice | Voice discovery | VoiceSelector dropdown |
 | Adjusts speech speed | Speech synthesis (parameter) | SpeedSlider |
