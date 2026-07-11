@@ -8,6 +8,26 @@ This ADR addresses the question raised in ADR-001: *If we add pronunciation scor
 
 ---
 
+## Relationship to ADR-001
+
+ADR-001 explicitly lists two constraints that **directly prohibit** what this ADR proposes:
+
+| ADR-001 Constraint | ADR-001 Wording |
+|---|---|
+| **No speech recognition** | *"Pronunciation scoring is out of scope for MVP."* |
+| **Resource limit** | *"~2GB TTS model — Already resource-heavy; cannot add more heavy services."* |
+
+**ADR-003 lifts both constraints.** The rationale:
+
+1. **Reading-based learning is incomplete without speaking practice.** A language platform that only reads text (TTS) but never lets the learner speak is fundamentally broken — like a music app without playback. Duolingo, Memrise, and Pimsleur all include speaking practice. Delivering a platform without it abandons the core learning loop: hear → speak → get feedback.
+2. **The resource increase is proportional, not multiplicative.** The current TTS model is ~2GB. Whisper "small" is ~1.5GB. Total: ~3.5GB. This is the same order of magnitude — not 3× or 10×. On a 4GB machine, this is acceptable. The constraint in ADR-001 said "cannot add more heavy services" — this ADR argues that the learning value justifies adding one more heavy service.
+3. **ADR-001's "no speech recognition" was an MVP scope decision, not an architectural prohibition.** The PRD's constraint was about *what to build first*, not about what the system can never support. ADR-003 is the "when" and "how" for a feature that was deferred, not forbidden.
+4. **No architectural pattern changes.** The STT module is structurally identical to the existing TTS module: a self-contained infrastructure module with no dependencies on Content or Progress. The modular monolith pattern from ADR-001 scales to accommodate this without modification.
+
+**In short: ADR-001 said "not yet." ADR-003 says "now, and here's why."**
+
+---
+
 ## Context
 
 The current platform generates speech from text (TTS = Text-to-Speech). The PRD explicitly states: *"No speech recognition — Pronunciation scoring is out of scope for MVP."*
@@ -24,15 +44,15 @@ However, pronunciation scoring is a natural extension of a language learning pla
 | **Confidence score** | 0.0–1.0 score for overall pronunciation accuracy |
 | **Visual feedback** | Highlight correctly/incorrectly pronounced words in the lesson text |
 
-### Constraints (Inherited from ADR-001)
+### Constraints (Inherited from ADR-001 — Partially Lifted)
 
-| Constraint | Implication |
-|-----------|-------------|
-| **CPU-only inference** | Speech recognition models are computationally heavy (often GPU-recommended) |
-| **~2GB TTS model** — Already resource-heavy | Cannot add another ~2GB speech recognition model |
-| **Local Docker Compose only** | No cloud STT (Speech-to-Text) APIs |
-| **Arabic language** | Arabic STT models are less mature than English |
-| **Solo developer** | Must minimize model management, training, and evaluation complexity |
+| Constraint | Status | Implication |
+|-----------|--------|-------------|
+| **CPU-only inference** | **Still applies** | Speech recognition models are computationally heavy (often GPU-recommended) |
+| **~2GB TTS model** — Already resource-heavy | **Lifted by this ADR** | Can add ~1.5GB Whisper (total ~3.5GB) — justified by learning value |
+| **Local Docker Compose only** | **Still applies** | No cloud STT (Speech-to-Text) APIs |
+| **Arabic language** | **Still applies** | Arabic STT models are less mature than English |
+| **Solo developer** | **Still applies** | Must minimize model management, training, and evaluation complexity |
 
 ### What We Know About Arabic STT
 

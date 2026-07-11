@@ -7,6 +7,11 @@
 
 ---
 
+## Executive Summary
+User opens Dashboard (`/`) → frontend calls `GET /api/lessons` → backend merges lesson JSON metadata (from `backend/content/{level}/lesson-{NN}.json`) with `user_progress` status from SQLite → returns 30 lessons with resolved status (`locked`/`available`/`in_progress`/`completed`) → frontend renders roadmap grouped by 3 CEFR levels. User clicks a lesson → navigates to `/lesson/:id` → frontend fetches full lesson data + progress. **Critical gap:** no `/api/lessons` endpoint exists, no SQLite code exists, no routing exists, only 1 of 30 lesson JSON files exists (data gap). **Known issues:** sequential unlock logic unimplemented (RC-5), `useVoices` type mismatch (RC-4), no `/lesson/:id` route (RC-3).
+
+---
+
 ## Overview
 A learner opens the Dashboard (`/`) and sees a **roadmap** of all 30 lessons across 3 CEFR levels (A1, A2, B1). Each lesson shows its status: `locked` 🔒, `available` →, `in_progress` ◉, or `completed` ✓. The learner can click any `available` or `in_progress` lesson to enter the lesson view (`/lesson/:id`). The system checks SQLite `user_progress` to determine each lesson's status, and the Content module to serve the lesson metadata (title, competencies, section count). This is the **gateway workflow** — every other learning workflow flows through it.
 

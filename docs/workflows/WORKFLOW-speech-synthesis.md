@@ -7,6 +7,11 @@
 
 ---
 
+## Executive Summary
+User types Arabic/English text, selects voice + speed, clicks **Generate Speech** (or presses `Ctrl+Enter`). Frontend validates input, sends `POST /api/generate`, backend runs XTTS-v2 → FFmpeg → returns MP3. Audio plays automatically, waveform animates, player panel slides up. **Key failure modes:** model not ready (503), speaker WAV missing (500), FFmpeg fails (fallback to WAV), browser blocks autoplay. **Critical known issues:** frontend polling window (20s) is 6× shorter than model load (120s) — see RC-1; default voice name mismatch — see RC-3; `/api/history` always returns empty text — see RC-1.
+
+---
+
 ## Overview
 A user enters Arabic or English text, selects a voice and speed, and triggers speech synthesis. The system validates the input, generates reference audio using XTTS-v2 voice cloning, converts to MP3, plays it back, and optionally allows download. This is the **only** reason the product exists — every failure mode must be handled gracefully.
 

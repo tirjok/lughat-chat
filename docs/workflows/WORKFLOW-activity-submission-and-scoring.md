@@ -7,6 +7,11 @@
 
 ---
 
+## Executive Summary
+User submits an answer to a practice activity in Lesson View. Backend validates, scores (activity-type-specific: fuzzy match, harakat-aware, keyword match, ordered dialogue match), writes score to SQLite `user_progress`, returns score + feedback. Supports 5 activity types (`listen-translate`, `translate-to-english`, `translate-to-arabic`, `introduce-characters`, `role-play`) with up to 3 attempts each. **Critical gap:** no scoring logic, no SQLite code, no submission endpoint, no activity submission composable, no `ActivityRenderer` component — all must be built from scratch. **Post-ADR-003 update:** `role-play` now has a second scoring path via audio recording → STT → pronunciation scoring (see new workflow). **Known issues:** fuzzy matching library missing (RC-6), harakat normalization missing (RC-7), competency score computation missing (RC-8).
+
+---
+
 ## Overview
 A learner is in the Lesson View (`/lesson/:id`) and encounters a practice activity. They submit an answer (varies by activity type: text input, multiple choice, audio recording, etc.). The system validates the answer, scores it (activity-type-specific scoring logic), returns a score (0.0–1.0) with feedback, updates the `user_progress` table in SQLite, and determines whether the activity is complete or if more attempts remain. This workflow supports up to 3 attempts per activity (configurable). It covers **all 5 activity types** defined in the PRD: `listen-translate`, `translate-to-english`, `translate-to-arabic`, `introduce-characters`, and `role-play`. This is the **core learning workflow** — it's the reason the platform exists beyond TTS playback.
 

@@ -7,6 +7,11 @@
 
 ---
 
+## Executive Summary
+User clicks "Playground" in navigation bar → navigates to `/playground` → existing TTS Studio renders (text input, voice selector, speed slider, Generate Speech button, audio player). **Critical gap:** no `/playground` route exists, no navigation bar exists. **Post-ADR-003 update:** Playground now also needs a microphone button for pronunciation recording (ADR-008), adding `useMicrophone` composable + `MicrophoneButton` component integration. The existing TTS Studio code is reused as-is — only routing and page structure change (plus new recording UI).
+
+---
+
 ## Overview
 The **Playground** is the existing TTS Studio, moved from `/` to `/playground`. It provides free-form text input + audio output with no lessons, no activities, no progress tracking. Users can type Arabic or English text, select a voice and speed, and generate speech. This workflow covers the **Playground page** specifically — how it's accessed, how it integrates with the navigation bar, and how it coexists with the learning pages.
 

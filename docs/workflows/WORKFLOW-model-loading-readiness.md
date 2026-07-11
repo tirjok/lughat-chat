@@ -7,6 +7,11 @@
 
 ---
 
+## Executive Summary
+Backend container starts → FastAPI yields immediately → background thread loads XTTS-v2 model (~120s on CPU) → `/health` reports `"loading"` until `"ready"`. Frontend polls `/health` every 2s (max 10 retries = 20s), disables Generate button until ready. **Critical bug:** 20s polling window is 6× shorter than 120s model load — frontend shows "Error" long before model loads (RC-1). Docker health check correctly accounts for 120s (200 retries × 15s). **Known issues:** named volume path mismatch (RC-5), frontend polling too short (RC-1), SPA serves regardless of backend health (RC-3). Fix: increase frontend polling to match 120s.
+
+---
+
 ## Overview
 When the backend container starts, the XTTS-v2 model (~2GB) must be loaded into memory. This takes ~120 seconds on CPU. During this time, the `/health` endpoint reports `status: "loading"`. The frontend polls `/health` every 2 seconds (max 10 retries = 20 seconds) and disables the Generate button until `status: "ready"`. If the model fails to load, status becomes `"error"`. This workflow covers the entire lifecycle: container start → model load → readiness → potential failure → recovery.
 

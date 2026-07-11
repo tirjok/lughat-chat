@@ -4,6 +4,8 @@
 
 **Accepted — Option A: MediaRecorder** — 2026-07-10
 
+**Dependent on ADR-003 acceptance.** This ADR evaluates how to capture and submit audio for pronunciation scoring. If ADR-003 (Speech Recognition / Whisper STT) is not implemented, this ADR has no purpose — there is no STT backend to receive the recordings. See [ADR-003](./ADR-003-speech-recognition-and-pronunciation-scoring.md) for the STT decision. If ADR-003 is deferred or rejected, this ADR should be deferred or rejected with it.
+
 This ADR addresses the question raised in ADR-003: *How do we handle browser microphone permissions, recording UI, and audio preprocessing?* It evaluates microphone capture strategies, Web Audio API integration, and the trade-off between browser-native recording and custom audio processing.
 
 ---
@@ -20,7 +22,7 @@ The platform's **role-play** activity (and potentially future pronunciation acti
 
 The PRD defines `role-play` as one of 5 mandatory activity types per lesson. It requires multi-turn dialogue where the learner speaks responses. This ADR evaluates how to implement the recording pipeline.
 
-### Constraints (Inherited from ADR-001)
+### Constraints (Inherited from ADR-001 and ADR-003)
 
 | Constraint | Implication |
 |-----------|-------------|
@@ -516,6 +518,8 @@ POST /api/pronounce
 - ❌ No server-side audio processing — all processing is client-side
 - ❌ No format conversion on the backend — browser handles format
 
+> **Note:** All of the above are only relevant if ADR-003 (Speech Recognition / Whisper STT) is accepted. Without an STT backend, microphone recording has no purpose.
+
 ### Audio Pipeline (MVP)
 
 ```
@@ -540,7 +544,9 @@ POST /api/pronounce (audio_data: Blob)
 Whisper STT → { transcription, confidence, score }
 ```
 
-### Open Questions for Future ADRs
+### Open Questions for Future ADRs (Conditional on ADR-003)
+
+> These questions are only relevant if ADR-003 (Speech Recognition / Whisper STT) is accepted. If ADR-003 is deferred or rejected, these questions become moot.
 
 1. **Enhanced recording (AudioWorklet)** — If Whisper quality on noisy recordings is unacceptable, add noise reduction (Option C). (ADR-008b)
 2. **Real-time audio level meter** — Show the user their recording volume in real-time to guide them. (ADR-008c)

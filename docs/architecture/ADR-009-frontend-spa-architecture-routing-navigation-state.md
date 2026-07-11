@@ -2,7 +2,7 @@
 
 ## Status
 
-**Accepted — Option A: Composable-Based State** — 2026-07-10
+**Accepted — Option C: Hybrid (URL State + Composables + Nuxt useState for Settings)** — 2026-07-10
 
 This ADR addresses the question raised in the PRD: *How do we structure the Nuxt SPA with multiple pages (Dashboard, Lesson View, Playground), a collapsible roadmap sidebar, and a top navigation bar?* It evaluates routing strategies, state management approaches, and the trade-off between composable-based state vs. global stores.
 
@@ -56,12 +56,12 @@ The current app is a **single-page TTS Studio** with no routing, no navigation, 
 | Constraint | Implication |
 |-----------|-------------|
 | **Nuxt 4 file-based routing** | Pages go in `app/pages/`, auto-imported. Routes are file paths. |
-| **No global store** — Current app uses composables with reactive refs | Must decide whether to introduce a store (Pinia) or keep composable-based state |
+| **No global store** — Current app uses composables with reactive refs | Must decide whether to introduce a store (Pinia) or keep composable-based state. Nuxt 4 provides `useState` as a built-in, SSR-friendly global state composable — a zero-dependency alternative to Pinia.
 | **Composable-based frontend** — Current composables are pure functions | New composables should follow the same pattern unless a global store is justified |
 | **Single user** — No auth, no user state | No authentication state to manage |
 | **Responsive layout** — Mobile (stacked panels) vs. Desktop (side-by-side) | Navigation and sidebar must work on both mobile and desktop |
 | **RTL support** — Arabic text handled via Cairo font + RTL direction | Navigation must support RTL (hamburger on right for Arabic UI) |
-| **Solo developer** — Must minimize state management complexity | Prefer composables over Pinia unless a store is clearly justified |
+| **Solo developer** — Must minimize state management complexity | Prefer composables and Nuxt 4's `useState` over Pinia unless a store is clearly justified |
 
 ---
 
@@ -330,9 +330,9 @@ export const useNavigationStore = defineStore('navigation', () => {
 
 ---
 
-### Option C: Hybrid (URL State + Composables)
+### Option C: Hybrid (URL State + Composables + Nuxt useState)
 
-Use **URL state** (vue-router) for navigation and lesson selection. Use **composables** for UI state (sidebar, panel toggle). Use **Pinia** only for data that needs to be shared across pages and persisted (e.g., sidebar preference).
+Use **URL state** (vue-router) for navigation and lesson selection. Use **composables** for UI state (sidebar, panel toggle). Use **Nuxt 4's `useState`** for persistent settings (e.g., sidebar preference).
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -352,11 +352,11 @@ Use **URL state** (vue-router) for navigation and lesson selection. Use **compos
 │  │  │  useLessons.ts — lessons data                │    │   │
 │  │  └─────────────────────────────────────────────┘    │   │
 │  │                                                     │   │
-│  │  Pinia (only for persistence)                        │   │
+│  │  Nuxt useState (for persistence)                   │   │
 │  │  ┌─────────────────────────────────────────────┐    │   │
 │  │  │  useSettings.ts — sidebar preference,        │    │   │
 │  │  │  theme, language, etc. (persisted to         │    │   │
-│  │  │  localStorage)                               │    │   │
+│  │  │  localStorage via watch)                     │    │   │
 │  │  └─────────────────────────────────────────────┘    │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -365,26 +365,27 @@ Use **URL state** (vue-router) for navigation and lesson selection. Use **compos
 **Key characteristics:**
 - **URL is the source of truth** for navigation — `window.history` manages the back/forward buttons
 - **Composables manage transient UI state** — Sidebar open/closed is not in the URL (it's a UI preference)
-- **Pinia for persistent settings** — Sidebar preference, theme, language are stored in localStorage via Pinia
-- **Minimal Pinia usage** — Only one store (`useSettings`) for persistent settings
-- **Most flexible** — Can migrate to full Pinia later if needed
+- **Nuxt `useState` for persistent settings** — Sidebar preference, theme, language are stored in localStorage via a `watch` inside the composable
+- **Zero Pinia** — No external state management library needed. Nuxt 4's `useState` is built-in, SSR-friendly, and auto-imported.
+- **Most flexible** — Can add Pinia later if devtools or time-travel debugging becomes necessary
 
 ---
 
 ## Trade-off Analysis
 
-| Concern | A: Composables Only | B: Pinia Store | C: Hybrid (URL + Composables + Pinia) |
+| Concern | A: Composables Only | B: Pinia Store | C: Hybrid (URL + Composables + useState) |
 |---------|-------------------|---------------|-------------------------------------|
-| **Setup complexity** | ✅ None — uses existing Vue patterns | ❌ Install Pinia, configure store, write stores | ⚠️ Install Pinia, one store for settings |
-| **Boilerplate** | ✅ Minimal — one composable per concern | ❌ Each store requires state, actions, getters | ⚠️ One store for settings, composables for the rest |
-| **Debugging** | ⚠️ State is scattered across composables | ✅ Pinia devtools — inspect state, time-travel | ✅ Pinia for settings, composables for the rest |
-| **State sharing** | ⚠️ Must pass state via composable props | ✅ Global store — all pages read the same state | ✅ URL for navigation, composables for UI, Pinia for settings |
+| **Setup complexity** | ✅ None — uses existing Vue patterns | ❌ Install Pinia, configure store, write stores | ✅ Zero setup — `useState` is built into Nuxt 4 |
+| **Boilerplate** | ✅ Minimal — one composable per concern | ❌ Each store requires state, actions, getters | ✅ One-liner: `useState('key')` per setting |
+| **Debugging** | ⚠️ State is scattered across composables | ✅ Pinia devtools — inspect state, time-travel | ⚠️ No devtools (trade-off) |
+| **State sharing** | ⚠️ Must pass state via composable props | ✅ Global store — all pages read the same state | ✅ URL for navigation, composables for UI, `useState` for settings |
 | **Browser back button** | ⚠️ Must manually sync with router | ✅ Router manages history; store reads from router | ✅ Router manages history (same as B) |
 | **URL shareability** | ⚠️ Must manually construct URLs | ✅ Store reads from router (URL is source of truth) | ✅ Router manages history (same as B) |
-| **Persistence** | ❌ Must manually save to localStorage | ✅ Pinia can persist to localStorage | ✅ Pinia persists settings to localStorage |
+| **Persistence** | ❌ Must manually save to localStorage | ✅ Pinia can persist to localStorage | ✅ `useState` + `watch` saves to localStorage |
 | **Team size** | ✅ 1 developer | ⚠️ 1–2 developers (store architecture) | ✅ 1 developer |
-| **Learning curve** | ✅ Vue composables (known) | ❌ Pinia concepts (store, actions, getters) | ⚠️ Pinia (one store) + composables |
-| **Migration path** | ✅ Can add Pinia later | ❌ Harder to remove Pinia | ✅ Can remove Pinia later if needed |
+| **Learning curve** | ✅ Vue composables (known) | ❌ Pinia concepts (store, actions, getters) | ✅ `useState` (built-in) + composables |
+| **Migration path** | ✅ Can add Pinia later | ❌ Harder to remove Pinia | ✅ Can remove `useState` if Pinia needed later |
+| **Bundle size** | ✅ 0 KB extra | ❌ ~10 KB (Pinia) | ✅ 0 KB extra — built into Nuxt 4 |
 
 ---
 
@@ -398,7 +399,7 @@ A full Pinia store makes sense when:
 4. **Team grows** — Multiple developers need a shared state contract (store API)
 5. **State is complex** — State has many interdependencies, computed properties, and actions
 
-**Partial fit for Lughat Chat.** The platform has 3 pages (Dashboard, Lesson, Playground) that share navigation state and sidebar state. However, the state is not complex enough to justify a full store. A single settings store (Option C) is sufficient.
+**Partial fit for Lughat Chat.** The platform has 3 pages (Dashboard, Lesson, Playground) that share navigation state and sidebar state. However, the state is not complex enough to justify a full store. A single `useState`-based settings composable (Option C) is sufficient.
 
 ### When Option C (Hybrid) Would Be Warranted
 
@@ -407,10 +408,10 @@ A hybrid approach makes sense when:
 1. **Navigation is URL-driven** — The current page and lesson are in the URL (`/lesson/1`)
 2. **UI state is transient** — Sidebar open/closed is a UI preference, not a data concern
 3. **Settings are persistent** — Theme, language, sidebar preference should survive page reloads
-4. **Most state is composable** — Only a small subset of state needs Pinia
-5. **Solo developer** — Minimal Pinia usage (one store) is easier to maintain than a full store system
+4. **Most state is composable** — Only a small subset of state needs `useState`
+5. **Solo developer** — Zero Pinia usage (use `useState`) is easier to maintain than any external library
 
-**Good fit for Lughat Chat.** The platform's navigation is URL-driven (lesson ID is in the URL). Sidebar state is transient (UI preference). Settings (theme, language) are persistent. This is exactly what Option C handles.
+**Good fit for Lughat Chat.** The platform's navigation is URL-driven (lesson ID is in the URL). Sidebar state is transient (UI preference). Settings (theme, language) are persistent. Nuxt 4's `useState` handles persistence without any external library. This is exactly what Option C handles.
 
 ---
 
@@ -459,29 +460,29 @@ A hybrid approach makes sense when:
 
 - **URL is the source of truth** — Navigation is managed by vue-router; the URL is the single source of truth for which page is active
 - **Composables for UI state** — Sidebar open/closed, panel toggle, etc. are managed by composables (simple, fast)
-- **Pinia for settings** — One store for persistent settings (theme, language, sidebar preference)
-- **Minimal Pinia** — Only one store (`useSettings`) is needed. The rest is composables.
+- **Nuxt `useState` for settings** — Zero dependencies. SSR-friendly. Auto-imported. One-liner per setting.
+- **No Pinia** — No install, no configuration, no store boilerplate. The only thing needed is a `watch` + `localStorage.setItem()` for persistence.
 - **Browser back button works** — Router manages history; no manual sync needed
 - **URL is shareable** — Bookmarking `/lesson/1` takes you directly to Lesson 1
 
 #### What becomes harder
 
-- **Two state systems** — Must understand both composables and Pinia (even if Pinia is used minimally)
-- **One extra dependency** — Pinia must be installed and configured (even for one store)
+- **No Pinia devtools** — Trade-off: no time-travel debugging or state inspection (acceptable for a solo developer with simple state)
+- **Manual persistence** — Must write a `watch` + `localStorage` inside the composable instead of relying on a Pinia plugin (trivial to implement)
 
 ---
 
 ## Recommendation
 
-**Adopt Option C: Hybrid (URL State + Composables + Pinia for Settings).**
+**Adopt Option C: Hybrid (URL State + Composables + Nuxt `useState` for Settings).**
 
 ### Rationale
 
 1. **URL is the source of truth for navigation.** The current lesson ID is in the URL (`/lesson/1`). This means the browser back button works, URLs are shareable, and the URL is the single source of truth for which lesson is active. No composable or store needs to manage this — vue-router handles it.
 2. **Composables are sufficient for UI state.** Sidebar open/closed, panel toggle, loading states — these are simple booleans and numbers. Composables with `ref()` handle them perfectly. No Pinia needed for UI state.
-3. **Pinia for persistent settings.** The only thing that needs Pinia is persistent settings (sidebar preference, theme, language). These survive page reloads and must be stored in localStorage. One store (`useSettings`) is sufficient.
-4. **Minimal Pinia usage.** Only one store for settings. The rest of the state is managed by composables. This is the sweet spot between Option A (no Pinia) and Option B (full Pinia).
-5. **Solo developer friendly.** One Pinia store + ~5 composables is easy to maintain. No complex store architecture, no actions/getters boilerplate for simple state.
+3. **Nuxt `useState` for persistent settings.** The only thing that needs `useState` is persistent settings (sidebar preference, theme, language). These survive page reloads and are persisted to localStorage via a simple `watch` inside the composable. No external library required.
+4. **Zero Pinia.** No install, no configuration, no store boilerplate. Nuxt 4's `useState` is built-in, SSR-friendly, and auto-imported. A single composable with `useState('key')` replaces what would be a Pinia store.
+5. **Solo developer friendly.** Zero external state libraries + ~5 composables is the simplest possible architecture. No complex store architecture, no actions/getters boilerplate, no devtools to install.
 
 ### State Architecture (After Adoption)
 
@@ -503,10 +504,11 @@ A hybrid approach makes sense when:
 │  │  useProgress.ts — progress data (from API)           │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
-│  Pinia (one store) — Persistent settings                    │
+│  Nuxt useState (built-in) — Persistent settings             │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │  useSettings.ts — sidebar preference, theme,         │   │
-│  │  language, etc. (persisted to localStorage)          │   │
+│  │  language, etc. (persisted to localStorage via     │   │
+│  │  watch + localStorage.setItem)                     │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -533,18 +535,19 @@ A hybrid approach makes sense when:
 ### New Composables (Frontend)
 
 | Composable | Purpose |
-|-----------|---------|
+|-----------|---------|  
 | `useNavigation.ts` | Current page, current lesson ID (from URL) |
 | `useSidebar.ts` | Sidebar open/closed, toggle, close, open |
 | `useCurrentLesson.ts` | Current lesson, current activity, select lesson, navigate activities |
 | `useLessons.ts` | Fetch lessons from API, cache, loading state |
 | `useProgress.ts` | Fetch progress from API, mark lesson completed |
+| `useSettings.ts` | Sidebar preference, theme, language (persisted to localStorage via `useState` + `watch`) |
 
-### New Pinia Store (Frontend)
+### New Settings Composable (Frontend)
 
-| Store | Purpose |
-|-------|---------|
-| `useSettings.ts` | Sidebar preference, theme, language (persisted to localStorage) |
+| Composable | Purpose |
+|-------|---------|  
+| `useSettings.ts` | Sidebar preference, theme, language (persisted to localStorage via `useState` + `watch`) |
 
 ### Open Questions for Future ADRs
 
@@ -559,6 +562,7 @@ A hybrid approach makes sense when:
 - [PRD: Pages (Dashboard, Lesson, Playground)](../PRD.md)
 - [ADR-001: Language Learning Platform Architecture](./ADR-001-language-learning-platform-architecture.md)
 - [Vue Router 4: File-based Routing](https://router.vuejs.org/guide/essentials/file-system-routing)
-- [Pinia: The Vue Store](https://pinia.vuejs.org/)
+- [Nuxt 4: State Management (useState)](https://nuxt.com/docs/4.x/getting-started/state-management)
+- [Nuxt 4: useState Composable](https://nuxt.com/docs/api/composables/use-state)
 - [Global State, Local State, and URL State In Vue Apps](https://www.nazarboyko.com/articles/global-state-local-state-and-url-state-in-vue-apps)
 - [Nuxt 4: File-based Routing](https://nuxt.com/docs/guide/concepts/rendering#file-system-routing)

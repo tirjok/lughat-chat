@@ -7,6 +7,11 @@
 
 ---
 
+## Executive Summary
+Backend serves lesson content from JSON files (`backend/content/{level}/lesson-{NN}.json`). Content module reads + parses all files, populates SQLite `lessons` table on first run, then serves via `GET /api/lessons` (list) and `GET /api/lessons/:id` (full detail with progress). **Critical gap:** no SQLite code exists, no `/api/lessons` endpoints exist, no schema validation exists, only 1 of 30 lesson JSON files exists (data gap). This is the **foundation** for both Lesson Browsing and Activity Submission — without it, no learning content is served.
+
+---
+
 ## Overview
 The backend serves lesson content from JSON files stored in `backend/content/{level}/lesson-{NN}.json`. Each lesson contains variable sections (dialogue, vocabulary, grammar, expressions) and mandatory practice activities. The Content module reads these files, validates the JSON structure, and serves them via API endpoints. This workflow covers the **entire lifecycle of lesson content** — from file storage to API response. It is the **foundation** for both Lesson Browsing and Activity Submission workflows.
 

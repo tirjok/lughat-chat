@@ -7,6 +7,11 @@
 
 ---
 
+## Executive Summary
+User opens Dashboard (`/`) → frontend renders top navigation bar + collapsible roadmap sidebar + main content area showing 30 lessons grouped by 3 CEFR levels. User clicks hamburger to toggle sidebar, clicks navigation bar items to navigate (Home, Roadmap, Playground), clicks lesson cards to enter Lesson View (`/lesson/:id`). **Critical gap:** no Dashboard page exists (current `index.vue` is TTS Studio), no navigation bar exists, no roadmap sidebar exists, no `/playground` or `/lesson/:id` routes exist. Purely client-side — depends on Lesson Browsing workflow for data.
+
+---
+
 ## Overview
 When the learner lands on the Dashboard (`/`), they see a **roadmap** of all 30 lessons across 3 CEFR levels (A1, A2, B1). Each level shows a progress percentage, each lesson shows a status icon (🔒 / → / ◉ / ✓), and clickable lessons navigate to the Lesson View (`/lesson/:id`). A **collapsible sidebar** (roadmap) can be toggled via a hamburger button. A **top navigation bar** is visible on all pages with: hamburger, Home, Roadmap, Playground, and TTS status indicator.
 
