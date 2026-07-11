@@ -8,7 +8,7 @@
 ---
 
 ## Executive Summary
-User opens Dashboard (`/`) → frontend calls `GET /api/lessons` → backend merges lesson JSON metadata (from `backend/content/{level}/lesson-{NN}.json`) with `user_progress` status from SQLite → returns 30 lessons with resolved status (`locked`/`available`/`in_progress`/`completed`) → frontend renders roadmap grouped by 3 CEFR levels. User clicks a lesson → navigates to `/lesson/:id` → frontend fetches full lesson data + progress. **Critical gap:** no `/api/lessons` endpoint exists, no SQLite code exists, no routing exists, only 1 of 30 lesson JSON files exists (data gap). **Known issues:** sequential unlock logic unimplemented (RC-5), `useVoices` type mismatch (RC-4), no `/lesson/:id` route (RC-3).
+User opens Dashboard (`/`) → frontend calls `GET /api/lessons` → backend merges lesson JSON metadata (from `backend/content/{level}/lesson-{NN}.json`) with `user_progress` status from SQLite → returns 30 lessons with resolved status (`locked`/`available`/`in_progress`/`completed`) → frontend renders roadmap grouped by 3 CEFR levels. User clicks a lesson → navigates to `/lesson/:id` → frontend fetches full lesson data + progress. **Critical gap:** no `/api/lessons` endpoint exists, no SQLite code exists, no routing exists, only 1 of 30 lesson JSON files exists (data gap). **Known issues:** sequential unlock logic unimplemented (RC-020), `useVoices` type mismatch (RC-034), no `/lesson/:id` route (RC-025).
 
 ---
 
@@ -327,11 +327,11 @@ A learner opens the Dashboard (`/`) and sees a **roadmap** of all 30 lessons acr
 ## Reality Checker Findings
 | # | Finding | Severity | Spec section | Resolution |
 |---|---|-----------|-------------|-------------|
-| RC-1 | **No lesson content exists beyond `lesson-01.json`** — `backend/content/a2/` and `backend/content/b1/` directories exist but are empty. The workflow spec assumes 30 lessons (10 per level × 3 levels). Currently only 1 lesson exists. | **Critical** | STEP 2 | The Content module will return 1 lesson, not 30. The roadmap will show 1 lesson, not 30. This is a data gap, not a code gap. |
-| RC-2 | **No SQLite database exists** — `app.py` currently has no database code. The `lessons` and `user_progress` tables are defined in the PRD but not implemented. | **Critical** | STEP 3 | The Progress module doesn't exist yet. The `/api/lessons` and `/api/progress` endpoints don't exist. This workflow cannot be tested until implemented. |
-| RC-3 | **No routing exists** — The current app is a single page (`/`). There is no `/` (Dashboard) or `/lesson/:id` route. The Playground route (`/playground`) is also not implemented. | **High** | STEP 1, STEP 5 | The frontend pages (`app/pages/index.vue` for Dashboard, `app/pages/lesson/[id].vue` for Lesson View) don't exist yet. |
-| RC-4 | **Current `useVoices` composable returns `Voice` objects with `dialect`, `tag`, `icon`, `speaker_wav` fields** — but the backend `/api/voices` returns simple `{ id, name }` objects. The frontend composable's type doesn't match the API. | **Medium** | STEP 4 | The `useVoices` composable needs updating to match the actual API response, or the API needs to be extended to return the richer data structure. |
-| RC-5 | **Sequential unlocking logic is not implemented** — The spec describes rules (lesson N unlocks when lesson N-1 is completed), but no code implements this. | **High** | STEP 3 | The Progress module must implement sequential unlock logic at the API level, not the frontend. The frontend should only display the status returned by the backend. |
+| RC-012 | **No lesson content exists beyond `lesson-01.json`** — `backend/content/a2/` and `backend/content/b1/` directories exist but are empty. The workflow spec assumes 30 lessons (10 per level × 3 levels). Currently only 1 lesson exists. | **Critical** | STEP 2 | The Content module will return 1 lesson, not 30. The roadmap will show 1 lesson, not 30. This is a data gap, not a code gap. |
+| RC-011 | **No SQLite database exists** — `app.py` currently has no database code. The `lessons` and `user_progress` tables are defined in the PRD but not implemented. | **Critical** | STEP 3 | The Progress module doesn't exist yet. The `/api/lessons` and `/api/progress` endpoints don't exist. This workflow cannot be tested until implemented. |
+| RC-025 | **No routing exists** — The current app is a single page (`/`). There is no `/` (Dashboard) or `/lesson/:id` route. The Playground route (`/playground`) is also not implemented. | **High** | STEP 1, STEP 5 | The frontend pages (`app/pages/index.vue` for Dashboard, `app/pages/lesson/[id].vue` for Lesson View) don't exist yet. |
+| RC-034 | **Current `useVoices` composable returns `Voice` objects with `dialect`, `tag`, `icon`, `speaker_wav` fields** — but the backend `/api/voices` returns simple `{ id, name }` objects. The frontend composable's type doesn't match the API. | **Medium** | STEP 4 | The `useVoices` composable needs updating to match the actual API response, or the API needs to be extended to return the richer data structure. |
+| RC-020 | **Sequential unlocking logic is not implemented** — The spec describes rules (lesson N unlocks when lesson N-1 is completed), but no code implements this. | **High** | STEP 3 | The Progress module must implement sequential unlock logic at the API level, not the frontend. The frontend should only display the status returned by the backend. |
 
 ---
 
@@ -385,8 +385,8 @@ A learner opens the Dashboard (`/`) and sees a **roadmap** of all 30 lessons acr
 | Date | Finding | Action taken |
 |---|---|---|
 | 2026-07-10 | Initial spec created from codebase analysis | — |
-| 2026-07-10 | RC-1: Only 1 of 30 lesson JSON files exists | Flagged as Critical — data gap, not code gap |
-| 2026-07-10 | RC-2: No SQLite code exists in current `app.py` | Flagged as Critical — must be implemented before this workflow can run |
-| 2026-07-10 | RC-3: No routing exists — single page app | Flagged as High — must be implemented before this workflow can run |
-| 2026-07-10 | RC-4: `useVoices` composable type mismatch with API | Flagged as Medium — needs composable update |
-| 2026-07-10 | RC-5: Sequential unlocking logic not implemented | Flagged as High — must be implemented in Progress module |
+| 2026-07-10 | RC-012: Only 1 of 30 lesson JSON files exists | Flagged as Critical — data gap, not code gap |
+| 2026-07-10 | RC-011: No SQLite code exists in current `app.py` | Flagged as Critical — must be implemented before this workflow can run |
+| 2026-07-10 | RC-025: No routing exists — single page app | Flagged as High — must be implemented before this workflow can run |
+| 2026-07-10 | RC-034: `useVoices` composable type mismatch with API | Flagged as Medium — needs composable update |
+| 2026-07-10 | RC-020: Sequential unlocking logic not implemented | Flagged as High — must be implemented in Progress module |

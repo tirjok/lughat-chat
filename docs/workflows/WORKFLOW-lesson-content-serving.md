@@ -133,10 +133,10 @@ The backend serves lesson content from JSON files stored in `backend/content/{le
 ## Reality Checker Findings
 | # | Finding | Severity | Spec section | Resolution |
 |---|---|---|---|-------------|
-| RC-1 | **Only 1 of 30 lesson JSON files exists** (`backend/content/a1/lesson-01.json`). `a2/` and `b1/` directories are empty. | **Critical** | STEP 1 | The Content module will return 1 lesson, not 30. This is a data gap, not a code gap. |
-| RC-2 | **No SQLite code exists in current `app.py`** — no database initialization, no `lessons` table, no `user_progress` table. | **Critical** | STEP 2 | The entire database layer must be built. |
-| RC-3 | **No `/api/lessons` or `/api/lessons/:id` endpoints exist** in current `app.py`. | **Critical** | STEP 3, STEP 4 | Both endpoints must be built. |
-| RC-4 | **Lesson JSON schema is defined in the PRD but not validated** — no schema validation code exists. | **Medium** | STEP 1 | Schema validation should be added (at minimum: required fields check). |
+| RC-012 | **Only 1 of 30 lesson JSON files exists** (`backend/content/a1/lesson-01.json`). `a2/` and `b1/` directories are empty. | **Critical** | STEP 1 | The Content module will return 1 lesson, not 30. This is a data gap, not a code gap. |
+| RC-011 | **No SQLite code exists in current `app.py`** — no database initialization, no `lessons` table, no `user_progress` table. | **Critical** | STEP 2 | The entire database layer must be built. |
+| RC-013 | **No `/api/lessons` or `/api/lessons/:id` endpoints exist** in current `app.py`. | **Critical** | STEP 3, STEP 4 | Both endpoints must be built. |
+| RC-033 | **Lesson JSON schema is defined in the PRD but not validated** — no schema validation code exists. | **Medium** | STEP 1 | Schema validation should be added (at minimum: required fields check). |
 
 ---
 

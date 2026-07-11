@@ -1,6 +1,6 @@
 # Implementation Plan: Fix Frontend Health Polling Window
 
-**Source**: `docs/workflows/WORKFLOW-model-loading-readiness.md` (v0.1) — RC-1
+**Source**: `docs/workflows/WORKFLOW-model-loading-readiness.md` (v0.1) — RC-001
 **Date**: 2026-07-11
 **Status**: Draft — Ready for implementation
 
@@ -18,9 +18,9 @@ The Docker health check correctly accounts for 120 seconds (`start_period: 120s`
 
 | # | Finding | Severity |
 |---|---------|----------|
-| RC-1 | Frontend health polling max is 10 retries × 2s = **20 seconds**, but model loading takes **~120 seconds** | **Critical** |
-| RC-2 | Docker health check has `start_period: 120s` and `retries: 200` (correct), but frontend polling (20s) does NOT match | **Critical** |
-| RC-3 | Frontend is a static SPA served by Nginx — it loads regardless of backend health | Medium |
+| RC-001 | Frontend health polling max is 10 retries × 2s = **20 seconds**, but model loading takes **~120 seconds** | **Critical** |
+| RC-042 | Docker health check has `start_period: 120s` and `retries: 200` (correct), but frontend polling (20s) does NOT match | **Critical** |
+| RC-038 | Frontend is a static SPA served by Nginx — it loads regardless of backend health | Medium |
 
 ---
 

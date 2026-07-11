@@ -1,6 +1,6 @@
 # Implementation Plan: Fix Model Cache Volume Path Mismatch
 
-**Source**: `docs/workflows/WORKFLOW-model-loading-readiness.md` (v0.1) — RC-5
+**Source**: `docs/workflows/WORKFLOW-model-loading-readiness.md` (v0.1) — RC-004
 **Date**: 2026-07-11
 **Status**: Draft — Ready for implementation
 
@@ -16,8 +16,8 @@ The Docker Compose configuration mounts the `tts-model-cache` named volume at `/
 
 | # | Finding | Severity |
 |---|---------|----------|
-| RC-5 | Model cache (`tts-model-cache` named volume at `/root/.local/share/tts`) is **NOT used** — the app writes to `/app/.cache/tts` (env var) | **High** |
-| RC-3 | Docker health check correctly accounts for 120s, but frontend polling (20s) does NOT | Critical |
+| RC-004 | Model cache (`tts-model-cache` named volume at `/root/.local/share/tts`) is **NOT used** — the app writes to `/app/.cache/tts` (env var) | **High** |
+| RC-042 | Docker health check correctly accounts for 120s, but frontend polling (20s) does NOT | Critical |
 
 ---
 

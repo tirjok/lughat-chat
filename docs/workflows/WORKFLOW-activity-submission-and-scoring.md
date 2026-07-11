@@ -8,7 +8,7 @@
 ---
 
 ## Executive Summary
-User submits an answer to a practice activity in Lesson View. Backend validates, scores (activity-type-specific: fuzzy match, harakat-aware, keyword match, ordered dialogue match), writes score to SQLite `user_progress`, returns score + feedback. Supports 5 activity types (`listen-translate`, `translate-to-english`, `translate-to-arabic`, `introduce-characters`, `role-play`) with up to 3 attempts each. **Critical gap:** no scoring logic, no SQLite code, no submission endpoint, no activity submission composable, no `ActivityRenderer` component — all must be built from scratch. **Post-ADR-003 update:** `role-play` now has a second scoring path via audio recording → STT → pronunciation scoring (see new workflow). **Known issues:** fuzzy matching library missing (RC-6), harakat normalization missing (RC-7), competency score computation missing (RC-8).
+User submits an answer to a practice activity in Lesson View. Backend validates, scores (activity-type-specific: fuzzy match, harakat-aware, keyword match, ordered dialogue match), writes score to SQLite `user_progress`, returns score + feedback. Supports 5 activity types (`listen-translate`, `translate-to-english`, `translate-to-arabic`, `introduce-characters`, `role-play`) with up to 3 attempts each. **Critical gap:** no scoring logic, no SQLite code, no submission endpoint, no activity submission composable, no `ActivityRenderer` component — all must be built from scratch. **Post-ADR-003 update:** `role-play` now has a second scoring path via audio recording → STT → pronunciation scoring (see new workflow). **Known issues:** fuzzy matching library missing (RC-017), harakat normalization missing (RC-018), competency score computation missing (RC-019).
 
 ---
 
@@ -302,14 +302,14 @@ A learner is in the Lesson View (`/lesson/:id`) and encounters a practice activi
 ## Reality Checker Findings
 | # | Finding | Severity | Spec section | Resolution |
 |---|---|-----------|-------------|-------------|
-| RC-1 | **No scoring logic exists** — The current `app.py` has no scoring functions, no activity types, no fuzzy matching. | **Critical** | STEP 3 | The Content module must implement 5 distinct scoring algorithms (one per activity type). This is the most complex part of the entire platform. |
-| RC-2 | **No `user_progress` table exists** — SQLite database code is not implemented in the current `app.py`. | **Critical** | STEP 4 | The Progress module must be built from scratch: database initialization, CRUD operations, sequential unlock logic. |
-| RC-3 | **No activity submission endpoint exists** — The current API has `/api/generate`, `/health`, `/api/voices`, `/api/history`. No lesson or progress endpoints. | **Critical** | STEP 2 | The entire `/api/lessons/:id/activities/:activityId/submit` endpoint must be built. |
-| RC-4 | **No `useActivitySubmission` composable exists** — The current frontend has no composable for activity submission. | **High** | STEP 2 | A new composable must be created: `app/composables/useActivitySubmission.ts`. |
-| RC-5 | **No `ActivityRenderer` component exists** — The current frontend has `AudioPlayerPanel`, `WaveformCanvas`, etc. but no activity-specific renderer. | **High** | STEP 1 | A new component must be created: `app/components/ActivityRenderer.vue` — 5 distinct renderers (one per activity type). |
-| RC-6 | **Fuzzy string matching is not implemented** — The PRD mentions "fuzzy string match" for translation activities. No fuzzy matching library is in `requirements.txt`. | **High** | STEP 3 | A fuzzy matching library (e.g., `python-Levenshtein` or `rapidfuzz`) must be added to `requirements.txt`. |
-| RC-7 | **Harakat-aware Arabic comparison is not implemented** — The PRD mentions "harakat" (diacritics) matter for `translate-to-arabic`. No harakat normalization or comparison exists. | **High** | STEP 3 | A harakat normalization/comparison module must be built (strip harakat for comparison, apply penalty for missing harakat). |
-| RC-8 | **`competency_impact` is defined in the API contract but has no implementation** — ADR-007 defines weighted aggregation, but no code computes competency scores. | **High** | STEP 4 | The Progress module must compute competency scores from activity scores (weighted average per ADR-007). |
+| RC-010 | **No scoring logic exists** — The current `app.py` has no scoring functions, no activity types, no fuzzy matching. | **Critical** | STEP 3 | The Content module must implement 5 distinct scoring algorithms (one per activity type). This is the most complex part of the entire platform. |
+| RC-011 | **No `user_progress` table exists** — SQLite database code is not implemented in the current `app.py`. | **Critical** | STEP 4 | The Progress module must be built from scratch: database initialization, CRUD operations, sequential unlock logic. |
+| RC-014 | **No activity submission endpoint exists** — The current API has `/api/generate`, `/health`, `/api/voices`, `/api/history`. No lesson or progress endpoints. | **Critical** | STEP 2 | The entire `/api/lessons/:id/activities/:activityId/submit` endpoint must be built. |
+| RC-015 | **No `useActivitySubmission` composable exists** — The current frontend has no composable for activity submission. | **High** | STEP 2 | A new composable must be created: `app/composables/useActivitySubmission.ts`. |
+| RC-016 | **No `ActivityRenderer` component exists** — The current frontend has `AudioPlayerPanel`, `WaveformCanvas`, etc. but no activity-specific renderer. | **High** | STEP 1 | A new component must be created: `app/components/ActivityRenderer.vue` — 5 distinct renderers (one per activity type). |
+| RC-017 | **Fuzzy string matching is not implemented** — The PRD mentions "fuzzy string match" for translation activities. No fuzzy matching library is in `requirements.txt`. | **High** | STEP 3 | A fuzzy matching library (e.g., `python-Levenshtein` or `rapidfuzz`) must be added to `requirements.txt`. |
+| RC-018 | **Harakat-aware Arabic comparison is not implemented** — The PRD mentions "harakat" (diacritics) matter for `translate-to-arabic`. No harakat normalization or comparison exists. | **High** | STEP 3 | A harakat normalization/comparison module must be built (strip harakat for comparison, apply penalty for missing harakat). |
+| RC-019 | **`competency_impact` is defined in the API contract but has no implementation** — ADR-007 defines weighted aggregation, but no code computes competency scores. | **High** | STEP 4 | The Progress module must compute competency scores from activity scores (weighted average per ADR-007). |
 
 ---
 
@@ -366,11 +366,11 @@ A learner is in the Lesson View (`/lesson/:id`) and encounters a practice activi
 | Date | Finding | Action taken |
 |---|---|---|
 | 2026-07-10 | Initial spec created from codebase analysis | — |
-| 2026-07-10 | RC-1: No scoring logic exists — 5 algorithms must be built | Flagged as Critical — most complex part of the platform |
-| RC-2: No SQLite code exists in current `app.py` | Flagged as Critical — Progress module must be built from scratch |
-| RC-3: No activity submission endpoint exists | Flagged as Critical — entire endpoint must be built |
-| RC-4: No `useActivitySubmission` composable exists | Flagged as High — new composable must be created |
-| RC-5: No `ActivityRenderer` component exists | Flagged as High — new component must be created (5 renderers) |
-| RC-6: No fuzzy matching library in requirements | Flagged as High — must be added |
-| RC-7: No harakat normalization/comparison exists | Flagged as High — must be built |
-| RC-8: No competency score computation exists | Flagged as High — must be implemented in Progress module |
+| 2026-07-10 | RC-010: No scoring logic exists — 5 algorithms must be built | Flagged as Critical — most complex part of the platform |
+| RC-011: No SQLite code exists in current `app.py` | Flagged as Critical — Progress module must be built from scratch |
+| RC-014: No activity submission endpoint exists | Flagged as Critical — entire endpoint must be built |
+| RC-015: No `useActivitySubmission` composable exists | Flagged as High — new composable must be created |
+| RC-016: No `ActivityRenderer` component exists | Flagged as High — new component must be created (5 renderers) |
+| RC-017: No fuzzy matching library in requirements | Flagged as High — must be added |
+| RC-018: No harakat normalization/comparison exists | Flagged as High — must be built |
+| RC-019: No competency score computation exists | Flagged as High — must be implemented in Progress module |

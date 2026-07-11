@@ -8,7 +8,7 @@
 ---
 
 ## Executive Summary
-User types Arabic/English text, selects voice + speed, clicks **Generate Speech** (or presses `Ctrl+Enter`). Frontend validates input, sends `POST /api/generate`, backend runs XTTS-v2 → FFmpeg → returns MP3. Audio plays automatically, waveform animates, player panel slides up. **Key failure modes:** model not ready (503), speaker WAV missing (500), FFmpeg fails (fallback to WAV), browser blocks autoplay. **Critical known issues:** frontend polling window (20s) is 6× shorter than model load (120s) — see RC-1; default voice name mismatch — see RC-3; `/api/history` always returns empty text — see RC-1.
+User types Arabic/English text, selects voice + speed, clicks **Generate Speech** (or presses `Ctrl+Enter`). Frontend validates input, sends `POST /api/generate`, backend runs XTTS-v2 → FFmpeg → returns MP3. Audio plays automatically, waveform animates, player panel slides up. **Key failure modes:** model not ready (503), speaker WAV missing (500), FFmpeg fails (fallback to WAV), browser blocks autoplay. **Critical known issues:** frontend polling window (20s) is 6× shorter than model load (120s) — see RC-001; default voice name mismatch — see RC-003; `/api/history` always returns empty text — see RC-005.
 
 ---
 
@@ -232,12 +232,12 @@ A user enters Arabic or English text, selects a voice and speed, and triggers sp
 ## Reality Checker Findings
 | # | Finding | Severity | Spec section | Resolution |
 |---|---|---|---|---|
-| RC-1 | Backend does NOT store original text with generated audio — `text: ""` always in history response | High | STEP 4 | `get_history()` parses metadata from filename only (language, voice). Original text is lost. This means `/api/history` cannot tell the user what text was synthesized for each file. |
-| RC-2 | `SynthesisResponse` Pydantic model (audio_url, filename, duration_seconds) is defined but **never used** — endpoint returns `FileResponse` directly | Medium | STEP 2 | Dead code. The model exists but the endpoint doesn't use it. |
-| RC-3 | Speaker WAV files in Docker are mounted from `./backend/speaker_wavs` on host — but the actual files are named `"KSA Hamed - Male.wav"` and `"KSA Zariyah - Female.wav"`, while the `generate_speaker_wavs.py` script generates `female.wav` and `male.wav` | High | STEP 2 voice resolution | The voice resolution logic (`speaker ?? voice ?? "female"`) defaults to `"female"`, but the actual WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"`. If a user selects the default voice, the app looks for `"female.wav"` which doesn't exist → 500 error. **This is a critical mismatch between default behavior and actual files.** |
-| RC-4 | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode WAV content served as `audio/mpeg` | Medium | STEP 2 failure modes | Browsers are generally lenient with content-type mismatches, but some may fail to decode. The fallback is intentional but risky. |
-| RC-5 | No rate limiting on `/api/generate` — any user can trigger unlimited synthesis, consuming CPU and disk | Medium | STEP 2 | No rate limiting exists. A single user (or bot) could fill the `tts-audio-cache` volume indefinitely. |
-| RC-6 | `seed` parameter defaults to 42 per-request but is optional in the API — frontend does NOT send `seed` | Low | STEP 2 | Frontend `useTtsApi.synthesize()` never sends `seed`, so the backend always uses default 42. Deterministic output is guaranteed but the frontend never exercises the seed feature. |
+| RC-005 | Backend does NOT store original text with generated audio — `text: ""` always in history response | High | STEP 4 | `get_history()` parses metadata from filename only (language, voice). Original text is lost. This means `/api/history` cannot tell the user what text was synthesized for each file. |
+| RC-028 | `SynthesisResponse` Pydantic model (audio_url, filename, duration_seconds) is defined but **never used** — endpoint returns `FileResponse` directly | Medium | STEP 2 | Dead code. The model exists but the endpoint doesn't use it. |
+| RC-003 | Speaker WAV files in Docker are mounted from `./backend/speaker_wavs` on host — but the actual files are named `"KSA Hamed - Male.wav"` and `"KSA Zariyah - Female.wav"`, while the `generate_speaker_wavs.py` script generates `female.wav` and `male.wav` | High | STEP 2 voice resolution | The voice resolution logic (`speaker ?? voice ?? "female"`) defaults to `"female"`, but the actual WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"`. If a user selects the default voice, the app looks for `"female.wav"` which doesn't exist → 500 error. **This is a critical mismatch between default behavior and actual files.** |
+| RC-006 | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode WAV content served as `audio/mpeg` | Medium | STEP 2 failure modes | Browsers are generally lenient with content-type mismatches, but some may fail to decode. The fallback is intentional but risky. |
+| RC-007 | No rate limiting on `/api/generate` — any user can trigger unlimited synthesis, consuming CPU and disk | Medium | STEP 2 | No rate limiting exists. A single user (or bot) could fill the `tts-audio-cache` volume indefinitely. |
+| RC-029 | `seed` parameter defaults to 42 per-request but is optional in the API — frontend does NOT send `seed` | Low | STEP 2 | Frontend `useTtsApi.synthesize()` never sends `seed`, so the backend always uses default 42. Deterministic output is guaranteed but the frontend never exercises the seed feature. |
 
 ---
 
@@ -271,7 +271,7 @@ A user enters Arabic or English text, selects a voice and speed, and triggers sp
 | A3 | XTTS-v2 model loads in ~120 seconds on CPU-only hardware | Docker health check `start_period: 120s`, 200 retries at 15s (verified) | Medium — could be longer on slow hardware |
 | A4 | Frontend health polling (every 2s, max 10 retries) will always find the model ready before user attempts generation | Frontend `useHealthPoll` (verified: 20s max polling window) | **Critical** — 20s polling window is much shorter than 120s model load. User could attempt synthesis before model is ready, getting 503. The frontend guard (`modelStatus === 'loading'` → button disabled) prevents this, but only if health polling catches up in time. |
 | A5 | Generated MP3 files in `tts-audio-cache` are never cleaned up | Backend `get_history()` lists all files (verified: no cleanup logic) | High — volume grows indefinitely, could fill disk |
-| A6 | The `generate_speaker_wavs.py` script and the actual deployed WAV files use the same naming convention | **NOT verified** — script generates `female.wav`/`male.wav`, deployed files are `KSA Hamed - Male.wav`/`KSA Zariyah - Female.wav` | **Critical** — see RC-3 |
+| A6 | The `generate_speaker_wavs.py` script and the actual deployed WAV files use the same naming convention | **NOT verified** — script generates `female.wav`/`male.wav`, deployed files are `KSA Hamed - Male.wav`/`KSA Zariyah - Female.wav` | **Critical** — see RC-003 |
 
 ---
 
@@ -287,4 +287,4 @@ A user enters Arabic or English text, selects a voice and speed, and triggers sp
 | Date | Finding | Action taken |
 |---|---|---|
 | 2026-07-10 | Initial spec created from codebase analysis | — |
-| 2026-07-10 | RC-3: Default voice name mismatch discovered | Flagged as Critical — needs immediate fix |
+| 2026-07-10 | RC-003: Default voice name mismatch discovered | Flagged as Critical — needs immediate fix |

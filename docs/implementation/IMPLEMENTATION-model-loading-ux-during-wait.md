@@ -1,6 +1,6 @@
 # Implementation Plan: UX During Model Loading Wait
 
-**Source**: `docs/workflows/WORKFLOW-model-loading-readiness.md` (v0.1) — RC-3
+**Source**: `docs/workflows/WORKFLOW-model-loading-readiness.md` (v0.1) — RC-038
 **Date**: 2026-07-11
 **Status**: Draft — Ready for implementation
 
@@ -18,8 +18,8 @@ There is no persistent "Model Loading" banner that can't be dismissed, and the U
 
 | # | Finding | Severity |
 |---|---------|----------|
-| RC-3 | Frontend is a static SPA served by Nginx — it loads regardless of backend health | **Medium** |
-| RC-1 | Frontend polling window (20s) is 6× shorter than model load time (120s) — critical bug | Critical (fixed by other slices) |
+| RC-038 | Frontend is a static SPA served by Nginx — it loads regardless of backend health | **Medium** |
+| RC-001 | Frontend polling window (20s) is 6× shorter than model load time (120s) — critical bug | Critical (fixed by other slices) |
 
 ---
 

@@ -170,11 +170,11 @@ This workflow covers the **UI/UX of the Dashboard** — how the roadmap is rende
 ## Reality Checker Findings
 | # | Finding | Severity | Spec section | Resolution |
 |---|---|---|---|-------------|
-| RC-1 | **No Dashboard page exists** — The current `app/pages/index.vue` is a TTS Studio, not a Dashboard. | **Critical** | STEP 1 | A new Dashboard page must be created (or the current one must be refactored). |
-| RC-2 | **No navigation bar exists** — The current app has no top navigation bar. | **Critical** | STEP 2 | A new `NavigationBar` component must be created. |
-| RC-3 | **No roadmap sidebar exists** — The current app has no collapsible sidebar. | **Critical** | STEP 3 | A new `LessonSidebar` component must be created. |
-| RC-4 | **No `/playground` route exists** — The current app is a single page at `/`. | **High** | STEP 2 | The `/playground` route must be created (move current TTS Studio there). |
-| RC-5 | **No `/lesson/:id` route exists** — There is no file-based routing for lessons. | **High** | STEP 5 | A new `app/pages/lesson/[id].vue` page must be created. |
+| RC-021 | **No Dashboard page exists** — The current `app/pages/index.vue` is a TTS Studio, not a Dashboard. | **Critical** | STEP 1 | A new Dashboard page must be created (or the current one must be refactored). |
+| RC-022 | **No navigation bar exists** — The current app has no top navigation bar. | **Critical** | STEP 2 | A new `NavigationBar` component must be created. |
+| RC-023 | **No roadmap sidebar exists** — The current app has no collapsible sidebar. | **Critical** | STEP 3 | A new `LessonSidebar` component must be created. |
+| RC-024 | **No `/playground` route exists** — The current app is a single page at `/`. | **High** | STEP 2 | The `/playground` route must be created (move current TTS Studio there). |
+| RC-025 | **No `/lesson/:id` route exists** — There is no file-based routing for lessons. | **High** | STEP 5 | A new `app/pages/lesson/[id].vue` page must be created. |
 
 ---
 

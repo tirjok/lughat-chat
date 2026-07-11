@@ -18,7 +18,7 @@ This spec also prepares the infrastructure for the upcoming Whisper/STT model lo
 
 | # | Finding | Severity |
 |---|---------|----------|
-| RC-1 | `/health` returns only `"loading"` / `"ready"` / `"error"` — no granularity during 120s wait | **High** |
+| RC-040 | `/health` returns only `"loading"` / `"ready"` / `"error"` — no granularity during 120s wait | **High** |
 | Missing | No `/api/pronounce` endpoint (Whisper/STT not built yet) | Critical (future) |
 | Missing | No STT model loading infrastructure (extends Model Loading workflow) | High (future) |
 

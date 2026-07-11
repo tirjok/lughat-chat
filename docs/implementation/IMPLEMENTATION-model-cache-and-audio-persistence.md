@@ -10,10 +10,10 @@
 
 This document breaks the **Model Cache Volume, Audio Persistence, and FFmpeg Fallback** ADR into implementation slices. Four related issues affect the backend's audio generation and persistence:
 
-- **RC-5 (Docker)**: Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused, ~2GB re-downloaded on every restart
-- **RC-1 (Synthesis)**: `/api/history` always returns `text: ""` — original synthesized text is lost
-- **RC-4 (Synthesis)**: FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode
-- **RC-5 (Synthesis)**: No rate limiting on `/api/generate` — disk fills indefinitely
+- **RC-004**: Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused, ~2GB re-downloaded on every restart
+- **RC-005**: `/api/history` always returns `text: ""` — original synthesized text is lost
+- **RC-006**: FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode
+- **RC-007**: No rate limiting on `/api/generate` — disk fills indefinitely
 
 ---
 

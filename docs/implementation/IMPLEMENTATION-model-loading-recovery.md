@@ -18,7 +18,7 @@ This is especially problematic during the 120-second model loading window: if th
 
 | # | Finding | Severity |
 |---|---------|----------|
-| RC-1 | Frontend polling enters error state permanently — no automatic recovery | **Critical** |
+| RC-041 | Frontend polling enters error state permanently — no automatic recovery | **Critical** |
 | Spec | "Should the frontend retry health polling after it enters error state (e.g., retry every 30s indefinitely)?" | **Open** |
 
 ---

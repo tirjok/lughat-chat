@@ -4,7 +4,7 @@
 
 **Accepted** — 2026-07-11
 
-Addresses **RC-6**: Frontend container blocks entirely while backend downloads model (~5–10 min on first start).
+Addresses **RC-002**: Frontend container blocks entirely while backend downloads model (~5–10 min on first start).
 
 ---
 
@@ -220,7 +220,7 @@ This decision is **easy to revert** — simply re-add the `depends_on` block to 
 ## References
 
 - **PRD**: [The Docker Health Check Race Condition](../../PRD.md#the-docker-health-check-race-condition)
-- **Issue**: [RC-6](../../PRD.md#known-issues)
+- **Issue**: [RC-002](../../PRD.md#known-issues)
 - **Component**: [`useHealthPoll.ts`](../../frontend/app/composables/useHealthPoll.ts)
 - **Configuration**: [`docker-compose.yml`](../../docker-compose.yml)
 - **Related ADRs**:

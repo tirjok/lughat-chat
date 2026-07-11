@@ -22,8 +22,8 @@
 | Audio history browsing | — | **Missing** | User views history (not yet implemented in UI) | Frontend → `/api/history` | — |
 | Audio playback | — | **Missing** | User clicks play, synthesis completes | Frontend `<audio>` element | — |
 
-> **Audio history browsing**: `/api/history` always returns `text: ""` — original synthesized text is lost (RC-1, High). Sidecar JSON fix approved in ADR-012, but the *workflow spec* (user journey, error modes, UI integration) is unwritten.
-> **Audio playback**: FFmpeg fallback copies WAV as `.mp3` — browsers may play silent/garbled audio (RC-4, Medium). Workflow spec needed for playback states, seek behavior, error handling.
+> **Audio history browsing**: `/api/history` always returns `text: ""` — original synthesized text is lost (RC-005, High). Sidecar JSON fix proposed in ADR-012, but the *workflow spec* (user journey, error modes, UI integration) is unwritten.
+> **Audio playback**: FFmpeg fallback copies WAV as `.mp3` — browsers may play silent/garbled audio (RC-006, Medium). Workflow spec needed for playback states, seek behavior, error handling.
 
 ### 🟡 High Tier — Degraded but functional UX
 
@@ -34,7 +34,7 @@
 | Text input validation | — | **Missing** | User types, clicks generate | Frontend (`useInputValidation`) | — |
 | Toast notification lifecycle | — | **Missing** | Any error/success/info event | Frontend (`useToast`) | — |
 
-> **Frontend health polling**: Polling window (20s) is 6× shorter than model load time (120s) — frontend shows "Error" long before model loads (RC-1, Critical). This is RC-1 — the #1 priority fix.
+> **Frontend health polling**: Polling window (20s) is 6× shorter than model load time (120s) — frontend shows "Error" long before model loads (RC-001, Critical). This is RC-001 — the #1 priority fix.
 
 ### 🟠 Medium Tier — Operational, not user-facing
 
@@ -53,9 +53,9 @@
 |---|---|---|---|---|---|
 | Audio download | — | **Missing** | User clicks download button | Frontend (client-side) | — |
 | Panel toggle (mobile) | — | **Missing** | User drags divider, switches panels | Frontend (client-side) | — |
-| Model cache persistence | ADR-012 | **Resolved** | Container restart (or lack thereof) | Docker volumes | 2026-07-11
+| Model cache persistence | ADR-012 | **Proposed** | Container restart (or lack thereof) | Docker volumes | 2026-07-11
 
-**Summary**: 22 discovered workflows. 8 specced (Draft). 12 **Missing** (exist in code but have no spec) — organized by risk tier. 1 **Resolved** (ADR-012). 6 new learning workflows specced in this session.
+**Summary**: 22 discovered workflows. 8 specced (Draft). 12 **Missing** (exist in code but have no spec) — organized by risk tier. 1 **Proposed** (ADR-012). 6 new learning workflows specced in this session.
 
 ---
 
@@ -203,13 +203,13 @@
 
 | # | Issue | Severity | Workflows affected |
 |---|---|---|---|
-| **RC-1** | Frontend health polling window (20s) is 6× shorter than model load time (120s) — frontend shows "Error" long before model loads | **Critical** | Model loading, Frontend health polling |
-| **RC-3** (Synthesis) | Default voice name mismatch: frontend defaults to `"female"` but deployed WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"` | **Critical** | Speech synthesis |
-| **RC-5** (Model) | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused, 2GB re-downloaded every restart | **High** → **Resolved by ADR-012** | Model loading, Container orchestration |
-| **RC-1** (Synthesis) | `/api/history` always returns `text: ""` — original synthesized text is lost | **High** → **Resolved by ADR-012** | Audio history browsing |
-| **RC-4** (Synthesis) | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | **Medium** → **Resolved by ADR-012** | Speech synthesis |
-| **RC-5** (Synthesis) | No rate limiting on `/api/generate` — disk fills indefinitely | **Medium** → **Resolved by ADR-012** | Speech synthesis |
-| **RC-2** (Learning) | Only 1 of 30 lesson JSON files exists — **not a blocker**: all 3 learning workflow implementations are written to work with lesson-01.json first. Remaining 29 files are a separate data-creation task (no code changes needed once populated). | **High** | Lesson content serving, Lesson browsing and access, Activity submission and scoring |
+| **RC-001** | Frontend health polling window (20s) is 6× shorter than model load time (120s) — frontend shows "Error" long before model loads | **Critical** | Model loading, Frontend health polling |
+| **RC-003** (Synthesis) | Default voice name mismatch: frontend defaults to `"female"` but deployed WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"` | **Critical** | Speech synthesis |
+| **RC-004** (Model) | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused, 2GB re-downloaded every restart | **High** → **Proposed by ADR-012** | Model loading, Container orchestration |
+| **RC-005** (Synthesis) | `/api/history` always returns `text: ""` — original synthesized text is lost | **High** → **Proposed by ADR-012** | Audio history browsing |
+| **RC-006** (Synthesis) | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | **Medium** → **Proposed by ADR-012** | Speech synthesis |
+| **RC-007** (Synthesis) | No rate limiting on `/api/generate` — disk fills indefinitely | **Medium** → **Proposed by ADR-012** | Speech synthesis |
+| **RC-012** (Learning) | Only 1 of 30 lesson JSON files exists — **not a blocker**: all 3 learning workflow implementations are written to work with lesson-01.json first. Remaining 29 files are a separate data-creation task (no code changes needed once populated). | **High** | Lesson content serving, Lesson browsing and access, Activity submission and scoring |
 
 ---
 
@@ -234,12 +234,12 @@ Each implementation file documents this explicitly in its Open Questions. See:
 ## Spec Priorities (Recommended Order)
 
 **Critical Tier** (spec first — data loss / broken UX):
-1. **WORKFLOW-model-loading-readiness.md** — Fix RC-1 (critical: frontend shows error after 20s, model takes 120s)
+1. **WORKFLOW-model-loading-readiness.md** — Fix RC-001 (critical: frontend shows error after 20s, model takes 120s)
 2. **WORKFLOW-audio-playback.md** — Playback states, FFmpeg fallback, error handling
 3. **WORKFLOW-audio-history-browsing.md** — Sidecar JSON integration, history UI
 
 **High Tier** (degraded UX, fix next):
-4. **WORKFLOW-speech-synthesis.md** — Fix RC-3 (critical: default voice name mismatch)
+4. **WORKFLOW-speech-synthesis.md** — Fix RC-003 (critical: default voice name mismatch)
 5. **WORKFLOW-voice-discovery.md** — Voice selection UI + API integration
 6. **WORKFLOW-frontend-health-polling.md** — Fix polling window (20s → 120s+)
 7. **WORKFLOW-text-input-validation.md** — Input validation, error states

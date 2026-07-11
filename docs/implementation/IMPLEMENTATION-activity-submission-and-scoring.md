@@ -10,14 +10,14 @@
 
 | # | Finding | Severity |
 |---|---------|----------|
-| RC-1 | No scoring logic exists — 5 algorithms must be built | Critical |
-| RC-2 | No SQLite code exists in `app.py` | Critical |
-| RC-3 | No activity submission endpoint exists | Critical |
-| RC-4 | No `useActivitySubmission` composable exists | High |
-| RC-5 | No `ActivityRenderer` component exists | High |
-| RC-6 | No fuzzy matching library in requirements | High |
-| RC-7 | No harakat normalization/comparison exists | High |
-| RC-8 | No competency score computation exists | High |
+| RC-010 | No scoring logic exists — 5 algorithms must be built | Critical |
+| RC-011 | No SQLite code exists in `app.py` | Critical |
+| RC-014 | No activity submission endpoint exists | Critical |
+| RC-015 | No `useActivitySubmission` composable exists | High |
+| RC-016 | No `ActivityRenderer` component exists | High |
+| RC-017 | No fuzzy matching library in requirements | High |
+| RC-018 | No harakat normalization/comparison exists | High |
+| RC-019 | No competency score computation exists | High |
 
 ---
 
@@ -228,7 +228,7 @@ Slice 4 (Submission Composable) ──► Slice 5 (Activity Renderer) ──► 
 
 2. **Phased rollout — Lesson 1 first**: Only 1 lesson JSON file exists (`backend/content/a1/lesson-01.json`) with 5 activities. **The implementation plan is NOT blocked by this gap.** All 6 slices are written to work with the single existing lesson. Slice 1 (Scoring Library) implements 5 algorithms that work against lesson-01.json's 5 activities. The remaining 29 lesson JSON files (A2 + B1) are a **separate data-creation task** — not an implementation task. Once the backend scoring infrastructure is complete, content authors can populate the remaining 29 JSON files (each with their own activities and expected answers) and the system will automatically apply the same scoring algorithms (no code changes needed).
 
-3. **Activity data gap** (RC-1): The existing `lesson-01.json` has 5 activities with `content` fields containing `arabic`, `english_expected`, `sentences`, `characters`, and `expected_elements` — but no flat `expected_answer` field. The scoring functions must work with the existing JSON structure (not a separate field). Should populating expected answers be a separate issue, or is it a data gap outside implementation scope?
+3. **Activity data gap** (RC-012): The existing `lesson-01.json` has 5 activities with `content` fields containing `arabic`, `english_expected`, `sentences`, `characters`, and `expected_elements` — but no flat `expected_answer` field. The scoring functions must work with the existing JSON structure (not a separate field). Should populating expected answers be a separate issue, or is it a data gap outside implementation scope?
 
 3. **Slice granularity**: Should Slices 2 and 3 be combined ("Activity Submission: score + persist") since they're the same API call? Currently kept separate to allow testing scoring logic independently from persistence.
 

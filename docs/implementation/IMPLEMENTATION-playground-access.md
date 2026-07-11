@@ -20,9 +20,9 @@ This workflow is a **prerequisite** for the Dashboard Navigation workflow (which
 
 | # | Finding | Severity | Reference |
 |---|---------|----------|-------------|
-| RC-1 | **Playground page does not exist** — The current `app/pages/index.vue` IS the TTS Studio (700+ lines). There is no `/playground` route. | Critical | STEP 1 |
-| RC-2 | **No navigation bar exists** — Users cannot access the Playground from a navigation bar (there is no navigation bar). | High | STEP 1 (Dashboard Navigation workflow) |
-| RC-3 | **The existing TTS Studio code IS the Playground** — No changes to the TTS Studio code are needed; only the routing and page structure change. | Low | STEP 1 |
+| RC-021 | **Playground page does not exist** — The current `app/pages/index.vue` IS the TTS Studio (700+ lines). There is no `/playground` route. | Critical | STEP 1 |
+| RC-022 | **No navigation bar exists** — Users cannot access the Playground from a navigation bar (there is no navigation bar). | High | STEP 1 (Dashboard Navigation workflow) |
+| RC-037 | **The existing TTS Studio code IS the Playground** — No changes to the TTS Studio code are needed; only the routing and page structure change. | Low | STEP 1 |
 
 ---
 

@@ -8,7 +8,7 @@
 ---
 
 ## Executive Summary
-Backend container starts → FastAPI yields immediately → background thread loads XTTS-v2 model (~120s on CPU) → `/health` reports `"loading"` until `"ready"`. Frontend polls `/health` every 2s (max 10 retries = 20s), disables Generate button until ready. **Critical bug:** 20s polling window is 6× shorter than 120s model load — frontend shows "Error" long before model loads (RC-1). Docker health check correctly accounts for 120s (200 retries × 15s). **Known issues:** named volume path mismatch (RC-5), frontend polling too short (RC-1), SPA serves regardless of backend health (RC-3). Fix: increase frontend polling to match 120s.
+Backend container starts → FastAPI yields immediately → background thread loads XTTS-v2 model (~120s on CPU) → `/health` reports `"loading"` until `"ready"`. Frontend polls `/health` every 2s (max 10 retries = 20s), disables Generate button until ready. **Critical bug:** 20s polling window is 6× shorter than 120s model load — frontend shows "Error" long before model loads (RC-001). Docker health check correctly accounts for 120s (200 retries × 15s). **Known issues:** named volume path mismatch (RC-004), frontend polling too short (RC-001), SPA serves regardless of backend health (RC-038). Fix: increase frontend polling to match 120s.
 
 ---
 
@@ -263,11 +263,11 @@ When the backend container starts, the XTTS-v2 model (~2GB) must be loaded into 
 ## Reality Checker Findings
 | # | Finding | Severity | Spec section | Resolution |
 |---|---|---|---|---|
-| RC-1 | Frontend health polling max is 10 retries × 2s = **20 seconds**, but model loading takes **~120 seconds** | **Critical** | STEP 5 | The frontend polling window (20s) is **6× shorter** than the actual model load time (120s). After 20s, the frontend enters `error` state and disables the Generate button permanently. The user sees "Error" even though the model is still loading in the background. **This is a bug: the frontend gives up long before the model finishes loading.** |
-| RC-2 | Docker health check has `start_period: 120s` and `retries: 200` (3000s = 50 minutes), which correctly accounts for model loading time. But the frontend polling (20s) does NOT. | Critical | STEP 5 vs STEP 7 | Discrepancy between Docker health check (correct) and frontend polling (incorrect). The Docker health check will eventually pass, but the frontend will have already errored out. |
-| RC-3 | Frontend is a **static SPA** served by Nginx — it loads regardless of backend health. The frontend doesn't know the backend is down until the first API call fails. | Medium | STEP 5 | The SPA loads instantly, but all API calls (health, voices, synthesis) will fail silently until the backend is ready. |
-| RC-4 | The `generate_speaker_wavs.py` script is a **one-time setup tool** — not part of the runtime workflow. It generates `female.wav` and `male.wav`, but the deployed files are `KSA Hamed - Male.wav` and `KSA Zariyah - Female.wav`. | High | STEP 3 | The script and deployed files use different naming conventions. The script is likely outdated or was replaced manually. |
-| RC-5 | Model cache (`tts-model-cache` named volume at `/root/.local/share/tts`) is **NOT used** — the app writes to `/app/.cache/tts` (set via `TTS_MODEL_CACHE` env var). The named volume is mounted at a different path. | High | STEP 3 | Model is re-downloaded (~2GB) on every container restart. The named volume exists but is unused. |
+| RC-001 | Frontend health polling max is 10 retries × 2s = **20 seconds**, but model loading takes **~120 seconds** | **Critical** | STEP 5 | The frontend polling window (20s) is **6× shorter** than the actual model load time (120s). After 20s, the frontend enters `error` state and disables the Generate button permanently. The user sees "Error" even though the model is still loading in the background. **This is a bug: the frontend gives up long before the model finishes loading.** |
+| RC-042 | Docker health check has `start_period: 120s` and `retries: 200` (3000s = 50 minutes), which correctly accounts for model loading time. But the frontend polling (20s) does NOT. | Critical | STEP 5 vs STEP 7 | Discrepancy between Docker health check (correct) and frontend polling (incorrect). The Docker health check will eventually pass, but the frontend will have already errored out. |
+| RC-038 | Frontend is a **static SPA** served by Nginx — it loads regardless of backend health. The frontend doesn't know the backend is down until the first API call fails. | Medium | STEP 5 | The SPA loads instantly, but all API calls (health, voices, synthesis) will fail silently until the backend is ready. |
+| RC-039 | The `generate_speaker_wavs.py` script is a **one-time setup tool** — not part of the runtime workflow. It generates `female.wav` and `male.wav`, but the deployed files are `KSA Hamed - Male.wav` and `KSA Zariyah - Female.wav`. | High | STEP 3 | The script and deployed files use different naming conventions. The script is likely outdated or was replaced manually. |
+| RC-004 | Model cache (`tts-model-cache` named volume at `/root/.local/share/tts`) is **NOT used** — the app writes to `/app/.cache/tts` (set via `TTS_MODEL_CACHE` env var). The named volume is mounted at a different path. | High | STEP 3 | Model is re-downloaded (~2GB) on every container restart. The named volume exists but is unused. |
 
 ---
 
@@ -277,12 +277,12 @@ When the backend container starts, the XTTS-v2 model (~2GB) must be loaded into 
 | TC-01: Normal model load | Container starts, model downloads in ~120s | Frontend health polling shows "Loading..." → "Ready" (green), Generate button enables |
 | TC-02: Frontend polling window too short | Model takes 120s, frontend polls for 20s then errors | **BUG**: Frontend shows "Error" after 20s even though model is still loading |
 | TC-03: Model never loads | Model download fails (no internet, disk full) | Frontend shows "Error" after 20s, Generate button stays disabled |
-| TC-04: Container restart during model load | Container restarts while model is loading | Model starts loading again from scratch (no cache used — see RC-5) |
+| TC-04: Container restart during model load | Container restarts while model is loading | Model starts loading again from scratch (no cache used — see RC-004) |
 | TC-05: Container restart after model loaded | Container restarts, model re-downloads (~120s) | Same as TC-01 but with ~120s delay |
 | TC-06: Backend container never starts | Docker build fails | Frontend shows "Error" after 20s, Generate button stays disabled |
 | TC-07: Docker health check passes | Model loads within 120s, health check passes | Frontend container starts (if depends_on condition met) |
 | TC-08: Docker health check fails | Model never loads, health check never passes | Frontend container blocked (never starts) |
-| TC-09: Frontend loads before backend ready | SPA loads instantly, health polling starts | Frontend shows "Loading..." for 20s, then "Error" (see RC-1) |
+| TC-09: Frontend loads before backend ready | SPA loads instantly, health polling starts | Frontend shows "Loading..." for 20s, then "Error" (see RC-001) |
 | TC-10: Page reload during model load | User reloads page while model is loading | Frontend restarts health polling from 0 (20s window again) |
 
 ---
@@ -291,7 +291,7 @@ When the backend container starts, the XTTS-v2 model (~2GB) must be loaded into 
 | # | Assumption | Where verified | Risk if wrong |
 |---|---|---|---|
 | A1 | Model loading takes ~120 seconds on CPU hardware | Docker health check `start_period: 120s` (verified) | Medium — could be longer on slower hardware |
-| A2 | Frontend health polling (10 retries × 2s = 20s) is sufficient for the user to wait for model readiness | **NOT verified against model load time** — 20s << 120s | **Critical** — see RC-1. Frontend gives up 100s before model loads. |
+| A2 | Frontend health polling (10 retries × 2s = 20s) is sufficient for the user to wait for model readiness | **NOT verified against model load time** — 20s << 120s | **Critical** — see RC-001. Frontend gives up 100s before model loads. |
 | A3 | Named volume `tts-model-cache` at `/root/.local/share/tts` is used for model persistence | **NOT verified** — app writes to `/app/.cache/tts` (env var) | **High** — volume is unused, model re-downloaded every restart |
 | A4 | Frontend SPA is served by Nginx regardless of backend health | `docker-compose.yml` — frontend doesn't depend on backend for serving static files (verified) | Low — confirmed in compose file |
 | A5 | `COQUI_TOS_AGREED=1` must be set for Coqui TTS to work | Docker Compose env vars (verified) | Low — confirmed in compose file |
@@ -299,7 +299,7 @@ When the backend container starts, the XTTS-v2 model (~2GB) must be loaded into 
 ---
 
 ## Open Questions
-- What is the correct fix for RC-1? Increase frontend polling retries to 60 (120s), or change polling interval to 15s with 8 retries (120s)?
+- What is the correct fix for RC-001? Increase frontend polling retries to 60 (120s), or change polling interval to 15s with 8 retries (120s)?
 - Should the frontend retry health polling after it enters error state (e.g., retry every 30s indefinitely)?
 - Why does the named volume `tts-model-cache` exist at `/root/.local/share/tts` if the app writes to `/app/.cache/tts`? Is this a leftover from a previous configuration?
 - Is there a plan to cache model weights across restarts? The 2GB download on every restart is expensive.
@@ -311,5 +311,5 @@ When the backend container starts, the XTTS-v2 model (~2GB) must be loaded into 
 | Date | Finding | Action taken |
 |---|---|---|
 | 2026-07-10 | Initial spec created from codebase analysis | — |
-| 2026-07-10 | RC-1: Frontend polling window (20s) is 6× shorter than model load time (120s) — critical bug | Flagged as Critical — needs immediate fix |
-| 2026-07-10 | RC-5: Named volume path doesn't match app config path — model never cached | Flagged as High — wastes 2GB download per restart |
+| 2026-07-10 | RC-001: Frontend polling window (20s) is 6× shorter than model load time (120s) — critical bug | Flagged as Critical — needs immediate fix |
+| 2026-07-10 | RC-004: Named volume path doesn't match app config path — model never cached | Flagged as High — wastes 2GB download per restart |

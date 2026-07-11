@@ -4,7 +4,7 @@
 
 **Accepted** — 2026-07-11
 
-Addresses **RC-3**: Default voice name mismatch — frontend defaults to `"female"` but deployed WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"`.
+Addresses **RC-003**: Default voice name mismatch — frontend defaults to `"female"` but deployed WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"`.
 
 ---
 
@@ -199,7 +199,7 @@ This decision only changes the backend's voice resolution logic. It can be rever
 
 ## References
 
-- **PRD**: [RC-3](../../PRD.md#known-issues) — Default voice name mismatch
+- **PRD**: [RC-003](../../PRD.md#known-issues) — Default voice name mismatch
 - **Backend**: [`app.py`](../../backend/app.py) — `generate_speech()` voice resolution logic
 - **Frontend**: [`index.vue`](../../frontend/app/pages/index.vue) — `watch(speakerVoices)` selects first voice
 - **Frontend**: [`useTtsApi.ts`](../../frontend/app/composables/useTtsApi.ts) — Sends selected voice to backend

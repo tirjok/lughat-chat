@@ -394,13 +394,13 @@ interface HealthResponse {
 
 | # | Issue | Severity | Status |
 |---|---|---|---|
-| RC-1 | Frontend health polling window (20s) is 6× shorter than model load time (120s) | Critical | To be fixed |
-| RC-6 | Frontend container blocks entirely while backend downloads model (~5–10 min on first start) | Critical | To be fixed |
-| RC-3 | Default voice name mismatch: frontend defaults to "female" but deployed WAV files are "KSA Hamed - Male" and "KSA Zariyah - Female" | Critical | **ADR-011** |
-| RC-5 | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused | High | **ADR-012** |
-| RC-1 (Synthesis) | `/api/history` always returns `text: ""` — original synthesized text is lost | High | **ADR-012** |
-| RC-4 (Synthesis) | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | Medium | **ADR-012** |
-| RC-5 (Synthesis) | No rate limiting on `/api/generate` — disk fills indefinitely | Medium | **ADR-012** |
+| RC-001 | Frontend health polling window (20s) is 6× shorter than model load time (120s) | Critical | To be fixed |
+| RC-002 | Frontend container blocks entirely while backend downloads model (~5–10 min on first start) | Critical | To be fixed |
+| RC-003 | Default voice name mismatch: frontend defaults to "female" but deployed WAV files are "KSA Hamed - Male" and "KSA Zariyah - Female" | Critical | **ADR-011** |
+| RC-004 | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused | High | **ADR-012** |
+| RC-005 | `/api/history` always returns `text: ""` — original synthesized text is lost | High | **ADR-012** |
+| RC-006 | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | Medium | **ADR-012** |
+| RC-007 | No rate limiting on `/api/generate` — disk fills indefinitely | Medium | **ADR-012** |
 
 ---
 

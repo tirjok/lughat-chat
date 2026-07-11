@@ -113,9 +113,9 @@ The **Playground** is the existing TTS Studio, moved from `/` to `/playground`. 
 ## Reality Checker Findings
 | # | Finding | Severity | Spec section | Resolution |
 |---|---|---|---|-------------|
-| RC-1 | **Playground page does not exist** — The current `app/pages/index.vue` IS the TTS Studio. There is no `/playground` route. | **Critical** | STEP 1 | The current `index.vue` must be moved to `playground.vue`, and a new Dashboard must be created at `index.vue`. |
-| RC-2 | **No navigation bar exists** — Users cannot access the Playground from a navigation bar (there is no navigation bar). | **High** | STEP 1 | A new `NavigationBar` component must be created with a "Playground" link. |
-| RC-3 | **The existing TTS Studio code IS the Playground** — No changes to the TTS Studio code are needed; only the routing and page structure change. | Low | STEP 1 | The existing `index.vue` code can be reused as the Playground page (just move it to a new route). |
+| RC-021 | **Playground page does not exist** — The current `app/pages/index.vue` IS the TTS Studio. There is no `/playground` route. | **Critical** | STEP 1 | The current `index.vue` must be moved to `playground.vue`, and a new Dashboard must be created at `index.vue`. |
+| RC-022 | **No navigation bar exists** — Users cannot access the Playground from a navigation bar (there is no navigation bar). | **High** | STEP 1 | A new `NavigationBar` component must be created with a "Playground" link. |
+| RC-037 | **The existing TTS Studio code IS the Playground** — No changes to the TTS Studio code are needed; only the routing and page structure change. | Low | STEP 1 | The existing `index.vue` code can be reused as the Playground page (just move it to a new route). |
 
 ---
 

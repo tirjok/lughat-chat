@@ -18,13 +18,13 @@ This workflow is **frontend-only**. It consumes the `GET /api/lessons` endpoint 
 
 | # | Finding | Severity | Reference |
 |---|---------|----------|-------------|
-| RC-1 | **No Dashboard page exists** — The current `app/pages/index.vue` IS a TTS Studio (700+ lines). It must be moved to `/playground` and replaced with a Dashboard page. | Critical | STEP 1 |
-| RC-2 | **No navigation bar exists** — The current app has no top navigation bar component. | Critical | STEP 2 |
-| RC-3 | **No roadmap sidebar exists** — The current app has no collapsible sidebar component. | Critical | STEP 3 |
-| RC-4 | **No `/playground` route exists** — The current app is a single page at `/`. The TTS Studio must be moved there. | High | STEP 1 (Playground workflow) |
-| RC-5 | **No `/lesson/:id` route exists** — There is no file-based routing for lessons. | High | STEP 5 (Lesson Browsing workflow) |
-| RC-6 | **No Pinia installed** — The project uses pure composables. ADR-009 recommends Option C (Hybrid), but Pinia is not yet installed. For this workflow, composables are sufficient — no Pinia needed. | Low | ADR-009 (Option C) |
-| RC-7 | **Existing TTS components must be preserved** — The current `index.vue` integrates 6 components (AudioPlayerPanel, WaveformCanvas, GenerateButton, SpeedSlider, VoiceSelector, ToastNotification). Moving it to `/playground` must preserve all functionality. | High | Existing codebase |
+| RC-021 | **No Dashboard page exists** — The current `app/pages/index.vue` IS a TTS Studio (700+ lines). It must be moved to `/playground` and replaced with a Dashboard page. | Critical | STEP 1 |
+| RC-022 | **No navigation bar exists** — The current app has no top navigation bar component. | Critical | STEP 2 |
+| RC-023 | **No roadmap sidebar exists** — The current app has no collapsible sidebar component. | Critical | STEP 3 |
+| RC-024 | **No `/playground` route exists** — The current app is a single page at `/`. The TTS Studio must be moved there. | High | STEP 1 (Playground workflow) |
+| RC-025 | **No `/lesson/:id` route exists** — There is no file-based routing for lessons. | High | STEP 5 (Lesson Browsing workflow) |
+| RC-035 | **No Pinia installed** — The project uses pure composables. ADR-009 recommends Option C (Hybrid), but Pinia is not yet installed. For this workflow, composables are sufficient — no Pinia needed. | Low | ADR-009 (Option C) |
+| RC-036 | **Existing TTS components must be preserved** — The current `index.vue` integrates 6 components (AudioPlayerPanel, WaveformCanvas, GenerateButton, SpeedSlider, VoiceSelector, ToastNotification). Moving it to `/playground` must preserve all functionality. | High | Existing codebase |
 
 ---
 

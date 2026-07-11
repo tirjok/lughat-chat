@@ -18,14 +18,14 @@ This workflow covers the **entire synthesis lifecycle**: user types text → fro
 
 | # | Finding | Severity | Spec section | Resolution |
 |---|---------|----------|-------------|-------------|
-| RC-1 | Backend does NOT store original text with generated audio — `text: ""` always in history response | **High** | STEP 4 | `get_history()` parses metadata from filename only. Original text is lost. |
-| RC-2 | `SynthesisResponse` Pydantic model (audio_url, filename, duration_seconds) is defined but **never used** — endpoint returns `FileResponse` directly | Medium | STEP 2 | Dead code. The model exists but the endpoint doesn't use it. |
-| RC-3 | Default voice name mismatch: `generate_speaker_wavs.py` generates `female.wav`/`male.wav`, but deployed files are `"KSA Hamed - Male.wav"`/`"KSA Zariyah - Female.wav"`. Default resolution `speaker ?? voice ?? "female"` looks for `"female.wav"` → 500 error. | **Critical** | STEP 2 | Fix default voice resolution to match deployed filenames. |
-| RC-4 | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode WAV content served as `audio/mpeg` | Medium | STEP 2 | Intentional fallback, but risky. |
-| RC-5 | No rate limiting on `/api/generate` — any user can trigger unlimited synthesis, consuming CPU and disk | Medium | STEP 2 | No rate limiting exists. |
-| RC-6 | `seed` parameter defaults to 42 per-request but is optional in the API — frontend does NOT send `seed` | Low | STEP 2 | Frontend never sends `seed`, so the backend always uses default 42. |
-| RC-7 | Frontend hardcodes `language: 'ar'` in `useTtsApi.synthesize()` when the API accepts `'ar'` | Low | STEP 2 | Frontend should send the language the user selects (or default to 'ar'). |
-| RC-8 | Generated MP3 files in `tts-audio-cache` are never cleaned up — volume grows indefinitely | High | STEP 4 | No cleanup mechanism exists. |
+| RC-005 | Backend does NOT store original text with generated audio — `text: ""` always in history response | **High** | STEP 4 | `get_history()` parses metadata from filename only. Original text is lost. |
+| RC-028 | `SynthesisResponse` Pydantic model (audio_url, filename, duration_seconds) is defined but **never used** — endpoint returns `FileResponse` directly | Medium | STEP 2 | Dead code. The model exists but the endpoint doesn't use it. |
+| RC-003 | Default voice name mismatch: `generate_speaker_wavs.py` generates `female.wav`/`male.wav`, but deployed files are `"KSA Hamed - Male.wav"`/`"KSA Zariyah - Female.wav"`. Default resolution `speaker ?? voice ?? "female"` looks for `"female.wav"` → 500 error. | **Critical** | STEP 2 | Fix default voice resolution to match deployed filenames. |
+| RC-006 | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode WAV content served as `audio/mpeg` | Medium | STEP 2 | Intentional fallback, but risky. |
+| RC-007 | No rate limiting on `/api/generate` — any user can trigger unlimited synthesis, consuming CPU and disk | Medium | STEP 2 | No rate limiting exists. |
+| RC-029 | `seed` parameter defaults to 42 per-request but is optional in the API — frontend does NOT send `seed` | Low | STEP 2 | Frontend never sends `seed`, so the backend always uses default 42. |
+| RC-030 | Frontend hardcodes `language: 'ar'` in `useTtsApi.synthesize()` when the API accepts `'ar'` | Low | STEP 2 | Frontend should send the language the user selects (or default to 'ar'). |
+| RC-007 | Generated MP3 files in `tts-audio-cache` are never cleaned up — volume grows indefinitely | High | STEP 4 | No cleanup mechanism exists. |
 
 ---
 
@@ -33,12 +33,12 @@ This workflow covers the **entire synthesis lifecycle**: user types text → fro
 
 | ID | Title | Blocked By | Priority |
 |----|-------|------------|----------|
-| **S-01** | Fix default voice resolution (RC-3) | **None** | **P0 — Critical** |
-| S-02 | Store original text with generated audio (RC-1) | S-01 | P1 |
-| S-03 | Add `language` field to frontend API (RC-7) | **None** | P1 |
-| S-04 | Add seed support to frontend (RC-6) | **None** | P2 |
-| S-05 | Clean up old audio files (RC-5, RC-8) | S-02 | P2 |
-| S-06 | Frontend: handle all error responses (RC-2, RC-4) | **None** | P2 |
+| **S-01** | Fix default voice resolution (RC-003) | **None** | **P0 — Critical** |
+| S-02 | Store original text with generated audio (RC-005) | S-01 | P1 |
+| S-03 | Add `language` field to frontend API (RC-030) | **None** | P1 |
+| S-04 | Add seed support to frontend (RC-029) | **None** | P2 |
+| S-05 | Clean up old audio files (RC-007) | S-02 | P2 |
+| S-06 | Frontend: handle all error responses (RC-028, RC-006) | **None** | P2 |
 | S-07 | Frontend: handle browser autoplay blocking (TC-11) | **None** | P2 |
 | S-08 | Frontend: keyboard shortcut + download UX (TC-12, TC-13) | **None** | P3 |
 
@@ -52,7 +52,7 @@ Phase 2 (depends on P1): S-02 → S-05
 
 ## Slices
 
-### Slice S-01: Fix Default Voice Resolution (RC-3)
+### Slice S-01: Fix Default Voice Resolution (RC-003)
 
 **Type**: AFK
 **Blocked by**: None (critical path — fix this first)
@@ -100,7 +100,7 @@ if not os.path.exists(speaker_wav):
 
 ---
 
-### Slice S-02: Store Original Text with Generated Audio (RC-1)
+### Slice S-02: Store Original Text with Generated Audio (RC-005)
 
 **Type**: AFK
 **Blocked by**: S-01 (needs voice resolution to work correctly first)
@@ -164,7 +164,7 @@ async def get_history():
 
 ---
 
-### Slice S-03: Add `language` Field to Frontend API (RC-7)
+### Slice S-03: Add `language` Field to Frontend API (RC-030)
 
 **Type**: AFK
 **Blocked by**: None
@@ -206,7 +206,7 @@ body: JSON.stringify({
 
 ---
 
-### Slice S-04: Add Seed Support to Frontend (RC-6)
+### Slice S-04: Add Seed Support to Frontend (RC-029)
 
 **Type**: AFK
 **Blocked by**: None
@@ -249,7 +249,7 @@ body: JSON.stringify({
 
 ---
 
-### Slice S-05: Clean Up Old Audio Files (RC-5, RC-8)
+### Slice S-05: Clean Up Old Audio Files (RC-007)
 
 **Type**: AFK
 **Blocked by**: S-02 (needs sidecar files to be written before cleanup)
@@ -289,7 +289,7 @@ body: JSON.stringify({
 
 ---
 
-### Slice S-06: Frontend — Handle All Error Responses (RC-2, RC-4)
+### Slice S-06: Frontend — Handle All Error Responses (RC-028, RC-006)
 
 **Type**: AFK
 **Blocked by**: None

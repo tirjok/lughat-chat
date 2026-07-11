@@ -10,12 +10,12 @@
 
 | # | Finding | Severity |
 |---|---------|----------|
-| RC-1 | Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). `a2/` and `b1/` directories are empty. | Critical |
-| RC-2 | No SQLite code exists in `app.py` — no database initialization. | Critical |
-| RC-3 | No `/api/lessons` or `/api/lessons/:id` endpoints exist. | Critical |
-| RC-4 | No schema validation code exists. | Medium |
-| RC-5 | No `user_progress` table exists — progress status cannot be resolved for lesson summaries or locked-lesson checks. | Critical |
-| RC-6 | No frontend lesson pages or composables exist — no `useLessons.ts`, no lesson list page, no lesson detail page. | Critical |
+| RC-012 | Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). `a2/` and `b1/` directories are empty. | Critical |
+| RC-011 | No SQLite code exists in `app.py` — no database initialization. | Critical |
+| RC-013 | No `/api/lessons` or `/api/lessons/:id` endpoints exist. | Critical |
+| RC-033 | No schema validation code exists. | Medium |
+| RC-032 | No `user_progress` table exists — progress status cannot be resolved for lesson summaries or locked-lesson checks. | Critical |
+| RC-006 | No frontend lesson pages or composables exist — no `useLessons.ts`, no lesson list page, no lesson detail page. | Critical |
 
 ---
 
@@ -321,17 +321,17 @@ Slice 1 (JSON Scanner)
 
 ## Open Questions
 
-1. **Phased rollout — Lesson 1 first** (RC-1): Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). **The implementation plan is NOT blocked by this gap.** Slices 1–5 build the backend infrastructure (JSON scanner → SQLite → list API → single lesson API → schema validation) using the single existing lesson file as the test subject. All acceptance criteria are written to pass with exactly 1 lesson. The remaining 29 lesson JSON files (A2 + B1) are a **separate data-creation task** — not an implementation task. Once the backend is complete, content authors can populate the remaining 29 JSON files and the system will automatically pick them up on next restart (no code changes needed).
+1. **Phased rollout — Lesson 1 first** (RC-012): Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). **The implementation plan is NOT blocked by this gap.** Slices 1–5 build the backend infrastructure (JSON scanner → SQLite → list API → single lesson API → schema validation) using the single existing lesson file as the test subject. All acceptance criteria are written to pass with exactly 1 lesson. The remaining 29 lesson JSON files (A2 + B1) are a **separate data-creation task** — not an implementation task. Once the backend is complete, content authors can populate the remaining 29 JSON files and the system will automatically pick them up on next restart (no code changes needed).
 
-2. **Schema validation scope** (RC-4): Should schema validation be strict (reject invalid lessons with 400) or lenient (skip invalid lessons, return valid ones — partial failure)? The workflow specifies partial failure, but strict validation is safer for content quality.
+2. **Schema validation scope** (RC-033): Should schema validation be strict (reject invalid lessons with 400) or lenient (skip invalid lessons, return valid ones — partial failure)? The workflow specifies partial failure, but strict validation is safer for content quality.
 
 3. **Section data in lesson-01.json**: The existing lesson has 5 sections (dialogue, vocabulary, pronouns, expressions, grammar). The workflow mentions 4 types (dialogue, vocabulary, grammar, expressions). Should `pronouns` be treated as a sub-type of `vocabulary`, or a distinct section type? (Answer: distinct — it has unique structure: pronoun table with gender/dual/plural forms.)
 
 4. **SQLite storage**: Should `competencies` and `sections` be stored as JSON strings (simpler) or as separate tables (more queryable)? The plan chooses JSON strings for the MVP.
 
-5. **Content sync** (RC-5 new): What happens if a JSON file is added or removed after SQLite is initialized? The plan now includes a sync strategy: on each startup, delete SQLite entries whose `id` no longer has a corresponding JSON file (prevents stale data from deleted JSON files).
+5. **Content sync** (RC-032 new): What happens if a JSON file is added or removed after SQLite is initialized? The plan now includes a sync strategy: on each startup, delete SQLite entries whose `id` no longer has a corresponding JSON file (prevents stale data from deleted JSON files).
 
-6. **Progress persistence** (RC-5 new): The `user_progress` table stores learner progress. Should this be per-user (requiring authentication) or global (single learner, no auth)? For MVP, assume single learner with no authentication.
+6. **Progress persistence** (RC-032 new): The `user_progress` table stores learner progress. Should this be per-user (requiring authentication) or global (single learner, no auth)? For MVP, assume single learner with no authentication.
 
 ---
 

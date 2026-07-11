@@ -16,11 +16,11 @@ This document breaks the **Lesson Browsing and Access** workflow into **7 implem
 
 | # | Finding | Severity | Reference |
 |---|---------|----------|-------------|
-| RC-1 | Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). `a2/` and `b1/` directories are empty. | Critical | STEP 2 |
-| RC-2 | No SQLite database code exists in `app.py`. No `lessons` or `user_progress` tables. | Critical | STEP 3 |
-| RC-3 | No routing exists — single page app (`/` only). No `/lesson/:id` route. | High | STEP 1, STEP 5 |
-| RC-4 | `useVoices` composable type mismatch with API (minor, out of scope). | Medium | STEP 4 |
-| RC-5 | Sequential unlocking logic not implemented. | High | STEP 3 |
+| RC-012 | Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). `a2/` and `b1/` directories are empty. | Critical | STEP 2 |
+| RC-011 | No SQLite database code exists in `app.py`. No `lessons` or `user_progress` tables. | Critical | STEP 3 |
+| RC-025 | No routing exists — single page app (`/` only). No `/lesson/:id` route. | High | STEP 1, STEP 5 |
+| RC-034 | `useVoices` composable type mismatch with API (minor, out of scope). | Medium | STEP 4 |
+| RC-020 | Sequential unlocking logic not implemented. | High | STEP 3 |
 
 ---
 
@@ -291,7 +291,7 @@ Slice 1 (SQLite Init) ──► Slice 2 (List API) ──► Slice 3 (Progress) 
 
 ## Open Questions
 
-1. **Phased rollout — Lesson 1 first** (RC-1): Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). **The implementation plan is NOT blocked by this gap.** All 7 slices build the backend + frontend infrastructure using the single existing lesson file. Slice 3 (Progress Module) correctly sets Lesson 1 to `available` and all others to `locked` — with only 1 lesson, this means Lesson 1 is `available` and there are no other lessons to lock. The remaining 29 lesson JSON files (A2 + B1) are a **separate data-creation task** — not an implementation task. Once the infrastructure is complete, content authors can populate the remaining 29 JSON files and the roadmap will automatically expand to show them (no code changes needed).
+1. **Phased rollout — Lesson 1 first** (RC-012): Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). **The implementation plan is NOT blocked by this gap.** All 7 slices build the backend + frontend infrastructure using the single existing lesson file. Slice 3 (Progress Module) correctly sets Lesson 1 to `available` and all others to `locked` — with only 1 lesson, this means Lesson 1 is `available` and there are no other lessons to lock. The remaining 29 lesson JSON files (A2 + B1) are a **separate data-creation task** — not an implementation task. Once the infrastructure is complete, content authors can populate the remaining 29 JSON files and the roadmap will automatically expand to show them (no code changes needed).
 
 2. **Dashboard vs. TTS Studio**: The current `index.vue` is a full-page TTS Studio. Should it be replaced with the Dashboard (roadmap), or should both coexist (Dashboard at `/`, TTS Studio at `/playground` per ADR-009)?
 
