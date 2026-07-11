@@ -23,38 +23,43 @@
 
 ## Proposed Slices
 
-### Slice 1: Backend — Fuzzy Matching & Harakat Library
+### Slice 1: Backend — Scoring Library (5 Algorithms)
 
 **Type**: AFK
 **Blocked by**: None
 **User stories**: — (enables all scoring slices)
 
-**What to build**: A scoring library module (`backend/content/scoring.py`) that provides:
+**What to build**: A scoring library module (`backend/content/scoring.py`) that provides 5 distinct scoring functions, one per activity type, plus a dispatch/routing function that selects the correct algorithm by `activity.type`:
 
-- **Fuzzy string matching** (case-insensitive, whitespace-normalized) for `listen-translate` and `translate-to-english`
-- **Harakat-aware Arabic comparison** for `translate-to-arabic` — strips harakat for comparison, applies × 0.8 penalty if user omits diacritics
-- **Content validation** for `introduce-characters` — keyword match ratio
-- **Dialogue completion scoring** for `role-play` — ordered match ratio
+1. **`listen-translate`** — Fuzzy string match (case-insensitive, whitespace-normalized) between user's English translation and the expected answer. Score = similarity ratio (0.0–1.0).
+2. **`translate-to-english`** — Same fuzzy match as above (case-insensitive, whitespace-normalized). Score = similarity ratio (0.0–1.0).
+3. **`translate-to-arabic`** — Fuzzy match with **harakat-aware** comparison: strips harakat (Arabic diacritics: ّ َ ِ ُ ّ ً ٍ ْ) for baseline comparison, then applies × 0.8 penalty if the user omitted diacritics that were in the expected answer. Score = similarity ratio with harakat penalty.
+4. **`introduce-characters`** — Content validation: checks that the user's answer contains required keywords/phrases from the character's expected sentences. Score = keyword match ratio (0.0–1.0).
+5. **`role-play`** — Dialogue completion scoring: checks that the user's lines match the expected dialogue in the correct order. Score = ordered match ratio (0.0–1.0).
 
-Add `rapidfuzz` to `requirements.txt` (pure Python, no C extension needed for Docker).
+Also adds `rapidfuzz` to `requirements.txt` (pure Python, no C extension needed for Docker).
 
 **Acceptance criteria**:
 - [ ] `rapidfuzz` added to `backend/requirements.txt`
-- [ ] Fuzzy matching returns similarity ratio 0.0–1.0 (case-insensitive, whitespace-normalized)
-- [ ] Harakat-aware comparison penalizes missing diacritics by × 0.8
-- [ ] Content validation computes keyword match ratio
-- [ ] Dialogue scoring computes ordered match ratio
-- [ ] All 5 activity types have a scoring function
+- [ ] `listen-translate` scoring function returns similarity ratio 0.0–1.0 (case-insensitive, whitespace-normalized)
+- [ ] `translate-to-english` scoring function returns similarity ratio 0.0–1.0 (case-insensitive, whitespace-normalized)
+- [ ] `translate-to-arabic` scoring function performs harakat-aware comparison: strips harakat for baseline, applies × 0.8 penalty if user omits diacritics present in expected answer
+- [ ] `introduce-characters` scoring function computes keyword match ratio (checks required keywords/phrases from character sentences)
+- [ ] `role-play` scoring function computes ordered dialogue match ratio (checks user lines match expected dialogue in order)
+- [ ] A dispatch/routing function (`score_activity(activity_type, user_answer, activity_content)`) selects and calls the correct scoring algorithm by `activity.type`
+- [ ] Unknown activity type returns a clear error: `"Unknown activity type: {type}"`
+- [ ] Unit tests cover each of the 5 scoring functions with edge cases (empty input, special characters, harakat variations, partial keyword matches, out-of-order dialogue)
 
 **Integration verification**:
 - [ ] Backend starts without errors (new dependency installed)
+- [ ] Importing `scoring.py` does not raise exceptions
 
 ---
 
 ### Slice 2: Backend — Activity Submission Endpoint
 
 **Type**: AFK
-**Blocked by**: Slice 1 (scoring library), Lesson Browsing Slice 1 (SQLite + lesson data)
+**Blocked by**: Slice 1 (scoring library), Lesson Browsing Slice 1 (SQLite + lesson data — `lessons` and `user_progress` tables)
 **User stories**: #4 (mandatory practice activities)
 
 **What to build**: A `POST /api/lessons/:lessonId/activities/:activityId/submit` endpoint that:
@@ -82,7 +87,7 @@ Add `rapidfuzz` to `requirements.txt` (pure Python, no C extension needed for Do
 ### Slice 3: Backend — Progress Persistence (Write `user_progress`)
 
 **Type**: AFK
-**Blocked by**: Slice 2 (submission endpoint), Lesson Browsing Slice 1 (SQLite tables)
+**Blocked by**: Slice 2 (submission endpoint), Lesson Browsing Slice 1 (SQLite tables — `lessons` and `user_progress`)
 **User stories**: #4 (mandatory practice), #6 (partial retry), #7 (score tracking)
 
 **What to build**: Extend the submit endpoint to persist scores to SQLite:
@@ -177,7 +182,7 @@ Local validation: empty answer → inline error "Please enter your answer"; answ
 
 **What to build**: Score display and lesson completion UI within the Lesson View:
 
-- Score bar (0.0–1.0) with color coding (green ≥ threshold, red below)
+- Score bar (0.0–1.0) with color coding (green ≥ 0.7 threshold, red below)
 - Feedback message (shown on first attempt)
 - Remaining attempts counter
 - "Next Activity" button (when activity is complete and more activities exist)
@@ -186,7 +191,7 @@ Local validation: empty answer → inline error "Please enter your answer"; answ
 - Dashboard refresh after lesson completion (re-fetch `/api/lessons` to update roadmap)
 
 **Acceptance criteria**:
-- [ ] Score bar displays 0.0–1.0 with color coding (green/red)
+- [ ] Score bar displays 0.0–1.0 with color coding (green ≥ 0.7, red below)
 - [ ] Feedback message is displayed after each submission
 - [ ] Remaining attempts counter is shown (e.g., "2 attempts remaining")
 - [ ] "Next Activity" button appears when activity is complete
@@ -208,25 +213,30 @@ Slice 1 (Scoring Library) ──► Slice 2 (Submission API) ──► Slice 3 (
 Slice 4 (Submission Composable) ──► Slice 5 (Activity Renderer) ──► Slice 6 (Score + Completion)
 ```
 
-- **Slice 1** is independent — can start immediately (no dependencies)
-- **Slices 2 → 3** are sequential backend (scoring first, then persistence)
-- **Slice 4** can run in parallel with backend slices (once the API exists)
-- **Slices 5 → 6** are sequential frontend (renderer first, then completion UI)
-- **Slice 6** depends on both backend (Slice 3) and frontend (Slice 5)
+- **Slice 1** is independent — can start immediately (no dependencies). Builds all 5 scoring algorithms in one library.
+- **Slices 2 → 3** are sequential backend (scoring first, then persistence). Both depend on Lesson Browsing Slice 1 for SQLite tables.
+- **Slice 4** can run in parallel with backend slices (once the API exists).
+- **Slices 5 → 6** are sequential frontend (renderer first, then completion UI).
+- **Slice 6** depends on both backend (Slice 3) and frontend (Slice 5).
+- **Cross-workflow dependency**: Slices 2 and 3 depend on Lesson Browsing Slice 1 (SQLite `lessons` + `user_progress` tables).
 
 ---
 
 ## Open Questions
 
-1. **Scoring threshold**: What is the exact score threshold for "completed" per activity? (PRD implies 0.7 per ADR-007, but should it be configurable per activity?)
+1. **Scoring threshold**: What is the exact score threshold for "completed" per activity? (ADR-007 specifies 0.7 as the default threshold for all competencies — single global threshold, no per-activity tuning.)
 
-2. **Activity data gap** (RC-1): The existing `lesson-01.json` has 5 activities but no `expected_answer` field. Should populating expected answers be a separate issue, or is it a data gap outside implementation scope?
+2. **Phased rollout — Lesson 1 first**: Only 1 lesson JSON file exists (`backend/content/a1/lesson-01.json`) with 5 activities. **The implementation plan is NOT blocked by this gap.** All 6 slices are written to work with the single existing lesson. Slice 1 (Scoring Library) implements 5 algorithms that work against lesson-01.json's 5 activities. The remaining 29 lesson JSON files (A2 + B1) are a **separate data-creation task** — not an implementation task. Once the backend scoring infrastructure is complete, content authors can populate the remaining 29 JSON files (each with their own activities and expected answers) and the system will automatically apply the same scoring algorithms (no code changes needed).
 
-3. **Slice granularity**: Should Slices 2 and 3 be combined ("Activity Submission: score + persist") since they're the same API call?
+3. **Activity data gap** (RC-1): The existing `lesson-01.json` has 5 activities with `content` fields containing `arabic`, `english_expected`, `sentences`, `characters`, and `expected_elements` — but no flat `expected_answer` field. The scoring functions must work with the existing JSON structure (not a separate field). Should populating expected answers be a separate issue, or is it a data gap outside implementation scope?
 
-4. **Dependencies on Lesson Browsing**: Slice 2 requires SQLite + lesson data from the Lesson Browsing workflow (Slice 1). Should this be noted as a cross-workflow dependency?
+3. **Slice granularity**: Should Slices 2 and 3 be combined ("Activity Submission: score + persist") since they're the same API call? Currently kept separate to allow testing scoring logic independently from persistence.
+
+4. **Dependencies on Lesson Browsing**: Slices 2 and 3 both depend on Lesson Browsing Slice 1 (SQLite tables `lessons` and `user_progress`). This cross-workflow dependency is now explicitly noted in each slice's "Blocked by" field.
 
 5. **Partial retry UX**: When a user re-opens a lesson with some activities completed and some not, should completed activities be shown as "locked from editing" (read-only) or hidden entirely?
+
+6. **Pronunciation scoring (ADR-003/ADR-008)**: The `role-play` activity has a second scoring path via audio recording → STT (Whisper) → pronunciation scoring. This is out of scope for the current slices — it belongs to the separate Pronunciation Scoring workflow.
 
 ---
 
@@ -242,6 +252,6 @@ Slice 4 (Submission Composable) ──► Slice 5 (Activity Renderer) ──► 
 | TC-11: Sequential unlock — same level | 3 | Next lesson in same level becomes `available` |
 | TC-13: Review mode — completed lesson | 2 | All activities shown as completed, no new submissions |
 | TC-14: Partial retry — retry failed activities | 3, 6 | 3 activities locked (completed), 2 available for retry |
-| TC-15: `listen-translate` scoring | 1, 2 | Fuzzy match score computed (case-insensitive) |
-| TC-16: `translate-to-arabic` scoring | 1, 2 | Fuzzy match with harakat penalty |
-| TC-17: `role-play` scoring | 1, 2 | Ordered match ratio computed |
+| TC-15: `listen-translate` scoring | 1, 2 | Fuzzy match score computed (case-insensitive, whitespace-normalized) |
+| TC-16: `translate-to-arabic` scoring | 1, 2 | Fuzzy match with harakat penalty (× 0.8 if diacritics omitted) |
+| TC-17: `role-play` scoring | 1, 2 | Ordered match ratio computed (line order matters) |

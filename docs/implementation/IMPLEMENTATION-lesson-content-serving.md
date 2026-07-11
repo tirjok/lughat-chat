@@ -1,7 +1,7 @@
 # Implementation Plan: Lesson Content Serving
 
 **Source**: `docs/workflows/WORKFLOW-lesson-content-serving.md` (v0.1)
-**Date**: 2026-07-10
+**Date**: 2026-07-10 (updated 2026-07-11)
 **Status**: Draft — Awaiting review
 
 ---
@@ -10,14 +10,16 @@
 
 | # | Finding | Severity |
 |---|---------|----------|
-| RC-1 | Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). `a2/` and `b1/` are empty. | Critical |
+| RC-1 | Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). `a2/` and `b1/` directories are empty. | Critical |
 | RC-2 | No SQLite code exists in `app.py` — no database initialization. | Critical |
 | RC-3 | No `/api/lessons` or `/api/lessons/:id` endpoints exist. | Critical |
 | RC-4 | No schema validation code exists. | Medium |
+| RC-5 | No `user_progress` table exists — progress status cannot be resolved for lesson summaries or locked-lesson checks. | Critical |
+| RC-6 | No frontend lesson pages or composables exist — no `useLessons.ts`, no lesson list page, no lesson detail page. | Critical |
 
 ---
 
-## Proposed Slices
+## Proposed Slices (9 total)
 
 ### Slice 1: Backend — JSON Content Scanner
 
@@ -49,7 +51,7 @@ Scanning logic:
 
 **Type**: AFK
 **Blocked by**: Slice 1 (JSON scanner)
-**User stories**: #3 (variable sections)
+**User stories**: #1 (roadmap), #3 (variable sections)
 
 **What to build**: One-time database initialization that populates the SQLite `lessons` table from JSON files:
 
@@ -57,11 +59,13 @@ Scanning logic:
 2. Insert or update all lessons from JSON files into the `lessons` table
 3. Store `competencies` and `sections` as JSON strings (not separate tables — simple, sufficient for MVP)
 4. Idempotent: subsequent runs only update changed lessons (compare by `id`)
+5. **Sync strategy**: on each startup, delete SQLite entries whose `id` no longer has a corresponding JSON file (prevents stale data from deleted JSON files)
 
 **Acceptance criteria**:
 - [ ] SQLite database file is created on first backend startup
 - [ ] `lessons` table is populated from JSON files (currently 1 lesson)
 - [ ] Subsequent backend restarts update changed lessons (idempotent)
+- [ ] Deleted JSON files result in corresponding SQLite entries being removed (sync strategy)
 - [ ] Schema: `id INTEGER PRIMARY KEY, level TEXT, sequence INTEGER, title TEXT, competencies TEXT, sections TEXT`
 
 **Integration verification**:
@@ -70,44 +74,81 @@ Scanning logic:
 
 ---
 
-### Slice 3: Backend — `GET /api/lessons` Endpoint (Lesson List)
+### Slice 3: Backend — `user_progress` Table
 
 **Type**: AFK
-**Blocked by**: Slice 1 (JSON scanner), Slice 2 (SQLite `lessons` table)
-**User stories**: #1 (roadmap), #3 (variable sections)
+**Blocked by**: Slice 2 (SQLite `lessons` table)
+**User stories**: #1 (roadmap), #2 (sequential lessons), #7 (score tracking)
 
-**What to build**: A `GET /api/lessons` endpoint that returns all lessons from the `lessons` SQLite table:
+**What to build**: A `user_progress` table that tracks learner progress per lesson and per activity:
 
-- Returns lesson summaries: `{ id, level, sequence, title, competency_count, section_count }`
+Table schema:
+```sql
+CREATE TABLE user_progress (
+    lesson_id INTEGER,
+    activity_id INTEGER,
+    score REAL DEFAULT 0,
+    status TEXT DEFAULT 'locked',  -- 'locked' | 'available' | 'in_progress' | 'completed'
+    attempts INTEGER DEFAULT 0,
+    PRIMARY KEY (lesson_id, activity_id)
+);
+```
+
+- On first run, populate all (lesson_id, activity_id) combinations from JSON files with `status = 'locked'`
+- The status resolution logic: a lesson is `'available'` if the previous lesson (same level, sequence - 1) has all activities `'completed'`; otherwise `'locked'`
+- The first lesson in each level is `'available'`
+
+**Acceptance criteria**:
+- [ ] `user_progress` table is created on first backend startup
+- [ ] All (lesson_id, activity_id) combinations are populated with `status = 'locked'` (except first lesson per level = `'available'`)
+- [ ] Status resolution logic correctly marks lessons as `'available'` or `'locked'` based on previous lesson completion
+- [ ] Subsequent restarts preserve existing progress data
+
+**Integration verification**:
+- [ ] Backend starts without errors
+- [ ] `user_progress` table exists with correct initial data after startup
+
+---
+
+### Slice 4: Backend — `GET /api/lessons` Endpoint (Lesson List)
+
+**Type**: AFK
+**Blocked by**: Slices 1 (JSON scanner), 2 (SQLite `lessons` table), 3 (user_progress table)
+**User stories**: #1 (roadmap), #3 (variable sections), #17 (progress in roadmap)
+
+**What to build**: A `GET /api/lessons` endpoint that returns all lessons from the `lessons` SQLite table with status resolved from the `user_progress` table:
+
+- Returns lesson summaries: `{ id, level, sequence, title, competency_count, section_count, status }`
+- `status` resolved from `user_progress`: `'available'` or `'locked'`
 - Sorted by level (A1, A2, B1) then sequence (1, 2, 3...)
-- Progress status is resolved by the Progress module (see Lesson Browsing workflow)
 - Returns `[]` when no lessons exist (not an error)
 
 **Acceptance criteria**:
 - [ ] `GET /api/lessons` returns an array of lesson summaries sorted by level then sequence
-- [ ] Each summary includes: `id`, `level`, `sequence`, `title`, `competency_count`, `section_count`
+- [ ] Each summary includes: `id`, `level`, `sequence`, `title`, `competency_count`, `section_count`, `status`
+- [ ] `status` correctly reflects `'available'` (first lesson per level) or `'locked'` (subsequent lessons)
 - [ ] Returns `[]` when no lessons exist (not an error)
 - [ ] Returns 500 when SQLite query fails
 
 **Integration verification**:
 - [ ] The real backend service starts without errors in logs
-- [ ] `GET /api/lessons` returns valid JSON with lesson data
+- [ ] `GET /api/lessons` returns valid JSON with lesson summaries including status field
 
 ---
 
-### Slice 4: Backend — `GET /api/lessons/:id` Endpoint (Single Lesson)
+### Slice 5: Backend — `GET /api/lessons/:id` Endpoint (Single Lesson)
 
 **Type**: AFK
-**Blocked by**: Slice 1 (JSON scanner), Slice 2 (SQLite `lessons` table), Slice 3 (list endpoint)
-**User stories**: #3 (variable sections), #4 (mandatory practice activities), #5 (competency checklist)
+**Blocked by**: Slices 1 (JSON scanner), 2 (SQLite `lessons` table), 3 (user_progress table), 4 (list endpoint)
+**User stories**: #3 (variable sections), #4 (mandatory practice activities), #5 (competency checklist), #7 (score tracking)
 
 **What to build**: A `GET /api/lessons/:id` endpoint that returns full lesson data:
 
 - Full lesson JSON: `id`, `level`, `sequence`, `title`, `competencies`, `sections`, `activities`
-- Sections include: dialogue, vocabulary, grammar, expressions (variable per lesson)
+- Sections include: dialogue, vocabulary, grammar, expressions, pronouns (variable per lesson)
 - Activities include: `listen-translate`, `translate-to-english`, `translate-to-arabic`, `introduce-characters`, `role-play`
-- Progress data: `{ status, activities: { activityId: { score, attempts, status } } }`
-- Sequential lockout check (see Lesson Browsing workflow)
+- Progress data from `user_progress`: `{ status, activities: { activityId: { score, attempts, status } } }`
+- Sequential lockout: returns 403 if lesson status is `'locked'` (with "This lesson is locked" message)
 
 **Acceptance criteria**:
 - [ ] `GET /api/lessons/:id` returns full lesson data (sections + activities + progress)
@@ -123,23 +164,33 @@ Scanning logic:
 
 ---
 
-### Slice 5: Backend — Schema Validation for Lesson JSON
+### Slice 6: Backend — Schema Validation Integration
 
 **Type**: AFK
 **Blocked by**: Slice 1 (JSON scanner)
-**User stories**: #3 (variable sections)
+**User stories**: #3 (variable sections), #18 (content creator validation)
 
-**What to build**: JSON Schema validation for lesson files (per ADR-006, Option B: JSON Schema Files):
+**What to build**: JSON Schema validation for lesson files (per ADR-006, Option B: JSON Schema Files), integrated into the scanner pipeline:
 
 - Schema files in `backend/content/schemas/` (one per activity type + common schema)
-- Validates lesson JSON against schema at serve time (not at write time)
+- Schema loader initializes at startup (loads all `.schema.json` files)
+- Validator runs on each parsed lesson during scanning (integrated into scanner output pipeline)
 - Required fields: `id`, `level`, `sequence`, `title`, `competencies`, `sections`, `activities`
 - Each activity validated against its type-specific schema (see ADR-006)
 - Invalid lessons are skipped with a log warning (partial failure — same behavior as malformed JSON)
 
+Schema files (per ADR-006):
+- `common.schema.json` — shared properties (id, type, title, order, max_attempts)
+- `listen-translate.schema.json`
+- `translate-to-english.schema.json`
+- `translate-to-arabic.schema.json`
+- `introduce-characters.schema.json`
+- `role-play.schema.json`
+
 **Acceptance criteria**:
 - [ ] JSON Schema files exist in `backend/content/schemas/` (common + 5 activity types)
-- [ ] Lesson JSON is validated against schema when served via API
+- [ ] Schema loader initializes at startup and loads all schema files
+- [ ] Validator integrated into scanner pipeline — each lesson validated before being returned
 - [ ] Invalid lessons are skipped with a log warning (partial failure)
 - [ ] `jsonschema` library added to `requirements.txt`
 - [ ] Currently passes validation for lesson-01.json (existing lesson is valid)
@@ -150,27 +201,89 @@ Scanning logic:
 
 ---
 
-### Slice 6: Frontend — Section Renderer (`SectionRenderer.vue`)
+### Slice 7: Frontend — `useLessons` Composable
 
-**Type**: HITL (design review needed for 4 section UI patterns)
-**Blocked by**: Slice 4 (single lesson API)
-**User stories**: #3 (variable sections)
+**Type**: AFK
+**Blocked by**: Slice 5 (single lesson API must exist)
+**User stories**: #1 (roadmap), #3 (variable sections), #17 (progress in roadmap)
 
-**What to build**: A `SectionRenderer.vue` component that renders 4 variable section types within a lesson:
+**What to build**: A `useLessons.ts` composable (following the pattern of existing `useTtsApi.ts`, `useVoices.ts`) that wraps API calls for lesson content:
 
-- **`dialogue`**: Arabic text with TTS playback (click to hear), speaker labels
-- **`vocabulary`**: Arabic word + English translation, TTS playback
-- **`pronouns`**: Pronoun table (subject/object, gender), TTS playback
+Functions:
+- `fetchLessons()`: Calls `GET /api/lessons`, returns `{ lessons, loading, error }`
+- `fetchLesson(id)`: Calls `GET /api/lessons/:id`, returns `{ lesson, loading, error }`
+- Handles loading states, error states, and retry logic
+- Uses existing `API_BASE_URL` from environment
+
+**Acceptance criteria**:
+- [ ] `useLessons.ts` composable created in `frontend/app/composables/`
+- [ ] `fetchLessons()` calls `GET /api/lessons` and returns lesson summaries with status
+- [ ] `fetchLesson(id)` calls `GET /api/lessons/:id` and returns full lesson data
+- [ ] Handles loading, error, and success states (following existing composable patterns)
+- [ ] Returns 1 lesson summary from existing `lesson-01.json`
+
+**Integration verification**:
+- [ ] Backend service starts without errors
+- [ ] `fetchLessons()` returns valid lesson data from running backend
+
+---
+
+### Slice 8: Frontend — Lesson List Page (Roadmap View)
+
+**Type**: HITL (design review needed for roadmap UI)
+**Blocked by**: Slice 7 (useLessons composable)
+**User stories**: #1 (roadmap), #17 (progress in roadmap)
+
+**What to build**: A lesson list page (`app/pages/lessons/index.vue`) that displays the learning roadmap:
+
+- Shows all lessons grouped by level (A1, A2, B1)
+- Each lesson card shows: title, level, sequence number, status indicator (available ✓ / locked 🔒)
+- Clickable lesson cards navigate to lesson detail page
+- Follows existing Nuxt page structure and UnoCSS styling conventions
+- RTL support for Arabic lesson titles
+
+**Acceptance criteria**:
+- [ ] `app/pages/lessons/index.vue` page created
+- [ ] Displays lessons grouped by level (A1, A2, B1) with status indicators
+- [ ] Clickable cards navigate to lesson detail page (`/lessons/:id`)
+- [ ] First lesson per level shows as `'available'`, subsequent as `'locked'`
+- [ ] Follows existing design system (UnoCSS, dark mode, RTL)
+
+**Integration verification**:
+- [ ] The real service starts without errors in logs
+- [ ] Navigating to `/lessons` shows lesson list with 1 lesson (lesson-01.json)
+
+---
+
+### Slice 9: Frontend — Lesson Detail Page + SectionRenderer
+
+**Type**: HITL (design review needed for 5 section UI patterns)
+**Blocked by**: Slices 5 (single lesson API), 6 (schema validation), 7 (useLessons composable)
+**User stories**: #3 (variable sections), #4 (mandatory practice activities), #5 (competency checklist), #9 (TTS on Arabic text)
+
+**What to build**: A lesson detail page (`app/pages/lessons/[id].vue`) with `SectionRenderer.vue` component:
+
+**SectionRenderer.vue** renders 5 variable section types within a lesson:
+- **`dialogue`**: Arabic text with TTS playback (click to hear), speaker labels, scene grouping
+- **`vocabulary`**: Arabic word + English translation, TTS playback, plural forms
+- **`pronouns`**: Pronoun table (subject/object, gender, dual/plural), TTS playback
 - **`expressions`**: Common expressions with translations, TTS playback
-- **`grammar`**: Grammar rules with examples, TTS playback (note: lesson-01.json has 5 sections including `grammar`)
+- **`grammar`**: Grammar rules with examples, TTS playback
 
 Each section is rendered based on its `type` field from the lesson JSON. Sections are displayed sequentially within the lesson view, between the lesson header and the practice activities.
 
+**Lesson detail page** wraps `SectionRenderer` with:
+- Lesson header (title, level, competency checklist)
+- Sections rendered by `SectionRenderer`
+- Practice activities section (placeholder for Activity Submission workflow)
+
 **Acceptance criteria**:
-- [ ] `SectionRenderer.vue` renders all 4+ section types (dialogue, vocabulary, pronouns, expressions, grammar)
+- [ ] `SectionRenderer.vue` component created in `frontend/app/components/`
+- [ ] Renders all 5 section types (dialogue, vocabulary, pronouns, expressions, grammar)
 - [ ] Arabic text supports TTS playback (click to hear — uses existing TTS endpoint)
 - [ ] RTL rendering for Arabic content
-- [ ] Sections are displayed sequentially within the lesson view
+- [ ] Sections displayed sequentially within the lesson view
+- [ ] `app/pages/lessons/[id].vue` page created and navigable
 - [ ] Graceful fallback for unknown section types (skip section, show error)
 
 **Integration verification**:
@@ -182,30 +295,43 @@ Each section is rendered based on its `type` field from the lesson JSON. Section
 ## Dependency Graph
 
 ```
-Slice 1 (JSON Scanner) ──► Slice 2 (SQLite Init) ──► Slice 3 (List API) ──► Slice 4 (Single Lesson) ──► Slice 6 (Section Renderer)
-       │                                                                                              │
-       └──────────────────────────────────────────────────────────────────────────────────────────────┘
-                                    (Slice 5 can run in parallel with Slices 1-4)
+Slice 1 (JSON Scanner)
+    ├─► Slice 2 (SQLite lessons) ──► Slice 3 (user_progress) ──► Slice 4 (List API) ──► Slice 7 (useLessons) ──► Slice 8 (List Page)
+    │       │                                                                    │
+    │       └────────────────────────────────────────────────────────────────────┘
+    │                                                                                │
+    └─► Slice 5 (Single Lesson API) ────────────────────────────────────────────────┤
+        │                                                                        │
+        └─► Slice 6 (Schema Validation) ──────────────────────────────────────────┤
+                                                                                │
+    Slice 7 ────────────────────────────────────────────────────────────────────┤
+                                                                                ▼
+                                                                        Slice 9 (Detail Page + SectionRenderer)
 ```
 
 - **Slice 1** is the foundation — can start immediately
-- **Slices 2 → 3 → 4** are sequential backend (scanner → SQLite → list → single lesson)
-- **Slice 5** (schema validation) can run in parallel with Slices 1–4 (it extends the scanner)
-- **Slice 6** is the only frontend slice — depends on Slice 4 (single lesson API)
+- **Slices 2 → 3 → 4** are sequential backend (scanner → SQLite lessons → user_progress → list API)
+- **Slice 5** (single lesson API) depends on Slices 1–4 (needs scanner, both tables, list API pattern)
+- **Slice 6** (schema validation) can start after Slice 1 (independent of database work)
+- **Slice 7** (useLessons composable) depends on Slice 5 (API must exist before frontend consumes it)
+- **Slice 8** (list page) depends on Slice 7 (composable must exist before page)
+- **Slice 9** (detail page + SectionRenderer) depends on Slices 5, 6, 7 (API, validation, composable)
 
 ---
 
 ## Open Questions
 
-1. **Data gap** (RC-1): Only 1 of 30 lesson JSON files exists. Should creating the remaining 29 files be a separate issue, or is it a data gap outside implementation scope?
+1. **Phased rollout — Lesson 1 first** (RC-1): Only 1 of 30 lesson JSON files exists (`backend/content/a1/lesson-01.json`). **The implementation plan is NOT blocked by this gap.** Slices 1–5 build the backend infrastructure (JSON scanner → SQLite → list API → single lesson API → schema validation) using the single existing lesson file as the test subject. All acceptance criteria are written to pass with exactly 1 lesson. The remaining 29 lesson JSON files (A2 + B1) are a **separate data-creation task** — not an implementation task. Once the backend is complete, content authors can populate the remaining 29 JSON files and the system will automatically pick them up on next restart (no code changes needed).
 
 2. **Schema validation scope** (RC-4): Should schema validation be strict (reject invalid lessons with 400) or lenient (skip invalid lessons, return valid ones — partial failure)? The workflow specifies partial failure, but strict validation is safer for content quality.
 
-3. **Section data in lesson-01.json**: The existing lesson has 5 sections (dialogue, vocabulary, pronouns, expressions, grammar). The workflow mentions 4 types (dialogue, vocabulary, grammar, expressions). Should `pronouns` be treated as a sub-type of `vocabulary`, or a distinct section type?
+3. **Section data in lesson-01.json**: The existing lesson has 5 sections (dialogue, vocabulary, pronouns, expressions, grammar). The workflow mentions 4 types (dialogue, vocabulary, grammar, expressions). Should `pronouns` be treated as a sub-type of `vocabulary`, or a distinct section type? (Answer: distinct — it has unique structure: pronoun table with gender/dual/plural forms.)
 
 4. **SQLite storage**: Should `competencies` and `sections` be stored as JSON strings (simpler) or as separate tables (more queryable)? The plan chooses JSON strings for the MVP.
 
-5. **Content sync**: What happens if a JSON file is added or removed after SQLite is initialized? The plan uses idempotent upsert by `id` — new files are picked up on next restart, deleted files are not removed from SQLite. Is this acceptable?
+5. **Content sync** (RC-5 new): What happens if a JSON file is added or removed after SQLite is initialized? The plan now includes a sync strategy: on each startup, delete SQLite entries whose `id` no longer has a corresponding JSON file (prevents stale data from deleted JSON files).
+
+6. **Progress persistence** (RC-5 new): The `user_progress` table stores learner progress. Should this be per-user (requiring authentication) or global (single learner, no auth)? For MVP, assume single learner with no authentication.
 
 ---
 
@@ -214,10 +340,14 @@ Slice 1 (JSON Scanner) ──► Slice 2 (SQLite Init) ──► Slice 3 (List A
 | Test | Slice | Description |
 |------|-------|-------------|
 | TC-01: No content files | 1 | Returns `[]` (empty array) — not an error |
-| TC-02: One valid lesson | 1, 3, 4 | Returns 1 lesson summary (lesson-01.json) |
+| TC-02: One valid lesson | 1, 4, 5 | Returns 1 lesson summary (lesson-01.json) |
 | TC-03: Malformed JSON | 1 | Skips that file, returns all valid lessons (partial failure) |
-| TC-04: Missing required fields | 5 | Skips that file, returns all valid lessons (partial failure) |
-| TC-05: All 30 lessons | 1, 3, 4 | Returns 30 lesson summaries (data gap — only 1 exists currently) |
-| TC-06: Single lesson by ID | 4 | Returns full lesson 1 (sections + activities) |
-| TC-07: Single lesson not found | 4 | Returns 404 |
-| TC-08: Locked lesson access | 4 | Returns 403 with "This lesson is locked" message |
+| TC-04: Missing required fields | 6 | Skips that file, returns all valid lessons (partial failure) |
+| TC-05: All 30 lessons | 1, 4, 5 | Returns 30 lesson summaries (data gap — only 1 exists currently) |
+| TC-06: Single lesson by ID | 5 | Returns full lesson 1 (sections + activities) |
+| TC-07: Single lesson not found | 5 | Returns 404 |
+| TC-08: Locked lesson access | 5 | Returns 403 with "This lesson is locked" message |
+| TC-09: First lesson available | 3, 4 | First lesson per level has `status = 'available'` |
+| TC-10: Subsequent lessons locked | 3, 4 | Lessons after first have `status = 'locked'` |
+| TC-11: Deleted JSON → deleted SQLite | 2 | Removing a JSON file results in corresponding SQLite entry removed on restart |
+| TC-12: Schema validation passes existing lesson | 6 | lesson-01.json passes all schema validations |

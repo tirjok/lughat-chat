@@ -185,6 +185,25 @@
 | **RC-1** (Synthesis) | `/api/history` always returns `text: ""` — original synthesized text is lost | **High** | Audio history browsing |
 | **RC-4** (Synthesis) | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | **Medium** | Speech synthesis |
 | **RC-5** (Synthesis) | No rate limiting on `/api/generate` — disk fills indefinitely | **Medium** | Speech synthesis |
+| **RC-2** (Learning) | Only 1 of 30 lesson JSON files exists — **not a blocker**: all 3 learning workflow implementations are written to work with lesson-01.json first. Remaining 29 files are a separate data-creation task (no code changes needed once populated). | **High** | Lesson content serving, Lesson browsing and access, Activity submission and scoring |
+
+---
+
+## Phased Rollout — Learning Workflows
+
+The 3 learning workflows (Lesson Content Serving, Lesson Browsing and Access, Activity Submission and Scoring) share a common data dependency: only 1 of 30 lesson JSON files exists. **This does NOT block implementation.** All 3 implementation plans are written to work with `backend/content/a1/lesson-01.json` (5 sections, 5 activities) as the test subject:
+
+| Phase | Content | Implementation Work | Data-creation Work |
+|-------|---------|--------------------|--------------------|
+| **Phase 1** | `a1/lesson-01.json` (exists) | Build all backend + frontend infrastructure | None — data already exists |
+| **Phase 2** | `a1/lessons 2-10` (29 missing) | **No code changes needed** — system auto-discovers new JSON files | Content authors create 9 JSON files |
+| **Phase 3** | `a2/lessons 1-10` (10 missing) | **No code changes needed** | Content authors create 10 JSON files |
+| **Phase 4** | `b1/lessons 1-10` (10 missing) | **No code changes needed** | Content authors create 10 JSON files |
+
+Each implementation file documents this explicitly in its Open Questions. See:
+- `docs/implementation/IMPLEMENTATION-lesson-content-serving.md` — Open Question 1
+- `docs/implementation/IMPLEMENTATION-lesson-browsing-and-access.md` — Open Question 1
+- `docs/implementation/IMPLEMENTATION-activity-submission-and-scoring.md` — Open Question 2
 
 ---
 
