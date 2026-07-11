@@ -395,11 +395,142 @@ interface HealthResponse {
 | # | Issue | Severity | Status |
 |---|---|---|---|
 | RC-1 | Frontend health polling window (20s) is 6× shorter than model load time (120s) | Critical | To be fixed |
-| RC-3 | Default voice name mismatch: frontend defaults to "female" but deployed WAV files are "KSA Hamed - Male" and "KSA Zariyah - Female" | Critical | To be fixed |
-| RC-5 | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused | High | To be fixed |
-| RC-1 (Synthesis) | `/api/history` always returns `text: ""` — original synthesized text is lost | High | To be fixed |
-| RC-4 (Synthesis) | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | Medium | To be fixed |
-| RC-5 (Synthesis) | No rate limiting on `/api/generate` — disk fills indefinitely | Medium | To be addressed |
+| RC-6 | Frontend container blocks entirely while backend downloads model (~5–10 min on first start) | Critical | To be fixed |
+| RC-3 | Default voice name mismatch: frontend defaults to "female" but deployed WAV files are "KSA Hamed - Male" and "KSA Zariyah - Female" | Critical | **ADR-011** |
+| RC-5 | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused | High | **ADR-012** |
+| RC-1 (Synthesis) | `/api/history` always returns `text: ""` — original synthesized text is lost | High | **ADR-012** |
+| RC-4 (Synthesis) | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | Medium | **ADR-012** |
+| RC-5 (Synthesis) | No rate limiting on `/api/generate` — disk fills indefinitely | Medium | **ADR-012** |
+
+---
+
+## The Docker Health Check Race Condition
+
+### Problem
+
+On first startup, the backend downloads ~2GB of XTTS-v2 model weights, taking 5–10 minutes. The current `docker-compose.yml` configures the frontend with `depends_on: backend.condition: service_healthy`, which means:
+
+1. Backend starts and begins downloading the model (~2–10 minutes)
+2. Frontend container **does not start at all** — it blocks until backend passes its health check
+3. User sees a blank page / connection refused error for several minutes
+4. No feedback is provided to the user about what's happening
+
+This is a **race condition between container startup and model download** that creates a dead period where the user has no information and no ability to interact.
+
+### Root Cause
+
+The frontend container is configured with:
+```yaml
+depends_on:
+  backend:
+    condition: service_healthy  # Blocks until backend health check passes
+```
+
+The backend health check has `start_period: 120s` and `retries: 200` (3000s total), but during this entire window, the frontend container is not started. The Nginx reverse proxy has nothing to serve.
+
+### Fix: Non-Blocking Frontend Boot with Loading Screen
+
+**Principle:** The frontend container should boot immediately. The user should see a graceful "Downloading Model Weights" screen while `useHealthPoll.ts` polls `/health` in the background. The moment `status` transitions from `'loading'` to `'ready'`, the UI swaps to the main dashboard.
+
+**Implementation:**
+
+1. **Remove the blocking `depends_on`** from `docker-compose.yml`:
+   ```yaml
+   frontend:
+     depends_on:
+       backend:
+         condition: service_healthy  # ← REMOVE THIS
+   ```
+   The frontend should start as soon as the Docker network is ready, regardless of backend health.
+
+2. **Create a `LoadingScreen.vue` component** — a full-page, centered, RTL-aware loading screen that displays:
+   - App logo (LughatChat)
+   - Arabic loading message: "جاري تحميل النموذج... يرجى الانتظار"
+   - A subtle animated spinner or pulsing gradient
+   - Estimated time: "قد يستغرق هذا بضعة دقائق في أول تشغيل"
+   - Optional: a progress indicator showing health poll count
+
+3. **Integrate `useHealthPoll.ts` into the root page** (or a new wrapper layout):
+   - `useHealthPoll()` already polls `/health` every 2 seconds and exposes `status` (`'loading' | 'ready' | 'error'`)
+   - When `status === 'loading'` → render `LoadingScreen.vue`
+   - When `status === 'ready'` → render the main dashboard (or redirect to `/playground`)
+   - When `status === 'error'` → render an error screen with retry option
+
+4. **Route structure:**
+   ```
+   / → LoadingScreen (while loading) → Dashboard (when ready)
+   /playground → same loading guard → TTS Studio (when ready)
+   /lesson/:id → same loading guard → Lesson page (when ready)
+   ```
+   The loading guard is a composable-level concern, not a route-level redirect — the health poll runs everywhere.
+
+5. **Error handling:** If health polling exhausts retries without reaching `ready`, show an error state with a "Retry" button that re-triggers the poll.
+
+### `useHealthPoll.ts` Contract (unchanged, already correct)
+
+The existing composable already provides exactly what's needed:
+
+```typescript
+const { status, modelLoaded } = useHealthPoll()
+// status: 'loading' | 'ready' | 'error'
+// modelLoaded: computed(() => status === 'ready')
+```
+
+No changes to this composable are required — it already polls every 2 seconds, stops on `ready` or `error`, and exposes reactive state for UI binding.
+
+### User Experience (First Startup)
+
+```
+1. User runs `docker compose up --build`
+2. Backend starts, downloads ~2GB model (5–10 minutes)
+3. Frontend starts immediately, shows LoadingScreen:
+   ┌─────────────────────────────────────────┐
+   │                                         │
+   │        🌊 LughatChat                    │
+   │                                         │
+   │     جاري تحميل النموذج...              │
+   │     يرجى الانتظار                      │
+   │                                         │
+   │     ⏳ قد يستغرق هذا بضعة دقائق        │
+   │                                         │
+   └─────────────────────────────────────────┘
+4. useHealthPoll polls /health every 2 seconds
+5. Model finishes downloading, /health returns { status: 'ready' }
+6. LoadingScreen fades out → Dashboard fades in
+7. User sees roadmap (A1 Lesson 1 available)
+```
+
+### User Experience (Subsequent Startups)
+
+```
+1. User runs `docker compose up`
+2. Backend loads model from volume in ~10–30 seconds
+3. Frontend shows LoadingScreen briefly (1–2 health polls)
+4. Dashboard appears almost immediately
+```
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `docker-compose.yml` | Remove `depends_on.backend.condition` from frontend service |
+| `app/components/LoadingScreen.vue` | **NEW** — Full-page loading UI (logo, Arabic text, spinner) |
+| `app/pages/index.vue` | Add loading guard: render `LoadingScreen` while `status === 'loading'` |
+| `app/pages/playground.vue` | Add loading guard (or use shared layout wrapper) |
+| `app/pages/lesson/[id].vue` | Add loading guard (or use shared layout wrapper) |
+
+### Files to Create
+
+| File | Purpose |
+|------|--------|
+| `app/components/LoadingScreen.vue` | Full-page loading screen with Arabic text, logo, spinner |
+
+### Migration Notes
+
+- The existing `ModelStatusIndicator.vue` and `MobileStatusIndicator.vue` show status in the nav bar — these can remain as-is since they already reflect `useHealthPoll()` state
+- The loading screen is a **full-page overlay**, not a nav-bar indicator — it replaces the entire UI until the model is ready
+- No changes to the backend are required — `/health` already returns `{ status: 'loading' }` during model download
+- The `useHealthPoll` composable is **already battle-tested** with 10 retries at 2-second intervals (20s total). For model downloads lasting 5–10 minutes, increase `maxRetries` to accommodate: e.g., `useHealthPoll({ maxRetries: 150 })` (5 minutes at 2s intervals) or make it configurable per page
 
 ---
 
@@ -414,19 +545,22 @@ Lesson 1 JSON has been created at `backend/content/a1/lesson-01.json`:
 
 ---
 
-## First Startup Experience (Updated)
+## First Startup Experience (After Health Check Fix)
 
 1. User runs `docker compose up --build`
 2. Backend container starts, downloads ~2GB XTTS-v2 model to volume (5–10 minutes)
-3. Frontend shows "جاري تحميل النموذج..." with spinning loader in the top-right status indicator
-4. Once model loads, indicator changes to checkmark "النموذج جاهز"
-5. User lands on the **Dashboard** — sees the roadmap (A1 Lesson 1 available, A2/B1 locked)
-6. User clicks Lesson 1 → enters the lesson view — sees variable sections + practice activities
-7. User can access **Playground** at any time via the top navigation bar
+3. Frontend starts **immediately** (no longer blocked by `depends_on`)
+4. User sees a **full-page LoadingScreen** with: LughatChat logo, "جاري تحميل النموذج... يرجى الانتظار", and animated spinner
+5. `useHealthPoll()` polls `/health` every 2 seconds in the background
+6. Once model loads, `status` transitions to `'ready'` → LoadingScreen fades out → Dashboard fades in
+7. User lands on the **Dashboard** — sees the roadmap (A1 Lesson 1 available, A2/B1 locked)
+8. User clicks Lesson 1 → enters the lesson view — sees variable sections + practice activities
+9. User can access **Playground** at any time via the top navigation bar
 
-## Subsequent Startups
+## Subsequent Startups (After Health Check Fix)
 
 1. `docker compose up` (no --build needed)
-2. Model loads from volume in seconds
-3. Application ready immediately
-4. User's progress is restored from SQLite (`user_progress` table)
+2. Backend loads model from volume in ~10–30 seconds
+3. Frontend shows LoadingScreen briefly (1–2 health polls)
+4. Dashboard appears almost immediately
+5. User's progress is restored from SQLite (`user_progress` table)

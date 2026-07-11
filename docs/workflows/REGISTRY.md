@@ -15,23 +15,47 @@
 | Lesson content serving | WORKFLOW-lesson-content-serving.md | **Draft** | API call (`GET /api/lessons*`) | Backend → Content Module → JSON files | 2026-07-10 |
 | Dashboard navigation and roadmap | WORKFLOW-dashboard-navigation-and-roadmap.md | **Draft** | User opens Dashboard (`/`) | Frontend (UI/UX) | 2026-07-10 |
 | Playground (TTS Studio) access | WORKFLOW-playground-access.md | **Draft** | User clicks "Playground" in nav bar | Frontend (existing TTS Studio) | 2026-07-10 |
-| Voice discovery | — | **Missing** | Page load (`onMounted` in `useVoices`) | Frontend → `/api/voices` | — |
+### 🔴 Critical Tier — Data loss or broken user experience in production
+
+| Workflow | Spec file | Status | Trigger | Primary actor | Last reviewed |
+|---|---|---|---|---|---|
 | Audio history browsing | — | **Missing** | User views history (not yet implemented in UI) | Frontend → `/api/history` | — |
-| Speaker WAV generation | — | **Missing** | Manual execution of `generate_speaker_wavs.py` | Operator (one-time setup) | — |
-| Container orchestration | — | **Missing** | `docker compose up` | Docker Compose | — |
-| Frontend health polling | — | **Missing** | Page load (`onMounted` in `useHealthPoll`) | Frontend → `/health` | — |
-| Health check (Docker) | — | **Missing** | Every 15s (configured in `docker-compose.yml`) | Docker | — |
 | Audio playback | — | **Missing** | User clicks play, synthesis completes | Frontend `<audio>` element | — |
-| Audio download | — | **Missing** | User clicks download button | Frontend (client-side) | — |
-| Panel toggle (mobile) | — | **Missing** | User drags divider, switches panels | Frontend (client-side) | — |
+
+> **Audio history browsing**: `/api/history` always returns `text: ""` — original synthesized text is lost (RC-1, High). Sidecar JSON fix approved in ADR-012, but the *workflow spec* (user journey, error modes, UI integration) is unwritten.
+> **Audio playback**: FFmpeg fallback copies WAV as `.mp3` — browsers may play silent/garbled audio (RC-4, Medium). Workflow spec needed for playback states, seek behavior, error handling.
+
+### 🟡 High Tier — Degraded but functional UX
+
+| Workflow | Spec file | Status | Trigger | Primary actor | Last reviewed |
+|---|---|---|---|---|---|
+| Voice discovery | — | **Missing** | Page load (`onMounted` in `useVoices`) | Frontend → `/api/voices` | — |
+| Frontend health polling | — | **Missing** | Page load (`onMounted` in `useHealthPoll`) | Frontend → `/health` | — |
 | Text input validation | — | **Missing** | User types, clicks generate | Frontend (`useInputValidation`) | — |
 | Toast notification lifecycle | — | **Missing** | Any error/success/info event | Frontend (`useToast`) | — |
+
+> **Frontend health polling**: Polling window (20s) is 6× shorter than model load time (120s) — frontend shows "Error" long before model loads (RC-1, Critical). This is RC-1 — the #1 priority fix.
+
+### 🟠 Medium Tier — Operational, not user-facing
+
+| Workflow | Spec file | Status | Trigger | Primary actor | Last reviewed |
+|---|---|---|---|---|---|
+| Speaker WAV generation | — | **Missing** | Manual execution of `generate_speaker_wavs.py` | Operator (one-time setup) | — |
+| Container orchestration | — | **Missing** | `docker compose up` | Docker Compose | — |
+| Health check (Docker) | — | **Missing** | Every 15s (configured in `docker-compose.yml`) | Docker | — |
 | CI/CD pipeline execution | — | **Missing** | Push/PR to main or develop | GitHub Actions | — |
 | Pre-commit quality gate | — | **Missing** | `git commit` | Pre-commit hooks (`run-tests.sh`) | — |
 | Nginx reverse proxy routing | — | **Missing** | Any HTTP request to frontend | Nginx | — |
-| Model cache persistence | — | **Missing** | Container restart (or lack thereof) | Docker volumes | — |
 
-**Summary**: 22 discovered workflows. 8 specced (Draft). 14 **Missing** (exist in code but have no spec). 6 new learning workflows specced in this session.
+### 🔵 Low Tier — Low risk, nice-to-have spec
+
+| Workflow | Spec file | Status | Trigger | Primary actor | Last reviewed |
+|---|---|---|---|---|---|
+| Audio download | — | **Missing** | User clicks download button | Frontend (client-side) | — |
+| Panel toggle (mobile) | — | **Missing** | User drags divider, switches panels | Frontend (client-side) | — |
+| Model cache persistence | ADR-012 | **Resolved** | Container restart (or lack thereof) | Docker volumes | 2026-07-11
+
+**Summary**: 22 discovered workflows. 8 specced (Draft). 12 **Missing** (exist in code but have no spec) — organized by risk tier. 1 **Resolved** (ADR-012). 6 new learning workflows specced in this session.
 
 ---
 
@@ -181,10 +205,10 @@
 |---|---|---|---|
 | **RC-1** | Frontend health polling window (20s) is 6× shorter than model load time (120s) — frontend shows "Error" long before model loads | **Critical** | Model loading, Frontend health polling |
 | **RC-3** (Synthesis) | Default voice name mismatch: frontend defaults to `"female"` but deployed WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"` | **Critical** | Speech synthesis |
-| **RC-5** (Model) | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused, 2GB re-downloaded every restart | **High** | Model loading, Container orchestration |
-| **RC-1** (Synthesis) | `/api/history` always returns `text: ""` — original synthesized text is lost | **High** | Audio history browsing |
-| **RC-4** (Synthesis) | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | **Medium** | Speech synthesis |
-| **RC-5** (Synthesis) | No rate limiting on `/api/generate` — disk fills indefinitely | **Medium** | Speech synthesis |
+| **RC-5** (Model) | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused, 2GB re-downloaded every restart | **High** → **Resolved by ADR-012** | Model loading, Container orchestration |
+| **RC-1** (Synthesis) | `/api/history` always returns `text: ""` — original synthesized text is lost | **High** → **Resolved by ADR-012** | Audio history browsing |
+| **RC-4** (Synthesis) | FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode | **Medium** → **Resolved by ADR-012** | Speech synthesis |
+| **RC-5** (Synthesis) | No rate limiting on `/api/generate` — disk fills indefinitely | **Medium** → **Resolved by ADR-012** | Speech synthesis |
 | **RC-2** (Learning) | Only 1 of 30 lesson JSON files exists — **not a blocker**: all 3 learning workflow implementations are written to work with lesson-01.json first. Remaining 29 files are a separate data-creation task (no code changes needed once populated). | **High** | Lesson content serving, Lesson browsing and access, Activity submission and scoring |
 
 ---
@@ -208,10 +232,26 @@ Each implementation file documents this explicitly in its Open Questions. See:
 ---
 
 ## Spec Priorities (Recommended Order)
+
+**Critical Tier** (spec first — data loss / broken UX):
 1. **WORKFLOW-model-loading-readiness.md** — Fix RC-1 (critical: frontend shows error after 20s, model takes 120s)
-2. **WORKFLOW-speech-synthesis.md** — Fix RC-3 (critical: default voice name mismatch)
-3. **WORKFLOW-voice-discovery.md** — Voice selection UI + API integration
-4. **WORKFLOW-audio-playback.md** — Playback, seek, waveform visualization
-5. **WORKFLOW-container-orchestration.md** — Docker compose, volumes, health checks
-6. **WORKFLOW-ci-cd-pipeline.md** — GitHub Actions, pre-commit hooks
-7. Remaining 10 workflows as capacity allows
+2. **WORKFLOW-audio-playback.md** — Playback states, FFmpeg fallback, error handling
+3. **WORKFLOW-audio-history-browsing.md** — Sidecar JSON integration, history UI
+
+**High Tier** (degraded UX, fix next):
+4. **WORKFLOW-speech-synthesis.md** — Fix RC-3 (critical: default voice name mismatch)
+5. **WORKFLOW-voice-discovery.md** — Voice selection UI + API integration
+6. **WORKFLOW-frontend-health-polling.md** — Fix polling window (20s → 120s+)
+7. **WORKFLOW-text-input-validation.md** — Input validation, error states
+8. **WORKFLOW-toast-notification-lifecycle.md** — Toast states, keyboard shortcuts
+
+**Medium Tier** (operational — spec when capacity allows):
+9. **WORKFLOW-container-orchestration.md** — Docker compose, volumes, health checks
+10. **WORKFLOW-health-check-docker.md** — Docker health check behavior
+11. **WORKFLOW-ci-cd-pipeline.md** — GitHub Actions, pre-commit hooks
+12. **WORKFLOW-speaker-wav-generation.md** — Speaker WAV setup workflow
+
+**Low Tier** (nice-to-have):
+13. **WORKFLOW-audio-download.md** — Client-side download flow
+14. **WORKFLOW-panel-toggle-mobile.md** — Mobile panel sliding behavior
+15. Remaining workflows as capacity allows
