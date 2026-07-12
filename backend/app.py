@@ -260,8 +260,14 @@ async def generate_speech(request: SynthesisRequest):
         timestamp = uuid.uuid4().hex[:8]
         lang_code = request.language
 
-        # Resolve voice: accept both "voice" and "speaker" fields; default to "female"
-        voice = request.speaker if request.speaker else (request.voice or "female")
+        # Resolve voice: accept both "voice" and "speaker" fields.
+        # If neither is explicitly provided, use the first discovered voice
+        # from speaker_wavs/ (alphabetically sorted). Falls back to "female"
+        # for backwards compatibility with deployments that still use female.wav.
+        voice = request.speaker if request.speaker else (request.voice or None)
+        if not voice:
+            discovered = discover_voices(SPEAKER_WAV_DIR)
+            voice = discovered[0]["id"] if discovered else "female"
 
         filename = f"{lang_code}_{voice}_{timestamp}.mp3"
         wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")

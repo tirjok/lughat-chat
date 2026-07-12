@@ -257,7 +257,12 @@ def test_generate_speech_returns_valid_response_on_success():
 
 
 def test_generate_speech_accepts_default_parameters():
-    """POST /api/generate works with minimal request (only text required) and returns MP3 blob."""
+    """POST /api/generate works with minimal request (only text required) and returns MP3 blob.
+
+    With the default voice fix, no voice/speaker field resolves to the first
+    discovered voice from speaker_wavs/ (alphabetically sorted), falling back
+    to "female" if no WAV files exist.
+    """
     _setup_mock_model()
 
     from fastapi.testclient import TestClient
@@ -344,3 +349,61 @@ def test_generate_speech_accepts_english_language():
     assert response.status_code == 200
     assert "audio/mpeg" in response.headers["content-type"]
     assert len(response.content) > 0
+
+
+def test_generate_speech_defaults_to_first_voice_when_no_voice_field():
+    """POST /api/generate with no voice/speaker uses the first discovered voice.
+
+    When neither 'voice' nor 'speaker' is provided, the backend resolves
+    to the first discovered voice from speaker_wavs/ (alphabetically sorted).
+    This test verifies that path returns valid MP3 audio with the correct
+    voice name in the response filename.
+    """
+    import app as main_app
+    from fastapi.testclient import TestClient
+
+    _mock_wav = _make_mock_wav()
+
+    def _mock_path_exists(path):
+        # Simulate that speaker_wavs/ contains 'KSA Hamed - Male.wav'
+        # (which sorts first alphabetically)
+        return True
+
+    def _mock_wave_open(path, mode="r"):
+        if mode == "w":
+            return _ORIGINAL_WAVE_OPEN(path, mode)
+        return _mock_wav
+
+    # Mock os.listdir to return realistic WAV filenames so discover_voices()
+    # returns real voice names — this lets us verify the response filename.
+    _original_listdir = os.listdir
+    main_app.os.listdir = lambda d: (
+        ["KSA Hamed - Male.wav", "KSA Zariyah - Female.wav"]
+        if d.endswith("speaker_wavs")
+        else _original_listdir(d)
+    )
+
+    # Patch at module level so the mock persists beyond the test function scope.
+    main_app.os.path.exists = _mock_path_exists
+    main_app.wave.open = _mock_wave_open
+    main_app.tts_model = _mock_tts_model()
+    main_app.model_load_status = "ready"
+
+    client = TestClient(app)
+
+    # No voice or speaker field — should use first discovered voice
+    response = client.post("/api/generate", json={"text": "Hello world"})
+
+    assert response.status_code == 200
+    assert "audio/mpeg" in response.headers["content-type"]
+    assert len(response.content) > 0
+    # Verify the response filename contains the first discovered voice
+    # (the public interface: filename in Content-Disposition header)
+    content_disp = response.headers.get("content-disposition", "")
+    assert "KSA Hamed - Male" in content_disp, (
+        f"Expected first voice 'KSA Hamed - Male' in response filename, "
+        f"got: {content_disp}"
+    )
+
+    # Restore real os.listdir for other tests
+    main_app.os.listdir = _original_listdir
