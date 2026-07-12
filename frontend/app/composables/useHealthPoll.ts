@@ -9,7 +9,7 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
 
   // Start polling immediately
   const baseUrl = options.baseUrl || ''
-  const maxRetries = options.maxRetries ?? 10
+  const maxRetries = options.maxRetries ?? 60
   let intervalId: ReturnType<typeof setInterval> | null = null
   let retryCount = 0
 
@@ -57,8 +57,16 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
     void checkHealth()
   })
 
+  function stop() {
+    if (intervalId !== null) {
+      clearInterval(intervalId)
+      intervalId = null
+    }
+  }
+
   return {
     status,
-    modelLoaded
+    modelLoaded,
+    stop
   }
 }

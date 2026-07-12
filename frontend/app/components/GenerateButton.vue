@@ -15,6 +15,8 @@ const emit = defineEmits<{
 <template>
   <button
     :disabled="disabled"
+    :aria-busy="modelStatus === 'loading'"
+    :aria-disabled="disabled"
     class="generate-btn group"
     @click="emit('click')"
   >
@@ -46,7 +48,7 @@ const emit = defineEmits<{
     >
       <div class="loader" />
       <span class="font-medium text-sunrise-orange animate-pulse text-sm md:text-base">
-        Processing Model...
+        Loading TTS Model...
       </span>
       <!-- Trailing icon circle (disabled state) -->
       <span

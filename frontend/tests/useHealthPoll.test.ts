@@ -13,12 +13,14 @@ describe('useHealthPoll', () => {
       const poller = useHealthPoll()
 
       expect(poller.status.value).toBe('loading')
+      poller.stop()
     })
 
     it('sets modelLoaded to false', () => {
       const poller = useHealthPoll()
 
       expect(poller.modelLoaded.value).toBe(false)
+      poller.stop()
     })
   })
 
@@ -40,6 +42,7 @@ describe('useHealthPoll', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(poller.status.value).toBe('ready')
+      poller.stop()
     })
 
     it('sets modelLoaded to true when status is ready', async () => {
@@ -58,6 +61,7 @@ describe('useHealthPoll', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(poller.modelLoaded.value).toBe(true)
+      poller.stop()
     })
   })
 
@@ -78,6 +82,7 @@ describe('useHealthPoll', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(poller.status.value).toBe('error')
+      poller.stop()
     })
   })
 
@@ -89,7 +94,7 @@ describe('useHealthPoll', () => {
       }))
       global.fetch = fetchSpy
 
-      useHealthPoll()
+      const poller = useHealthPoll()
 
       // Trigger onMounted to start polling
       for (const cb of mountedCallbacks) {
@@ -101,10 +106,15 @@ describe('useHealthPoll', () => {
 
       // Only 1 call: the immediate check sets status to 'ready', which stops polling
       expect(fetchSpy).toHaveBeenCalledTimes(1)
+      poller.stop()
     })
   })
 
   describe('network error handling', () => {
+    beforeEach(() => {
+      mountedCallbacks.length = 0
+    })
+
     it('keeps status as "loading" when fetch throws a network error', async () => {
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
 
@@ -118,6 +128,44 @@ describe('useHealthPoll', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(poller.status.value).toBe('loading')
+      poller.stop()
     })
+
+    it('continues polling past 20 seconds when model has not loaded yet', async () => {
+      global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
+
+      const poller = useHealthPoll()
+
+      // Trigger onMounted to start polling
+      for (const cb of mountedCallbacks) {
+        cb()
+      }
+
+      // Wait 25 seconds — well past the old 10-retry limit (20s)
+      await new Promise(resolve => setTimeout(resolve, 25000))
+
+      // Should still be "loading", NOT "error" (old behavior would error at 20s)
+      expect(poller.status.value).toBe('loading')
+      poller.stop()
+    }, 30000)
+
+    it('accepts a custom maxRetries override', async () => {
+      const fetchSpy = vi.fn(() => Promise.reject(new Error('Network error')))
+      global.fetch = fetchSpy
+
+      const poller = useHealthPoll({ maxRetries: 5 })
+
+      // Trigger onMounted to start polling
+      for (const cb of mountedCallbacks) {
+        cb()
+      }
+
+      // Wait for 5 retries × 2s = 10 seconds (+ 3s buffer for async resolution)
+      await new Promise(resolve => setTimeout(resolve, 13000))
+
+      // Should have entered error state after 5 retries
+      expect(poller.status.value).toBe('error')
+      poller.stop()
+    }, 15000)
   })
 })
