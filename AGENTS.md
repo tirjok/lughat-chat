@@ -467,6 +467,48 @@ When the user asks about building features, modifying existing code, or understa
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice from `docs/implementation/`, the agent MUST:**
+
+### 1. Skill Audit
+Run `find-skills` to check if all required skills are installed. Install missing ones.
+
+**Core skills (always needed):**
+- `solid` — SOLID principles, architecture patterns, code review
+- `find-skills` — Discover and install skills when needed (pre-installed)
+- `review` — Review changes since a fixed point (standards, spec, code quality)
+
+**Frontend skills (for any frontend slice):**
+- `vue` + `vue-best-practices` — Vue 3 Composition API, `<script setup>`, reactivity
+- `vueuse-functions` — VueUse composables (useRoute, useRouter, useMediaQuery)
+- `vue-testing-best-practices` — Test naming, AAA pattern, lean testing
+- `testing-best-practices` — 50+ JavaScript/Node.js testing best practices
+- `unocss` — UnoCSS utility rules, shortcuts, presets
+- `ui-designer` — Component specs, design tokens, pixel-perfect implementation
+- `frontend-design` — Aesthetic direction, typography, color palette
+
+**Backend/Research skills (for any backend slice):**
+- `librarian` — Search library internals with source code + GitHub permalinks
+
+### 2. Document Audit
+Read these documents before starting any implementation:
+- `docs/workflows/REGISTRY.md` — Identify missing workflow specs (audio playback, toast lifecycle, etc.)
+- `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` — Cross-workflow dependencies (what blocks what)
+- `docs/architecture/README.md` — Active ADRs and their decisions
+- `docs/PRD.md` — User stories and requirements
+
+### 3. Latest Information Search
+- Use `web_search` for the latest versions of Vue 3, Nuxt 4, FastAPI, Coqui TTS, UnoCSS, VueUse
+- Use `librarian` to find internal library code when answers aren't in docs alone
+- Cross-reference with `docs/architecture/` ADRs for project-specific decisions
+
+### 4. Report
+State explicitly before implementing:
+> "Skills available: [...], Skills installed: [...], Missing: [...], Latest docs found: [...], Cross-workflow dependencies: [...]"
+
+---
+
 ## UI/UX Feedback Workflow
 
 These skills handle **LLM-driven UI/UX review, audit, and improvement**. Use them when the user says "review the UI", "fix the UX", "audit accessibility", "make it look better", or reports visual/design issues.

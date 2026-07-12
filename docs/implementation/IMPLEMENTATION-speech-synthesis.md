@@ -6,6 +6,37 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, error handling patterns, code review | `pi skills install solid` | S-01 to S-08 (all slices: error handling, validation) |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | S-03, S-04, S-06, S-07, S-08 (frontend changes) |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | S-03, S-04, S-06, S-07, S-08 tests |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code + GitHub permalinks | `pi skills install librarian` | Coqui TTS latest API, FastAPI FileResponse patterns |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (audio playback, toast lifecycle) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Model Loading blocks Speech Synthesis) | S-01 depends on model being ready |
+| `docs/workflows/WORKFLOW-model-loading-readiness.md` | Model loading states, health polling | S-01–S-08 (all slices depend on model readiness) |
+| `docs/workflows/WORKFLOW-playground-access.md` | Playground route (moved from `/`) | S-03, S-04, S-06 (frontend API calls) |
+| `docs/architecture/ADR-011` | Default voice resolution (RC-003) | S-01 (fixes the same issue) |
+| `docs/architecture/ADR-012` | Model cache volume, audio persistence, FFmpeg fallback | S-02, S-05 (sidecar files, cleanup) |
+| `docs/PRD.md` | User stories #9–12 (TTS & pronunciation) | All slices |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/architecture/ADR-011` (default voice resolution) and `ADR-012` (model cache, audio persistence) — S-01 and S-02 overlap with these ADRs. Read `docs/workflows/WORKFLOW-model-loading-readiness.md` — the model must be ready before synthesis can succeed. Then begin S-01 (fix default voice resolution — critical path)."
+
+---
+
 ## Overview
 
 This document breaks the **Speech Synthesis** workflow into **8 implementation issues** (vertical slices). Each slice is a thin, end-to-end path through all layers (validation, API, playback, error handling, tests). They are ordered by dependency — blockers first — so that each subsequent slice can reference real issue identifiers once implemented.

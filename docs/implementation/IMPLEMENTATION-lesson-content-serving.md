@@ -6,6 +6,44 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, architecture patterns, code review | `pi skills install solid` | Slices 1–6 (backend: JSON scanner, SQLite, schema validation) |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | Slices 7–9 (frontend: composables, pages, components) |
+| `vueuse-functions` | VueUse composables (useRoute, useRouter) | `pi skills install vueuse-functions` | Slice 7 (useLessons composable), Slice 9 (lesson detail) |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | All frontend tests (Slices 7, 8, 9) |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code + GitHub permalinks | `pi skills install librarian` | Slice 1 (Python file scanning patterns), Slice 6 (jsonschema API internals) |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+| `ui-designer` | Component specs, design tokens, pixel-perfect implementation | `pi skills install ui-designer` | Slice 9 (SectionRenderer UI spec) |
+| `unocss` | UnoCSS utility rules, shortcuts, presets | `pi skills install unocss` | Section rendering, RTL support, dark mode |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (audio playback, toast lifecycle) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Lesson Browsing, Activity Submission) | Slices 2–9 |
+| `docs/workflows/WORKFLOW-lesson-browsing-and-access.md` | SQLite tables (lessons, user_progress), sequential unlocking | Slice 2–4 |
+| `docs/workflows/WORKFLOW-activity-submission-and-scoring.md` | 5 activity types (listen-translate, translate-to-english, etc.) | Slice 5 (single lesson), Slice 9 (SectionRenderer) |
+| `docs/workflows/WORKFLOW-playground-access.md` | Playground route (moved from `/`) | Slice 7 (routing) |
+| `docs/workflows/WORKFLOW-model-loading-readiness.md` | Health polling, model loading states | Integration with existing health check |
+| `docs/architecture/ADR-005` | Content Editor and Version Control (keep JSON files) | Slice 1 (JSON scanning), Slice 6 (schema validation) |
+| `docs/architecture/ADR-006` | Activity type taxonomy (JSON Schema) | Slice 6 (schema validation) |
+| `docs/architecture/ADR-009` | Frontend SPA architecture (Option C: Hybrid) | Slices 7, 8, 9 |
+| `docs/PRD.md` | User stories #3 (variable sections), #18 (content creator) | All backend slices |
+| `backend/content/a1/lesson-01.json` | Existing lesson data (5 sections, 5 activities) | All slices use this as test subject |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/architecture/ADR-005`, `ADR-006`, and `ADR-009` for domain knowledge. Read `backend/content/a1/lesson-01.json` to understand the existing lesson structure. Read `docs/workflows/WORKFLOW-lesson-browsing-and-access.md` — its Slice 1 (SQLite initialization) is a prerequisite for this workflow's Slices 1–9. Then begin Slice 1."
+
+---
+
 ## Reality Check (Current State vs. Spec)
 
 | # | Finding | Severity |

@@ -6,6 +6,45 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, architecture patterns, code review | `pi skills install solid` | Slices 1–4 (backend SQLite, schema validation) |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | Slices 5, 6, 7 (frontend composables, pages) |
+| `vueuse-functions` | VueUse composables (useRoute, useRouter, useAsyncData) | `pi skills install vueuse-functions` | Slice 7 navigation, Slice 5/6 data fetching |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | All frontend tests (Slices 5, 6, 7) |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code + GitHub permalinks | `pi skills install librarian` | Slice 1 (SQLite patterns in Python), Slice 6 (jsonschema API) |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+| `ui-designer` | Component specs, design tokens, pixel-perfect implementation | `pi skills install ui-designer` | Slices 5, 6 (roadmap UI, lesson view) |
+| `unocss` | UnoCSS utility rules, shortcuts, presets | `pi skills install unocss` | Dashboard cards, responsive layouts |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (audio playback, toast lifecycle) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Activity Submission blocked by this) | Slice 2/3 dependencies |
+| `docs/workflows/WORKFLOW-lesson-content-serving.md` | JSON scanner, SQLite tables (Slice 1 must match) | Slice 1–9 |
+| `docs/workflows/WORKFLOW-activity-submission-and-scoring.md` | Activity types (5 types) | Slice 5 (single lesson endpoint) |
+| `docs/workflows/WORKFLOW-dashboard-navigation-and-roadmap.md` | Dashboard page (replaces current index.vue) | Slice 5 (Dashboard page) |
+| `docs/workflows/WORKFLOW-playground-access.md` | Playground route (moved from `/`) | Slice 7 (routing) |
+| `docs/workflows/WORKFLOW-model-loading-readiness.md` | Health polling, model loading states | Navigation bar integration |
+| `docs/architecture/ADR-005` | Content Editor and Version Control (keep JSON files) | Slice 1 (JSON scanning) |
+| `docs/architecture/ADR-006` | Activity type taxonomy (JSON Schema) | Slice 6 (schema validation) |
+| `docs/architecture/ADR-007` | Progress scoring (weighted average, 0.7 threshold) | Slice 3 (sequential unlocking) |
+| `docs/architecture/ADR-009` | Frontend SPA architecture (Option C: Hybrid) | Slices 5, 6, 7 |
+| `docs/PRD.md` | User stories #1, #2, #5, #7 (roadmap, sequential, competencies) | All slices |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/architecture/ADR-005`, `ADR-006`, `ADR-007`, and `ADR-009` for domain knowledge. Read `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` for cross-workflow dependencies. Read `docs/workflows/WORKFLOW-lesson-content-serving.md` — its Slice 1 (JSON scanner) is a prerequisite for this workflow's Slices 1–9. Then begin Slice 1."
+
+---
+
 ## Overview
 
 This document breaks the **Lesson Browsing and Access** workflow into **7 implementation issues** (vertical slices). Each slice is a thin, end-to-end path through all layers (schema, API, UI, tests). They are ordered by dependency — blockers first — so that each subsequent slice can reference real issue identifiers once published.

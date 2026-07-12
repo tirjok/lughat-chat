@@ -6,6 +6,40 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, error handling, code review | `pi skills install solid` | Slices M-06, M-07 (backend API extension, frontend integration) |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | Slice M-07 (frontend reads new fields) |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | Slice M-07 tests |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code | `pi skills install librarian` | Coqui TTS model loading callback patterns (download progress) |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+| `unocss` | UnoCSS utility rules, shortcuts, presets | `pi skills install unocss` | Slice M-07 (status indicator styling) |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (container orchestration, health check) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Model Loading blocks all) | All slices |
+| `docs/workflows/WORKFLOW-model-loading-polling-fix.md` | Health polling fix (M-01 — prerequisite for M-06, M-07) | Slices M-06, M-07 |
+| `docs/workflows/WORKFLOW-model-loading-recovery.md` | Retry-after-error (M-08 to M-10 — depends on M-01) | Cross-reference |
+| `docs/workflows/WORKFLOW-model-loading-ux-during-wait.md` | UX during loading (M-11 to M-13 — depends on M-01) | Cross-reference |
+| `docs/workflows/WORKFLOW-speech-synthesis.md` | Speech synthesis (S-01 to S-08 — model must be ready) | All slices |
+| `docs/workflows/WORKFLOW-dashboard-navigation-and-roadmap.md` | Dashboard navigation (status indicator integration) | Slice M-07 |
+| `docs/architecture/ADR-010` | Non-blocking frontend boot (LoadingScreen) | Slice M-07 (loading screen integration) |
+| `docs/PRD.md` | Known issue RC-001 (polling window mismatch) | Slice M-06 (enriched status) |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/workflows/WORKFLOW-model-loading-polling-fix.md` — its Slice M-01 (increase polling) is a prerequisite for this file's Slices M-06, M-07. Read `docs/architecture/ADR-010` (non-blocking frontend boot). Then begin Slice M-06 (extend health endpoint with model_name and sub_status)."
+
+---
+
 ## Problem Statement
 
 The `/health` endpoint currently returns only coarse-grained status: `"loading"`, `"ready"`, or `"error"`. During the ~120-second model loading window, the frontend has no way to provide more granular status to the user. There's no indication of *which* model is loading, whether the model is downloading or initializing, or any estimate of remaining time.

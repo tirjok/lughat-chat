@@ -6,6 +6,40 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | All slices use Vue components/composables |
+| `vueuse-functions` | VueUse composables (useRoute, useRouter, useMediaQuery, useScroll) | `pi skills install vueuse-functions` | Navigation, sidebar state, responsive breakpoints |
+| `unocss` | UnoCSS utility rules, shortcuts, presets | `pi skills install unocss` | Dashboard layout, roadmap cards, responsive styles |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | Slice 1–6 tests |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code | `pi skills install librarian` | Nuxt 4 routing patterns, VueUse latest API |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+| `ui-designer` | Component specs, design tokens, pixel-perfect implementation | `pi skills install ui-designer` | Slices 3, 4, 6 (roadmap UI design) |
+| `frontend-design` | Aesthetic direction, typography, color palette | `pi skills install frontend-design` | Slices 3, 6 (HITL design review) |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (toast lifecycle, voice discovery) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Dashboard depends on Lesson Browsing) | Slice 4 needs `/api/lessons` |
+| `docs/workflows/WORKFLOW-playground-access.md` | Playground route (Slice 1 prerequisite) | Slice 1 moves current TTS Studio |
+| `docs/workflows/WORKFLOW-model-loading-readiness.md` | Health polling, model loading states | Navigation bar status indicator |
+| `docs/architecture/ADR-009` | Frontend SPA architecture (Option C: Hybrid composables) | Slices 3, 5, 7 |
+| `docs/architecture/ADR-010` | Non-blocking frontend boot (LoadingScreen) | Navigation bar integration |
+| `docs/PRD.md` | User stories #1, #15, #16, #17 (roadmap, nav bar) | All frontend slices |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/architecture/ADR-009` for routing decisions and `docs/workflows/WORKFLOW-playground-access.md` for the Playground route (prerequisite for Slice 1). Read `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` for cross-workflow dependencies. Then begin Slice 1."
+
+---
+
 ## Overview
 
 This document breaks the **Dashboard Navigation and Roadmap Display** workflow into **6 implementation issues** (vertical slices). Each slice is a thin, end-to-end path through all layers (components, composables, routing, tests). They are ordered by dependency — blockers first — so that each subsequent slice can reference real issue identifiers once implemented.

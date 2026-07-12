@@ -6,6 +6,42 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, error handling, code review | `pi skills install solid` | Slices M-01 to M-03 (all model loading fixes) |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | Slices M-01, M-03 (composable, component changes) |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | Slice M-02 (test updates) |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code | `pi skills install librarian` | Coqui TXTT model loading time patterns |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+| `unocss` | UnoCSS utility rules, shortcuts, presets | `pi skills install unocss` | Slice M-03 (GenerateButton styling) |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (front-end health polling) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Model Loading blocks all workflows) | All slices |
+| `docs/workflows/WORKFLOW-model-loading-progress.md` | Model loading progress (M-06, M-07 — can run in parallel) | Slices M-06, M-07 |
+| `docs/workflows/WORKFLOW-model-loading-recovery.md` | Retry-after-error (M-08 to M-10 — depends on M-01) | Slices M-08, M-09, M-10 |
+| `docs/workflows/WORKFLOW-model-loading-ux-during-wait.md` | UX during loading (M-11 to M-13 — depends on M-01) | Slices M-11, M-12, M-13 |
+| `docs/workflows/WORKFLOW-speech-synthesis.md` | Speech synthesis (S-01 to S-08 — model must be ready) | All slices (model must load before synthesis) |
+| `docs/workflows/WORKFLOW-playground-access.md` | Playground route (M-03 integration) | Slice M-03 (GenerateButton) |
+| `docs/workflows/WORKFLOW-dashboard-navigation-and-roadmap.md` | Dashboard navigation (M-03, M-11 integration) | Slices M-03, M-11 |
+| `docs/architecture/ADR-010` | Non-blocking frontend boot (LoadingScreen) | Slice M-01 (loading screen integration) |
+| `docs/architecture/ADR-012` | Model cache volume (M-04 — can run in parallel) | Slice M-04 (volume path fix) |
+| `docs/PRD.md` | Known issue RC-001 (polling window 6× shorter than model load) | Slice M-01 |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/workflows/WORKFLOW-model-loading-progress.md`, `WORKFLOW-model-loading-recovery.md`, and `WORKFLOW-model-loading-ux-during-wait.md` — all reference this file's Slice M-01 as a prerequisite. Read `docs/architecture/ADR-010` (non-blocking frontend boot) and `ADR-012` (model cache volume). Then begin Slice M-01 (increase polling to 60 retries — critical path for ALL other model loading slices)."
+
+---
+
 ## Problem Statement
 
 The frontend health polling window is **20 seconds** (10 retries × 2s interval), but the XTTS-v2 model takes **~120 seconds** to load on CPU. After 20 seconds, the frontend enters `error` state and permanently disables the Generate button — even though the model is still loading in the background. The user sees a false "Error" state for **100 seconds** before the model actually finishes loading.

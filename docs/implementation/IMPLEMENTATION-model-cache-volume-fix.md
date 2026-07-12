@@ -6,6 +6,33 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, error handling, code review | `pi skills install solid` | Slice M-04 (Docker Compose change), Slice M-05 (verification) |
+| `librarian` | Search library internals with source code | `pi skills install librarian` | Coqui TTS model cache path internals (verify no fallback to `/root/.local/share/tts`) |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (container orchestration, health check) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Model Loading blocks Speech Synthesis) | All slices |
+| `docs/workflows/WORKFLOW-model-loading-polling-fix.md` | Health polling fix (M-01 — critical path, can run in parallel) | M-04 can start in parallel with M-01 |
+| `docs/workflows/WORKFLOW-speech-synthesis.md` | Speech synthesis fixes (S-01, S-02) | Slice 1 (overlaps with ADR-012) |
+| `docs/architecture/ADR-012` | Model cache volume, audio persistence (same RC-004) | Slice M-04 (same fix, coordinated) |
+| `docs/PRD.md` | Known issue RC-004 (model re-downloaded every restart) | Slice M-04 |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/workflows/WORKFLOW-model-loading-polling-fix.md` — Slice M-01 (increase polling) can run in parallel with this file's Slice M-04. Read `docs/architecture/ADR-012` — Slice 1 fixes the same volume path issue. Coordinate with both workflows. Then begin Slice M-04 (align Docker volume mount with app config path)."
+
+---
+
 ## Problem Statement
 
 The Docker Compose configuration mounts the `tts-model-cache` named volume at `/root/.local/share/tts` inside the backend container, but the application writes model files to `/app/.cache/tts` (set via the `TTS_MODEL_CACHE` environment variable). This path mismatch means the named volume is **completely unused** — the ~2GB TTS model is re-downloaded on every container restart, wasting bandwidth and adding ~2 minutes to every restart.

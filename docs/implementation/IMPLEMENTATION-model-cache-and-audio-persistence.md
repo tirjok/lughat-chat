@@ -6,6 +6,33 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, error handling, code review | `pi skills install solid` | Slices 1–5 (backend: Docker, file I/O, error handling) |
+| `librarian` | Search library internals with source code | `pi skills install librarian` | Coqui TTS model cache path internals, FFmpeg subprocess patterns |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (audio playback, toast lifecycle) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Model Loading blocks Speech Synthesis) | All slices |
+| `docs/workflows/WORKFLOW-model-loading-readiness.md` | Model loading states, health polling (M-01 to M-13) | Slices 1–5 (all relate to model loading) |
+| `docs/workflows/WORKFLOW-speech-synthesis.md` | Speech synthesis fixes (S-01 to S-08) | Slice 2 (sidecar files), Slice 4 (cleanup) |
+| `docs/architecture/ADR-011` | Default voice resolution (RC-003) | Slice 1 (volume path fix) |
+| `docs/PRD.md` | Known issues RC-004, RC-005, RC-006, RC-007 | All slices |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/workflows/WORKFLOW-model-loading-readiness.md` — Slices M-04 (volume path) and M-05 (persistence verification) are in this same workflow. Read `docs/workflows/WORKFLOW-speech-synthesis.md` — S-02 (sidecar files) and S-05 (cleanup) overlap with this workflow. Then begin Slice 1 (fix volume mount path — critical path)."
+
+---
+
 ## Overview
 
 This document breaks the **Model Cache Volume, Audio Persistence, and FFmpeg Fallback** ADR into implementation slices. Four related issues affect the backend's audio generation and persistence:

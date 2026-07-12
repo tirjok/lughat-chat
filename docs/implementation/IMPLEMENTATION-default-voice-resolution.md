@@ -6,6 +6,35 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, error handling, code review | `pi skills install solid` | Slices 1–5 (backend voice resolution, tests) |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | Slice 4 (frontend voice selector) |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | Slices 2, 3, 4 tests |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code | `pi skills install librarian` | Coqui TTS voice discovery internals |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (voice discovery) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Speech Synthesis blocked by this) | All slices |
+| `docs/workflows/WORKFLOW-speech-synthesis.md` | Speech synthesis fixes (S-01 fixes the same RC-003) | Slice 1 (overlaps with S-01) |
+| `docs/architecture/ADR-012` | Model cache volume, audio persistence | Slice 1 (volume path) |
+| `docs/PRD.md` | User stories #11 (consistent teacher voice) | All slices |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/workflows/WORKFLOW-speech-synthesis.md` — S-01 fixes the same RC-003 issue (default voice resolution). This is a P0 critical fix — coordinate with the Speech Synthesis workflow to avoid duplicate changes. Then begin Slice 1 (fix default voice resolution in backend)."
+
+---
+
 ## Overview
 
 This document breaks the **Default Voice Resolution** ADR into implementation slices. The problem: when no voice is explicitly selected, the backend defaults to `"female"`, but deployed WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"`. The synthesis request looks for `"female.wav"` which doesn't exist → 500 error. The user cannot generate speech without manually selecting a voice first.

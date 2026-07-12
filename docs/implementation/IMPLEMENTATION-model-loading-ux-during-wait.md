@@ -6,6 +6,43 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, error handling, code review | `pi skills install solid` | Slices M-11 to M-13 (all UX during loading) |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | Slices M-11, M-12, M-13 (components, composable) |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | Slices M-11, M-12, M-13 tests |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code | `pi skills install librarian` | Coqui TTS model loading time estimates |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+| `unocss` | UnoCSS utility rules, shortcuts, presets | `pi skills install unocss` | Slices M-11, M-12, M-13 (banner styling, responsive) |
+| `ui-designer` | Component specs, design tokens, pixel-perfect implementation | `pi skills install ui-designer` | Slice M-11 (loading banner design) |
+| `frontend-design` | Aesthetic direction, typography, color palette | `pi skills install frontend-design` | Slice M-11, M-13 (banner/toast design) |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (container orchestration, health check) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Model Loading blocks all) | All slices |
+| `docs/workflows/WORKFLOW-model-loading-polling-fix.md` | Health polling fix (M-01 — prerequisite for M-11, M-12, M-13) | Slices M-11, M-12, M-13 |
+| `docs/workflows/WORKFLOW-model-loading-progress.md` | Model loading progress (M-06, M-07) | Slice M-11 (uses model_name from M-06) |
+| `docs/workflows/WORKFLOW-model-loading-recovery.md` | Retry-after-error (M-08 to M-10) | Cross-reference |
+| `docs/workflows/WORKFLOW-speech-synthesis.md` | Speech synthesis (S-01 to S-08 — model must be ready) | All slices |
+| `docs/workflows/WORKFLOW-playground-access.md` | Playground route (M-11, M-12 integration) | Slices M-11, M-12 |
+| `docs/workflows/WORKFLOW-dashboard-navigation-and-roadmap.md` | Dashboard navigation (status indicator integration) | Slices M-11, M-12, M-13 |
+| `docs/architecture/ADR-010` | Non-blocking frontend boot (LoadingScreen) | Slice M-11 (loading screen integration) |
+| `docs/PRD.md` | Known issue RC-038 (frontend loads regardless of backend health) | Slice M-11 |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/workflows/WORKFLOW-model-loading-polling-fix.md` — its Slice M-01 (increase polling) is a prerequisite for this file's Slices M-11, M-12, M-13. Read `docs/workflows/WORKFLOW-model-loading-progress.md` — Slice M-06 (model_name in health) is referenced by Slice M-11. Read `docs/architecture/ADR-010` (non-blocking frontend boot). Then begin Slice M-11 (add persistent loading banner)."
+
+---
+
 ## Problem Statement
 
 The frontend is a static SPA served by Nginx — it loads instantly regardless of backend health. During the 120-second model loading window, all API calls (health, voices, synthesis) will fail silently until the backend is ready. The user sees the full UI (text area, voice selector, speed slider) and might try to generate speech before the model is ready, resulting in a confusing 503 error.

@@ -6,6 +6,40 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | SOLID principles, state machines, error handling | `pi skills install solid` | Slices M-08 to M-10 (state machine, UI components) |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | Slices M-08, M-09, M-10 (composable, components) |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | Slices M-08, M-09, M-10 tests |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files |
+| `librarian` | Search library internals with source code | `pi skills install librarian` | Coqui TTS crash/recovery patterns |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point | `pi skills install review` | After each slice, review the diff |
+| `unocss` | UnoCSS utility rules, shortcuts, presets | `pi skills install unocss` | Slices M-09, M-10 (status indicator styling) |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (container orchestration, health check) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Model Loading blocks all) | All slices |
+| `docs/workflows/WORKFLOW-model-loading-polling-fix.md` | Health polling fix (M-01 — prerequisite for M-08, M-09, M-10) | Slices M-08, M-09, M-10 |
+| `docs/workflows/WORKFLOW-model-loading-progress.md` | Model loading progress (M-06, M-07) | Cross-reference |
+| `docs/workflows/WORKFLOW-model-loading-ux-during-wait.md` | UX during loading (M-11 to M-13 — depends on M-01) | Cross-reference |
+| `docs/workflows/WORKFLOW-speech-synthesis.md` | Speech synthesis (S-01 to S-08 — model must be ready) | All slices |
+| `docs/workflows/WORKFLOW-dashboard-navigation-and-roadmap.md` | Dashboard navigation (status indicator integration) | Slices M-09, M-10 |
+| `docs/architecture/ADR-010` | Non-blocking frontend boot (LoadingScreen) | Slice M-08 (loading screen integration) |
+| `docs/PRD.md` | Known issue RC-001 (polling window mismatch) | Slice M-08 |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/workflows/WORKFLOW-model-loading-polling-fix.md` — its Slice M-01 (increase polling) is a prerequisite for this file's Slices M-08, M-09, M-10. Read `docs/workflows/WORKFLOW-model-loading-ux-during-wait.md` — its Slices M-11, M-12, M-13 also depend on M-01. Then begin Slice M-08 (add retry-after-error state machine)."
+
+---
+
 ## Problem Statement
 
 Once `useHealthPoll` enters the error state (server down, network error, or max retries exceeded), it **never retries**. The user must reload the page to attempt recovery. If the backend crashes and restarts, or if there's a temporary network issue, the frontend has no way to recover without a page reload.

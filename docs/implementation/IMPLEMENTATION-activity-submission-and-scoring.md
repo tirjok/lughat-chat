@@ -6,6 +6,35 @@
 
 ---
 
+## Pre-Flight: Skill & Document Discovery
+
+**Before implementing ANY slice, the agent MUST:**
+
+### Skills Required
+| Skill | Purpose | Install If Missing | Why |
+|-------|---------|-------------------|-----|
+| `solid` | Ensures SOLID principles in scoring algorithms (single responsibility per activity type) | `pi skills install solid` | 5 distinct algorithms must not be mixed |
+| `vue` + `vue-best-practices` | Vue 3 Composition API, `<script setup>`, reactivity | `pi skills install vue` | All frontend slices (4, 5, 6) use Vue components/composables |
+| `vue-testing-best-practices` | Test naming, AAA pattern, lean testing | `pi skills install vue-testing-best-practices` | Slice 4 tests (composable), Slice 5 tests (component) |
+| `testing-best-practices` | 50+ JavaScript/Node.js testing best practices | `pi skills install testing-best-practices` | All test files follow these standards |
+| `librarian` | Search library internals with source code + GitHub permalinks | `pi skills install librarian` | Slice 1 needs `rapidfuzz` API details (harakat normalization) |
+| `find-skills` | Discover and install skills when needed | (pre-installed) | Audit environment before starting |
+| `review` | Review changes since a fixed point (standards, spec, code quality) | `pi skills install review` | After each slice, review the diff |
+
+### Document Search Required
+| Document | What to Find | Source |
+|----------|-------------|--------|
+| `docs/workflows/REGISTRY.md` | Missing workflow specs (audio playback, toast lifecycle) | Cross-reference before starting |
+| `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies between all workflows | Slice 2/3 blocked by Lesson Browsing |
+| `docs/architecture/ADR-006` | Activity type taxonomy (5 types defined here) | Slice 1 scoring algorithms |
+| `docs/architecture/ADR-007` | Progress scoring and competency aggregation (weighted average) | Slice 3 competency computation |
+| `docs/PRD.md` | User stories #4, #6, #7 (mandatory practice, retry, score tracking) | All slices reference these |
+
+### Agent Instruction
+> "Run `find-skills` to audit the environment. Install any missing skills from the table above. Read `docs/workflows/REGISTRY.md` to identify missing workflow specs. Read `docs/architecture/ADR-006` and `ADR-007` for scoring domain knowledge. Then begin Slice 1."
+
+---
+
 ## Reality Check (Current State vs. Spec)
 
 | # | Finding | Severity |
