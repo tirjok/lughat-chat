@@ -264,7 +264,7 @@ When the backend container starts, the XTTS-v2 model (~2GB) must be loaded into 
 | # | Finding | Severity | Spec section | Resolution |
 |---|---|---|---|---|
 | RC-001 | Frontend health polling max is 10 retries × 2s = **20 seconds**, but model loading takes **~120 seconds** | **Critical** | STEP 5 | The frontend polling window (20s) is **6× shorter** than the actual model load time (120s). After 20s, the frontend enters `error` state and disables the Generate button permanently. The user sees "Error" even though the model is still loading in the background. **This is a bug: the frontend gives up long before the model finishes loading.** |
-| RC-042 | Docker health check has `start_period: 120s` and `retries: 200` (3000s = 50 minutes), which correctly accounts for model loading time. But the frontend polling (20s) does NOT. | Critical | STEP 5 vs STEP 7 | Discrepancy between Docker health check (correct) and frontend polling (incorrect). The Docker health check will eventually pass, but the frontend will have already errored out. |
+| (Consolidated into RC-001) | Docker health check has `start_period: 120s` and `retries: 200` (3000s = 50 minutes), which correctly accounts for model loading time. But the frontend polling (20s) does NOT match — this detail is now part of RC-001. | (See RC-001) | STEP 5 vs STEP 7 | (Consolidated into RC-001) |
 | RC-038 | Frontend is a **static SPA** served by Nginx — it loads regardless of backend health. The frontend doesn't know the backend is down until the first API call fails. | Medium | STEP 5 | The SPA loads instantly, but all API calls (health, voices, synthesis) will fail silently until the backend is ready. |
 | RC-039 | The `generate_speaker_wavs.py` script is a **one-time setup tool** — not part of the runtime workflow. It generates `female.wav` and `male.wav`, but the deployed files are `KSA Hamed - Male.wav` and `KSA Zariyah - Female.wav`. | High | STEP 3 | The script and deployed files use different naming conventions. The script is likely outdated or was replaced manually. |
 | RC-004 | Model cache (`tts-model-cache` named volume at `/root/.local/share/tts`) is **NOT used** — the app writes to `/app/.cache/tts` (set via `TTS_MODEL_CACHE` env var). The named volume is mounted at a different path. | High | STEP 3 | Model is re-downloaded (~2GB) on every container restart. The named volume exists but is unused. |
@@ -299,7 +299,7 @@ When the backend container starts, the XTTS-v2 model (~2GB) must be loaded into 
 ---
 
 ## Open Questions
-- What is the correct fix for RC-001? Increase frontend polling retries to 60 (120s), or change polling interval to 15s with 8 retries (120s)?
+- What is the correct fix for RC-001? (See RC-001 in [RC-REGISTRY.md](../architecture/RC-REGISTRY.md).) Increase frontend polling retries to 60 (120s), or change polling interval to 15s with 8 retries (120s)?
 - Should the frontend retry health polling after it enters error state (e.g., retry every 30s indefinitely)?
 - Why does the named volume `tts-model-cache` exist at `/root/.local/share/tts` if the app writes to `/app/.cache/tts`? Is this a leftover from a previous configuration?
 - Is there a plan to cache model weights across restarts? The 2GB download on every restart is expensive.

@@ -17,7 +17,7 @@ The Docker Compose configuration mounts the `tts-model-cache` named volume at `/
 | # | Finding | Severity |
 |---|---------|----------|
 | RC-004 | Model cache (`tts-model-cache` named volume at `/root/.local/share/tts`) is **NOT used** — the app writes to `/app/.cache/tts` (env var) | **High** |
-| RC-042 | Docker health check correctly accounts for 120s, but frontend polling (20s) does NOT | Critical |
+| (Consolidated into RC-001) | Docker health check correctly accounts for 120s, but frontend polling (20s) does NOT — see RC-001 for full details | (See RC-001) |
 
 ---
 

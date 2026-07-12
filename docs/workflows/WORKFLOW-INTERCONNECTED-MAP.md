@@ -238,16 +238,7 @@ Endpoint                    Method   Auth   Description
 
 ## Critical Known Issues (Cross-Workflow)
 
-| # | Issue | Workflows affected | Severity | Fix |
-|---|---|---|---|---|
-| **RC-001** | Frontend polls /health for 20s, but model loads in ~180-210s (2 models) | Model Loading, Speech Synthesis, Playground, Activity Submission | **Critical** | Increase polling to 210s |
-| **RC-008** | No `/api/pronounce` endpoint exists | Pronunciation Scoring (NEW) | **Critical** | Must build from scratch |
-| **RC-009** | No `useMicrophone` composable exists | Pronunciation Scoring (NEW) | **Critical** | Must build from scratch |
-| **RC-010** | No scoring logic exists for any activity | Activity Submission | **Critical** | 5 algorithms must be built |
-| **RC-011** | No SQLite code exists | Lesson Browsing, Activity Submission | **Critical** | Must build from scratch |
-| **RC-012** | Only 1 of 30 lesson JSON files exists | Lesson Browsing, Lesson Content Serving | **Critical** | Data gap, not code gap |
-| **RC-003** | Default voice name mismatch (`"female"` vs `"KSA Hamed - Male"`) | Speech Synthesis | **Critical** | Fix default voice resolution |
-| **RC-005** | `/api/history` always returns `text: ""` | Speech Synthesis (cleanup inventory) | **High** | Store original text with generated audio |
+See [RC-REGISTRY.md](../architecture/RC-REGISTRY.md) for the complete list of known issues. Key issues affecting this workflow: RC-001, RC-003, RC-005, RC-008, RC-009, RC-010, RC-011, RC-012.
 
 ---
 

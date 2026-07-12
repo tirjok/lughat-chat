@@ -22,7 +22,7 @@
 
 | RC# | Issue | Severity | Status | ADR | Workflows Referencing | Implementation Plans Referencing |
 |-----|-------|----------|--------|-----|----------------------|----------------------------------|
-| **RC-001** | Frontend health polling window (20s) is 6× shorter than model load time (120s) — frontend shows "Error" long before model loads | Critical | To be fixed | — | Model Loading Readiness, Interconnected Map (RC-1) | Model Loading Polling Fix, Model Loading UX During Wait, Model Loading Progress, Speech Synthesis (RC-1), Speech Synthesis Slice S-06, Activity Submission (RC-1), Lesson Browsing (RC-1), Lesson Content Serving (RC-1), Dashboard Navigation (RC-1), Playground Access (RC-1) |
+| **RC-001** | Frontend health polling window (20s) is 6× shorter than model load time (120s) — frontend shows "Error" long before model loads. Docker health check correctly accounts for 120s (`start_period: 120s`, `retries: 200`), but frontend polling (20s) does NOT match — frontend errors out ~100s before the model is ready. | Critical | To be fixed | — | Model Loading Readiness, Interconnected Map (RC-1) | Model Loading Polling Fix, Model Loading UX During Wait, Model Loading Progress, Speech Synthesis (RC-1), Speech Synthesis Slice S-06, Activity Submission (RC-1), Lesson Browsing (RC-1), Lesson Content Serving (RC-1), Dashboard Navigation (RC-1), Playground Access (RC-1) |
 | **RC-002** | Frontend container blocks entirely while backend downloads model (~5–10 min on first start) — user sees blank page / connection refused | Critical | To be fixed | ADR-010 | Model Loading Readiness (RC-6), Interconnected Map (RC-1) | Model Loading Polling Fix, Model Loading UX During Wait, Model Loading Progress, Model Loading Recovery |
 | **RC-003** | Default voice name mismatch: frontend defaults to `"female"` but deployed WAV files are `"KSA Hamed - Male"` and `"KSA Zariyah - Female"` | Critical | Resolved (ADR-011) | ADR-011 | Speech Synthesis (RC-3), Model Loading Readiness (RC-4), Interconnected Map (RC-7) | Default Voice Resolution, Speech Synthesis (RC-3), Speech Synthesis Slice S-01, Playground Access (RC-3), Dashboard Navigation (RC-3) |
 | **RC-004** | Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused, ~2GB re-downloaded every restart | High | Proposed (ADR-012) | ADR-012 | Model Loading Readiness (RC-5), Model Cache Volume Fix, Interconnected Map (RC-5) | Model Cache Volume Fix, Model Cache and Audio Persistence |
@@ -68,7 +68,6 @@
 | **RC-039** | The `generate_speaker_wavs.py` script generates `female.wav`/`male.wav` but deployed files are `KSA Hamed - Male.wav`/`KSA Zariyah - Female.wav` | High | Not blocking (RC-003 covers this) | — | Model Loading Readiness (RC-4) | — |
 | **RC-040** | `/health` returns only `"loading"` / `"ready"` / `"error"` — no granularity during 120s wait | High | To be fixed | ADR-010 | Model Loading Progress (RC-1) | Model Loading Progress (RC-1) |
 | **RC-041** | Frontend polling enters error state permanently — no automatic recovery | Critical | To be fixed | — | Model Loading Recovery (RC-1) | Model Loading Recovery (RC-1) |
-| **RC-042** | Docker health check has `start_period: 120s` and `retries: 200` (correct), but frontend polling (20s) does NOT match | Critical | To be fixed | ADR-010 | Model Loading Readiness (RC-2), Model Loading Polling Fix (RC-2) | Model Loading Polling Fix (RC-2) |
 | **RC-043** | No scoring logic exists — 5 algorithms must be built (duplicate of RC-010) | Critical | To be fixed | ADR-003 | Activity Submission (RC-1) | Activity Submission (RC-1) |
 
 ### Duplicate RC Entries (Consolidation Notes)
@@ -89,7 +88,7 @@ The following RC numbers in the Interconnected Map and per-workflow docs duplica
 
 ### Next Available RC Number
 
-**RC-044** — reserve for new issues discovered during future audits.
+**RC-042** — now reclaimed (consolidated into RC-001). Reserve for new issues discovered during future audits.
 
 ---
 
@@ -102,7 +101,7 @@ This table shows how every per-workflow RC number maps to the global registry. W
 | Local RC# | Maps To | Issue |
 |-----------|---------|-------|
 | RC-1 | RC-001 | Frontend polling 20s vs 120s model load |
-| RC-2 | RC-042 | Docker health check vs frontend polling discrepancy |
+| RC-2 | RC-001 | Docker health check vs frontend polling discrepancy (consolidated into RC-001) |
 | RC-3 | RC-038 | Frontend SPA loads regardless of backend health |
 | RC-4 | RC-039 | `generate_speaker_wavs.py` script vs deployed files naming |
 | RC-5 | RC-004 | Model cache path mismatch |
@@ -178,7 +177,7 @@ This table shows how every per-workflow RC number maps to the global registry. W
 | Local RC# | Maps To | Issue |
 |-----------|---------|-------|
 | RC-1 | RC-001 | Frontend polling 20s vs 120s model load |
-| RC-2 | RC-042 | Docker health check vs frontend polling discrepancy |
+| RC-2 | RC-001 | Docker health check vs frontend polling discrepancy (consolidated into RC-001) |
 
 ### Model Loading UX During Wait Implementation
 
@@ -204,7 +203,7 @@ This table shows how every per-workflow RC number maps to the global registry. W
 | Local RC# | Maps To | Issue |
 |-----------|---------|-------|
 | RC-5 | RC-004 | Model cache path mismatch |
-| RC-3 | RC-042 | Frontend polling vs Docker health check discrepancy |
+| RC-3 | RC-001 | Frontend polling vs Docker health check discrepancy (consolidated into RC-001) |
 
 ### Model Cache and Audio Persistence Implementation
 
