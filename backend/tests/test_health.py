@@ -18,6 +18,8 @@ def test_health_returns_loading_when_model_not_loaded():
     data = response.json()
     assert data["status"] == "loading"
     assert data["model_loaded"] is False
+    assert data["model_name"] == "XTTS-v2"
+    assert data["sub_status"] == "initializing"
 
 
 def test_health_returns_ready_when_model_is_loaded():
@@ -37,6 +39,8 @@ def test_health_returns_ready_when_model_is_loaded():
     data = response.json()
     assert data["status"] == "ready"
     assert data["model_loaded"] is True
+    assert data["model_name"] == "XTTS-v2"
+    assert data["sub_status"] == ""
 
 
 def test_health_returns_error_when_model_load_failed():
@@ -56,3 +60,5 @@ def test_health_returns_error_when_model_load_failed():
     data = response.json()
     assert data["status"] == "error"
     assert data["model_loaded"] is False
+    assert data["model_name"] == "XTTS-v2"
+    assert data["sub_status"] == ""

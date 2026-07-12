@@ -15,12 +15,25 @@ describe('ModelStatusIndicator', () => {
     vi.clearAllMocks()
   })
 
+  // Helper: create a mock return value with modelName and subStatus
+  function mockReturnValue(base: {
+    status: import('vue').Ref<string>
+    modelLoaded: import('vue').ComputedRef<boolean>
+  }): import('../app/composables/useHealthPoll').HealthPollResult {
+    return {
+      ...base,
+      modelName: ref(''),
+      subStatus: ref(''),
+      stop: vi.fn()
+    }
+  }
+
   describe('loading state', () => {
     it('renders spinning loader icon and "Loading..." text on mount', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -28,10 +41,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('renders the loader indicator (orange dot) in loading state', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -41,10 +54,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('does not render check or alert dots in loading state', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
       const allClasses = wrapper.html()
@@ -56,10 +69,10 @@ describe('ModelStatusIndicator', () => {
 
   describe('ready state', () => {
     it('renders green indicator dot and "Ready" text when model is loaded', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('ready'),
         modelLoaded: computed(() => true)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -67,10 +80,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('renders the green dot indicator element', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('ready'),
         modelLoaded: computed(() => true)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
       // Ready state renders a green dot (not an icon)
@@ -79,10 +92,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('does not render loading or error dots in ready state', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('ready'),
         modelLoaded: computed(() => true)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
       const allClasses = wrapper.html()
@@ -94,10 +107,10 @@ describe('ModelStatusIndicator', () => {
 
   describe('error state', () => {
     it('renders red indicator dot and "Error" text when model is not loaded', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('error'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -105,10 +118,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('renders the red dot indicator element', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('error'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
       // Error state renders a red dot (not an icon)
@@ -117,10 +130,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('does not render loading or ready dots in error state', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('error'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
       const allClasses = wrapper.html()
@@ -135,10 +148,10 @@ describe('ModelStatusIndicator', () => {
       const statusRef = ref('loading')
       const modelLoadedRef = ref(false)
 
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: statusRef,
         modelLoaded: modelLoadedRef
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -163,10 +176,10 @@ describe('ModelStatusIndicator', () => {
       const statusRef = ref('loading')
       const modelLoadedRef = ref(false)
 
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: statusRef,
         modelLoaded: modelLoadedRef
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -189,10 +202,10 @@ describe('ModelStatusIndicator', () => {
       const statusRef = ref('error')
       const modelLoadedRef = ref(false)
 
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: statusRef,
         modelLoaded: modelLoadedRef
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -215,10 +228,10 @@ describe('ModelStatusIndicator', () => {
 
   describe('layout', () => {
     it('renders with flex layout and RTL-compatible structure', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -229,10 +242,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('renders indicator dot and text with gap spacing', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 
@@ -241,10 +254,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('renders indicator dot with consistent dimensions', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
       // The indicator dot should have w-2 h-2 classes for consistent sizing
@@ -254,10 +267,10 @@ describe('ModelStatusIndicator', () => {
     })
 
     it('renders text with small font size', () => {
-      vi.mocked(useHealthPoll).mockReturnValue({
+      vi.mocked(useHealthPoll).mockReturnValue(mockReturnValue({
         status: ref('loading'),
         modelLoaded: computed(() => false)
-      })
+      }))
 
       const wrapper = mount(ModelStatusIndicator)
 

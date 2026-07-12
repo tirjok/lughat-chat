@@ -1,14 +1,34 @@
 <script setup lang="ts">
 import { useHealthPoll } from '../composables/useHealthPoll'
 
-const { status, modelLoaded } = useHealthPoll()
+const { status, modelLoaded, modelName, subStatus } = useHealthPoll()
+
+function displayText(): string {
+  if (status.value === 'loading') {
+    const name = modelName.value || 'XTTS-v2'
+    return subStatus.value === 'initializing'
+      ? `Loading ${name}...`
+      : 'Loading...'
+  }
+  return modelLoaded.value ? 'Ready' : 'Error'
+}
+
+function tooltipText(): string {
+  if (status.value === 'loading') {
+    const name = modelName.value || 'XTTS-v2'
+    return subStatus.value === 'initializing'
+      ? `Model ${name} Loading...`
+      : 'Model Loading...'
+  }
+  return modelLoaded.value ? 'Model Ready' : 'Model Error'
+}
 </script>
 
 <template>
   <!-- Outer Shell: subtle background + hairline ring -->
   <div
     class="flex items-center gap-2 rounded-full ring-1 ring-white/[0.06] px-2.5 py-1 bg-white/[0.02]"
-    title="Model XTTS-v2 Ready"
+    :title="tooltipText()"
   >
     <!-- Inner Core -->
     <div
@@ -36,7 +56,7 @@ const { status, modelLoaded } = useHealthPoll()
       />
 
       <span class="text-xs font-medium text-gray-300">
-        {{ status === 'loading' ? 'Loading...' : modelLoaded ? 'Ready' : 'Error' }}
+        {{ displayText() }}
       </span>
     </div>
   </div>

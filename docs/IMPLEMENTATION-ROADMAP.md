@@ -20,8 +20,8 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 | # | File | Slice | What |
 |---|------|-------|------|
 | 1 | `IMPLEMENTATION-model-loading-polling-fix.md` | M-01 | Increase frontend polling 20s → 120s (60 retries). **Critical path — do first.** ✅ DONE |
-| 2 | `IMPLEMENTATION-model-cache-volume-fix.md` | M-04 | Fix volume mount path (unused ~2GB re-download) |
-| 3 | `IMPLEMENTATION-model-loading-progress.md` | M-06 | Add `model_name` + `sub_status` to `/health` |
+| 2 | `IMPLEMENTATION-model-cache-volume-fix.md` | M-04, M-05 | Fix volume mount path (unused ~2GB re-download) ✅ DONE |
+| 3 | `IMPLEMENTATION-model-loading-progress.md` | M-06 | Add `model_name` + `sub_status` to `/health` ✅ DONE |
 | 4 | `IMPLEMENTATION-default-voice-resolution.md` | S-1 | Fix default voice resolution (RC-003) — P0, no blockers |
 
 ## Chunk 2 — TTS Runtime UX (Built on Chunk 1)
@@ -78,9 +78,13 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 
 ## Where to Start
 
-Open `docs/implementation/IMPLEMENTATION-model-loading-polling-fix.md` — Slice M-01: "Increase polling to 60 retries (120s)."
+Slices M-01 (polling fix) and M-04 (volume path fix) are **done**. Next available:
 
-Everything else depends on this completing first.
+- `IMPLEMENTATION-model-loading-polling-fix.md` — Slice M-02: Update tests for 60-retry default
+- `IMPLEMENTATION-model-loading-polling-fix.md` — Slice M-03: Update GenerateButton loading text
+- `IMPLEMENTATION-model-loading-progress.md` — Slice M-06: Add `model_name` + `sub_status` to `/health`
+
+All remaining slices (M-02 through M-13, S-01 through S-08) depend on these Phase 1 slices completing first.
 
 ## Key
 

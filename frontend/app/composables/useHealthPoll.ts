@@ -3,9 +3,19 @@ export interface UseHealthPollOptions {
   maxRetries?: number
 }
 
-export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
+export interface HealthPollResult {
+  status: import('vue').Ref<'loading' | 'ready' | 'error'>
+  modelLoaded: import('vue').ComputedRef<boolean>
+  modelName: import('vue').Ref<string>
+  subStatus: import('vue').Ref<string>
+  stop: () => void
+}
+
+export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollResult => {
   const status = ref<'loading' | 'ready' | 'error'>('loading')
   const modelLoaded = computed(() => status.value === 'ready')
+  const modelName = ref<string>('')
+  const subStatus = ref<string>('')
 
   // Start polling immediately
   const baseUrl = options.baseUrl || ''
@@ -29,6 +39,8 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
 
       const data = await response.json()
       status.value = data.status || 'ready'
+      modelName.value = data.model_name || ''
+      subStatus.value = data.sub_status || ''
 
       // Stop polling on terminal state
       if (status.value === 'ready') {
@@ -67,6 +79,8 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
   return {
     status,
     modelLoaded,
+    modelName,
+    subStatus,
     stop
   }
 }

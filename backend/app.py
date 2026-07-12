@@ -228,6 +228,8 @@ class SynthesisResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str  # loading | ready | error
     model_loaded: bool
+    model_name: str = "XTTS-v2"  # Name of the loaded model
+    sub_status: str = ""  # Optional: "downloading" | "initializing" | ""
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -236,6 +238,8 @@ async def health():
     return {
         "status": model_load_status,
         "model_loaded": tts_model is not None and model_load_status == "ready",
+        "model_name": "XTTS-v2",
+        "sub_status": "initializing" if model_load_status == "loading" else "",
     }
 
 

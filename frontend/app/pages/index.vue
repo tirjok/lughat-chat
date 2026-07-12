@@ -62,7 +62,8 @@ const audioModule = useAudioModule({
 const { audioRef, audioUrl, duration, currentTime, isPlaying, isPaused } = audioModule
 
 const { synthesize } = useTtsApi()
-const { status: modelStatus } = useHealthPoll()
+const healthPoll = useHealthPoll()
+const { status: modelStatus } = healthPoll
 const { voices: speakerVoices } = useVoices()
 
 function formatTime(seconds: number): string {
@@ -72,8 +73,11 @@ function formatTime(seconds: number): string {
   return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
-// Safety net: dispose on unmount
-onUnmounted(() => audioModule.dispose())
+// Safety net: dispose audio and stop health polling on unmount
+onUnmounted(() => {
+  audioModule.dispose()
+  healthPoll.stop()
+})
 
 const textInput = shallowRef('')
 const selectedSpeaker = shallowRef('')

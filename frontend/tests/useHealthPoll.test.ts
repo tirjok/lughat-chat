@@ -110,6 +110,143 @@ describe('useHealthPoll', () => {
     })
   })
 
+  describe('model_name and sub_status parsing', () => {
+    beforeEach(() => {
+      mountedCallbacks.length = 0
+    })
+
+    it('parses model_name from health response', async () => {
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          status: 'loading',
+          model_loaded: false,
+          model_name: 'XTTS-v2',
+          sub_status: 'initializing'
+        })
+      }))
+
+      const poller = useHealthPoll()
+
+      // Trigger onMounted to start polling
+      for (const cb of mountedCallbacks) {
+        cb()
+      }
+
+      // Wait for the first polling cycle to complete
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      expect(poller.modelName.value).toBe('XTTS-v2')
+      poller.stop()
+    })
+
+    it('parses sub_status from health response', async () => {
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          status: 'loading',
+          model_loaded: false,
+          model_name: 'XTTS-v2',
+          sub_status: 'initializing'
+        })
+      }))
+
+      const poller = useHealthPoll()
+
+      // Trigger onMounted to start polling
+      for (const cb of mountedCallbacks) {
+        cb()
+      }
+
+      // Wait for the first polling cycle to complete
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      expect(poller.subStatus.value).toBe('initializing')
+      poller.stop()
+    })
+
+    it('exposes empty sub_status when model is ready', async () => {
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          status: 'ready',
+          model_loaded: true,
+          model_name: 'XTTS-v2',
+          sub_status: ''
+        })
+      }))
+
+      const poller = useHealthPoll()
+
+      // Trigger onMounted to start polling
+      for (const cb of mountedCallbacks) {
+        cb()
+      }
+
+      // Wait for the first polling cycle to complete
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      expect(poller.subStatus.value).toBe('')
+      expect(poller.modelName.value).toBe('XTTS-v2')
+      poller.stop()
+    })
+
+    it('defaults model_name to empty string when not in response', async () => {
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          status: 'loading',
+          model_loaded: false
+          // no model_name field
+        })
+      }))
+
+      const poller = useHealthPoll()
+
+      // Trigger onMounted to start polling
+      for (const cb of mountedCallbacks) {
+        cb()
+      }
+
+      // Wait for the first polling cycle to complete
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      expect(poller.modelName.value).toBe('')
+      poller.stop()
+    })
+  })
+
+  describe('stop() function', () => {
+    it('can be called without error', () => {
+      const poller = useHealthPoll()
+      // Should not throw
+      expect(() => poller.stop()).not.toThrow()
+    })
+
+    it('clears the interval when called after mount', async () => {
+      const fetchSpy = vi.fn(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: 'ready', model_loaded: true })
+      }))
+      global.fetch = fetchSpy
+
+      const poller = useHealthPoll()
+
+      // Trigger onMounted to start polling
+      for (const cb of mountedCallbacks) {
+        cb()
+      }
+
+      // Wait for the first polling cycle
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      expect(poller.status.value).toBe('ready')
+
+      // stop() should clear the interval without error
+      expect(() => poller.stop()).not.toThrow()
+    })
+  })
+
   describe('network error handling', () => {
     beforeEach(() => {
       mountedCallbacks.length = 0
