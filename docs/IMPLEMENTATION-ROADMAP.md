@@ -28,7 +28,7 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 
 | # | File | Slice | What |
 |---|------|-------|------|
-| 5 | `IMPLEMENTATION-model-loading-recovery.md` | M-08 | Retry-after-error state machine |
+| 5 | `IMPLEMENTATION-model-loading-recovery.md` | M-08 | Retry-after-error state machine ✅ DONE |
 | 6 | `IMPLEMENTATION-model-loading-ux-during-wait.md` | M-11 | Persistent loading banner |
 | 7 | `IMPLEMENTATION-model-loading-recovery.md` | M-09–10 | "Retrying..." UI + manual retry button |
 | 8 | `IMPLEMENTATION-model-loading-ux-during-wait.md` | M-12–13 | Disable controls during loading + ready toast |

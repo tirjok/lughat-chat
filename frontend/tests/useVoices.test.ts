@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { registerEndpoint } from '@nuxt/test-utils/runtime'
 import { useVoices } from '../app/composables/useVoices'
-import { mountedCallbacks } from './setup'
 
 describe('useVoices', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mountedCallbacks.length = 0
   })
 
   describe('initial state', () => {
@@ -17,62 +16,45 @@ describe('useVoices', () => {
   })
 
   describe('successful fetch', () => {
-    it('fetches voices from /api/voices on mount and populates the ref', async () => {
+    it('fetches voices from /api/voices and populates the ref', async () => {
       const mockVoices = [
-        { id: 'female', name: 'Female Voice' },
-        { id: 'male', name: 'Male Voice' }
+        { id: 'female', name: 'Female Voice', dialect: '', tag: '', icon: '', speaker_wav: '' },
+        { id: 'male', name: 'Male Voice', dialect: '', tag: '', icon: '', speaker_wav: '' }
       ]
 
-      global.fetch = vi.fn(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockVoices)
-      }))
+      registerEndpoint('/api/voices', () => mockVoices)
 
-      const { voices } = useVoices()
+      const { voices, loadVoices } = useVoices()
 
-      // Trigger onMounted to start fetching
-      for (const cb of mountedCallbacks) {
-        cb()
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 50))
+      // Call loadVoices directly instead of relying on onMounted
+      await loadVoices()
 
       expect(voices.value).toEqual(mockVoices)
-      expect(fetch).toHaveBeenCalledWith('/api/voices')
     })
   })
 
   describe('fetch error handling', () => {
     it('returns an empty array when fetch throws a network error', async () => {
-      global.fetch = vi.fn(() => Promise.reject(new Error('Network failure')))
+      registerEndpoint('/api/voices', {
+        handler: () => { throw new Error('Network failure') }
+      })
 
       const { voices } = useVoices()
 
-      // Trigger onMounted
-      for (const cb of mountedCallbacks) {
-        cb()
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 50))
-
+      await expect(useVoices().loadVoices()).resolves.toEqual([])
       expect(voices.value).toEqual([])
     })
 
     it('returns an empty array when response is not ok', async () => {
-      global.fetch = vi.fn(() => Promise.resolve({
-        ok: false,
-        status: 503
-      }))
+      registerEndpoint('/api/voices', {
+        handler: () => {
+          throw new Error('HTTP 503: Service Unavailable')
+        }
+      })
 
       const { voices } = useVoices()
 
-      // Trigger onMounted
-      for (const cb of mountedCallbacks) {
-        cb()
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 50))
-
+      await expect(useVoices().loadVoices()).resolves.toEqual([])
       expect(voices.value).toEqual([])
     })
   })

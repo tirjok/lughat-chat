@@ -101,6 +101,25 @@ npx vitest --config vitest.component.config.ts
 - Naming: `<name>.test.ts`
 - All test files MUST live in `frontend/tests/`. Never create test files inside `app/` or any source directory.
 
+### Testing Anti-Patterns (MUST AVOID)
+
+These patterns **will cause test failures** in the Nuxt 4 test environment (`environment: 'nuxt'`, `domEnvironment: 'jsdom'`). The Nuxt runtime initializes during `beforeAll`, and auto-imports resolve at import time — **not** from `globalThis` overrides.
+
+| Anti-Pattern | Why It Fails | Correct Approach |
+|---|---|---|
+| `Object.defineProperty(window, 'fetch', ...)` | `window.fetch` is not how the Nuxt test env resolves native `fetch`. The test env's Nitro router handles it. | Use `registerEndpoint('/api/endpoint', () => mockData)` from `@nuxt/test-utils/runtime` |
+| `global.fetch = vi.fn(...)` | Works in isolation but **doesn't intercept** fetch calls made inside composables that use auto-imported lifecycle hooks (`onMounted`). | Use `registerEndpoint` — it intercepts at the Nitro/h3 level, which native `fetch` properly routes to |
+| Triggering mocked `onMounted` callbacks to trigger API calls | `setup.ts` mocks `ref` as `vi.fn(() => ({ value: init }))`. Auto-imported `ref` from Vue bypasses this mock entirely, so `ref` returns real `RefImpl`. But the `fetch` inside `onMounted` callbacks goes to the real network. | Call the composable's **public methods directly** (e.g., `loadVoices()`, `synthesize()`). Don't rely on lifecycle hook triggering for API tests |
+| Using `setup.ts` global mocks for `ref`, `onMounted`, `computed` in API tests | The Nuxt test environment's auto-import system resolves `ref`/`onMounted` from `vue` directly, bypassing `globalThis` overrides. The mocks are only useful for component tests that don't make network calls. | For composables that make API calls: use `registerEndpoint` + call methods directly. For pure logic composables (no API): the mocks are fine |
+
+**Rule of thumb:** If a composable makes HTTP requests (calls `fetch`, `$fetch`, or `useFetch`), test it with `registerEndpoint` + direct method calls. If it's pure state/logic with no side effects, the `setup.ts` mocks work fine.
+
+### Reference: Working test patterns
+
+- **`tests/useTtsApi.test.ts`** — Direct `global.fetch = vi.fn(...)` works because `useTtsApi` methods are called directly (no `onMounted` involved). This is the **simplest pattern for pure method tests**.
+- **`tests/useVoices.test.ts`** — Uses `registerEndpoint` + `loadVoices()` called directly. The **correct pattern for composables with lifecycle hooks**.
+- **`tests/useInputValidation.test.ts`** — Pure logic, no API calls. Uses `setup.ts` mocks. Fine for state-only composables.
+
 **Test files (19 total):
 - `app.test.ts` — Root app integration test
 - `AudioPlayerPanel.test.ts` — Audio player panel tests

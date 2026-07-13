@@ -27,8 +27,8 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
+    "@nuxt/test-utils": "^4.0.3",
     "@unocss/reset": "^66.7.2",
-    "@vitejs/plugin-vue": "^6.0.7",
     "@vue/test-utils": "^2.4.10",
     "eslint": "^10.3.0",
     "jsdom": "^29.1.1",

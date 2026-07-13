@@ -1,32 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
 import { ref, defineComponent } from 'vue'
-
+import { mountSuspended, mockNuxtImport, mockComponent } from '@nuxt/test-utils/runtime'
 import App from '../app/app.vue'
 
-let mockUseHead: ReturnType<typeof vi.fn>
-let mockUseSeoMeta: ReturnType<typeof vi.fn>
-let mockUseToast: ReturnType<typeof vi.fn>
+// ─── File-level mocks (required by mockNuxtImport macro) ────────────
+// mockNuxtImport is a macro that gets transpiled to vi.mock(), which is
+// hoisted. We use vi.hoisted() to create mock factories that can be
+// referenced inside the macro without hoisting conflicts.
 
-beforeEach(() => {
-  mockUseHead = vi.fn()
-  mockUseSeoMeta = vi.fn()
-  mockUseToast = vi.fn(() => ({
+const { useHeadMock, useSeoMetaMock, useToastMock } = vi.hoisted(() => ({
+  useHeadMock: vi.fn(),
+  useSeoMetaMock: vi.fn(),
+  useToastMock: vi.fn(() => ({
     message: ref(''),
-    visible: ref(true),
+    visible: ref(false),
     showToast: vi.fn()
   }))
-  ;(globalThis as Record<string, unknown>).useHead = mockUseHead
-  ;(globalThis as Record<string, unknown>).useSeoMeta = mockUseSeoMeta
-  ;(globalThis as Record<string, unknown>).useToast = mockUseToast
-})
+}))
+
+// Wire the macros at describe-block level (transpiled before Nuxt starts).
+mockNuxtImport('useHead', () => useHeadMock)
+mockNuxtImport('useSeoMeta', () => useSeoMetaMock)
+mockNuxtImport('useToast', () => useToastMock)
+
+// Mock NuxtPage so mountSuspended can render the app shell.
+mockComponent('NuxtPage', defineComponent({ template: '<div />' }))
 
 describe('app.vue — dark theme meta tags', () => {
-  it('calls useHead with viewport and favicon meta tags', () => {
-    mount(App, { components: { NuxtPage: defineComponent({ template: '<div />' }) } })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
-    expect(mockUseHead).toHaveBeenCalledTimes(1)
-    const callArgs = mockUseHead.mock.calls[0][0]
+  it('calls useHead with viewport and favicon meta tags', async () => {
+    await mountSuspended(App)
+
+    expect(useHeadMock).toHaveBeenCalledTimes(1)
+    const callArgs = useHeadMock.mock.calls[0][0]
     expect(callArgs.meta).toContainEqual(
       expect.objectContaining({ name: 'viewport' })
     )
@@ -35,14 +44,8 @@ describe('app.vue — dark theme meta tags', () => {
     )
   })
 
-  it('does NOT render ToastNotification (rendered in index.vue instead)', () => {
-    const wrapper = mount(App, {
-      global: {
-        components: {
-          NuxtPage: defineComponent({ template: '<div />' })
-        }
-      }
-    })
+  it('does NOT render ToastNotification (rendered in index.vue instead)', async () => {
+    const wrapper = await mountSuspended(App)
 
     // ToastNotification is no longer in app.vue (Phase 1: removed duplicate)
     // It is rendered inside index.vue's page content
