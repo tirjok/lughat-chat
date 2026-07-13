@@ -101,6 +101,25 @@ const validationState = computed(() =>
   useInputValidation(textInput.value, modelStatus)
 )
 
+const isModelLoading = computed(() => modelStatus === 'loading')
+const loadingPlaceholder = computed(() =>
+  isModelLoading.value ? 'Model is loading... Please wait' : 'اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته'
+)
+
+// M-13: Show toast when model finishes loading (transition from loading → ready)
+let hasShownReadyToast = false
+watch(() => modelStatus, (newStatus, oldStatus) => {
+  console.log('M-13 watch fired:', oldStatus, '->', newStatus)
+  if (oldStatus === 'loading' && newStatus === 'ready' && !hasShownReadyToast) {
+    hasShownReadyToast = true
+    showToast('Model ready — you can now generate speech.', 'info')
+  }
+  // Reset flag when entering loading state (new loading cycle)
+  if (newStatus === 'loading') {
+    hasShownReadyToast = false
+  }
+})
+
 // Panel announcement for screen readers
 const panelAnnouncement = computed(() => {
   return activePanel.value === 'control-deck'
@@ -267,7 +286,8 @@ function handleClosePlayer() {
             dir="rtl"
             class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg leading-loose text-gray-100 placeholder-gray-600 scroll-smooth z-10"
             style="caret-color: #FF512F;"
-            placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
+            :placeholder="loadingPlaceholder"
+            :disabled="isModelLoading"
           />
         </div>
       </main>
@@ -302,10 +322,11 @@ function handleClosePlayer() {
             <VoiceSelector
               v-model="selectedSpeaker"
               :voices="speakerVoices"
+              :disabled="isModelLoading"
             />
 
             <!-- Speed Control -->
-            <SpeedSlider v-model="speedValue" />
+            <SpeedSlider v-model="speedValue" :disabled="isModelLoading" />
           </div>
         </div>
 
@@ -482,8 +503,9 @@ function handleClosePlayer() {
             <VoiceSelector
               v-model="selectedSpeaker"
               :voices="speakerVoices"
+              :disabled="isModelLoading"
             />
-            <SpeedSlider v-model="speedValue" />
+            <SpeedSlider v-model="speedValue" :disabled="isModelLoading" />
           </div>
         </div>
 
@@ -624,7 +646,8 @@ function handleClosePlayer() {
             dir="rtl"
             class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg md:text-xl lg:text-2xl leading-relaxed text-gray-100 placeholder-gray-600 scroll-smooth z-10"
             style="caret-color: #FF512F;"
-            placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
+            :placeholder="loadingPlaceholder"
+            :disabled="isModelLoading"
           />
         </div>
 
