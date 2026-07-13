@@ -400,9 +400,12 @@ def test_generate_speech_defaults_to_first_voice_when_no_voice_field():
     # Verify the response filename contains the first discovered voice
     # (the public interface: filename in Content-Disposition header)
     content_disp = response.headers.get("content-disposition", "")
-    assert "KSA Hamed - Male" in content_disp, (
+    from urllib.parse import unquote
+
+    decoded = unquote(content_disp)
+    assert "KSA Hamed - Male" in decoded, (
         f"Expected first voice 'KSA Hamed - Male' in response filename, "
-        f"got: {content_disp}"
+        f"got: {content_disp} (decoded: {decoded})"
     )
 
     # Restore real os.listdir for other tests

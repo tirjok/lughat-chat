@@ -4,7 +4,7 @@
 const EMPTY_TEXT_ERROR = 'Please enter text to convert to speech'
 const MODEL_LOADING_ERROR = 'Model is loading, please wait...'
 
-export type ModelStatus = 'loading' | 'ready' | 'error'
+export type ModelStatus = 'loading' | 'ready' | 'error' | 'retrying'
 
 interface UseInputValidationResult {
   isValid: boolean

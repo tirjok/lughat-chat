@@ -1,7 +1,7 @@
 <script setup lang="ts">
 interface Props {
   isGenerating: boolean
-  modelStatus: 'loading' | 'ready' | 'error'
+  modelStatus: 'loading' | 'ready' | 'error' | 'retrying'
   disabled: boolean
 }
 
@@ -41,14 +41,14 @@ const emit = defineEmits<{
       </span>
     </div>
 
-    <!-- Loading/Generating state: Button-in-Button trailing icon -->
+    <!-- Loading/Retrying/Generating state: Button-in-Button trailing icon -->
     <div
       v-else
       class="btn-content loading-state"
     >
       <div class="loader" />
       <span class="font-medium text-sunrise-orange animate-pulse text-sm md:text-base">
-        Loading TTS Model...
+        {{ modelStatus === 'retrying' ? 'Retrying...' : 'Loading TTS Model...' }}
       </span>
       <!-- Trailing icon circle (disabled state) -->
       <span

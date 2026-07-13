@@ -23,7 +23,7 @@
 | `unocss` | UnoCSS utility rules, shortcuts, presets | `pi skills install unocss` | Slices M-09, M-10 (status indicator styling) |
 
 ### Document Search Required
-| Document | What to Find | Source |
+| Document | What to Find | Source |y
 |----------|-------------|--------|
 | `docs/workflows/REGISTRY.md` | Missing workflow specs (container orchestration, health check) | Cross-reference before starting |
 | `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` | Cross-workflow dependencies (Model Loading blocks all) | All slices |

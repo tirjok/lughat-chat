@@ -9,7 +9,7 @@ import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll,
 describe('Mobile split-screen', () => {
   const mockAudio = createMockUseAudioModule()
   const mockTts = createMockUseTtsApi()
-  const mockHealth = createMockUseHealthPoll()
+  const mockHealth = createMockUseHealthPoll('ready')
   const mockValidation = createMockUseInputValidation()
   const mockToast = createMockUseToast()
 

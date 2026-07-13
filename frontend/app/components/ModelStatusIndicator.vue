@@ -1,26 +1,32 @@
 <script setup lang="ts">
 import { useHealthPoll } from '../composables/useHealthPoll'
 
-const { status, modelLoaded, modelName, subStatus } = useHealthPoll()
+const { status, modelLoaded, modelName, subStatus, retry } = useHealthPoll()
 
 function displayText(): string {
-  if (status.value === 'loading') {
-    const name = modelName.value || 'XTTS-v2'
-    return subStatus.value === 'initializing'
+  if (status === 'loading') {
+    const name = modelName || 'XTTS-v2'
+    return subStatus === 'initializing'
       ? `Loading ${name}...`
       : 'Loading...'
   }
-  return modelLoaded.value ? 'Ready' : 'Error'
+  if (status === 'retrying') {
+    return 'Retrying...'
+  }
+  return modelLoaded ? 'Ready' : 'Error'
 }
 
 function tooltipText(): string {
-  if (status.value === 'loading') {
-    const name = modelName.value || 'XTTS-v2'
-    return subStatus.value === 'initializing'
+  if (status === 'loading') {
+    const name = modelName || 'XTTS-v2'
+    return subStatus === 'initializing'
       ? `Model ${name} Loading...`
       : 'Model Loading...'
   }
-  return modelLoaded.value ? 'Model Ready' : 'Model Error'
+  if (status === 'retrying') {
+    return 'Model XTTS-v2 — Retrying...'
+  }
+  return modelLoaded ? 'Model Ready' : 'Model Error'
 }
 </script>
 
@@ -48,6 +54,13 @@ function tooltipText(): string {
         class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"
       />
 
+      <!-- Retrying state: orange dot with slow pulse (same as loading) -->
+      <span
+        v-else-if="status === 'retrying'"
+        aria-hidden="true"
+        class="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse"
+      />
+
       <!-- Error state: red dot -->
       <span
         v-else
@@ -58,6 +71,19 @@ function tooltipText(): string {
       <span class="text-xs font-medium text-gray-300">
         {{ displayText() }}
       </span>
+
+      <!-- Manual retry button: visible in retrying and error states -->
+      <button
+        v-if="status === 'retrying' || status === 'error'"
+        aria-label="Retry health check"
+        class="rounded-full bg-studio-900 text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] cursor-pointer active:scale-95"
+        @click="retry"
+      >
+        <span
+          aria-hidden="true"
+          class="ph ph-arrow-counter-clockwise text-sm"
+        />
+      </button>
     </div>
   </div>
 </template>

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import Index from '../app/pages/index.vue'
 import { setBreakpoint } from './mocks'
 
@@ -47,8 +47,13 @@ beforeEach(() => {
   })
 
   ;(globalThis as Record<string, unknown>).useHealthPoll = mockUseHealthPoll.mockReturnValue({
-    status: ref('ready'),
-    modelLoaded: computed(() => true)
+    get status() { return 'ready' },
+    get modelLoaded() { return true },
+    get modelName() { return '' },
+    get subStatus() { return '' },
+    stop: () => {},
+    retry: () => {},
+    start: () => {}
   })
 
   ;(globalThis as Record<string, unknown>).useInputValidation = mockUseInputValidation.mockReturnValue({

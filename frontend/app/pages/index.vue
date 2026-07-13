@@ -98,7 +98,7 @@ watch(speakerVoices, (v) => {
 }, { immediate: true })
 
 const validationState = computed(() =>
-  useInputValidation(textInput.value, modelStatus.value)
+  useInputValidation(textInput.value, modelStatus)
 )
 
 // Panel announcement for screen readers

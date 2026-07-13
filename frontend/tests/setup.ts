@@ -51,13 +51,15 @@ global.IntersectionObserver = class IntersectionObserver extends EventTarget {
 } as unknown as typeof IntersectionObserver
 
 // Track onMounted callbacks for testing composables that use lifecycle hooks
-const mountedCallbacks: (() => void)[] = []
+export const mountedCallbacks: (() => void)[] = []
 
 // Mock Nuxt auto-imported composables — return reactive-like objects with .value properties
 Object.assign(globalThis, {
   onMounted: vi.fn((cb: () => void) => mountedCallbacks.push(cb)),
   ref: vi.fn((init: unknown) => ({ value: init })),
-  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } }))
+  shallowRef: vi.fn((init: unknown) => ({ value: init })),
+  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } })),
+  readonly: vi.fn((x: unknown) => x) // passthrough — tests don't need deep readonly
 })
 
 // ─── Re-export mock factories for component tests ───────────────────
@@ -70,4 +72,3 @@ export {
 } from './mocks'
 
 // Export for tests to trigger mount callbacks
-export { mountedCallbacks }

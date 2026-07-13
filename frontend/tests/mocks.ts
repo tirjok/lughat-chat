@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { ref, computed, type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 
 // ─── Breakpoint Simulation Helper ─────────────────────────────────────
 // Sets window.innerWidth and matchMedia to simulate a specific device breakpoint.
@@ -66,9 +66,16 @@ export const createMockUseTtsApi = () => ({
 })
 
 // ─── Health Poll Mock Factory ────────────────────────────────────────
-export const createMockUseHealthPoll = () => ({
-  status: ref('loading' as const),
-  modelLoaded: computed(() => true)
+export const createMockUseHealthPoll = (
+  statusValue: 'loading' | 'ready' | 'error' | 'retrying' = 'loading'
+) => ({
+  get status() { return statusValue },
+  get modelLoaded() { return statusValue === 'ready' },
+  get modelName() { return '' },
+  get subStatus() { return '' },
+  stop: vi.fn(),
+  retry: vi.fn(),
+  start: vi.fn()
 })
 
 // ─── Input Validation Mock Factory ───────────────────────────────────
