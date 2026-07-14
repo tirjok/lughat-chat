@@ -114,6 +114,53 @@ These patterns **will cause test failures** in the Nuxt 4 test environment (`env
 
 **Rule of thumb:** If a composable makes HTTP requests (calls `fetch`, `$fetch`, or `useFetch`), test it with `registerEndpoint` + direct method calls. If it's pure state/logic with no side effects, the `setup.ts` mocks work fine.
 
+### Pre-Test Checklist (MUST FOLLOW)
+
+**Before writing ANY test, answer these questions in order:**
+
+1. **Does the source make HTTP requests?**
+   - YES → Use `registerEndpoint()` (composable) or `vi.mock()` (component)
+   - NO → Use `setup.ts` global mocks (ref, computed, watch)
+
+2. **How many composables does the source use?**
+   - 0–1 → Direct mock or `vi.mock()` is sufficient
+   - 2–3 → Use individual `vi.mock()` per composable
+   - 4+ → Use `mocks.ts` factory functions + `Object.assign(globalThis, {...})`
+
+3. **Does the source use `onMounted`?**
+   - YES → Call the composable's **public methods directly**. Do NOT try to trigger `onMounted` callbacks.
+   - NO → Safe to call directly.
+
+4. **Is the source a page with 3+ composables?**
+   - YES → Use `tests/mocks.ts` factory functions. Wire all via `Object.assign(globalThis, {...})`.
+   - NO → Use `vi.mock()` or direct mocking.
+
+### Source-Code-in-Context Requirement
+
+**When generating a test for a new component or composable, always read the source file first and include its content in the context.** The LLM must see the actual return signature, method names, reactive state, and whether lifecycle hooks (`onMounted`) are involved. Never write a test for code you haven't read.
+
+### Testing Decision Tree (Quick Reference)
+
+```
+Does the source make HTTP requests (fetch/$fetch/useFetch)?
+  YES → Does it use onMounted?
+    YES → Use `registerEndpoint()` + call public methods directly.
+          Reference: tests/useVoices.test.ts
+    NO  → Use `global.fetch = vi.fn(...)` directly.
+          Reference: tests/useTtsApi.test.ts
+  NO  → Use `setup.ts` global mocks (ref, computed, watch).
+        Reference: tests/useInputValidation.test.ts
+
+Does the component use any composables that make HTTP requests?
+  YES → Use `vi.mock()` for each API composable.
+        Reference: tests/ModelStatusIndicator.test.ts
+  NO  → Use `shallowMount()` directly. No mocking needed.
+
+Does the page use 3+ composables?
+  YES → Use `mocks.ts` factory functions + `Object.assign(globalThis, {...})`.
+        Reference: tests/PanelSliding.test.ts
+```
+
 ### Reference: Working test patterns
 
 - **`tests/useTtsApi.test.ts`** — Direct `global.fetch = vi.fn(...)` works because `useTtsApi` methods are called directly (no `onMounted` involved). This is the **simplest pattern for pure method tests**.

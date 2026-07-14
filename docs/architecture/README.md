@@ -38,6 +38,7 @@ Lughat Chat is a **text-to-speech (TTS) web application** focused on Arabic spee
 | [ADR-010](./ADR-010-non-blocking-frontend-boot-with-loading-screen.md) | Non-Blocking Frontend Boot with Loading Screen (Docker health check race condition) | **Accepted — Option A** |
 | [ADR-011](./ADR-011-default-voice-resolution-and-voice-name-mismatch.md) | Default Voice Resolution and Voice Name Mismatch (RC-003) | **Accepted — Option A** |
 | [ADR-012](./ADR-012-model-cache-volume-and-audio-persistence.md) | Model Cache Volume Path, Audio Persistence, and FFmpeg Fallback (RC-004, RC-005, RC-006, RC-007) | **Proposed** |
+| [ADR-013](./ADR-013-testing-strategy-and-llm-test-generation.md) | Testing Strategy and LLM Test Generation (mocking decision tree, source-in-context, templates) | **Accepted** |
 
 ## Diagram Index
 

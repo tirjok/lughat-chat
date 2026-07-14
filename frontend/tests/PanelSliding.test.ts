@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { registerEndpoint } from '@nuxt/test-utils/runtime'
 import Index from '../app/pages/index.vue'
 import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation, createMockUseToast } from './mocks'
 
@@ -12,18 +12,23 @@ describe('Mobile split-screen', () => {
   const mockHealth = createMockUseHealthPoll('ready')
   const mockValidation = createMockUseInputValidation()
   const mockToast = createMockUseToast()
-
-  const voiceRefs = ref([
-    { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
-    { id: 'tariq', name: 'Tariq - News Anchor', dialect: 'Modern Standard Arabic [MSA]', tag: 'MSA', icon: 'waveform', speaker_wav: 'male.wav' },
-    { id: 'laila', name: 'Laila - Storyteller', dialect: 'Levantine Arabic [AR-LB]', tag: 'AR-LB', icon: 'waveform', speaker_wav: 'female.wav' }
-  ])
+  const mockVoices = {
+    voices: [
+      { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
+      { id: 'tariq', name: 'Tariq - News Anchor', dialect: 'Modern Standard Arabic [MSA]', tag: 'MSA', icon: 'waveform', speaker_wav: 'male.wav' },
+      { id: 'laila', name: 'Laila - Storyteller', dialect: 'Levantine Arabic [AR-LB]', tag: 'AR-LB', icon: 'waveform', speaker_wav: 'female.wav' }
+    ],
+    loading: false,
+    error: null,
+    loadVoices: vi.fn().mockResolvedValue([])
+  }
 
   beforeEach(() => {
+    registerEndpoint('/api/voices', () => mockVoices.voices)
     Object.assign(globalThis, {
       useAudioModule: vi.fn(() => mockAudio),
       useTtsApi: vi.fn(() => mockTts),
-      useVoices: vi.fn(() => ({ voices: voiceRefs })),
+      useVoices: vi.fn(() => mockVoices),
       useHealthPoll: vi.fn(() => mockHealth),
       useInputValidation: vi.fn(() => mockValidation),
       showToast: mockToast.showToast ?? (() => {})
