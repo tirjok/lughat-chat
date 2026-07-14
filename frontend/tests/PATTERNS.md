@@ -30,10 +30,12 @@ What am I testing?
 │  │  ├─ YES → Does it use onMounted (or other lifecycle hooks)?
 │  │  │  ├─ YES → Pattern 1: registerEndpoint + direct method call
 │  │  │  └─ NO  → Pattern 2: global.fetch stub (pure method test)
-│  │  └─ NO  → Pattern 3: Direct call (pure logic)
+│  │  └─ NO  → Does it use onMounted?
+│  │     ├─ YES → Pattern 3b: Direct call (setup.ts mocks ref/computed)
+│  │     └─ NO  → Pattern 3: Direct call (pure logic)
 │  │
 │  └─ Does it use onMounted but NO HTTP?
-│     └─ Pattern 3: Direct call (setup.ts mocks ref/computed)
+│     └─ Pattern 3b: Direct call (setup.ts mocks ref/computed)
 │
 ├─ A component (app/components/*.vue)
 │  │
@@ -92,7 +94,7 @@ it('works on mobile')
 - Call the composable's **public methods directly** — never try to trigger `onMounted`.
 - Defer composable calls inside `it()` or `beforeEach()` (not at `describe` top level).
 
-**Working reference:** `tests/useVoices.test.ts`
+**Working reference:** `frontend/tests/useVoices.test.ts`
 
 ---
 
@@ -106,7 +108,7 @@ it('works on mobile')
 - Assert on the fetch call arguments (headers, body, URL) to verify the request shape.
 - This is the **simplest pattern** — use it for pure method tests.
 
-**Working reference:** `tests/useTtsApi.test.ts`
+**Working reference:** `frontend/tests/useTtsApi.test.ts`
 
 ```ts
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -188,7 +190,9 @@ describe('useMyComposable', () => {
 - For composables that use timers, use `vi.useFakeTimers()` / `vi.advanceTimersByTime()`.
 - Test the composable's **public interface**: return values, state changes, method side-effects.
 
-**Working reference:** `tests/useInputValidation.test.ts`, `tests/useToast.test.ts`, `tests/usePanelToggle.test.ts`
+**Working reference:** `frontend/tests/useInputValidation.test.ts`, `frontend/tests/useToast.test.ts`, `frontend/tests/usePanelToggle.test.ts`
+
+**Note — Pattern 3b (onMounted + no HTTP):** If a composable uses `onMounted` but makes **no** HTTP calls, it still uses Pattern 3's approach: call the composable directly. The `setup.ts` mocks for `onMounted` are sufficient because there are no network calls to intercept. The lifecycle hook runs synchronously during the composable call — no need to defer or trigger it.
 
 ```ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
@@ -261,7 +265,7 @@ describe('useToast auto-dismiss', () => {
 - For components that need Nuxt features (auto-imports, routing), use `mountSuspended()` instead.
 - Test the component's **public contract**: rendered text, data attributes, emitted events, props.
 
-**Working reference:** `tests/ModelStatusIndicator.test.ts`, `tests/LoadingBanner.test.ts`, `tests/SpeedSlider.test.ts`, `tests/VoiceSelector.test.ts`
+**Working reference:** `frontend/tests/ModelStatusIndicator.test.ts`, `frontend/tests/LoadingBanner.test.ts`, `frontend/tests/SpeedSlider.test.ts`, `frontend/tests/VoiceSelector.test.ts`
 
 ```ts
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -314,7 +318,7 @@ describe('MyComponent', () => {
 - `vi.mock()` is **hoisted** — it runs before any code in the file executes. This is why the mock must be at file scope, not inside a function.
 - Use `shallowRef` (not `ref`) for the module-level state — it avoids deep reactivity overhead and is the pattern used in all working component tests.
 - For components that use Nuxt features (routing, auto-imports, plugins), replace `mount()` with `mountSuspended()` from `@nuxt/test-utils/runtime`.
-- For responsive testing, use `setBreakpoint()` from `tests/mocks.ts` (sets `window.innerWidth` and `matchMedia`).
+- For responsive testing, use `setBreakpoint()` from `frontend/tests/mocks.ts` (sets `window.innerWidth` and `matchMedia`).
 
 ---
 
@@ -330,8 +334,8 @@ describe('MyComponent', () => {
 - Use `mountSuspended()` — **never** `shallowMount()` or `mount()` for pages.
 - Defer composable calls inside `it()` blocks (not at `describe` top level).
 
-**Working reference:** `tests/index.test.ts` (the **only** page test that passes cleanly)
-**Broken reference:** `tests/PanelSliding.test.ts` (uses `shallowMount` + `Object.assign(globalThis)` — produces unhandled rejection errors)
+**Working reference:** `frontend/tests/index.test.ts` (the **only** page test that passes cleanly)
+**Broken reference:** `frontend/tests/PanelSliding.test.ts` (uses `shallowMount` + `Object.assign(globalThis)` — produces unhandled rejection errors)
 
 ```ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -416,11 +420,11 @@ describe('MyPage', () => {
 **Use when:** Testing responsive layout changes (mobile vs desktop breakpoints).
 
 **Key rules:**
-- Use `setBreakpoint()` from `tests/mocks.ts` — it sets `window.innerWidth` and `matchMedia`.
+- Use `setBreakpoint()` from `frontend/tests/mocks.ts` — it sets `window.innerWidth` and `matchMedia`.
 - Save and restore `window.innerWidth` in `beforeEach` / `afterEach`.
 - Combine with Pattern 4 (for simple components) or Pattern 5 (for pages).
 
-**Working reference:** `tests/usePanelToggle.test.ts`, `tests/index.test.ts` (responsive section)
+**Working reference:** `frontend/tests/usePanelToggle.test.ts`, `frontend/tests/index.test.ts` (responsive section)
 
 ```ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
@@ -476,7 +480,7 @@ describe('useMyComposable responsive', () => {
 - Always mock `json()` on the response — composables often call `.json()` in catch blocks.
 - Use `expect(fn).rejects.toThrow()` — never `try/catch` in tests.
 
-**Working reference:** `tests/useTtsApi.test.ts`
+**Working reference:** `frontend/tests/useTtsApi.test.ts`
 
 ```ts
 import { describe, it, expect, vi } from 'vitest'
@@ -531,10 +535,12 @@ What am I testing?
 │  │  ├─ YES → Does it use onMounted?
 │  │  │  ├─ YES → Pattern 1: registerEndpoint + direct call
 │  │  │  └─ NO  → Pattern 2: global.fetch stub
-│  │  └─ NO  → Pattern 3: Direct call (pure logic)
+│  │  └─ NO  → Does it use onMounted?
+│  │     ├─ YES → Pattern 3b: Direct call (setup.ts mocks)
+│  │     └─ NO  → Pattern 3: Direct call (pure logic)
 │  │
 │  └─ Does it use onMounted but NO HTTP?
-│     └─ Pattern 3: Direct call (setup.ts mocks)
+│     └─ Pattern 3b: Direct call (setup.ts mocks)
 │
 ├─ A component (app/components/*.vue)
 │  │
@@ -550,6 +556,8 @@ What am I testing?
       └─ Pattern 5 (same as component with 4+ deps)
 ```
 
+> **Note — Pattern 3b:** A composable that uses `onMounted` but makes **no** HTTP calls is still tested directly (Pattern 3's approach). The `setup.ts` mocks for `onMounted` are sufficient — there are no network calls to intercept. This resolves the ambiguity where the decision tree suggested Pattern 3 but Pattern 3's description said "no lifecycle hooks."
+
 ---
 
 ## Anti-Patterns (DO NOT USE)
@@ -563,4 +571,18 @@ What am I testing?
 | Using `setup.ts` global mocks for API composables | Nuxt resolves auto-imports from `vue` directly, bypassing `globalThis` | `registerEndpoint` + direct method calls |
 | Multiple `mockNuxtImport` for the same import | Hoisting prevents duplicate mocks per file | Use `vi.hoisted()` to manage mock state between tests |
 | Testing private/internal implementation details | Tests break on refactors that don't change behavior | Test public contract: props, emitted events, rendered output, returned refs |
-| `shallowMount()` + `Object.assign(globalThis)` for pages | Produces unhandled rejection errors (see PanelSliding) | Use `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()` (see Pattern 5) |
+| `shallowMount()` + `Object.assign(globalThis)` for pages | Produces unhandled rejection errors (see PanelSlading) | Use `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()` (see Pattern 5) |
+
+---
+
+## Related
+
+- **ADR-013** — `docs/architecture/ADR-013-testing-strategy-and-llm-test-generation.md` — Four-pillar strategy decision record
+- **AGENTS.md** — Project context, testing anti-patterns table, pre-test checklist (authority document)
+- `frontend/tests/setup.ts` — Global mock setup for unit tests (ref, computed, watch, onMounted)
+- `frontend/tests/setup.component.ts` — Global mock setup for component tests (URL APIs, fetch)
+- `frontend/tests/mocks.ts` — Mock factory functions for component tests (used by Pattern 4)
+- `frontend/tests/index.test.ts` — Working Pattern 5 page test (single reference)
+- `frontend/tests/PanelSlading.test.ts` — **BROKEN** — uses `shallowMount` + `Object.assign(globalThis)` (documented as cautionary example)
+- `vitest.config.ts` — Vitest configuration (environment: 'nuxt', domEnvironment: 'jsdom')
+- `vitest.component.config.ts` — Component test configuration

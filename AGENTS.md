@@ -108,11 +108,12 @@ These patterns **will cause test failures** in the Nuxt 4 test environment (`env
 | Anti-Pattern | Why It Fails | Correct Approach |
 |---|---|---|
 | `Object.defineProperty(window, 'fetch', ...)` | `window.fetch` is not how the Nuxt test env resolves native `fetch`. The test env's Nitro router handles it. | Use `registerEndpoint('/api/endpoint', () => mockData)` from `@nuxt/test-utils/runtime` |
-| `global.fetch = vi.fn(...)` | Works in isolation but **doesn't intercept** fetch calls made inside composables that use auto-imported lifecycle hooks (`onMounted`). | Use `registerEndpoint` — it intercepts at the Nitro/h3 level, which native `fetch` properly routes to |
+| `global.fetch = vi.fn(...)` on composables with `onMounted` | `onMounted` callbacks bypass the mock and hit the real network. **Conditionally valid**: safe when the composable does NOT use lifecycle hooks. | For composables with `onMounted`: use `registerEndpoint` + call methods directly. For composables without `onMounted`: `global.fetch` is safe (Pattern 2). See `tests/PATTERNS.md`. |
 | Triggering mocked `onMounted` callbacks to trigger API calls | `setup.ts` mocks `ref` as `vi.fn(() => ({ value: init }))`. Auto-imported `ref` from Vue bypasses this mock entirely, so `ref` returns real `RefImpl`. But the `fetch` inside `onMounted` callbacks goes to the real network. | Call the composable's **public methods directly** (e.g., `loadVoices()`, `synthesize()`). Don't rely on lifecycle hook triggering for API tests |
-| Using `setup.ts` global mocks for `ref`, `onMounted`, `computed` in API tests | The Nuxt test environment's auto-import system resolves `ref`/`onMounted` from `vue` directly, bypassing `globalThis` overrides. The mocks are only useful for component tests that don't make network calls. | For composables that make API calls: use `registerEndpoint` + call methods directly. For pure logic composables (no API): the mocks are fine |
+| Using `setup.ts` global mocks for API composables | The Nuxt test environment's auto-import system resolves `ref`/`onMounted` from `vue` directly, bypassing `globalThis` overrides. | For composables that make API calls: use `registerEndpoint` + call methods directly. For pure logic composables (no API): the mocks are fine. |
+| `shallowMount()` + `Object.assign(globalThis)` for pages | Produces unhandled rejection errors (see `PanelSliding.test.ts`). | Use `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()` (Pattern 5). See `tests/PATTERNS.md`. |
 
-**Rule of thumb:** If a composable makes HTTP requests (calls `fetch`, `$fetch`, or `useFetch`), test it with `registerEndpoint` + direct method calls. If it's pure state/logic with no side effects, the `setup.ts` mocks work fine.
+**Rule of thumb:** If a composable makes HTTP requests **and** uses `onMounted`: use `registerEndpoint` + call public methods directly. If it makes HTTP requests but does NOT use `onMounted`: `global.fetch` stub is safe (Pattern 2). If it's pure state/logic with no side effects: `setup.ts` mocks work fine. For complex decisions, see `tests/PATTERNS.md`.
 
 ### Pre-Test Checklist (MUST FOLLOW)
 
@@ -124,15 +125,15 @@ These patterns **will cause test failures** in the Nuxt 4 test environment (`env
 
 2. **How many composables does the source use?**
    - 0–1 → Direct mock or `vi.mock()` is sufficient
-   - 2–3 → Use individual `vi.mock()` per composable
-   - 4+ → Use `mocks.ts` factory functions + `Object.assign(globalThis, {...})`
+   - 2–3 → Use individual `vi.mock()` per composable (Pattern 4)
+   - 4+ → See `tests/PATTERNS.md` Pattern 5: `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()`
 
 3. **Does the source use `onMounted`?**
    - YES → Call the composable's **public methods directly**. Do NOT try to trigger `onMounted` callbacks.
    - NO → Safe to call directly.
 
 4. **Is the source a page with 3+ composables?**
-   - YES → Use `tests/mocks.ts` factory functions. Wire all via `Object.assign(globalThis, {...})`.
+   - YES → See `tests/PATTERNS.md` Pattern 5: `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()`
    - NO → Use `vi.mock()` or direct mocking.
 
 ### Source-Code-in-Context Requirement
@@ -145,21 +146,25 @@ These patterns **will cause test failures** in the Nuxt 4 test environment (`env
 Does the source make HTTP requests (fetch/$fetch/useFetch)?
   YES → Does it use onMounted?
     YES → Use `registerEndpoint()` + call public methods directly.
-          Reference: tests/useVoices.test.ts
+          Reference: tests/useVoices.test.ts (Pattern 1)
     NO  → Use `global.fetch = vi.fn(...)` directly.
-          Reference: tests/useTtsApi.test.ts
+          Reference: tests/useTtsApi.test.ts (Pattern 2)
   NO  → Use `setup.ts` global mocks (ref, computed, watch).
-        Reference: tests/useInputValidation.test.ts
+        Reference: tests/useInputValidation.test.ts (Pattern 3)
 
 Does the component use any composables that make HTTP requests?
-  YES → Use `vi.mock()` for each API composable.
-        Reference: tests/ModelStatusIndicator.test.ts
+  YES (1–3 deps) → Use `vi.mock()` for each API composable.
+                   Reference: tests/ModelStatusIndicator.test.ts (Pattern 4)
+  YES (4+ deps) → See `tests/PATTERNS.md` Pattern 5: `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()`
   NO  → Use `shallowMount()` directly. No mocking needed.
 
-Does the page use 3+ composables?
-  YES → Use `mocks.ts` factory functions + `Object.assign(globalThis, {...})`.
-        Reference: tests/PanelSliding.test.ts
+Does the page use 4+ composables?
+  YES → See `tests/PATTERNS.md` Pattern 5: `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()`
+        Reference: tests/index.test.ts (the **only** working page test)
+  NO  → See `tests/PATTERNS.md` Pattern 4 (component-level `vi.mock`).
 ```
+
+> **Full decision tree with code templates:** See `tests/PATTERNS.md`. It covers 7 patterns including responsive testing (Pattern 6) and error handling (Pattern 7).
 
 ### Reference: Working test patterns
 
@@ -167,22 +172,25 @@ Does the page use 3+ composables?
 - **`tests/useVoices.test.ts`** — Uses `registerEndpoint` + `loadVoices()` called directly. The **correct pattern for composables with lifecycle hooks**.
 - **`tests/useInputValidation.test.ts`** — Pure logic, no API calls. Uses `setup.ts` mocks. Fine for state-only composables.
 
-**Test files (19 total):
+**Test files (22 total):**
 - `app.test.ts` — Root app integration test
 - `AudioPlayerPanel.test.ts` — Audio player panel tests
-- `index.test.ts` — Main page integration test
-- `ModelStatusIndicator.test.ts` — Model status indicator tests
-- `PanelSliding.test.ts` — Panel sliding animation tests
+- `composable-api-template.test.ts` — API composable test template
+- `debug-health.test.ts` — Health endpoint debug test
+- `index.test.ts` — Main page integration test (Pattern 5 reference)
+- `infrastructure.smoke.test.ts` — Infrastructure smoke tests
+- `ModelStatusIndicator.test.ts` — Model status indicator tests (Pattern 4 reference)
+- `PanelSlading.test.ts` — **BROKEN** — uses `shallowMount` + `Object.assign(globalThis)` (see PATTERNS.md)
 - `SpeedSlider.test.ts` — Speed slider interaction tests
 - `ToastNotification.test.ts` — Toast notification rendering tests
 - `ToastShortcut.test.ts` — Toast keyboard shortcut tests
 - `useAudioModule.test.ts` — Audio module logic tests
 - `useHealthPoll.test.ts` — Health polling logic tests
-- `useInputValidation.test.ts` — Input validation logic tests
-- `usePanelToggle.test.ts` — Panel toggle composable tests
+- `useInputValidation.test.ts` — Input validation logic tests (Pattern 3 reference)
+- `usePanelToggle.test.ts` — Panel toggle composable tests (Pattern 6 reference)
 - `useToast.test.ts` — Toast composable tests
-- `useTtsApi.test.ts` — TTS API composable tests
-- `useVoices.test.ts` — Voices composable tests
+- `useTtsApi.test.ts` — TTS API composable tests (Pattern 2 reference)
+- `useVoices.test.ts` — Voices composable tests (Pattern 1 reference)
 - `VoiceSelector.test.ts` — Voice selector basic tests
 - `VoiceSelector.animation.test.ts` — Voice selector animation tests
 - `VoiceSelector.click.test.ts` — Voice selector click interaction tests

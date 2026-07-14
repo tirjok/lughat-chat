@@ -42,10 +42,12 @@ A single reference document (`tests/PATTERNS.md`) that maps every scenario to ex
     NO  → Use `shallowMount()` directly. No mocking needed.
 
 ## For pages (app/pages/*.vue):
-  Uses 3+ composables?
-    YES → Use mock factory functions from tests/mocks.ts.
-           Wire all via Object.assign(globalThis, {...}).
-           Reference: tests/PanelSliding.test.ts
+  Uses 4+ composables?
+    YES → Use `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()` (Pattern 5).
+           Reference: tests/index.test.ts (the **only** working page test).
+           **Do NOT** use `Object.assign(globalThis, {...})` — this is the broken
+           `PanelSliding.test.ts` pattern that produces unhandled rejection errors.
+  NO  → Use `vi.mock()` per composable (Pattern 4).
 ```
 
 ### Pillar 2: Source-Code-in-Context Requirement
@@ -80,13 +82,13 @@ vi.mock('../app/composables/useMyComposable', () => ({
 
 ### Pillar 4: Pre-Test Checklist in AGENTS.md
 
-Added to AGENTS.md "Testing" section:
+Added to AGENTS.md "Testing" section (updated to reflect Pattern 5):
 
 > **Before writing any test, answer these questions:**
-> 1. Does the source make HTTP requests? → Choose `registerEndpoint` or `vi.mock`
-> 2. How many composables does the source use? → More than 2 means mock factories
+> 1. Does the source make HTTP requests? → Choose `registerEndpoint` (composable) or `vi.mock` (component)
+> 2. How many composables does the source use? → 4+ means Pattern 5: `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()`
 > 3. Does the source use `onMounted`? → Call public methods directly, don't trigger lifecycle
-> 4. Is the source a page with 3+ composables? → Use `mocks.ts` factory functions
+> 4. Is the source a page with 4+ composables? → See `tests/PATTERNS.md` Pattern 5 (not `mocks.ts` factory functions)
 
 ## Consequences
 
@@ -104,12 +106,16 @@ Added to AGENTS.md "Testing" section:
 1. **Consolidate mocks.ts into a single builder function** — Would reduce API surface from 5 factories to 1, but adds indirection. Deferred to future iteration.
 2. **Add a test-generation CLI tool** — Would automate template selection, but over-engineers a documentation problem.
 3. **Remove `global.fetch` mocking entirely** — Would simplify to 2 patterns, but `useTtsApi.test.ts` uses it successfully and is the simplest pattern for pure method tests.
+4. **Use `Object.assign(globalThis)` for pages** — The original approach (now superseded by Pattern 5) produced unhandled rejection errors. Replaced with `vi.hoisted()` + `mockNuxtImport()` + `mountSuspended()`.
 
 ## Related
 
-- AGENTS.md — Project context and testing anti-patterns table
+- AGENTS.md — Project context and testing anti-patterns table (updated to reference Pattern 5)
+- `tests/PATTERNS.md` — 7-pattern decision tree with code templates (authoritative reference)
 - `tests/setup.ts` — Global mock setup for unit tests
 - `tests/setup.component.ts` — Global mock setup for component tests
-- `tests/mocks.ts` — Mock factory functions for component tests
+- `tests/mocks.ts` — Mock factory functions for component tests (used by Pattern 4)
+- `tests/index.test.ts` — Working Pattern 5 page test (single reference)
+- `tests/PanelSlading.test.ts` — **BROKEN** — uses `shallowMount` + `Object.assign(globalThis)` (documented as cautionary example)
 - `vitest.config.ts` — Vitest configuration (environment: 'nuxt', domEnvironment: 'jsdom')
 - `vitest.component.config.ts` — Component test configuration
