@@ -140,18 +140,22 @@ def test_cleanup_audio_deletes_files_beyond_limit():
         audio_dir = os.path.join(tmpdir, "downloads")
         os.makedirs(audio_dir, exist_ok=True)
 
-        # Create 5 MP3 files with sidecars (simulating old syntheses)
+        # Create 5 MP3 files with sidecars (simulating old syntheses),
+        # setting explicit mtimes to avoid race conditions.
+        base_time = 2000000.0
         for i in range(5):
             ts = f"aaaa{i:04d}"
             mp3_filename = f"ar_voice_{ts}.mp3"
             mp3_path = os.path.join(audio_dir, mp3_filename)
             with open(mp3_path, "wb") as f:
                 f.write(b"\xff\xfb")
+            os.utime(mp3_path, (base_time + i, base_time + i))
 
             meta_filename = f"{ts}.meta.json"
             meta_path = os.path.join(audio_dir, meta_filename)
             with open(meta_path, "w") as f:
                 json.dump({"text": f"Text {i}", "created_at": ts}, f)
+            os.utime(meta_path, (base_time + i, base_time + i))
 
         # Set limit to 3 — should delete 2 oldest files
         _setup_mock_model(
@@ -193,18 +197,23 @@ def test_cleanup_audio_deletes_sidecars_alongside_mp3():
         audio_dir = os.path.join(tmpdir, "downloads")
         os.makedirs(audio_dir, exist_ok=True)
 
-        # Create 5 MP3 files with sidecars
+        # Create 5 MP3 files with sidecars, setting explicit mtimes
+        # to avoid race conditions where rapid file creation
+        # results in identical modification times.
+        base_time = 1000000.0
         for i in range(5):
             ts = f"bbbb{i:04d}"
             mp3_filename = f"ar_voice_{ts}.mp3"
             mp3_path = os.path.join(audio_dir, mp3_filename)
             with open(mp3_path, "wb") as f:
                 f.write(b"\xff\xfb")
+            os.utime(mp3_path, (base_time + i, base_time + i))
 
             meta_filename = f"{ts}.meta.json"
             meta_path = os.path.join(audio_dir, meta_filename)
             with open(meta_path, "w") as f:
                 json.dump({"text": f"Text {i}", "created_at": ts}, f)
+            os.utime(meta_path, (base_time + i, base_time + i))
 
         _setup_mock_model(
             audio_dir=audio_dir,

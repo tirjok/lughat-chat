@@ -4,6 +4,8 @@ export interface SynthesisRequest {
   text: string
   speaker?: string
   speed?: number
+  language?: 'ar' | 'en'
+  seed?: number
 }
 
 export interface SynthesisResponse {
@@ -38,7 +40,8 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
           text: request.text,
           speaker: request.speaker,
           speed: request.speed || 1.0,
-          language: 'ar'
+          language: request.language ?? 'ar',
+          seed: request.seed
         })
       })
     } catch {
@@ -54,12 +57,25 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
 
       const errorData = await response.json().catch(() => ({}))
       const statusMessage = errorMessages[response.status]
+      const detail = errorData?.detail
+
+      // Map specific backend 500 error messages to user-friendly frontend messages
+      if (typeof detail === 'string') {
+        if (detail.includes('Speaker WAV file not found')) {
+          throw new Error('Voice not available. Please select a different voice.')
+        }
+        if (detail.includes('Speaker WAV file is too short')) {
+          throw new Error('Voice reference audio is too short. Please select a different voice.')
+        }
+        if (detail.includes('Failed to generate audio')) {
+          throw new Error('Speech synthesis failed. Please try again.')
+        }
+      }
 
       if (statusMessage) {
         throw new Error(statusMessage)
       }
 
-      const detail = errorData?.detail
       if (detail) {
         throw new Error(`Server error: ${detail}`)
       }

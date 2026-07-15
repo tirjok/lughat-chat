@@ -216,10 +216,8 @@ def cleanup_audio():
             reverse=True,
         )
 
-        # Number of files to delete
-        num_to_delete = len(audio_files) - MAX_AUDIO_FILES
-
-        for old_file in audio_files[num_to_delete:]:  # delete the oldest files
+        # Delete the oldest files (beyond MAX_AUDIO_FILES)
+        for old_file in audio_files[MAX_AUDIO_FILES:]:  # delete the oldest files
             old_file_path = os.path.join(AUDIO_DIR, old_file)
             try:
                 os.remove(old_file_path)

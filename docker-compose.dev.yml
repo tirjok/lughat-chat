@@ -45,8 +45,12 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Mount source code — changes reflected without rebuild
-      - ./frontend:/app
+      # Mount source code — changes reflected without rebuild.
+      # node_modules is mounted as a named volume so the container's
+      # platform-specific bindings (linux-arm64-musl) are preserved
+      # instead of being overwritten by the host's darwin bindings.
+      - ./frontend:/app:delegated
+      - frontend-node-modules:/app/node_modules
     environment:
       - NODE_ENV=development
     depends_on:
@@ -61,5 +65,6 @@ networks:
     driver: bridge
 
 volumes:
-  tts-model-cache-dev:     # Persists TTS model (2GB, downloaded once)
-  tts-audio-cache-dev:     # Persists generated audio files
+  tts-model-cache-dev:        # Persists TTS model (2GB, downloaded once)
+  tts-audio-cache-dev:        # Persists generated audio files
+  frontend-node-modules:      # Preserves platform-specific node_modules (linux-arm64-musl)
