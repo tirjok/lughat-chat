@@ -46,8 +46,8 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 
 | # | File | Slice | What |
 |---|------|-------|------|
-| 13 | `IMPLEMENTATION-lesson-content-serving.md` | S-1 | JSON content scanner |
-| 14 | `IMPLEMENTATION-lesson-content-serving.md` | S-2 | SQLite `lessons` table |
+| 13 | `IMPLEMENTATION-lesson-content-serving.md` | S-1 | JSON content scanner  ✅ DONE |
+| 14 | `IMPLEMENTATION-lesson-content-serving.md` | S-2 | SQLite `lessons` table  ✅ DONE |
 | 15 | `IMPLEMENTATION-lesson-content-serving.md` | S-3 | `user_progress` table |
 | 16 | `IMPLEMENTATION-lesson-content-serving.md` | S-4, S-5 | `/api/lessons` + `/api/lessons/:id` |
 | 17 | `IMPLEMENTATION-lesson-content-serving.md` | S-6–9 | Schema validation, `useLessons`, lesson pages |

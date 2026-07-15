@@ -12,6 +12,9 @@ import threading
 import wave
 from typing import Optional
 
+# Slice 2: SQLite lessons table
+from lessons_db import init_lessons_db
+
 # Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
 # This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
 import os as _os
@@ -110,6 +113,7 @@ MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
 SPEAKER_WAV_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "speaker_wavs"
 )
+CONTENT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "content")
 MAX_AUDIO_FILES = int(os.environ.get("MAX_AUDIO_FILES", "100"))
 
 
@@ -258,6 +262,12 @@ model_load_status = "loading"  # loading | ready | error
 async def lifespan(app: FastAPI):
     """Load TTS model in background so server starts immediately."""
     global tts_model, model_load_status
+
+    # Slice 2: Initialize SQLite lessons table from JSON files
+    try:
+        init_lessons_db(CONTENT_DIR)
+    except Exception as e:
+        print(f"Warning: Failed to initialize lessons database: {e}")
 
     def load_model():
         """Load TTS model in a background thread."""

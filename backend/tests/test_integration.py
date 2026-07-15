@@ -15,6 +15,7 @@ they only touch the public API.
 """
 
 import os
+import subprocess
 import tempfile
 
 from fastapi.testclient import TestClient
@@ -29,6 +30,7 @@ _REAL_OS_LISTDIR = os.listdir
 _REAL_OS_PATH_EXISTS = os.path.exists
 _REAL_OS_PATH_JOIN = os.path.join
 _REAL_OS_PATH_BASENAME = os.path.basename
+_REAL_SUBPROCESS_RUN = subprocess.run
 
 
 def _mock_tts_model():
@@ -165,6 +167,18 @@ def _setup_mock_model(
 
         main_app.subprocess.run = _ffmpeg_succeed
 
+    # Return a cleanup function to restore all patched attributes
+    def _cleanup():
+        import app as _main_app
+
+        _main_app.os.listdir = _REAL_OS_LISTDIR
+        _main_app.os.path.exists = _REAL_OS_PATH_EXISTS
+        _main_app.os.path.join = _REAL_OS_PATH_JOIN
+        _main_app.wave.open = _ORIGINAL_WAVE_OPEN
+        _main_app.subprocess.run = _REAL_SUBPROCESS_RUN
+
+    return _cleanup
+
 
 def _client():
     from app import app
@@ -204,54 +218,56 @@ def test_full_flow_generate_then_history_returns_text():
                 or p.endswith("downloads")
             )
 
-        _setup_mock_model(
+        cleanup = _setup_mock_model(
             audio_dir=audio_dir,
             speaker_wav_dir=speaker_dir,
             path_exists_override=_path_exists,
         )
+        try:
+            client = _client()
 
-        client = _client()
+            # --- Step 1: Generate speech ---
+            response = client.post(
+                "/api/generate",
+                json={
+                    "text": "مرحبا بك في لغةات",
+                    "language": "ar",
+                    "speaker": "KSA Hamed - Male",
+                    "speed": 1.2,
+                    "pitch": 0.5,
+                    "seed": 123,
+                },
+            )
 
-        # --- Step 1: Generate speech ---
-        response = client.post(
-            "/api/generate",
-            json={
-                "text": "مرحبا بك في لغةات",
-                "language": "ar",
-                "speaker": "KSA Hamed - Male",
-                "speed": 1.2,
-                "pitch": 0.5,
-                "seed": 123,
-            },
-        )
+            assert response.status_code == 200
+            assert "audio/mpeg" in response.headers["content-type"]
 
-        assert response.status_code == 200
-        assert "audio/mpeg" in response.headers["content-type"]
+            # Verify MP3 file exists
+            mp3_files = [f for f in os.listdir(audio_dir) if f.endswith(".mp3")]
+            assert len(mp3_files) == 1, f"Expected 1 MP3 file, got: {mp3_files}"
 
-        # Verify MP3 file exists
-        mp3_files = [f for f in os.listdir(audio_dir) if f.endswith(".mp3")]
-        assert len(mp3_files) == 1, f"Expected 1 MP3 file, got: {mp3_files}"
+            # Verify sidecar file exists
+            meta_files = [f for f in os.listdir(audio_dir) if f.endswith(".meta.json")]
+            assert len(meta_files) == 1, f"Expected 1 sidecar, got: {meta_files}"
 
-        # Verify sidecar file exists
-        meta_files = [f for f in os.listdir(audio_dir) if f.endswith(".meta.json")]
-        assert len(meta_files) == 1, f"Expected 1 sidecar, got: {meta_files}"
+            # --- Step 2: Check history returns the text ---
+            response = client.get("/api/history")
 
-        # --- Step 2: Check history returns the text ---
-        response = client.get("/api/history")
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, list)
+            assert len(data) == 1
 
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, list)
-        assert len(data) == 1
-
-        entry = data[0]
-        assert entry["text"] == "مرحبا بك في لغةات", (
-            f"Expected text from sidecar, got: '{entry['text']}'"
-        )
-        assert entry["language"] == "ar"
-        assert entry["voice"] == "KSA Hamed - Male"
-        assert entry["speed"] == 1.2
-        assert entry["pitch"] == 0.5
+            entry = data[0]
+            assert entry["text"] == "مرحبا بك في لغةات", (
+                f"Expected text from sidecar, got: '{entry['text']}'"
+            )
+            assert entry["language"] == "ar"
+            assert entry["voice"] == "KSA Hamed - Male"
+            assert entry["speed"] == 1.2
+            assert entry["pitch"] == 0.5
+        finally:
+            cleanup()
 
 
 # ===========================================================================
@@ -283,61 +299,63 @@ def test_full_flow_multiple_generations_history_all_texts():
                 or p.endswith("downloads")
             )
 
-        _setup_mock_model(
+        cleanup = _setup_mock_model(
             audio_dir=audio_dir,
             speaker_wav_dir=speaker_dir,
             path_exists_override=_path_exists,
         )
+        try:
+            client = _client()
 
-        client = _client()
+            # Generate 3 different audio files
+            requests = [
+                {
+                    "text": "مرحبا بالعالم",
+                    "language": "ar",
+                    "speaker": "KSA Zariyah - Female",
+                },
+                {
+                    "text": "Hello world",
+                    "language": "en",
+                    "speaker": "KSA Zariyah - Female",
+                },
+                {
+                    "text": "أهلا وسهلا",
+                    "language": "ar",
+                    "speaker": "KSA Zariyah - Female",
+                },
+            ]
 
-        # Generate 3 different audio files
-        requests = [
-            {
-                "text": "مرحبا بالعالم",
-                "language": "ar",
-                "speaker": "KSA Zariyah - Female",
-            },
-            {
-                "text": "Hello world",
-                "language": "en",
-                "speaker": "KSA Zariyah - Female",
-            },
-            {
-                "text": "أهلا وسهلا",
-                "language": "ar",
-                "speaker": "KSA Zariyah - Female",
-            },
-        ]
+            for req in requests:
+                response = client.post("/api/generate", json=req)
+                assert response.status_code == 200
 
-        for req in requests:
-            response = client.post("/api/generate", json=req)
+            # Verify 3 MP3 + 3 sidecars
+            mp3_files = [f for f in os.listdir(audio_dir) if f.endswith(".mp3")]
+            meta_files = [f for f in os.listdir(audio_dir) if f.endswith(".meta.json")]
+            assert len(mp3_files) == 3, f"Expected 3 MP3 files, got: {mp3_files}"
+            assert len(meta_files) == 3, f"Expected 3 sidecars, got: {meta_files}"
+
+            # --- Step: Check history ---
+            response = client.get("/api/history")
             assert response.status_code == 200
+            data = response.json()
+            assert len(data) == 3
 
-        # Verify 3 MP3 + 3 sidecars
-        mp3_files = [f for f in os.listdir(audio_dir) if f.endswith(".mp3")]
-        meta_files = [f for f in os.listdir(audio_dir) if f.endswith(".meta.json")]
-        assert len(mp3_files) == 3, f"Expected 3 MP3 files, got: {mp3_files}"
-        assert len(meta_files) == 3, f"Expected 3 sidecars, got: {meta_files}"
+            # Verify all 3 texts appear
+            history_texts = {entry["text"] for entry in data}
+            for expected_text in [req["text"] for req in requests]:
+                assert expected_text in history_texts, (
+                    f"Expected '{expected_text}' in history"
+                )
 
-        # --- Step: Check history ---
-        response = client.get("/api/history")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 3
-
-        # Verify all 3 texts appear
-        history_texts = {entry["text"] for entry in data}
-        for expected_text in [req["text"] for req in requests]:
-            assert expected_text in history_texts, (
-                f"Expected '{expected_text}' in history"
-            )
-
-        # Verify all entries have non-empty text (sidecar was written)
-        for entry in data:
-            assert entry["text"] != "", (
-                f"Expected non-empty text for {entry['filename']}"
-            )
+            # Verify all entries have non-empty text (sidecar was written)
+            for entry in data:
+                assert entry["text"] != "", (
+                    f"Expected non-empty text for {entry['filename']}"
+                )
+        finally:
+            cleanup()
 
 
 # ===========================================================================
@@ -372,53 +390,55 @@ def test_full_flow_cleanup_removes_old_files_and_sidecars():
             )
 
         # Set limit to 5 — after 7 generations, 2 should be cleaned up
-        _setup_mock_model(
+        cleanup = _setup_mock_model(
             audio_dir=audio_dir,
             speaker_wav_dir=speaker_dir,
             max_audio_files=5,
             path_exists_override=_path_exists,
         )
+        try:
+            client = _client()
 
-        client = _client()
+            # Generate 7 files (exceeds limit of 5)
+            for i in range(7):
+                response = client.post(
+                    "/api/generate",
+                    json={
+                        "text": f"Test text number {i}",
+                        "language": "ar",
+                        "speaker": "KSA Hamed - Male",
+                    },
+                )
+                assert response.status_code == 200
 
-        # Generate 7 files (exceeds limit of 5)
-        for i in range(7):
-            response = client.post(
-                "/api/generate",
-                json={
-                    "text": f"Test text number {i}",
-                    "language": "ar",
-                    "speaker": "KSA Hamed - Male",
-                },
+            # Check file counts — should be at most 5 MP3 + 5 sidecars
+            mp3_files = sorted(f for f in os.listdir(audio_dir) if f.endswith(".mp3"))
+            meta_files = sorted(
+                f for f in os.listdir(audio_dir) if f.endswith(".meta.json")
             )
+
+            assert len(mp3_files) <= 5, (
+                f"Expected <= 5 MP3 files after cleanup, got: {len(mp3_files)}"
+            )
+            assert len(meta_files) <= 5, (
+                f"Expected <= 5 sidecars after cleanup, got: {len(meta_files)}"
+            )
+
+            # Verify history reflects cleanup
+            response = client.get("/api/history")
             assert response.status_code == 200
-
-        # Check file counts — should be at most 5 MP3 + 5 sidecars
-        mp3_files = sorted(f for f in os.listdir(audio_dir) if f.endswith(".mp3"))
-        meta_files = sorted(
-            f for f in os.listdir(audio_dir) if f.endswith(".meta.json")
-        )
-
-        assert len(mp3_files) <= 5, (
-            f"Expected <= 5 MP3 files after cleanup, got: {len(mp3_files)}"
-        )
-        assert len(meta_files) <= 5, (
-            f"Expected <= 5 sidecars after cleanup, got: {len(meta_files)}"
-        )
-
-        # Verify history reflects cleanup
-        response = client.get("/api/history")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) <= 5, (
-            f"Expected <= 5 history entries after cleanup, got: {len(data)}"
-        )
-
-        # All history entries should have non-empty text
-        for entry in data:
-            assert entry["text"] != "", (
-                f"Expected non-empty text for {entry['filename']}"
+            data = response.json()
+            assert len(data) <= 5, (
+                f"Expected <= 5 history entries after cleanup, got: {len(data)}"
             )
+
+            # All history entries should have non-empty text
+            for entry in data:
+                assert entry["text"] != "", (
+                    f"Expected non-empty text for {entry['filename']}"
+                )
+        finally:
+            cleanup()
 
 
 # ===========================================================================
@@ -461,34 +481,38 @@ def test_full_flow_ffmpeg_failure_returns_wav_content_type():
                 stderr=b"ffmpeg: command not found",
             )
 
-        _setup_mock_model(
+        cleanup = _setup_mock_model(
             audio_dir=audio_dir,
             speaker_wav_dir=speaker_dir,
             path_exists_override=_path_exists,
             ffmpeg_side_effect=_ffmpeg_fail,
         )
+        try:
+            client = _client()
 
-        client = _client()
+            response = client.post(
+                "/api/generate",
+                json={
+                    "text": "مرحبا بالعالم",
+                    "language": "ar",
+                    "speaker": "KSA Hamed - Male",
+                },
+            )
 
-        response = client.post(
-            "/api/generate",
-            json={
-                "text": "مرحبا بالعالم",
-                "language": "ar",
-                "speaker": "KSA Hamed - Male",
-            },
-        )
+            assert response.status_code == 200
+            # When FFmpeg fails, the fallback returns audio/wav, not audio/mpeg
+            content_type = response.headers["content-type"]
+            assert "audio/wav" in content_type, (
+                f"Expected audio/wav Content-Type on FFmpeg failure, got: {content_type}"
+            )
 
-        assert response.status_code == 200
-        # When FFmpeg fails, the fallback returns audio/wav, not audio/mpeg
-        content_type = response.headers["content-type"]
-        assert "audio/wav" in content_type, (
-            f"Expected audio/wav Content-Type on FFmpeg failure, got: {content_type}"
-        )
-
-        # Verify WAV file was written (TTS mock writes real WAV)
-        wav_files = [f for f in os.listdir(audio_dir) if f.endswith(".wav")]
-        assert len(wav_files) >= 1, f"Expected at least 1 WAV file, got: {wav_files}"
+            # Verify WAV file was written (TTS mock writes real WAV)
+            wav_files = [f for f in os.listdir(audio_dir) if f.endswith(".wav")]
+            assert len(wav_files) >= 1, (
+                f"Expected at least 1 WAV file, got: {wav_files}"
+            )
+        finally:
+            cleanup()
 
 
 # ===========================================================================
@@ -524,44 +548,50 @@ def test_full_workflow_generate_history_cleanup_history_again():
                 or p.endswith("downloads")
             )
 
-        _setup_mock_model(
+        cleanup = _setup_mock_model(
             audio_dir=audio_dir,
             speaker_wav_dir=speaker_dir,
             max_audio_files=5,
             path_exists_override=_path_exists,
         )
+        try:
+            client = _client()
 
-        client = _client()
+            all_texts = [f"First text {i}" for i in range(7)]
 
-        all_texts = [f"First text {i}" for i in range(7)]
+            # --- Phase 1: Generate 7 files ---
+            for text in all_texts:
+                response = client.post(
+                    "/api/generate",
+                    json={
+                        "text": text,
+                        "language": "ar",
+                        "speaker": "KSA Hamed - Male",
+                    },
+                )
+                assert response.status_code == 200
 
-        # --- Phase 1: Generate 7 files ---
-        for text in all_texts:
-            response = client.post(
-                "/api/generate",
-                json={
-                    "text": text,
-                    "language": "ar",
-                    "speaker": "KSA Hamed - Male",
-                },
-            )
+            # --- Phase 2: Verify history has 5 entries (after cleanup) ---
+            response = client.get("/api/history")
             assert response.status_code == 200
+            data = response.json()
 
-        # --- Phase 2: Verify history has 5 entries (after cleanup) ---
-        response = client.get("/api/history")
-        assert response.status_code == 200
-        data = response.json()
+            assert len(data) <= 5, f"Expected <= 5 history entries, got: {len(data)}"
 
-        assert len(data) <= 5, f"Expected <= 5 history entries, got: {len(data)}"
+            # All entries should have non-empty text
+            for entry in data:
+                assert entry["text"] != "", (
+                    f"Expected non-empty text for {entry['filename']}"
+                )
 
-        # All entries should have non-empty text
-        for entry in data:
-            assert entry["text"] != "", (
-                f"Expected non-empty text for {entry['filename']}"
+            # Verify file counts — cleanup should have reduced to ≤ 5
+            mp3_files = [f for f in os.listdir(audio_dir) if f.endswith(".mp3")]
+            meta_files = [f for f in os.listdir(audio_dir) if f.endswith(".meta.json")]
+            assert len(mp3_files) <= 5, (
+                f"Expected <= 5 MP3 files, got: {len(mp3_files)}"
             )
-
-        # Verify file counts — cleanup should have reduced to ≤ 5
-        mp3_files = [f for f in os.listdir(audio_dir) if f.endswith(".mp3")]
-        meta_files = [f for f in os.listdir(audio_dir) if f.endswith(".meta.json")]
-        assert len(mp3_files) <= 5, f"Expected <= 5 MP3 files, got: {len(mp3_files)}"
-        assert len(meta_files) <= 5, f"Expected <= 5 sidecars, got: {len(meta_files)}"
+            assert len(meta_files) <= 5, (
+                f"Expected <= 5 sidecars, got: {len(meta_files)}"
+            )
+        finally:
+            cleanup()
