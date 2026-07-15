@@ -8,22 +8,20 @@ cd "$SCRIPT_DIR"
 echo "▶ Running backend tests..."
 ./scripts/run-backend-tests.sh "$@"
 
-# ── Frontend: lint ─────────────────────────────────────
+# ── Frontend: lint (inside Docker dev container) ───────
 echo ""
 echo "▶ Running frontend lint..."
-cd frontend
-pnpm lint "$@"
+docker compose -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm lint" "$@"
 
-# ── Frontend: typecheck ────────────────────────────────
+# ── Frontend: typecheck (inside Docker dev container) ──
 echo ""
 echo "▶ Running frontend typecheck..."
-pnpm typecheck "$@"
+docker compose -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm typecheck"
 
-# ── Frontend tests (vitest via pnpm) ───────────────────
+# ── Frontend tests (vitest inside Docker dev container) ─
 echo ""
 echo "▶ Running frontend tests..."
-pnpm test "$@"
-cd ..
+docker compose -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm test"
 
 echo ""
 echo "✓ All checks passed!"

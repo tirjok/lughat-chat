@@ -37,8 +37,8 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 
 | # | File | Slice | What |
 |---|------|-------|------|
-| 9 | `IMPLEMENTATION-speech-synthesis.md` | S-01 | Fix default voice resolution (P0) |
-| 10 | `IMPLEMENTATION-speech-synthesis.md` | S-02, S-05 | Store original text + audio cleanup |
+| 9 | `IMPLEMENTATION-speech-synthesis.md` | S-01 | Fix default voice resolution (P0) ✅ DONE |
+| 10 | `IMPLEMENTATION-speech-synthesis.md` | S-02, S-05 | Store original text + audio cleanup ✅ DONE |
 | 11 | `IMPLEMENTATION-speech-synthesis.md` | S-03, S-04, S-06–08 | Language, seed, error handling, autoplay, shortcuts |
 | 12 | `IMPLEMENTATION-model-cache-and-audio-persistence.md` | S-5 | Integration verification (end-to-end) |
 

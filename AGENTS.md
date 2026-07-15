@@ -491,6 +491,60 @@ These must be ≥ 0.33 seconds (XTTS-v2 minimum). Add custom voices by placing W
 
 ---
 
+## Docker Deployment
+
+**Full reference:** [`docs/docker/DOCKER-GUIDE.md`](../docker/DOCKER-GUIDE.md)
+
+The project runs **two independent Docker Compose environments simultaneously** — production and development.
+
+### Quick Commands
+
+```bash
+./dev.sh up          # Start both prod + dev environments
+./dev.sh down        # Stop all services
+./dev.sh restart     # Restart all
+./dev.sh logs        # View production backend logs
+```
+
+### Environments at a Glance
+
+| Aspect | Production (`docker-compose.yml`) | Development (`docker-compose.dev.yml`) |
+|--------|-----------------------------------|----------------------------------------|
+| Frontend port | 9001:80 | 3000:3000 |
+| Backend port | 9000:8000 | 9000:8000 |
+| Frontend image | `frontend/Dockerfile` (multi-stage) | `frontend/Dockerfile.dev` (dev server) |
+| Backend CMD | `uvicorn` (no reload) | `uvicorn --reload` |
+| Source mounting | None (built image) | `./backend:/app`, `./frontend:/app` |
+| Model cache | `tts-model-cache` | `tts-model-cache-dev` |
+| Audio cache | `tts-audio-cache` | `tts-audio-cache-dev` |
+| Container names | `lughat-backend`, `lughat-frontend` | `lughat-backend-dev`, `lughat-frontend-dev` |
+| Network | `lughat-network` | `lughat-dev-network` |
+| Frontend waits | `service_healthy` (health check) | `service_started` (no health check) |
+
+### Key Docker Facts
+
+- **Backend Dockerfile** builds PyTorch CPU, Coqui TTS 0.27.5, and **rebuilds torchcodec from source** (pre-built wheel requires CUDA)
+- **Frontend production** uses multi-stage build: Node 20 builder → Nginx Alpine server (zero Node.js at runtime)
+- **Frontend development** runs Nuxt dev server with hot reload from mounted source
+- **Nginx** proxies `/api/*` and `/health` to backend; serves SPA static files; 1800s timeout for TTS synthesis
+- **Health check**: backend polls `/health` every 15s (200 retries, 120s start_period); frontend waits for `service_healthy`
+- **Health check is omitted in dev** — 120s start_period would delay frontend startup by 50 minutes
+- **Separate networks** allow both environments to share host port 9000 without conflict
+- **Speaker WAVs** are bind-mounted from host (`./backend/speaker_wavs:/app/speaker_wavs`) — changes visible without restart
+- **Model cache volume** (`tts-model-cache`) is mounted at `/app/.cache/tts` matching `TTS_MODEL_CACHE` env var
+- **`.env` file** at project root is documentation only — values are hardcoded in compose files
+
+### Debugging
+
+```bash
+docker compose logs -f backend          # Production backend
+ docker exec -it lughat-backend /bin/bash  # Shell inside container
+docker volume inspect tts-model-cache   # Check model cache volume
+docker network inspect lughat-network   # Check network config
+```
+
+---
+
 ## CI/CD Pipeline (GitHub Actions)
 
 Two separate workflows — one per service. Both run on `ubuntu-latest` and trigger on pushes/PRs to `main` and `develop`.
@@ -570,6 +624,7 @@ Read these documents before starting any implementation:
 - `docs/workflows/REGISTRY.md` — Identify missing workflow specs (audio playback, toast lifecycle, etc.)
 - `docs/workflows/WORKFLOW-INTERCONNECTED-MAP.md` — Cross-workflow dependencies (what blocks what)
 - `docs/architecture/README.md` — Active ADRs and their decisions
+- `docs/docker/DOCKER-GUIDE.md` — Complete Docker deployment reference (prod vs dev, compose files, Dockerfiles, Nginx config, volumes, networks)
 - `docs/PRD.md` — User stories and requirements
 
 ### 3. Latest Information Search

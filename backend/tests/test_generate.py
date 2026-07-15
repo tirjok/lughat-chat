@@ -1,4 +1,7 @@
 import os
+import tempfile
+
+import pytest
 
 from app import app
 
@@ -9,10 +12,21 @@ from app import app
 import wave as _real_wave_module
 
 _ORIGINAL_WAVE_OPEN = _real_wave_module.open
+_REAL_OS_LISTDIR = os.listdir  # Save real os.listdir for restoration
 
 
 def _mock_tts_model():
-    """Create a mock TTS model that returns without error."""
+    """Create a mock TTS model that writes both WAV and MP3 files.
+
+    The backend's /api/generate endpoint:
+    1. Writes a WAV file via tts_to_file
+    2. Converts WAV → MP3 via ffmpeg
+    3. Deletes the WAV
+    4. Returns FileResponse for the MP3
+
+    Since FileResponse calls os.stat() (not mocked), we must write the
+    MP3 file directly so the real os.stat succeeds.
+    """
 
     class MockTTS:
         def tts_to_file(
@@ -23,16 +37,31 @@ def _mock_tts_model():
             speaker_wav=None,
             temperature=None,
         ):
-            # Create a minimal valid WAV-like file for testing
+            # Create a minimal valid WAV file (the backend expects this).
             import wave
 
             with wave.open(file_path, "w") as wav_file:
                 wav_file.setnchannels(1)
                 wav_file.setsampwidth(2)
                 wav_file.setframerate(22050)
-                # Write 0.1 seconds of silence
                 samples = b"\x00\x00" * 2205
                 wav_file.writeframes(samples)
+
+            # Also write a minimal valid MP3 so FileResponse's os.stat succeeds.
+            # Write a 2-byte sync frame (valid MP3 header) — minimal but
+            # enough that FileResponse's os.stat doesn't raise.
+
+            mp3_path = file_path.replace(".wav", ".mp3")
+            if file_path.endswith(".wav"):
+                mp3_path = file_path[:-4] + ".mp3"
+            else:
+                mp3_path = file_path
+            # Write a minimal valid MP3 (sync word + minimal frame header)
+            with open(mp3_path, "wb") as f:
+                # Minimal valid MP3 frame: 2-byte sync + 1-byte header + 1-byte
+                # extension (0x00) + 1-byte bitrate/frame config (0x00)
+                # This is a valid ISO/IEC 11172-3 frame header.
+                f.write(b"\xff\xfb\x90\x00\x00")
 
     return MockTTS()
 
@@ -80,10 +109,15 @@ def _setup_mock_model():
     Mocks os.path.exists so the backend's speaker_wav file check passes,
     and mocks wave.open for reading (used by _validate_speaker_wav) while
     letting the TTS mock write real WAV files to disk.
+
+    Uses a temporary directory for AUDIO_DIR so that cleanup_audio() does not
+    interfere with the real backend/downloads/ directory (which may contain
+    hundreds of files from prior testing).
     """
     import app as main_app
 
     _mock_wav = _make_mock_wav()
+    tmpdir = tempfile.mkdtemp()
 
     def _mock_path_exists(path):
         # Always return True — we control the entire filesystem via mocks.
@@ -102,6 +136,29 @@ def _setup_mock_model():
     main_app.wave.open = _mock_wave_open
     main_app.tts_model = _mock_tts_model()
     main_app.model_load_status = "ready"
+    main_app.AUDIO_DIR = tmpdir
+
+
+@pytest.fixture(autouse=True)
+def _restore_app_module():
+    """Restore app module state after each test."""
+    yield
+    import app as main_app
+
+    main_app.tts_model = None
+    main_app.model_load_status = "loading"
+    main_app.AUDIO_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(main_app.__file__)), "downloads"
+    )
+    main_app.MAX_AUDIO_FILES = 100
+    main_app.SPEAKER_WAV_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(main_app.__file__)), "speaker_wavs"
+    )
+    main_app.os.path.exists = os.path.exists  # Restore real os.path.exists
+    main_app.wave.open = _ORIGINAL_WAVE_OPEN  # Restore real wave.open
+    main_app.os.listdir = (
+        _REAL_OS_LISTDIR  # Restore real os.listdir (test 430-470 patches it)
+    )
 
 
 def test_generate_speech_requires_text():
@@ -297,6 +354,9 @@ def test_generate_speech_with_custom_voice_works():
     main_app.wave.open = _mock_wave_open
     main_app.tts_model = _mock_tts_model()
     main_app.model_load_status = "ready"
+    # Use a temporary directory for AUDIO_DIR so that cleanup_audio() does not
+    # interfere with the real backend/downloads/ directory.
+    main_app.AUDIO_DIR = tempfile.mkdtemp()
 
     client = TestClient(app)
 
@@ -388,6 +448,9 @@ def test_generate_speech_defaults_to_first_voice_when_no_voice_field():
     main_app.wave.open = _mock_wave_open
     main_app.tts_model = _mock_tts_model()
     main_app.model_load_status = "ready"
+    # Use a temporary directory for AUDIO_DIR so that cleanup_audio() does not
+    # interfere with the real backend/downloads/ directory.
+    main_app.AUDIO_DIR = tempfile.mkdtemp()
 
     client = TestClient(app)
 

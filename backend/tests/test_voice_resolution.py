@@ -26,7 +26,17 @@ _REAL_OS_PATH_EXISTS = os.path.exists
 
 
 def _mock_tts_model():
-    """Create a mock TTS model that writes a minimal valid WAV file."""
+    """Create a mock TTS model that writes both WAV and MP3 files.
+
+    The backend's /api/generate endpoint:
+    1. Writes a WAV file via tts_to_file
+    2. Converts WAV → MP3 via ffmpeg
+    3. Deletes the WAV
+    4. Returns FileResponse for the MP3
+
+    Since FileResponse calls os.stat() (not mocked), we must write the
+    MP3 file directly so the real os.stat succeeds.
+    """
 
     class MockTTS:
         def tts_to_file(
@@ -45,6 +55,15 @@ def _mock_tts_model():
                 wav_file.setframerate(22050)
                 samples = b"\x00\x00" * 2205
                 wav_file.writeframes(samples)
+
+            # Also write a minimal valid MP3 so FileResponse's os.stat succeeds.
+
+            mp3_path = (
+                file_path[:-4] + ".mp3" if file_path.endswith(".wav") else file_path
+            )
+            with open(mp3_path, "wb") as f:
+                # Minimal valid MP3 frame header (ISO/IEC 11172-3).
+                f.write(b"\xff\xfb\x90\x00\x00")
 
     return MockTTS()
 
@@ -90,6 +109,10 @@ def _restore_app_module():
     main_app.SPEAKER_WAV_DIR = os.path.join(
         os.path.dirname(os.path.abspath(main_app.__file__)), "speaker_wavs"
     )
+    main_app.AUDIO_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(main_app.__file__)), "downloads"
+    )
+    main_app.MAX_AUDIO_FILES = 100  # Default
 
 
 def _setup_mock_model(
@@ -115,6 +138,11 @@ def _setup_mock_model(
 
     if speaker_wav_dir is not None:
         main_app.SPEAKER_WAV_DIR = speaker_wav_dir
+
+    # Use a temporary directory for AUDIO_DIR so that cleanup_audio() does not
+    # interfere with the real backend/downloads/ directory (which may contain
+    # hundreds of files from prior testing).
+    main_app.AUDIO_DIR = tempfile.mkdtemp()
 
     if listdir_override is not None:
         main_app.os.listdir = listdir_override

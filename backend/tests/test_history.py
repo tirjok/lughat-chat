@@ -1,4 +1,29 @@
+import os
+
+import pytest
+
 from app import app
+
+# Capture the real wave.open and os functions before any patching.
+import wave as _real_wave_module
+
+_ORIGINAL_WAVE_OPEN = _real_wave_module.open
+_REAL_OS_LISTDIR = os.listdir
+
+
+@pytest.fixture(autouse=True)
+def _restore_app_module():
+    """Restore app module state after each test."""
+    yield
+    import app as main_app
+
+    main_app.AUDIO_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(main_app.__file__)), "downloads"
+    )
+    main_app.MAX_AUDIO_FILES = 999999  # Disable cleanup for history tests
+    main_app.os.path.exists = os.path.exists
+    main_app.wave.open = _ORIGINAL_WAVE_OPEN
+    main_app.os.listdir = _REAL_OS_LISTDIR  # Restore listdir from patched tests
 
 
 def test_history_returns_list_of_audio_files():
@@ -9,6 +34,7 @@ def test_history_returns_list_of_audio_files():
 
     response = client.get("/api/history")
 
+    print(f"DEBUG: status={response.status_code}, body={response.text[:500]}")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)

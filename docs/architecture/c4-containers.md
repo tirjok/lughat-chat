@@ -51,7 +51,7 @@ C4Container
 | **Nuxt SPA** | Nuxt 4.4.5 + Vue 3 + TypeScript + UnoCSS | Full-page TTS Studio: text input (RTL Arabic), voice/speed controls, audio playback, waveform visualization, toast notifications, health polling | Docker network, port 9001:80 (served by Nginx) |
 | **FastAPI Server** | Python 3.12 + FastAPI 0.115.6 + uvicorn | REST API: `/health`, `/api/voices`, `/api/generate`, `/api/history`. Background TTS model loading. Static file serving for downloads/speaker_wavs. | Docker network, port 9000:8000 |
 | **XTTS-v2 Model** | Coqui TTS 0.27.5 + PyTorch (CPU-only) | Multilingual TTS engine. Loads on startup (~120s). Clones voices from reference WAV files. CPU-only inference takes several seconds per request. | Inside backend container |
-| **TTS Model Cache** | Docker named volume | Persists ~2GB TTS model files. Currently **not used for persistence** — model is re-downloaded on each restart (env var `TTS_MODEL_CACHE` points to `/app/.cache/tts`, not the volume mount). | Docker volume: `tts-model-cache` |
+| **TTS Model Cache** | Docker named volume | Persists ~2GB TTS model files. Mounted at `/app/.cache/tts` matching `TTS_MODEL_CACHE` env var (RC-004 fixed). | Docker volume: `tts-model-cache` |
 | **Audio Cache** | Docker named volume | Persists generated MP3 files. No cleanup mechanism. | Docker volume: `tts-audio-cache` |
 | **Speaker WAV Library** | Host-mounted directory | Reference audio files for voice cloning. Dynamically discovered via `/api/voices`. | `./backend/speaker_wavs/` on host, mounted to `/app/speaker_wavs/` in container |
 
@@ -85,7 +85,7 @@ C4Container
 2. **API proxy at Nginx level** — Frontend makes relative URL calls (`/api/generate`); Nginx routes to the backend container. No hardcoded backend URLs in frontend code.
 3. **Background model loading** — FastAPI starts serving requests immediately; TTS model loads asynchronously in a daemon thread. Health polling handles the ~120s loading window.
 4. **Speaker WAV directory** — Voices are dynamically discovered at runtime by scanning `.wav` files. No hardcoded voice list.
-5. **Docker named volumes** — Model cache and audio cache use named volumes. Model cache is currently **not used for persistence** (env var overrides the mount point).
+5. **Docker named volumes** — Model cache and audio cache use named volumes. Model cache is now **used for persistence** (RC-004 fixed: volume mounted at `/app/.cache/tts` matches `TTS_MODEL_CACHE` env var).
 
 ## Cross-Cutting Concerns
 

@@ -2,6 +2,7 @@
 
 > **System:** Lughat Chat — Arabic Text-to-Speech Studio
 > **Generated:** 2026-07-05
+> **Updated:** 2025-07-15 (Docker dev vs prod documentation)
 > **Level:** 4 — Deployment (Infrastructure nodes, containers, volumes, and network topology)
 
 ---
@@ -28,14 +29,14 @@ C4Deployment
     Container(tts_engine, "XTTS-v2 Model", "Coqui TTS 0.27.5 + PyTorch (CPU)", "Multilingual TTS engine. Loaded in background thread (~120s). Voice cloning from speaker reference WAV files.")
   }
 
-  Deployment_Node(model_vol, "TTS Model Cache Volume", "Docker named volume (~2 GB)", "Persists TTS model files. Currently NOT used for persistence (env var TTS_MODEL_CACHE overrides mount point).")
-  Deployment_Node(audio_vol, "Audio Cache Volume", "Docker named volume (unbounded)", "Persists generated MP3 files. No cleanup mechanism.")
+  Deployment_Node(model_vol, "TTS Model Cache Volume", "Docker named volume (~2 GB)", "Persists TTS model files. Mounted at /app/.cache/tts matching TTS_MODEL_CACHE env var.")
+  Deployment_Node(audio_vol, "Audio Cache Volume", "Docker named volume (unbounded)", "Persists generated MP3 files. Cleanup enforced via MAX_AUDIO_FILES env var (default: 100).")
 
   Rel(browser, nginx_serve, "Loads SPA; sends synthesis requests", "HTTP/HTTPS / Port 9001")
   Rel(nginx_proxy, fastapi_app, "Proxies API/health requests", "HTTP / Internal network")
 
   Rel(fastapi_app, tts_engine, "Invokes TTS inference", "Python API / In-process")
-  Rel(fastapi_app, model_vol, "Stores model files", "File system (overridden by env)")
+  Rel(fastapi_app, model_vol, "Stores model files", "File system (volume mounted at /app/.cache/tts)")
   Rel(fastapi_app, audio_vol, "Writes generated MP3s", "File system (mounted)")
 
   Rel(backend_container, speaker_wavs_mount, "Reads reference WAV files", "Host mount: ./backend/speaker_wavs → /app/speaker_wavs/")
@@ -74,8 +75,8 @@ C4Deployment
 
 | Volume | Mount Point | Size | Persistence |
 |--------|-------------|------|-------------|
-| `tts-model-cache` | `/root/.local/share/tts` (in container) | ~2 GB | **Not used** — app writes to `/app/.cache/tts` (env var overrides mount) |
-| `tts-audio-cache` | `/app/downloads` (in container) | Unbounded | **Used** — persists generated MP3 files |
+| `tts-model-cache` | `/app/.cache/tts` (in container) | ~2 GB | **Used** — persists TTS model across restarts (RC-004 fixed) |
+| `tts-audio-cache` | `/app/downloads` (in container) | ~2 GB (capped) | **Used** — persists generated MP3 files (cleanup via MAX_AUDIO_FILES) |
 
 ## Network Topology
 
@@ -101,8 +102,8 @@ Browser (Port 9001)
 │                                 └────────────────────────┘ │
 │                                                               │
 │  Volumes:                                                   │
-│  • tts-model-cache → /root/.local/share/tts (not used)     │
-│  • tts-audio-cache → /app/downloads (used)                 │
+│  • tts-model-cache → /app/.cache/tts (used, RC-004 fixed)  │
+│  • tts-audio-cache → /app/downloads (used, cleanup enabled) │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -121,7 +122,7 @@ services:
     container_name: lughat-backend
     ports: ["9000:8000"]
     volumes:
-      - tts-model-cache:/root/.local/share/tts
+      - tts-model-cache:/app/.cache/tts
       - tts-audio-cache:/app/downloads
       - ./backend/speaker_wavs:/app/speaker_wavs
     environment:
@@ -150,8 +151,9 @@ services:
 ## Key Deployment Notes
 
 1. **No GPU support** — CPU-only inference; generation takes several seconds per request.
-2. **Model re-download** — Despite the `tts-model-cache` volume being defined, the app writes to `/app/.cache/tts` (env var), which is not the volume mount point (`/root/.local/share/tts`). The ~2GB model is re-downloaded on each container restart.
+2. **Model cache persists** — The `tts-model-cache` volume is mounted at `/app/.cache/tts`, matching the `TTS_MODEL_CACHE` env var. The ~2GB model is downloaded once and persisted across restarts (RC-004 fixed).
 3. **1800s timeouts** — Nginx allows up to 30 minutes for TTS synthesis (long texts on CPU can take minutes).
 4. **Speaker WAV persistence** — `./backend/speaker_wavs/` is mounted from the host, so new `.wav` files are visible without rebuilding.
-5. **Audio accumulation** — Generated MP3s accumulate in `tts-audio-cache` with no cleanup mechanism.
+5. **Audio cleanup** — Generated MP3s are capped at `MAX_AUDIO_FILES` (default: 100). Oldest files are deleted when the limit is exceeded (RC-007 fixed).
 6. **CORS** — Both Nginx and FastAPI allow all origins (`*`). Should be restricted to the frontend container IP in production.
+7. **History stores text** — `/api/history` now returns the original synthesized text via sidecar JSON files (RC-005 fixed).

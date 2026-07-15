@@ -1,0 +1,65 @@
+# ─────────────────────────────────────────────────────────
+# Development environment — hot reload, editable source
+# ─────────────────────────────────────────────────────────
+# - Backend: uvicorn with --reload (port 9000)
+# - Frontend: pnpm dev (port 3000, proxies to backend:9000)
+# - Source code mounted as volumes → changes reflected immediately
+# - No rebuild needed for code changes
+# ─────────────────────────────────────────────────────────
+services:
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lughat-backend-dev
+    ports:
+      - "9000:8000"
+    volumes:
+      # Mount source code — changes reflected without rebuild
+      - ./backend:/app
+      # Persist model cache across restarts
+      - tts-model-cache-dev:/app/.cache/tts
+      # Persist generated audio files
+      - tts-audio-cache-dev:/app/downloads
+      # Mount speaker_wavs
+      - ./backend/speaker_wavs:/app/speaker_wavs
+    environment:
+      - TZ=UTC
+      - TTS_MODEL_CACHE=/app/.cache/tts
+      - COQUI_TOS_AGREED=1
+      - LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/x86_64-linux-gnu
+      - MAX_AUDIO_FILES=100
+    restart: unless-stopped
+    networks:
+      - lughat-dev-network
+    # No healthcheck during dev — model loading is async
+    # (healthcheck would block startup with 120s start_period)
+    # Override CMD to run uvicorn with hot-reload
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: lughat-frontend-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code — changes reflected without rebuild
+      - ./frontend:/app
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      backend-dev:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - lughat-dev-network
+
+networks:
+  lughat-dev-network:
+    driver: bridge
+
+volumes:
+  tts-model-cache-dev:     # Persists TTS model (2GB, downloaded once)
+  tts-audio-cache-dev:     # Persists generated audio files

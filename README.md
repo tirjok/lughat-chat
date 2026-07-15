@@ -46,10 +46,22 @@ A **text-to-speech (TTS) web application** for Arabic speech synthesis, powered 
 # Start all services (model downloads on first run — ~2GB)
 docker compose up --build
 
-# Access the app at http://localhost
+# Access the app at http://localhost:9001
 ```
 
 The TTS model is cached in a named volume (`tts-model-cache`) so it only downloads once. Generated audio files are persisted in `tts-audio-cache`.
+
+### Start Development + Production Simultaneously
+
+```bash
+# Start both environments (see docs/docker/DOCKER-GUIDE.md)
+./dev.sh up
+
+# Development:  http://localhost:3000  (hot reload)
+# Production:   http://localhost:9001  (Nginx)
+```
+
+> **Full Docker reference:** [`docs/docker/DOCKER-GUIDE.md`](docs/docker/DOCKER-GUIDE.md) — environments, Dockerfiles, Nginx config, volumes, networks, troubleshooting.
 
 #### Environment Variables (in `.env`)
 

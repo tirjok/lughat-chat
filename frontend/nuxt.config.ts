@@ -38,13 +38,19 @@ export default defineNuxtConfig({
   nitro: {
     // Proxy to backend in development mode only.
     // In production, Nginx handles all proxying (see Dockerfile).
+    // When running in Docker dev mode, proxy to the backend container
+    // by its Docker Compose service name (backend-dev).
     devProxy: {
       '/api/': {
-        target: 'http://localhost:9000/api/',
+        target: process.env.NODE_ENV === 'docker'
+          ? 'http://backend-dev:8000/api/'
+          : 'http://localhost:9000/api/',
         changeOrigin: true
       },
       '/health': {
-        target: 'http://localhost:9000/health',
+        target: process.env.NODE_ENV === 'docker'
+          ? 'http://backend-dev:8000/health'
+          : 'http://localhost:9000/health',
         changeOrigin: true
       }
     }

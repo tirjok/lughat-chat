@@ -2,13 +2,13 @@
 
 ## Status
 
-**Approved** — 2026-07-11
+**Implemented** — RC-004, RC-005, RC-007 fixed (2025-07-15). RC-006 status: see backend source.
 
 Addresses:
-- **RC-004** (High): Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused
-- **RC-005** (High): `/api/history` always returns `text: ""` — original synthesized text is lost
+- **RC-004** (High): ~~Named volume `tts-model-cache` mounted at `/root/.local/share/tts` but app writes to `/app/.cache/tts` — volume is unused~~ → **FIXED** — volume now mounted at `/app/.cache/tts` matching `TTS_MODEL_CACHE`
+- **RC-005** (High): ~~`/api/history` always returns `text: ""` — original synthesized text is lost~~ → **FIXED** — sidecar JSON files store original text
 - **RC-006** (Medium): FFmpeg fallback copies WAV to `.mp3` extension — browser may not decode
-- **RC-007** (Medium): No rate limiting on `/api/generate` — disk fills indefinitely
+- **RC-007** (Medium): ~~No rate limiting on `/api/generate` — disk fills indefinitely~~ → **FIXED** — `MAX_AUDIO_FILES` env var enforces cleanup
 
 ---
 
@@ -16,36 +16,37 @@ Addresses:
 
 Four related issues affect the backend's audio generation and persistence:
 
-### RC-004: Model Cache Volume Path Mismatch
+### RC-004: Model Cache Volume Path Mismatch ~~(FIXED)~~
 
-The Docker Compose configuration mounts the `tts-model-cache` named volume at `/root/.local/share/tts` inside the backend container, but the application writes model files to `/app/.cache/tts` (set via the `TTS_MODEL_CACHE` environment variable). This path mismatch means the named volume is **completely unused** — the ~2GB TTS model is re-downloaded on every container restart.
+The Docker Compose configuration originally mounted the `tts-model-cache` named volume at `/root/.local/share/tts` inside the backend container, while the application writes model files to `/app/.cache/tts` (set via the `TTS_MODEL_CACHE` environment variable). This path mismatch meant the named volume was **completely unused** — the ~2GB TTS model was re-downloaded on every container restart.
 
-**Current code** (`docker-compose.yml`):
+**Fixed code** (`docker-compose.yml`):
 ```yaml
 volumes:
-  - tts-model-cache:/root/.local/share/tts   # ← WRONG PATH
+  - tts-model-cache:/app/.cache/tts   # ← FIXED: matches TTS_MODEL_CACHE env var
 environment:
-  - TTS_MODEL_CACHE=/app/.cache/tts           # ← App writes here, volume mounts elsewhere
+  - TTS_MODEL_CACHE=/app/.cache/tts   # ← Now matches volume mount point
 ```
 
-**Impact**: Every container restart re-downloads ~2GB, adding ~2 minutes to every startup. The model cache volume is defined but does nothing.
+**Impact**: The ~2GB model is now downloaded once and persisted across container restarts. No more 2-minute download delay on every restart.
 
-### RC-005: Original Text Lost in History
+### RC-005: Original Text Lost in History ~~(FIXED)~~
 
-The `/api/history` endpoint returns `text: ""` for every entry because the original synthesized text is not stored with the generated audio file. The filename `{lang}_{voice}_{timestamp}.mp3` contains only metadata (language, voice, timestamp) — no text content.
+The `/api/generate` endpoint now stores the original synthesized text in a sidecar JSON file next to each generated MP3. The `/api/history` endpoint reads these sidecar files and returns the original text.
 
-**Current code** (`app.py`):
+**Fixed code** (`app.py`):
 ```python
+# On generation: stores text in sidecar JSON
 items.append({
     "filename": filename,
-    "text": "",  # We don't store the original text
-    "language": language,
-    "voice": voice,
+    "text": request.text,  # ← FIXED: stores original text
     ...
 })
+# On history: reads sidecar JSON
+    text = sidecar.get("text", "")
 ```
 
-**Impact**: Users cannot see what text was synthesized for each audio file in their history. This breaks the ability to review past generations.
+**Impact**: Users can now see what text was synthesized for each audio file in their history. Past generations are fully reviewable.
 
 ### RC-006: FFmpeg Fallback Produces Invalid MP3
 
@@ -60,23 +61,30 @@ except subprocess.CalledProcessError as e:
 
 **Impact**: On some browsers, the audio plays as silent or garbled noise. On others, it may fail entirely.
 
-### RC-007: No Rate Limiting — Disk Fills Indefinitely
+### RC-007: No Rate Limiting — Disk Fills Indefinitely ~~(FIXED)~~
 
-Generated MP3 files in `tts-audio-cache` are never cleaned up. The volume grows without bound, potentially filling the disk.
+Generated MP3 files in `tts-audio-cache` were never cleaned up. The volume grew without bound, potentially filling the disk.
 
-**Current behavior**: `get_history()` lists all files in `/app/downloads/` — no cleanup logic exists.
+**Fixed code** (`app.py`):
+```python
+MAX_AUDIO_FILES = int(os.environ.get("MAX_AUDIO_FILES", "100"))
+def cleanup_audio():
+    """Delete oldest audio files beyond MAX_AUDIO_FILES limit."""
+    if len(audio_files) <= MAX_AUDIO_FILES:
+        return  # No cleanup needed
+```
 
-**Impact**: After many generations, the Docker volume fills up, causing container errors and potential system instability.
+**Impact**: Generated MP3s are now capped at `MAX_AUDIO_FILES` (default: 100). Oldest files are automatically deleted when the limit is exceeded, preventing disk fill-up.
 
 ---
 
-## Decision
+## Decision (Historical)
 
-### We choose: Three-Part Fix
+### We chose: Three-Part Fix
 
-1. **Fix the model cache volume path** (RC-004) — Change the volume mount to `/app/.cache/tts` to match the env var
-2. **Store original text with audio files** (RC-005) — Write sidecar JSON files next to each MP3
-3. **Add audio file cleanup** (RC-007) — Keep the N most recent files, delete older ones
+1. **Fix the model cache volume path** (RC-004) — Changed the volume mount to `/app/.cache/tts` to match the env var ✅ **IMPLEMENTED**
+2. **Store original text with audio files** (RC-005) — Write sidecar JSON files next to each MP3 ✅ **IMPLEMENTED**
+3. **Add audio file cleanup** (RC-007) — Keep the N most recent files, delete older ones ✅ **IMPLEMENTED**
 4. **Fix FFmpeg fallback** (RC-006) — Return the WAV file with correct `Content-Type: audio/wav` instead of copying to `.mp3`
 
 ### 1. Fix Model Cache Volume Path

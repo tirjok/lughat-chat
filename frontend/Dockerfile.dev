@@ -1,0 +1,26 @@
+# Development Dockerfile — Nuxt dev server with hot reload
+FROM node:20-alpine
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@10.33.4 --activate
+
+WORKDIR /app
+
+# Copy package files first (for layer caching)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Install dependencies (dev deps included)
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Expose dev server port
+EXPOSE 3000
+
+# When running in Docker, proxy frontend dev server to backend-dev container
+ENV NODE_ENV=docker
+ENV HOST=0.0.0.0
+
+# Run dev server with hot reload
+CMD ["pnpm", "dev"]

@@ -202,6 +202,41 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 
 ---
 
+## Docker Deployment
+
+**Full reference:** [`docs/docker/DOCKER-GUIDE.md`](../docker/DOCKER-GUIDE.md)
+
+The project runs **two independent Docker Compose environments** simultaneously — production and development — each with its own network, containers, and volumes.
+
+### Quick Reference
+
+| Aspect | Production | Development |
+|--------|-----------|-------------|
+| Frontend port | 9001:80 | 3000:3000 |
+| Backend port | 9000:8000 | 9000:8000 |
+| Frontend image | `frontend/Dockerfile` (multi-stage) | `frontend/Dockerfile.dev` |
+| Backend CMD | `uvicorn` (no reload) | `uvicorn --reload` |
+| Source mounting | None | `./backend:/app`, `./frontend:/app` |
+| Model cache | `tts-model-cache` | `tts-model-cache-dev` |
+| Audio cache | `tts-audio-cache` | `tts-audio-cache-dev` |
+| Container names | `lughat-backend`, `lughat-frontend` | `lughat-backend-dev`, `lughat-frontend-dev` |
+| Network | `lughat-network` | `lughat-dev-network` |
+| Frontend waits | `service_healthy` | `service_started` |
+
+### Key Docker Facts
+- Backend Dockerfile rebuilds **torchcodec from source** (pre-built wheel requires CUDA)
+- Frontend production: multi-stage build (Node 20 builder → Nginx Alpine, zero Node.js at runtime)
+- Frontend development: Nuxt dev server with hot reload from mounted source
+- Nginx proxies `/api/*` and `/health` to backend; 1800s timeout for TTS synthesis
+- Health check: backend polls `/health` every 15s (200 retries, 120s start_period)
+- Health check is **omitted in dev** — 120s start would delay frontend by 50 minutes
+- Separate networks allow both environments to share host port 9000 without conflict
+- Speaker WAVs are bind-mounted from host — changes visible without restart
+- Model cache volume (`tts-model-cache`) mounted at `/app/.cache/tts` matching `TTS_MODEL_CACHE`
+- `.env` file at project root is documentation only — values are hardcoded in compose files
+
+---
+
 ## Known Issues & Debugging Patterns
 
 ### Audio Playback Timing Issue (Fixed 2026-06-05)

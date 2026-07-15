@@ -326,7 +326,10 @@ function handleClosePlayer() {
             />
 
             <!-- Speed Control -->
-            <SpeedSlider v-model="speedValue" :disabled="isModelLoading" />
+            <SpeedSlider
+              v-model="speedValue"
+              :disabled="isModelLoading"
+            />
           </div>
         </div>
 
@@ -505,7 +508,10 @@ function handleClosePlayer() {
               :voices="speakerVoices"
               :disabled="isModelLoading"
             />
-            <SpeedSlider v-model="speedValue" :disabled="isModelLoading" />
+            <SpeedSlider
+              v-model="speedValue"
+              :disabled="isModelLoading"
+            />
           </div>
         </div>
 
