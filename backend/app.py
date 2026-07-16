@@ -11,6 +11,9 @@ import subprocess
 import threading
 import wave
 from typing import Optional
+from pathlib import Path
+import sqlite3
+from sqlite_safety import apply_safety_pragmas
 
 # Slice 2: SQLite lessons table
 from lessons_db import init_lessons_db
@@ -376,10 +379,236 @@ async def health():
     }
 
 
+# ---------------------------------------------------------------------------
+# S-04 & S-05: Lesson content serving endpoints
+# ---------------------------------------------------------------------------
+
+# Default database path (shared with lessons_db / progress_db)
+DB_PATH = str(Path(__file__).resolve().parent / "lughat.db")
+
+
 @app.get("/api/voices")
 async def list_voices():
     """List available voices discovered from speaker_wavs/ directory."""
     return discover_voices(SPEAKER_WAV_DIR)
+
+
+def _get_db_connection():
+    """Open a SQLite connection using the current DB_PATH."""
+    conn = sqlite3.connect(DB_PATH)
+    apply_safety_pragmas(conn)
+    return conn
+
+
+@app.get("/api/lessons")
+async def list_lessons():
+    """Slice 4: Return lesson summaries with status resolved from user_progress.
+
+    Returns lesson summaries: { id, level, sequence, title,
+    competency_count, section_count, status }.
+    Sorted by level (A1, A2, B1) then sequence (1, 2, 3...).
+    Returns [] when no lessons exist (not an error).
+    Returns 500 when SQLite query fails.
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            # Fetch all lessons from the lessons table.
+            rows = conn.execute(
+                "SELECT id, level, sequence, title, competency_count, "
+                "section_count, activity_count "
+                "FROM lessons ORDER BY level ASC, sequence ASC"
+            ).fetchall()
+
+            if not rows:
+                return []
+
+            # Resolve status from user_progress table.
+            # For each lesson, check if ALL its activities are completed.
+            # First lesson per level: 'available'.
+            # Subsequent lessons: 'available' only if previous lesson's
+            # activities are all completed; otherwise 'locked'.
+
+            # Build a map of lesson_id -> list of activity statuses.
+            progress_rows = conn.execute(
+                "SELECT lesson_id, activity_id, status FROM user_progress"
+            ).fetchall()
+
+            # Group statuses by lesson_id.
+            lesson_activity_statuses = {}
+            for lesson_id, activity_id, status in progress_rows:
+                if lesson_id not in lesson_activity_statuses:
+                    lesson_activity_statuses[lesson_id] = {}
+                lesson_activity_statuses[lesson_id][activity_id] = status
+
+            # Sort rows by level, sequence for deterministic ordering.
+            sorted_rows = sorted(rows, key=lambda r: (r[1].lower(), r[2]))
+
+            # Derive first-lesson-per-level from the sorted list (first occurrence
+            # per level key is the first lesson).
+            first_lesson_ids = set()
+            seen_levels = set()
+            for row in sorted_rows:
+                lesson_id, level, sequence, title, competency_count, section_count, activity_count = row
+                level_key = level.lower()
+                if level_key not in seen_levels:
+                    seen_levels.add(level_key)
+                    first_lesson_ids.add(lesson_id)
+
+            # Build summary list.
+            summaries = []
+            for i, row in enumerate(sorted_rows):
+                lesson_id, level, sequence, title, competency_count, section_count, activity_count = row
+
+                # Resolve status.
+                activity_statuses = lesson_activity_statuses.get(lesson_id, {})
+                all_completed = (
+                    activity_statuses
+                    and all(s == "completed" for s in activity_statuses.values())
+                )
+
+                if all_completed:
+                    status = "completed"
+                elif lesson_id in first_lesson_ids:
+                    status = "available"
+                else:
+                    # Check if previous lesson (same level) is fully completed.
+                    status = "locked"
+                    if i > 0:
+                        prev_row = sorted_rows[i - 1]
+                        prev_level = prev_row[1]
+                        if prev_level.lower() == level.lower():
+                            prev_id = prev_row[0]
+                            prev_statuses = lesson_activity_statuses.get(prev_id, {})
+                            if prev_statuses and all(
+                                s == "completed" for s in prev_statuses.values()
+                            ):
+                                status = "available"
+
+                summaries.append({
+                    "id": lesson_id,
+                    "level": level,
+                    "sequence": sequence,
+                    "title": title,
+                    "competency_count": competency_count,
+                    "section_count": section_count,
+                    "status": status,
+                })
+
+            return summaries
+        finally:
+            conn.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/lessons/{lesson_id}")
+async def get_lesson(lesson_id: int):
+    """Slice 5: Return full lesson data with progress.
+
+    Returns full lesson JSON: { id, level, sequence, title,
+    competencies, sections, activities } plus progress data from
+    user_progress: { status, activities: { activityId: { score, attempts, status } } }.
+
+    Returns 404 for non-existent lesson IDs.
+    Returns 403 for locked lessons (with 'This lesson is locked' message).
+    Returns 500 when SQLite query fails.
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            # Fetch the lesson from the lessons table.
+            row = conn.execute(
+                "SELECT id, level, sequence, title, competency_count, "
+                "section_count, activity_count, competencies, sections, activities "
+                "FROM lessons WHERE id = ?",
+                (lesson_id,),
+            ).fetchone()
+
+            if not row:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Lesson with id {lesson_id} not found",
+                )
+
+            (
+                lesson_id_val, level, sequence, title, competency_count,
+                section_count, activity_count, competencies_json,
+                sections_json, activities_json,
+            ) = row
+
+            # Parse JSON fields.
+            competencies = json.loads(competencies_json) if competencies_json else []
+            sections = json.loads(sections_json) if sections_json else []
+            activities = json.loads(activities_json) if activities_json else []
+
+            # Fetch progress data from user_progress.
+            progress_rows = conn.execute(
+                "SELECT lesson_id, activity_id, score, status, attempts "
+                "FROM user_progress WHERE lesson_id = ?",
+                (lesson_id_val,),
+            ).fetchall()
+
+            # Build activity progress map.
+            activity_progress = {}
+            for p_lesson_id, activity_id, score, status, attempts in progress_rows:
+                activity_progress[str(activity_id)] = {
+                    "score": score if score is not None else 0,
+                    "status": status,
+                    "attempts": attempts if attempts is not None else 0,
+                }
+
+            # Determine overall lesson status from progress.
+            # A lesson with 0 activities (activity_count == 0) has no
+            # user_progress rows, so activity_progress is empty and defaults
+            # to 'locked' — but an empty lesson should be accessible.
+            if activity_count == 0:
+                lesson_status = "available"
+            elif activity_progress:
+                statuses = [ap["status"] for ap in activity_progress.values()]
+                all_completed = all(s == "completed" for s in statuses)
+                has_any_attempt = any(ap["attempts"] > 0 for ap in activity_progress.values())
+
+                if all_completed:
+                    lesson_status = "completed"
+                elif has_any_attempt:
+                    lesson_status = "in_progress"
+                else:
+                    # All activities in a lesson share the same initial status
+                    # (locked or available), so statuses[0] is safe.
+                    lesson_status = statuses[0] if statuses else "locked"
+            else:
+                lesson_status = "locked"
+
+            # Check if lesson is locked — return 403.
+            if lesson_status == "locked":
+                raise HTTPException(
+                    status_code=403,
+                    detail="This lesson is locked. Complete previous lessons to unlock.",
+                )
+
+            # Build the full lesson response.
+            lesson_data = {
+                "id": lesson_id_val,
+                "level": level,
+                "sequence": sequence,
+                "title": title,
+                "competencies": competencies,
+                "sections": sections,
+                "activities": activities,
+                "progress": {
+                    "status": lesson_status,
+                    "activities": activity_progress,
+                },
+            }
+
+            return lesson_data
+        finally:
+            conn.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/generate")
