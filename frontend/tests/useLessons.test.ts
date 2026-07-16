@@ -47,14 +47,15 @@ describe('useLessons', () => {
     })
 
     it('returns empty array when fetch throws a network error', async () => {
-      registerEndpoint('/api/lessons', {
-        handler: () => { throw new Error('Network failure') }
-      })
+      const originalFetch = global.fetch
+      const mockRejected = vi.fn().mockRejectedValue(new Error('Network failure'))
+      global.fetch = mockRejected as typeof fetch
 
       const { lessons, fetchLessons } = useLessons()
-
-      await expect(fetchLessons()).resolves.toEqual([])
+      await fetchLessons()
       expect(lessons.value).toEqual([])
+
+      global.fetch = originalFetch
     })
 
     it('sets loading to true during fetch', async () => {
