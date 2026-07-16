@@ -31,6 +31,7 @@ import sqlite3
 from pathlib import Path
 
 from content_scanner import scan_content
+from sqlite_safety import apply_safety_pragmas
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,7 @@ def init_lessons_db(content_dir: str = "content", db_path: str | None = None) ->
         db_path = DB_PATH
 
     conn = sqlite3.connect(db_path)
+    apply_safety_pragmas(conn)
 
     try:
         # 1. Create the table (if not exists).

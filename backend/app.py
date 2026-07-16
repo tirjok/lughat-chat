@@ -15,6 +15,9 @@ from typing import Optional
 # Slice 2: SQLite lessons table
 from lessons_db import init_lessons_db
 
+# Slice 3: user_progress table
+from progress_db import init_user_progress_db
+
 # Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
 # This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
 import os as _os
@@ -268,6 +271,12 @@ async def lifespan(app: FastAPI):
         init_lessons_db(CONTENT_DIR)
     except Exception as e:
         print(f"Warning: Failed to initialize lessons database: {e}")
+
+    # Slice 3: Initialize user_progress table from JSON files
+    try:
+        init_user_progress_db(CONTENT_DIR)
+    except Exception as e:
+        print(f"Warning: Failed to initialize user_progress database: {e}")
 
     def load_model():
         """Load TTS model in a background thread."""
