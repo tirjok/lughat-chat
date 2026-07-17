@@ -13,7 +13,7 @@
       class="dialogue-content"
     >
       <div
-        v-for="scene in (section.content as { scenes?: Array<{ label?: string; lines?: Array<{ speaker?: string; arabic?: string; english?: string }> }> })?.scenes"
+        v-for="scene in dialogueContent?.scenes"
         :key="scene.label"
         class="scene mb-4"
       >
@@ -52,7 +52,7 @@
       class="vocabulary-content"
     >
       <div
-        v-for="category in (section.content as { categories?: Array<{ label?: string; words?: Array<{ arabic?: string; english?: string; plural?: string }> }> })?.categories"
+        v-for="category in vocabularyContent?.categories"
         :key="category.label"
         class="vocab-category mb-4"
       >
@@ -74,7 +74,7 @@
           <button
             class="tts-btn text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
             :data-tts-text="word.arabic"
-            @click="handleTTS(word.arabic!)"
+            @click="handleTTS(word.arabic)"
           >
             🔊
           </button>
@@ -103,7 +103,7 @@
         </thead>
         <tbody>
           <tr
-            v-for="pronoun in (section.content as { pronouns?: Array<{ arabic?: string; english?: string; example?: string }> })?.pronouns"
+            v-for="pronoun in pronounsContent?.pronouns"
             :key="pronoun.arabic"
             class="border-b border-gray-100 dark:border-gray-800"
           >
@@ -133,7 +133,7 @@
       class="expressions-content"
     >
       <div
-        v-for="expr in (section.content as { expressions?: Array<{ arabic?: string; english?: string }> })?.expressions"
+        v-for="expr in expressionsContent?.expressions"
         :key="expr.arabic"
         class="expression flex gap-3 items-center mb-2"
         dir="rtl"
@@ -143,7 +143,7 @@
         <button
           class="tts-btn text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
           :data-tts-text="expr.arabic"
-          @click="handleTTS(expr.arabic!)"
+          @click="handleTTS(expr.arabic)"
         >
           🔊
         </button>
@@ -156,7 +156,7 @@
       class="grammar-content"
     >
       <div
-        v-for="topic in (section.content as { topics?: Array<{ name?: string; description?: string; examples?: Array<{ arabic?: string; english?: string }> }> })?.topics"
+        v-for="topic in grammarContent?.topics"
         :key="topic.name"
         class="grammar-topic mb-4"
       >
@@ -177,7 +177,7 @@
           <button
             class="tts-btn text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
             :data-tts-text="ex.arabic"
-            @click="handleTTS(ex.arabic!)"
+            @click="handleTTS(ex.arabic)"
           >
             🔊
           </button>
@@ -191,63 +191,60 @@
       class="unknown-section"
     >
       <p class="text-red-500 dark:text-red-400">
-        Unknown section type: {{ section.type }}
+        Unknown section type: {{ unknownSectionType }}
       </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-interface SectionContent {
-  scenes?: Array<{
-    label?: string
-    lines?: Array<{
-      speaker?: string
-      arabic?: string
-      english?: string
-    }>
-  }>
-  categories?: Array<{
-    label?: string
-    words?: Array<{
-      arabic?: string
-      english?: string
-      plural?: string
-    }>
-  }>
-  pronouns?: Array<{
-    arabic?: string
-    english?: string
-    example?: string
-  }>
-  expressions?: Array<{
-    arabic?: string
-    english?: string
-  }>
-  topics?: Array<{
-    name?: string
-    description?: string
-    examples?: Array<{
-      arabic?: string
-      english?: string
-    }>
-  }>
-}
+import type {
+  DialogueSectionContent,
+  ExpressionsSectionContent,
+  GrammarSectionContent,
+  LessonSection,
+  PronounsSectionContent,
+  VocabularySectionContent
+} from '../composables/useLessons'
 
 interface SectionRendererProps {
-  section: {
-    type?: string
-    title?: string
-    content?: SectionContent | Record<string, unknown>
-  }
+  section: LessonSection
   lessonId: number
 }
 
-defineProps<SectionRendererProps>()
+const props = defineProps<SectionRendererProps>()
 
 const { synthesize } = useTtsApi()
 
 function handleTTS(text: string) {
   synthesize({ text })
 }
+
+// Type-safe narrowing: each computed returns the correctly-typed content for its section type.
+const unknownSectionType = computed<string>(() => props.section.type)
+
+const dialogueContent = computed<DialogueSectionContent | undefined>(() => {
+  if (props.section.type === 'dialogue') return props.section.content as DialogueSectionContent
+  return undefined
+})
+
+const vocabularyContent = computed<VocabularySectionContent | undefined>(() => {
+  if (props.section.type === 'vocabulary') return props.section.content as VocabularySectionContent
+  return undefined
+})
+
+const pronounsContent = computed<PronounsSectionContent | undefined>(() => {
+  if (props.section.type === 'pronouns') return props.section.content as PronounsSectionContent
+  return undefined
+})
+
+const expressionsContent = computed<ExpressionsSectionContent | undefined>(() => {
+  if (props.section.type === 'expressions') return props.section.content as ExpressionsSectionContent
+  return undefined
+})
+
+const grammarContent = computed<GrammarSectionContent | undefined>(() => {
+  if (props.section.type === 'grammar') return props.section.content as GrammarSectionContent
+  return undefined
+})
 </script>

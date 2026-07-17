@@ -52,9 +52,9 @@ describe('useVoices', () => {
         }
       })
 
-      const { voices } = useVoices()
+      const { voices, loadVoices } = useVoices()
 
-      await expect(useVoices().loadVoices()).resolves.toEqual([])
+      await expect(loadVoices()).resolves.toEqual([])
       expect(voices.value).toEqual([])
     })
   })

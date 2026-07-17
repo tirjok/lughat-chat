@@ -52,7 +52,7 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 | 16 | `IMPLEMENTATION-lesson-content-serving.md` | S-4, S-5 | `/api/lessons` + `/api/lessons/:id` ✅ DONE |
 | 17 | `IMPLEMENTATION-lesson-content-serving.md` | S-6–9 | Schema validation, `useLessons`, lesson pages ✅ DONE |
 | 18 | `IMPLEMENTATION-lesson-browsing-and-access.md` | S-1 | SQLite initialization (same as #14) ✅ DONE |
-| 19 | `IMPLEMENTATION-lesson-browsing-and-access.md` | S-2–7 | Content, progress, dashboard, lesson view, navigation |
+| 19 | `IMPLEMENTATION-lesson-browsing-and-access.md` | S-2–7 | Content, progress, dashboard, lesson view, navigation ✅ DONE |
 
 ## Chunk 5 — Navigation & Dashboard
 

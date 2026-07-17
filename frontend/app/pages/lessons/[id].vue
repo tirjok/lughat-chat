@@ -3,7 +3,19 @@
     class="lesson-detail-page min-h-screen bg-gray-50 dark:bg-gray-900"
     dir="rtl"
   >
-    <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Navigation bar -->
+    <NavBar />
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+      <!-- Back to Dashboard -->
+      <NuxtLink
+        to="/"
+        class="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-6"
+      >
+        <span class="ph ph-arrow-right" />
+        Back to Roadmap
+      </NuxtLink>
+
       <!-- Loading State -->
       <div
         v-if="currentLoading"
@@ -12,16 +24,46 @@
         Loading lesson...
       </div>
 
-      <!-- Error State -->
+      <!-- Error State (locked or not found) -->
       <div
         v-else-if="currentError"
         class="text-red-500 dark:text-red-400"
       >
-        {{ currentError }}
+        <p class="text-lg mb-4">
+          {{ currentError }}
+        </p>
+        <NuxtLink
+          to="/"
+          class="btn"
+        >
+          Back to Roadmap
+        </NuxtLink>
       </div>
 
       <!-- Lesson Content -->
       <template v-else-if="currentLesson">
+        <!-- Locked overlay -->
+        <div
+          v-if="currentLesson.progress?.status === 'locked'"
+          class="text-center py-12"
+        >
+          <span class="text-4xl">🔒</span>
+          <p class="text-lg text-gray-600 dark:text-gray-300 mt-4">
+            This lesson is locked. Complete previous lessons first.
+          </p>
+        </div>
+
+        <!-- Completed (review mode) -->
+        <div
+          v-else-if="currentLesson.progress?.status === 'completed'"
+          class="mb-6"
+        >
+          <div class="flex items-center gap-2 text-green-600 dark:text-green-400">
+            <span class="text-2xl">✓</span>
+            <span class="text-lg font-semibold">Lesson completed — review mode</span>
+          </div>
+        </div>
+
         <!-- Lesson Header -->
         <div class="lesson-header mb-8">
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -38,8 +80,8 @@
             </h3>
             <ul class="space-y-1">
               <li
-                v-for="(comp, i) in currentLesson.competencies"
-                :key="i"
+                v-for="(comp, index) in currentLesson.competencies"
+                :key="`comp-${index}`"
                 class="text-gray-600 dark:text-gray-400"
               >
                 {{ comp }}
@@ -51,7 +93,7 @@
         <!-- Sections rendered by SectionRenderer -->
         <SectionRenderer
           v-for="(section, index) in currentLesson.sections"
-          :key="index"
+          :key="`section-${index}`"
           :section="section"
           :lesson-id="currentLesson.id"
         />
@@ -62,50 +104,46 @@
             Practice Activities
           </h2>
           <div class="space-y-4">
-            <div
+            <ActivityRenderer
               v-for="(activity, index) in currentLesson.activities"
-              :key="index"
-              class="card"
-            >
-              <h3 class="font-semibold text-gray-900 dark:text-white">
-                {{ (activity as Record<string, unknown>).title }}
-              </h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ (activity as Record<string, unknown>).description }}
-              </p>
-              <span
-                class="activity-status text-sm font-medium"
-                :class="getActivityStatusColor(index + 1)"
-              >
-                {{ getActivityStatus(index + 1) }}
-              </span>
-            </div>
+              :key="`activity-${activity.id}`"
+              :activity="activity"
+              :lesson-id="currentLesson.id"
+              :activity-index="index"
+            />
           </div>
         </div>
       </template>
-    </div>
+
+      <!-- Not found / no lesson loaded -->
+      <div
+        v-else-if="!currentLoading && !currentError && !currentLesson"
+        class="text-center py-12"
+      >
+        <p class="text-lg text-gray-600 dark:text-gray-400 mb-4">
+          No lesson found.
+        </p>
+        <NuxtLink
+          to="/"
+          class="btn"
+        >
+          Back to Roadmap
+        </NuxtLink>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
 const route = useRoute()
-const { currentLesson, currentLoading, currentError, fetchLesson } = useLessons()
 
-const lessonId = computed(() => Number(route.params.id) || 1)
+// Use the new useCurrentLesson composable (Nuxt 4 useFetch-based)
+const lessonId = computed(() => Number(String(route.params.id)) || 1)
+const { currentLesson, currentLoading, currentError, refresh: _refresh } = useLesson(lessonId.value)
 
-// Fetch the lesson
-fetchLesson(lessonId.value)
-
-function getActivityStatus(activityId: number): string {
-  if (!currentLesson.value?.progress?.activities) return 'locked'
-  const activity = currentLesson.value.progress.activities[String(activityId)]
-  return (activity?.status as string) || 'locked'
-}
-
-function getActivityStatusColor(activityId: number): string {
-  const status = getActivityStatus(activityId)
-  if (status === 'completed') return 'text-green-500'
-  if (status === 'available') return 'text-blue-500'
-  return 'text-gray-400'
-}
+// SEO metadata — title updates when lesson loads
+useSeoMeta({
+  title: computed(() => currentLesson.value ? `${currentLesson.value.title} — LughatChat` : 'Loading lesson — LughatChat'),
+  description: 'Arabic language learning — lesson content'
+})
 </script>

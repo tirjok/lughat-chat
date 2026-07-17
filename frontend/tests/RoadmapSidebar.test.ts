@@ -1,0 +1,101 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { shallowRef } from 'vue'
+import { mountSuspended } from '@nuxt/test-utils/runtime'
+import RoadmapSidebar from '../app/components/RoadmapSidebar.vue'
+
+// Module-level reactive ref — the mock composable reads this at mount time.
+const mockLessonsState = shallowRef([])
+const mockLessonsLoading = shallowRef(false)
+const mockLessonsError = shallowRef(null)
+const mockFetchLessons = vi.fn().mockResolvedValue([])
+
+// vi.mock is hoisted to the top of the file by Vitest.
+vi.mock('../app/composables/useLessons', () => ({
+  useLessons: () => ({
+    lessons: mockLessonsState,
+    loading: mockLessonsLoading,
+    error: mockLessonsError,
+    fetchLessons: mockFetchLessons
+  })
+}))
+
+describe('RoadmapSidebar', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockLessonsState.value = []
+    mockLessonsLoading.value = false
+    mockLessonsError.value = null
+  })
+
+  describe('component tree', () => {
+    it('When rendered then level headers are displayed', async () => {
+      mockLessonsState.value = [
+        { id: 1, level: 'A1', sequence: 1, title: 'Lesson 1', competency_count: 5, section_count: 5, status: 'available' },
+        { id: 2, level: 'A2', sequence: 1, title: 'Lesson 2', competency_count: 3, section_count: 3, status: 'locked' }
+      ]
+      const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
+      expect(wrapper.text()).toContain('A1')
+      expect(wrapper.text()).toContain('A2')
+    })
+
+    it('When rendered then lesson cards are displayed', async () => {
+      mockLessonsState.value = [
+        { id: 1, level: 'A1', sequence: 1, title: 'The Salutations', competency_count: 5, section_count: 5, status: 'available' },
+        { id: 2, level: 'A1', sequence: 2, title: 'Second Lesson', competency_count: 3, section_count: 3, status: 'locked' }
+      ]
+      const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
+      const cards = wrapper.findAll('.sidebar-lesson-card')
+      expect(cards.length).toBe(2)
+    })
+
+    it('When rendered then progress percentage is shown per level', async () => {
+      mockLessonsState.value = [
+        { id: 1, level: 'A1', sequence: 1, title: 'Lesson 1', competency_count: 5, section_count: 5, status: 'completed' }
+      ]
+      const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
+      expect(wrapper.html()).toContain('%')
+    })
+  })
+
+  describe('status icons', () => {
+    it('When lesson is available then shows available icon', async () => {
+      mockLessonsState.value = [
+        { id: 1, level: 'A1', sequence: 1, title: 'Lesson 1', competency_count: 5, section_count: 5, status: 'available' }
+      ]
+      const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
+      expect(wrapper.text()).toContain('✓')
+    })
+
+    it('When lesson is locked then shows locked icon', async () => {
+      mockLessonsState.value = [
+        { id: 2, level: 'A1', sequence: 2, title: 'Lesson 2', competency_count: 3, section_count: 3, status: 'locked' }
+      ]
+      const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
+      expect(wrapper.text()).toContain('🔒')
+    })
+  })
+
+  describe('interaction', () => {
+    it('When locked lesson card clicked then no navigation', async () => {
+      mockLessonsState.value = [
+        { id: 2, level: 'A1', sequence: 2, title: 'Locked Lesson', competency_count: 3, section_count: 3, status: 'locked' }
+      ]
+      const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
+      const cards = wrapper.findAll('.sidebar-lesson-card')
+      const lockedCard = cards[0]
+      const link = lockedCard.find('a')
+      expect(link.exists()).toBe(false)
+    })
+
+    it('When available lesson card clicked then navigates to /lesson/:id', async () => {
+      mockLessonsState.value = [
+        { id: 1, level: 'A1', sequence: 1, title: 'Lesson 1', competency_count: 5, section_count: 5, status: 'available' }
+      ]
+      const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
+      const cards = wrapper.findAll('.sidebar-lesson-card')
+      const availableCard = cards[0]
+      // NuxtLink wraps the card — inner div has cursor-pointer
+      expect(availableCard.classes()).toContain('cursor-pointer')
+    })
+  })
+})

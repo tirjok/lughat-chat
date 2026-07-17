@@ -14,6 +14,8 @@ services:
       - tts-audio-cache:/app/downloads
       # Mount speaker_wavs so new .wav files are visible without rebuild
       - ./backend/speaker_wavs:/app/speaker_wavs
+      # Mount frontend source for integration tests (checks for source files)
+      - ./frontend/app:/app/frontend_source
     environment:
       - TZ=UTC
       - TTS_MODEL_CACHE=/app/.cache/tts
