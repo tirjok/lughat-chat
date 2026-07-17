@@ -1,8 +1,8 @@
 # ─────────────────────────────────────────────────────────
 # Development environment — hot reload, editable source
 # ─────────────────────────────────────────────────────────
-# - Backend: uvicorn with --reload (port 9000)
-# - Frontend: pnpm dev (port 3000, proxies to backend:9000)
+# - Backend: uvicorn with --reload (port 9100)
+# - Frontend: pnpm dev (port 3000, proxies to backend:9100)
 # - Source code mounted as volumes → changes reflected immediately
 # - No rebuild needed for code changes
 # ─────────────────────────────────────────────────────────
@@ -13,7 +13,7 @@ services:
       dockerfile: Dockerfile
     container_name: lughat-backend-dev
     ports:
-      - "9000:8000"
+      - "9100:8000"
     volumes:
       # Mount source code — changes reflected without rebuild
       - ./backend:/app
@@ -53,6 +53,7 @@ services:
       - frontend-node-modules:/app/node_modules
     environment:
       - NODE_ENV=development
+      - NUXT_TELEMETRY_DISABLED=1
     depends_on:
       backend-dev:
         condition: service_started

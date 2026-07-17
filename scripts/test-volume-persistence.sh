@@ -1,5 +1,6 @@
 #!/bin/bash
 # scripts/test-volume-persistence.sh - Test volume persistence and container restarts
+# Supports Docker, Podman, or any compatible runtime.
 
 set -euo pipefail
 
@@ -8,6 +9,18 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Detect container runtime
+if command -v podman-compose &>/dev/null; then
+    COMPOSE_CMD="podman-compose"
+elif command -v docker-compose &>/dev/null; then
+    COMPOSE_CMD="docker-compose"
+elif command -v docker &>/dev/null && docker compose version &>/dev/null 2>&1; then
+    COMPOSE_CMD="docker compose"
+else
+    echo "ERROR: No container runtime found. Install podman-compose or Docker."
+    exit 1
+fi
 
 # Logging functions
 log_info() { echo -e "${GREEN}[PERSISTENCE]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
@@ -19,8 +32,8 @@ main() {
     log_info "Starting volume persistence and restart test"
     
     # Bring up the containers
-    log_info "Starting containers with docker compose..."
-    docker compose up -d
+    log_info "Starting containers with $COMPOSE_CMD..."
+    $COMPOSE_CMD up -d
     
     # Wait for services to start
     log_info "Waiting for services to be healthy..."
@@ -28,14 +41,14 @@ main() {
     
     # Check if containers are running
     log_info "Checking container status..."
-    docker compose ps
+    $COMPOSE_CMD ps
     
     # Test volume persistence by checking if cache directory exists and has content
     log_info "Testing volume persistence..."
     
     # Check that volumes are properly mounted and accessible
     log_info "Checking model weights volume..."
-    model_check=$(docker compose run --rm -v arabic-tts-model-weights:/app/models tts-backend ls /app/models 2>/dev/null || echo "failed")
+    model_check=$($COMPOSE_CMD run --rm -v arabic-tts-model-weights:/app/models tts-backend ls /app/models 2>/dev/null || echo "failed")
     if [ "$model_check" = "failed" ]; then
         log_warn "Model volume may not be properly mounted or is empty"
     else
@@ -43,7 +56,7 @@ main() {
     fi
     
     log_info "Checking speaker data volume..."
-    speaker_check=$(docker compose run --rm -v arabic-tts-speaker-data:/app/speakers tts-backend ls /app/speakers 2>/dev/null || echo "failed")
+    speaker_check=$($COMPOSE_CMD run --rm -v arabic-tts-speaker-data:/app/speakers tts-backend ls /app/speakers 2>/dev/null || echo "failed")
     if [ "$speaker_check" = "failed" ]; then
         log_warn "Speaker data volume may not be properly mounted or is empty"
     else
@@ -51,7 +64,7 @@ main() {
     fi
     
     log_info "Checking audio cache volume..."
-    cache_check=$(docker compose run --rm -v arabic-tts-audio-cache:/app/cache/audio tts-backend ls /app/cache/audio 2>/dev/null || echo "failed")
+    cache_check=$($COMPOSE_CMD run --rm -v arabic-tts-audio-cache:/app/cache/audio tts-backend ls /app/cache/audio 2>/dev/null || echo "failed")
     if [ "$cache_check" = "failed" ]; then
         log_warn "Audio cache volume may not be properly mounted or is empty"
     else
@@ -63,14 +76,14 @@ main() {
     
     # Stop containers
     log_info "Stopping containers..."
-    docker compose down
+    $COMPOSE_CMD down
     
     # Wait a moment
     sleep 5
     
     # Start containers again
     log_info "Starting containers again..."
-    docker compose up -d
+    $COMPOSE_CMD up -d
     
     # Wait for services to restart
     log_info "Waiting for services to restart..."
@@ -78,7 +91,7 @@ main() {
     
     # Check that containers are running again
     log_info "Checking container status after restart..."
-    docker compose ps
+    $COMPOSE_CMD ps
     
     # Verify services are healthy after restart
     log_info "Verifying service health after restart..."
@@ -87,7 +100,7 @@ main() {
     backend_health=$(curl -s -f http://localhost/health || echo "failed")
     if [ "$backend_health" = "failed" ]; then
         log_error "Backend health check failed after restart"
-        docker compose logs tts-backend
+        $COMPOSE_CMD logs tts-backend
         exit 1
     else
         log_info "Backend health check passed after restart"
@@ -97,17 +110,17 @@ main() {
     frontend_status=$(curl -s -f http://localhost/ || echo "failed")
     if [ "$frontend_status" = "failed" ]; then
         log_error "Frontend accessibility test failed after restart"
-        docker compose logs frontend
+        $COMPOSE_CMD logs frontend
         exit 1
     else
-        log_info "Frontend accessibility test passed after restart"
+        log_info "Frontend accessibility passed after restart"
     fi
     
     # Test that volumes still exist and are accessible
     log_info "Verifying volume persistence after restart..."
     
     # Check model weights volume again (should still exist)
-    model_check_after=$(docker compose run --rm -v arabic-tts-model-weights:/app/models tts-backend ls /app/models 2>/dev/null || echo "failed")
+    model_check_after=$($COMPOSE_CMD run --rm -v arabic-tts-model-weights:/app/models tts-backend ls /app/models 2>/dev/null || echo "failed")
     if [ "$model_check_after" = "failed" ]; then
         log_warn "Model volume may not persist correctly after restart"
     else
@@ -115,7 +128,7 @@ main() {
     fi
     
     # Check speaker data volume again (should still exist)
-    speaker_check_after=$(docker compose run --rm -v arabic-tts-speaker-data:/app/speakers tts-backend ls /app/speakers 2>/dev/null || echo "failed")
+    speaker_check_after=$($COMPOSE_CMD run --rm -v arabic-tts-speaker-data:/app/speakers tts-backend ls /app/speakers 2>/dev/null || echo "failed")
     if [ "$speaker_check_after" = "failed" ]; then
         log_warn "Speaker data volume may not persist correctly after restart"
     else
@@ -123,7 +136,7 @@ main() {
     fi
     
     # Check audio cache volume again (should still exist)
-    cache_check_after=$(docker compose run --rm -v arabic-tts-audio-cache:/app/cache/audio tts-backend ls /app/cache/audio 2>/dev/null || echo "failed")
+    cache_check_after=$($COMPOSE_CMD run --rm -v arabic-tts-audio-cache:/app/cache/audio tts-backend ls /app/cache/audio 2>/dev/null || echo "failed")
     if [ "$cache_check_after" = "failed" ]; then
         log_warn "Audio cache volume may not persist correctly after restart"
     else
@@ -148,7 +161,7 @@ main() {
     log_info "Volume persistence and restart test completed successfully!"
     
     # Clean up
-    docker compose down
+    $COMPOSE_CMD down
     
     exit 0
 }

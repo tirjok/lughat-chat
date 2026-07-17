@@ -1,8 +1,12 @@
-# Docker Deployment Guide — Lughat Chat
+# Container Deployment Guide — Lughat Chat
 
 > **System:** Lughat Chat — Arabic Text-to-Speech Studio
 > **Last Updated:** 2025-07-15
-> **Stack:** Docker Compose · Nginx Alpine · Python 3.12 · Node 20 · pnpm 10.33.4
+> **Stack:** Podman / Docker Compose · Nginx Alpine · Python 3.12 · Node 20 · pnpm 10.33.4
+
+> **Podman Support:** This project supports both Docker and Podman. Podman is the recommended runtime for rootless containers. Install [`podman-compose`](https://github.com/containers/podman-compose) for Docker Compose file support.
+
+> **Migration from Docker:** All scripts now auto-detect the container runtime (podman-compose → docker-compose → docker compose). No code changes needed — just install `podman-compose` and run `./dev.sh up`.
 
 ---
 
@@ -134,15 +138,27 @@ In development, the health check is **deliberately omitted** because:
 
 ### Prerequisites
 
-- **Docker** 24+ with Docker Compose v2
-- **Disk space**: ~8–10 GB (TTS model ~2GB + audio cache + Docker images ~5GB)
+- **Podman** 5+ with `podman-compose` (recommended) **or** Docker 24+ with Docker Compose v2
+- **Disk space**: ~8–10 GB (TTS model ~2GB + audio cache + container images ~5GB)
 - **RAM**: 4–8 GB minimum (XTTS-v2 model loads into memory)
 - **CPU**: Modern multi-core (CPU-only inference; no GPU support)
+
+### Install podman-compose (Podman users)
+
+```bash
+# macOS (Homebrew)
+brew install podman-compose
+
+# Linux (pip)
+pip install podman-compose
+
+# Or via your package manager
+```
 
 ### Start Both Environments
 
 ```bash
-# From project root
+# From project root (auto-detects container runtime)
 ./dev.sh up
 ```
 
@@ -175,8 +191,10 @@ This starts:
 
 ```bash
 ./dev.sh logs          # Production backend logs
-docker compose logs -f backend-dev    # Development backend logs
-docker compose logs -f frontend-dev  # Development frontend logs
+./dev.sh logs backend-dev    # Development backend logs (via dev.sh wrapper)
+podman-compose -f docker-compose.dev.yml logs -f backend-dev  # Direct (Podman)
+# or
+docker compose -f docker-compose.dev.yml logs -f backend-dev  # Direct (Docker)
 ```
 
 ---
@@ -557,12 +575,12 @@ The `.env` file at the project root defines configuration values used by documen
 ```
 
 Runs 4 checks in order (stops at first failure):
-1. **Backend tests** — `./scripts/run-backend-tests.sh` (pytest inside Docker)
-2. **Frontend lint** — `pnpm lint` (inside Docker dev container)
-3. **Frontend typecheck** — `pnpm typecheck` (inside Docker dev container)
-4. **Frontend tests** — `pnpm test` (Vitest inside Docker dev container)
+1. **Backend tests** — `./scripts/run-backend-tests.sh` (pytest inside container)
+2. **Frontend lint** — `pnpm lint` (inside container dev environment)
+3. **Frontend typecheck** — `pnpm typecheck` (inside container dev environment)
+4. **Frontend tests** — `pnpm test` (Vitest inside container dev environment)
 
-All frontend checks run **inside the Docker dev container** (`docker compose -f docker-compose.dev.yml run --rm frontend-dev`), ensuring test environments match production behavior.
+All frontend checks run **inside the container dev environment** (auto-detects podman-compose or docker compose), ensuring test environments match production behavior.
 
 ### `./scripts/run-backend-tests.sh` — Backend Test Runner
 
@@ -607,33 +625,54 @@ Generates optimized Dockerfiles with:
 
 ### Debug Commands
 
+> **Note:** Replace `docker compose` with `podman-compose` for Podman users. The `./dev.sh` wrapper auto-detects the runtime.
+
 ```bash
 # List all containers (production + development)
+podman-compose ps
+podman-compose -f docker-compose.dev.yml ps
+# or
 docker compose ps
 docker compose -f docker-compose.dev.yml ps
 
 # View production backend logs (model loading progress)
+podman-compose logs -f backend
+# or
 docker compose logs -f backend
 
 # View development backend logs
+podman-compose -f docker-compose.dev.yml logs -f backend-dev
 docker compose -f docker-compose.dev.yml logs -f backend-dev
 
 # View development frontend logs
+podman-compose -f docker-compose.dev.yml logs -f frontend-dev
 docker compose -f docker-compose.dev.yml logs -f frontend-dev
 
-# Check volume status
+# Check volume status (Podman uses "storage" instead of "volumes")
+podman volume ls | grep lughat
+podman volume inspect tts-model-cache
+# or (Docker)
 docker volume ls | grep lughat
 docker volume inspect tts-model-cache
 
-# Check network status
+# Check network status (Podman uses "network" instead of "networks")
+podman network ls | grep lughat
+podman network inspect lughat-network
+# or (Docker)
 docker network ls | grep lughat
 docker network inspect lughat-network
 
 # Execute shell inside container
+podman exec -it lughat-backend /bin/bash
+podman exec -it lughat-backend-dev /bin/bash
+# or (Docker)
 docker exec -it lughat-backend /bin/bash
 docker exec -it lughat-backend-dev /bin/bash
 
-# Clean up all Docker resources (DANGEROUS — removes volumes!)
+# Clean up all container resources (DANGEROUS — removes volumes!)
+podman-compose down -v
+podman-compose -f docker-compose.dev.yml down -v
+# or (Docker)
 docker compose down -v
 docker compose -f docker-compose.dev.yml down -v
 ```
@@ -652,6 +691,96 @@ docker run --rm -v tts-model-cache:/data alpine ls -la /data/.cache/tts/
 # 2. Check that the volume name is exactly "tts-model-cache" (not "tts-model-cache-dev")
 # 3. Ensure the backend container is using the correct Dockerfile (not Dockerfile.dev)
 ```
+
+---
+
+## 11.5. Podman Migration Guide
+
+### What changes when switching from Docker to Podman?
+
+Podman is **API-compatible** with Docker — the main difference is that Podman is rootless by default and doesn't run a daemon. The project's scripts now auto-detect the container runtime.
+
+### Installation
+
+**macOS (Homebrew):**
+```bash
+brew install podman podman-compose
+podman machine init    # Create the Linux VM
+podman machine start   # Start the VM
+```
+
+**Linux:**
+```bash
+# Fedora/RHEL
+sudo dnf install podman podman-compose
+
+# Debian/Ubuntu
+sudo apt install podman podman-compose
+
+# Arch
+sudo pacman -S podman podman-compose
+```
+
+### What stays the same
+- `docker-compose.yml` and `docker-compose.dev.yml` — no changes needed
+- `backend/Dockerfile`, `frontend/Dockerfile`, `frontend/Dockerfile.dev` — no changes needed
+- `frontend/nginx.conf` — no changes needed
+- All volume names, network names, port mappings — identical
+- All environment variables — identical
+
+### What changes
+- `docker compose` → `podman-compose` (or `podman compose` via podman-docker compat)
+- `docker build` → `podman build`
+- `docker run` → `podman run`
+- `docker exec` → `podman exec`
+- `docker volume` → `podman volume`
+- `docker network` → `podman network`
+- `docker ps` → `podman ps`
+- `docker logs` → `podman logs`
+
+### Key differences to be aware of
+
+1. **Rootless operation**: Podman runs as your user, not root. Volume mounts may have different permissions. Use `--privileged` flag if needed for specific mounts.
+
+2. **macOS**: Podman runs in a Linux VM (podman machine). Network bindings to `localhost` work via the VM's networking.
+
+3. **Named volumes**: Podman uses `podman volume ls` instead of `docker volume ls`. Volume data is stored under `~/.local/share/containers/storage/volumes/`.
+
+4. **Network isolation**: Bridge networks work the same way. Podman uses `slirp4netns` for user-space networking on macOS.
+
+5. **Health checks**: Podman supports the same `HEALTHCHECK` directive. The `--health-*` flags work identically.
+
+### Scripts that auto-detect the runtime
+
+All project scripts now auto-detect the container runtime in this priority order:
+1. `podman-compose` (if installed)
+2. `docker-compose` (if installed)
+3. `docker compose` (if Docker is installed with Compose plugin)
+
+Scripts updated:
+- `dev.sh` — environment manager
+- `run-tests.sh` — quality gate
+- `scripts/run-backend-tests.sh` — backend test runner
+- `scripts/optimize-docker.sh` — image optimizer
+- `scripts/test-e2e.sh` — end-to-end tests
+- `scripts/test-volume-persistence.sh` — volume persistence tests
+- `scripts/test-phase5.sh` — phase 5 validation
+
+### Quick comparison: Docker vs Podman commands
+
+| Action | Docker | Podman |
+|--------|--------|--------|
+| List containers | `docker ps` | `podman ps` |
+| Start services | `docker compose up -d` | `podman-compose up -d` |
+| Stop services | `docker compose down` | `podman-compose down` |
+| View logs | `docker compose logs -f` | `podman-compose logs -f` |
+| Shell into container | `docker exec -it <name> /bin/bash` | `podman exec -it <name> /bin/bash` |
+| List volumes | `docker volume ls` | `podman volume ls` |
+| List networks | `docker network ls` | `podman network ls` |
+| Build image | `docker build -t <name> .` | `podman build -t <name> .` |
+| Clean up | `docker compose down -v` | `podman-compose down -v` |
+
+> **Bottom line**: The `docker-compose.yml` files need **zero changes**. The only change is installing `podman-compose` and running `./dev.sh up` instead of `docker compose up --build`.
 
 ---
 
@@ -687,19 +816,19 @@ docker run --rm -v tts-model-cache:/data alpine ls -la /data/.cache/tts/
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | Production Docker Compose (2 services, bridge network, named volumes) |
-| `docker-compose.dev.yml` | Development Docker Compose (hot reload, separate network) |
+| `docker-compose.yml` | Production container compose (2 services, bridge network, named volumes) |
+| `docker-compose.dev.yml` | Development container compose (hot reload, separate network) |
 | `backend/Dockerfile` | Backend image: Python 3.12, PyTorch CPU, Coqui TTS, torchcodec |
 | `frontend/Dockerfile` | Frontend production: multi-stage (builder + Nginx) |
 | `frontend/Dockerfile.dev` | Frontend development: Node 20, pnpm dev server |
 | `frontend/nginx.conf` | Nginx reverse proxy configuration (SPA serving, API proxy) |
-| `frontend/.dockerignore` | Files excluded from frontend Docker build context |
-| `backend/.dockerignore` | Files excluded from backend Docker build context |
-| `.env` | Project configuration (documentation, not consumed by Docker) |
-| `dev.sh` | Development environment manager (up/down/restart/logs) |
-| `run-tests.sh` | Quality gate (backend tests → lint → typecheck → frontend tests) |
-| `scripts/run-backend-tests.sh` | Backend test runner (pytest inside Docker) |
-| `scripts/optimize-docker.sh` | Docker image optimizer (reference/evaluation) |
+| `frontend/.dockerignore` | Files excluded from frontend container build context |
+| `backend/.dockerignore` | Files excluded from backend container build context |
+| `.env` | Project configuration (documentation, not consumed by containers) |
+| `dev.sh` | Development environment manager (up/down/restart/logs, auto-detects runtime) |
+| `run-tests.sh` | Quality gate (backend tests → lint → typecheck → frontend tests, auto-detects runtime) |
+| `scripts/run-backend-tests.sh` | Backend test runner (pytest inside container, auto-detects runtime) |
+| `scripts/optimize-docker.sh` | Container image optimizer (reference/evaluation, supports Docker/Podman) |
 
 ## Appendix B: Container Inventory
 
@@ -709,6 +838,8 @@ docker run --rm -v tts-model-cache:/data alpine ls -la /data/.cache/tts/
 | Frontend (prod) | `nginx:alpine` | 9001:80 | `lughat-frontend` | Nginx reverse proxy + SPA |
 | Backend (dev) | `python:3.12-slim` | 9000:8000 | `lughat-backend-dev` | FastAPI + XTTS-v2 (hot reload) |
 | Frontend (dev) | `node:20-alpine` | 3000:3000 | `lughat-frontend-dev` | Nuxt dev server (hot reload) |
+
+> **Note:** Container names are set via `container_name` in compose files. Podman uses the same names. On macOS with Podman, containers run in a Linux VM (podman machine) rather than natively.
 
 ## Appendix C: Volume Inventory
 

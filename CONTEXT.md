@@ -1,7 +1,7 @@
 # Project Context — Lughat Chat
 
 ## Overview
-A **text-to-speech (TTS) web app** for Arabic speech synthesis using Coqui XTTS-v2. Deployed via Docker Compose with Nginx as reverse proxy.
+A **text-to-speech (TTS) web app** for Arabic speech synthesis using Coqui XTTS-v2. Deployed via container (Podman or Docker) Compose with Nginx as reverse proxy.
 
 ## Architecture
 ```
@@ -136,13 +136,13 @@ npx vitest --config vitest.component.config.ts
 
 ### Test Setup (Pytest)
 ```bash
-# Run backend tests (inside Docker — no host Python needed)
+# Run backend tests (inside container — no host Python needed)
 ./scripts/run-backend-tests.sh
 ```
 
 **Run all tests (backend + frontend) from project root:**
 ```bash
-./run-tests.sh     # Runs backend tests in Docker, then pnpm test (frontend)
+./run-tests.sh     # Runs backend tests in container, then pnpm test (frontend)
 ```
 
 **Test files:** `backend/tests/`
@@ -154,7 +154,7 @@ npx vitest --config vitest.component.config.ts
 
 ---
 
-## Docker Deployment (`docker-compose.yml`)
+## Container Deployment (`docker-compose.yml`)
 
 ### Services
 | Service | Image | Ports | Notes |
@@ -202,11 +202,11 @@ All styles use `@apply` with UnoCSS utilities. Key blocks:
 
 ---
 
-## Docker Deployment
+## Container Deployment
 
 **Full reference:** [`docs/docker/DOCKER-GUIDE.md`](../docker/DOCKER-GUIDE.md)
 
-The project runs **two independent Docker Compose environments** simultaneously — production and development — each with its own network, containers, and volumes.
+The project runs **two independent container compose environments** simultaneously — production and development — each with its own network, containers, and volumes.
 
 ### Quick Reference
 
@@ -223,7 +223,7 @@ The project runs **two independent Docker Compose environments** simultaneously 
 | Network | `lughat-network` | `lughat-dev-network` |
 | Frontend waits | `service_healthy` | `service_started` |
 
-### Key Docker Facts
+### Key Container Facts
 - Backend Dockerfile rebuilds **torchcodec from source** (pre-built wheel requires CUDA)
 - Frontend production: multi-stage build (Node 20 builder → Nginx Alpine, zero Node.js at runtime)
 - Frontend development: Nuxt dev server with hot reload from mounted source
@@ -255,4 +255,4 @@ The project runs **two independent Docker Compose environments** simultaneously 
 5. **Dark mode**: all UnoCSS utility classes have `dark:` variants defined in main.css
 6. **RTL support**: Arabic text handled via Cairo font + RTL direction
 7. **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script) + Lucide + Simple Icons
-8. **Host ports**: Docker backend on 9000, frontend on 9001. Local dev proxies to localhost:9000.
+8. **Host ports**: Container backend on 9000, frontend on 9001. Local dev proxies to localhost:9000.

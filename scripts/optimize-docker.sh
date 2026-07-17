@@ -1,5 +1,6 @@
 #!/bin/bash
-# scripts/optimize-docker.sh - Optimize Docker images for size and build time
+# scripts/optimize-docker.sh - Optimize container images for size and build time
+# Supports Docker, Podman, or any compatible runtime.
 
 set -euo pipefail
 
@@ -9,19 +10,30 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Detect container runtime
+if command -v podman &>/dev/null; then
+    BUILDER_CMD="podman"
+elif command -v docker &>/dev/null; then
+    BUILDER_CMD="docker"
+else
+    echo "ERROR: No container runtime found (podman or docker)."
+    exit 1
+fi
+
 # Logging functions
 log_info() { echo -e "${GREEN}[OPTIMIZE]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
 
-# Optimize Docker images
+# Optimize container images
 main() {
-    log_info "Starting Docker image optimization"
+    log_info "Starting container image optimization"
     
     # Build with buildkit for better caching and layer reuse
-    log_info "Building optimized Docker images with buildkit..."
+    log_info "Building optimized container images with buildkit..."
     
-    # Enable buildkit for better performance and caching
+    # Enable buildkit (works for both Docker and Podman)
+    export BUILDAH_ISOLATION=chroot  # Podman uses buildah under the hood
     export DOCKER_BUILDKIT=1
     
     # Build backend image with multi-stage optimization
@@ -73,7 +85,7 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 EOF
 
     # Build optimized backend image
-    docker build -f /tmp/optimized-backend.Dockerfile -t arabic-tts-backend-optimized ./backend
+    $BUILDER_CMD build -f /tmp/optimized-backend.Dockerfile -t arabic-tts-backend-optimized ./backend
     
     # Build frontend image with better optimization
     log_info "Optimizing frontend Dockerfile..."
@@ -132,16 +144,16 @@ CMD ["nginx", "-g", "daemon off;"]
 EOF
 
     # Build optimized frontend image
-    docker build -f /tmp/optimized-frontend.Dockerfile -t arabic-tts-frontend-optimized ./frontend
+    $BUILDER_CMD build -f /tmp/optimized-frontend.Dockerfile -t arabic-tts-frontend-optimized ./frontend
     
     # Show image sizes
-    log_info "Docker image sizes:"
-    docker images | grep arabic-tts
+    log_info "Container image sizes:"
+    $BUILDER_CMD images | grep arabic-tts
     
     # Cleanup temporary files
     rm -f /tmp/optimized-backend.Dockerfile /tmp/optimized-frontend.Dockerfile
     
-    log_info "Docker image optimization completed"
+    log_info "Container image optimization completed"
     
     # Show build statistics
     log_info "Checking for potential improvements..."
@@ -151,7 +163,7 @@ EOF
     
     # Show current image sizes
     echo "Current image sizes:"
-    docker images | grep -E "(arabic-tts|nginx)" | awk '{print $1 ": " $2 " (" $3 ")"}'
+    $BUILDER_CMD images | grep -E "(arabic-tts|nginx)" | awk '{print $1 ": " $2 " (" $3 ")"}'
     
     exit 0
 }

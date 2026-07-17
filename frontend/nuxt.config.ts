@@ -44,13 +44,13 @@ export default defineNuxtConfig({
       '/api/': {
         target: process.env.NODE_ENV === 'docker'
           ? 'http://backend-dev:8000/api/'
-          : 'http://localhost:9000/api/',
+          : 'http://localhost:9100/api/',
         changeOrigin: true
       },
       '/health': {
         target: process.env.NODE_ENV === 'docker'
           ? 'http://backend-dev:8000/health'
-          : 'http://localhost:9000/health',
+          : 'http://localhost:9100/health',
         changeOrigin: true
       }
     }

@@ -5,15 +5,21 @@ Thank you for your interest in contributing! This document covers how to get sta
 ## Getting Started
 
 ### Prerequisites
-- [Docker](https://www.docker.com/) & Docker Compose
+- [Podman](https://podman.io/) (with `podman-compose`) **or** Docker with Docker Compose
 - Node.js 20+ (for frontend development)
 - Python 3.11+ (for backend development)
 
+> **Note:** This project supports both Docker and Podman. Podman is recommended for rootless containers.
+
 ### Local Development
 
-#### Full Stack (Docker)
+#### Full Stack (Containerized)
 ```bash
-docker compose up --build
+./dev.sh up
+# or directly:
+podman-compose up --build   # Podman (recommended)
+# or
+docker compose up --build   # Docker
 ```
 
 #### Frontend Only

@@ -1,5 +1,6 @@
 #!/bin/bash
 # scripts/test-phase5.sh - Run all tests for Phase 5: Testing, Optimization & Distribution
+# Supports Docker, Podman, or any compatible runtime.
 
 set -euo pipefail
 
@@ -8,6 +9,18 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Detect container runtime
+if command -v podman-compose &>/dev/null; then
+    COMPOSE_CMD="podman-compose"
+elif command -v docker-compose &>/dev/null; then
+    COMPOSE_CMD="docker-compose"
+elif command -v docker &>/dev/null && docker compose version &>/dev/null 2>&1; then
+    COMPOSE_CMD="docker compose"
+else
+    echo "ERROR: No container runtime found. Install podman-compose or Docker."
+    exit 1
+fi
 
 # Logging functions
 log_info() { echo -e "${GREEN}[PHASE5]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
@@ -79,8 +92,8 @@ main() {
         exit 1
     fi
     
-    # Validate docker compose file syntax
-    if docker compose config --quiet 2>/dev/null; then
+    # Validate compose file syntax
+    if $COMPOSE_CMD config --quiet 2>/dev/null; then
         log_info "✓ docker-compose.yml syntax is valid"
     else
         log_error "✗ docker-compose.yml syntax invalid"

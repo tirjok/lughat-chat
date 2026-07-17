@@ -249,7 +249,7 @@ Does the page use 4+ composables?
 
 ---
 
-## Docker Deployment (`docker-compose.yml`)
+## Container Deployment (`docker-compose.yml`)
 
 ### Services
 | Service | Image | Ports | Notes |
@@ -329,19 +329,30 @@ cd frontend && pnpm dev
 
 > **Pre-commit hooks** require `pre-commit` installed on the host (`pip install pre-commit`). All backend tests run inside Docker — no host Python needed.
 
-### Docker (production / full stack)
+### Containerized (production / full stack)
 ```bash
-# Build and start all services
-docker compose up --build -d
+# Build and start all services (auto-detects Podman or Docker)
+./dev.sh up
+
+# Or directly:
+podman-compose up --build -d    # Podman (recommended)
+# or
+docker compose up --build -d    # Docker
 
 # View logs
-docker compose logs -f
+docker compose logs -f           # Docker
+# or
+podman-compose logs -f           # Podman
 
 # Stop services
-docker compose down
+docker compose down              # Docker
+# or
+podman-compose down              # Podman
 
 # Rebuild after dependency changes (model cache persists)
-docker compose up --build -d
+docker compose up --build -d     # Docker
+# or
+podman-compose up --build -d     # Podman
 ```
 
 ### Frontend Scripts (from `frontend/`)
@@ -537,8 +548,10 @@ The project runs **two independent Docker Compose environments simultaneously** 
 ### Debugging
 
 ```bash
-docker compose logs -f backend          # Production backend
- docker exec -it lughat-backend /bin/bash  # Shell inside container
+podman-compose logs -f backend          # Production backend (Podman)
+docker compose logs -f backend          # Production backend (Docker)
+podman exec -it lughat-backend /bin/bash  # Shell inside container (Podman)
+docker exec -it lughat-backend /bin/bash  # Shell inside container (Docker)
 docker volume inspect tts-model-cache   # Check model cache volume
 docker network inspect lughat-network   # Check network config
 ```

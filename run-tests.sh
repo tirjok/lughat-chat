@@ -4,24 +4,36 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# ── Backend tests (pytest inside Docker) ───────────────
+# Detect container runtime: prefer podman-compose, fall back to docker-compose
+if command -v podman-compose &>/dev/null; then
+    COMPOSE_CMD="podman-compose"
+elif command -v docker-compose &>/dev/null; then
+    COMPOSE_CMD="docker-compose"
+elif command -v docker &>/dev/null && docker compose version &>/dev/null 2>&1; then
+    COMPOSE_CMD="docker compose"
+else
+    echo "ERROR: No container runtime found. Install podman-compose or Docker."
+    exit 1
+fi
+
+# ── Backend tests (pytest inside container) ──────────────
 echo "▶ Running backend tests..."
 ./scripts/run-backend-tests.sh "$@"
 
-# ── Frontend: lint (inside Docker dev container) ───────
+# ── Frontend: lint (inside container dev environment) ────
 echo ""
 echo "▶ Running frontend lint..."
-docker compose -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm lint" "$@"
+$COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm lint" "$@"
 
-# ── Frontend: typecheck (inside Docker dev container) ──
+# ── Frontend: typecheck (inside container dev environment) ──
 echo ""
 echo "▶ Running frontend typecheck..."
-docker compose -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm typecheck"
+$COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm typecheck"
 
-# ── Frontend tests (vitest inside Docker dev container) ─
+# ── Frontend tests (vitest inside container dev environment) ─
 echo ""
 echo "▶ Running frontend tests..."
-docker compose -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm test"
+$COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm test"
 
 echo ""
 echo "✓ All checks passed!"

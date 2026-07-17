@@ -37,16 +37,23 @@ A **text-to-speech (TTS) web application** for Arabic speech synthesis, powered 
 ## Quick Start
 
 ### Prerequisites
-- [Docker](https://www.docker.com/) & Docker Compose
+- [Podman](https://podman.io/) (with `podman-compose`) **or** Docker with Docker Compose
 - At least 4GB RAM (XTTS-v2 model loads into memory)
 
-### Run with Docker Compose
+> **Note:** This project supports both Docker and Podman. Podman is the recommended runtime for rootless containers. Install [`podman-compose`](https://github.com/containers/podman-compose) for Docker Compose file support.
+
+### Run with Podman (or Docker)
 
 ```bash
 # Start all services (model downloads on first run — ~2GB)
-docker compose up --build
+./dev.sh up
 
-# Access the app at http://localhost:9001
+# Or directly:
+podman-compose up --build    # Podman (recommended)
+# or
+docker compose up --build    # Docker
+
+# Access the app at http://localhost:9001 (prod) or http://localhost:3000 (dev)
 ```
 
 The TTS model is cached in a named volume (`tts-model-cache`) so it only downloads once. Generated audio files are persisted in `tts-audio-cache`.
@@ -61,7 +68,7 @@ The TTS model is cached in a named volume (`tts-model-cache`) so it only downloa
 # Production:   http://localhost:9001  (Nginx)
 ```
 
-> **Full Docker reference:** [`docs/docker/DOCKER-GUIDE.md`](docs/docker/DOCKER-GUIDE.md) — environments, Dockerfiles, Nginx config, volumes, networks, troubleshooting.
+> **Full container reference:** [`docs/docker/DOCKER-GUIDE.md`](docs/docker/DOCKER-GUIDE.md) — environments, Dockerfiles, Nginx config, volumes, networks, troubleshooting.
 
 #### Environment Variables (in `.env`)
 
@@ -75,7 +82,7 @@ The TTS model is cached in a named volume (`tts-model-cache`) so it only downloa
 
 ### Run Locally (Development)
 
-> **Note:** Backend requires Docker (Coqui TTS dependencies are complex). Use `docker compose up backend` or run the full stack with `docker compose up --build -d`.
+> **Note:** Backend requires a container runtime (Podman or Docker) for Coqui TTS dependencies. Use `./dev.sh up backend` or run the full stack with `./dev.sh up`.
 
 #### Frontend
 ```bash
@@ -152,7 +159,7 @@ From the project root, run both backend and frontend tests in one command:
 ./run-tests.sh -v       # With verbose output
 ```
 
-All **backend tests run inside Docker** — no Python installation needed on your host machine.
+All **backend tests run inside a container** — no Python installation needed on your host machine.
 
 ### Frontend (Vitest)
 ```bash
@@ -161,16 +168,16 @@ pnpm test              # Run all unit tests
 npx vitest --config vitest.component.config.ts  # Component tests only
 ```
 
-### Backend (Pytest — inside Docker)
+### Backend (Pytest — inside container)
 ```bash
-./scripts/run-backend-tests.sh          # Run backend tests in Docker
+./scripts/run-backend-tests.sh          # Run backend tests in container
 ./scripts/run-backend-tests.sh -v       # With verbose output
 ```
 
-> **Note:** The backend Docker image includes `pytest`, `fastapi`, and all test dependencies. No Python is installed on the host — everything runs in the container.
+> **Note:** The backend container image includes `pytest`, `fastapi`, and all test dependencies. No Python is installed on the host — everything runs in the container.
 
 ### Pre-commit Hooks
-All hooks run automatically on `git commit`. Backend tests execute inside Docker:
+All hooks run automatically on `git commit`. Backend tests execute inside the container:
 ```bash
 pre-commit install    # (already done — see setup below)
 git add . && git commit -m "fix: something"

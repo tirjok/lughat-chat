@@ -1,5 +1,6 @@
 #!/bin/bash
 # scripts/test-e2e.sh - End-to-end test for Arabic TTS containerized stack
+# Supports Docker, Podman, or any compatible runtime.
 
 set -euo pipefail
 
@@ -8,6 +9,18 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Detect container runtime
+if command -v podman-compose &>/dev/null; then
+    COMPOSE_CMD="podman-compose"
+elif command -v docker-compose &>/dev/null; then
+    COMPOSE_CMD="docker-compose"
+elif command -v docker &>/dev/null && docker compose version &>/dev/null 2>&1; then
+    COMPOSE_CMD="docker compose"
+else
+    echo "ERROR: No container runtime found. Install podman-compose or Docker."
+    exit 1
+fi
 
 # Logging functions
 log_info() { echo -e "${GREEN}[TEST]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
@@ -19,8 +32,8 @@ main() {
     log_info "Starting end-to-end test for Arabic TTS stack"
     
     # Bring up the containers
-    log_info "Starting containers with docker compose..."
-    docker compose up -d
+    log_info "Starting containers with $COMPOSE_CMD..."
+    $COMPOSE_CMD up -d
     
     # Wait for services to start
     log_info "Waiting for services to be healthy..."
@@ -28,14 +41,14 @@ main() {
     
     # Check if containers are running
     log_info "Checking container status..."
-    docker compose ps
+    $COMPOSE_CMD ps
     
     # Test backend health endpoint
     log_info "Testing backend health check..."
     backend_health=$(curl -s -f http://localhost:80/health || echo "failed")
     if [ "$backend_health" = "failed" ]; then
         log_error "Backend health check failed"
-        docker compose logs tts-backend
+        $COMPOSE_CMD logs tts-backend
         exit 1
     else
         log_info "Backend health check passed"
@@ -46,10 +59,10 @@ main() {
     frontend_status=$(curl -s -f http://localhost/ || echo "failed")
     if [ "$frontend_status" = "failed" ]; then
         log_error "Frontend accessibility test failed"
-        docker compose logs frontend
+        $COMPOSE_CMD logs frontend
         exit 1
     else
-        log_info "Frontend accessibility test passed"
+        log_info "Frontend accessibility passed"
     fi
     
     # Test TTS synthesis endpoint (mock)
@@ -72,17 +85,17 @@ main() {
     
     # Bring containers down and up to test persistence
     log_info "Stopping containers for volume persistence test..."
-    docker compose down
+    $COMPOSE_CMD down
     
     log_info "Starting containers again to test volume persistence..."
-    docker compose up -d
+    $COMPOSE_CMD up -d
     
     # Wait for services to restart
     sleep 5
     
     # Check if containers are running again
     log_info "Checking container status after restart..."
-    docker compose ps
+    $COMPOSE_CMD ps
     
     # Test that services are still healthy
     log_info "Testing services after restart..."
@@ -97,7 +110,7 @@ main() {
     log_info "End-to-end test completed successfully!"
     
     # Clean up
-    docker compose down
+    $COMPOSE_CMD down
     
     exit 0
 }
