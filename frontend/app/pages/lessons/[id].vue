@@ -4,7 +4,13 @@
     dir="rtl"
   >
     <!-- Navigation bar -->
-    <NavBar />
+    <NavBar @toggle="sidebar.toggle" />
+
+    <!-- Roadmap Sidebar (collapsible) -->
+    <RoadmapSidebar
+      :is-open="sidebar.isOpen.value"
+      @close="sidebar.close()"
+    />
 
     <main class="max-w-4xl mx-auto px-4 py-8">
       <!-- Back to Dashboard -->
@@ -135,10 +141,20 @@
 </template>
 
 <script setup lang="ts">
+const sidebar = useSidebar()
+
 const route = useRoute()
 
-// Use the new useCurrentLesson composable (Nuxt 4 useFetch-based)
-const lessonId = computed(() => Number(String(route.params.id)) || 1)
+// Validate lesson ID from route params; navigate back to dashboard if missing.
+const rawId = String(route.params.id ?? '').trim()
+const lessonId = computed(() => {
+  const num = Number(rawId)
+  if (!rawId || isNaN(num) || num < 1) {
+    navigateTo('/')
+    return 1
+  }
+  return num
+})
 const { currentLesson, currentLoading, currentError, refresh: _refresh } = useLesson(lessonId.value)
 
 // SEO metadata — title updates when lesson loads

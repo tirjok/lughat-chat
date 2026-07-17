@@ -15,6 +15,12 @@ import { useVoices } from '../composables/useVoices'
 import { useTtsApi } from '../composables/useTtsApi'
 import { showToast } from '../composables/useToast'
 
+// SEO metadata for playground page
+useSeoMeta({
+  title: 'TTS Playground — LughatChat',
+  description: 'Arabic Text-to-Speech Studio — Generate speech with XTTS-v2'
+})
+
 const { activePanel } = usePanelToggle()
 const {
   isPlaying,
@@ -130,6 +136,8 @@ onUnmounted(() => {
     dir="ltr"
     @keydown="handleKeydown"
   >
+    <!-- Navigation bar (compact: no hamburger since Playground has no sidebar) -->
+    <NavBar compact />
     <!-- Hidden audio element for download -->
     <audio
       v-if="audioUrl"
@@ -138,8 +146,8 @@ onUnmounted(() => {
       class="hidden"
     />
 
-    <!-- Desktop: two-panel layout -->
-    <div class="hidden md:flex h-screen">
+    <!-- Desktop: two-panel layout (padding-top from CSS variable) -->
+    <div class="hidden md:flex h-screen" style="padding-top: var(--nav-height, 56px)">
       <!-- Left panel: Control Deck -->
       <div
         ref="controlDeckDesktopRef"

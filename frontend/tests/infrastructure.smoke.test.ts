@@ -1,7 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref, computed } from 'vue'
-import { mockNuxtImport, registerEndpoint, mountSuspended } from '@nuxt/test-utils/runtime'
+import { ref, computed, defineComponent } from 'vue'
+import { mockNuxtImport, registerEndpoint, mountSuspended, mockComponent } from '@nuxt/test-utils/runtime'
 import Index from '../app/pages/index.vue'
+
+// Mock useSidebar — the Dashboard page now uses it, and the test env
+// does not provide matchMedia/addEventListener that VueUse needs.
+mockNuxtImport('useSidebar', () => () => ({
+  isOpen: ref(false),
+  isMobile: ref(false),
+  sidebarWidth: ref('280px'),
+  toggle: vi.fn(),
+  close: vi.fn()
+}))
+
+// Stub RoadmapSidebar so mountSuspended can render the Dashboard page.
+mockComponent('RoadmapSidebar', defineComponent({
+  props: ['isOpen'],
+  template: '<div class="roadmap-sidebar" data-testid="roadmap-sidebar" />'
+}))
 
 describe('Nuxt 4 test infrastructure smoke test', () => {
   beforeEach(() => {

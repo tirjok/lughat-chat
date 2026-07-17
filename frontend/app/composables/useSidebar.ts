@@ -5,11 +5,11 @@
 // Tracks sidebar open state and detects mobile viewport to determine
 // the appropriate sidebar width.
 
-import { ref, computed } from 'vue'
+import { computed, shallowRef } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 
 export function useSidebar() {
-  const isOpen = ref(false)
+  const isOpen = shallowRef(false)
   const isMobile = useMediaQuery('(max-width: 767px)')
 
   const sidebarWidth = computed(() => {
@@ -30,19 +30,11 @@ export function useSidebar() {
     isOpen.value = false
   }
 
-  /**
-   * Open the sidebar.
-   */
-  function open(): void {
-    isOpen.value = true
-  }
-
   return {
     isOpen,
     isMobile,
     sidebarWidth,
     toggle,
-    close,
-    open
+    close
   }
 }

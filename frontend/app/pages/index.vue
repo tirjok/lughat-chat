@@ -4,9 +4,19 @@
     dir="rtl"
   >
     <!-- Navigation bar -->
-    <NavBar />
+    <NavBar @toggle="sidebar.toggle" />
 
-    <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Roadmap Sidebar (collapsible) -->
+    <RoadmapSidebar
+      :is-open="sidebar.isOpen.value"
+      @close="sidebar.close()"
+    />
+
+    <!-- Main content area (shifts when sidebar is open on desktop) -->
+    <div
+      class="max-w-4xl mx-auto px-4 py-8"
+      :class="{ 'ml-72': sidebar.isOpen.value && !sidebar.isMobile.value }"
+    >
       <!-- Page Header -->
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
         Learning Roadmap
@@ -101,6 +111,14 @@
 
 <script setup lang="ts">
 import type { LessonSummary } from '~/composables/useLessons'
+
+const sidebar = useSidebar()
+
+// SEO metadata for dashboard page
+useSeoMeta({
+  title: 'Learning Roadmap — LughatChat',
+  description: 'Arabic language learning — view your 30-lesson roadmap across CEFR levels A1, A2, B1'
+})
 
 const { lessons, loading, error, fetchLessons } = useLessons()
 

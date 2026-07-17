@@ -49,14 +49,6 @@ describe('useSidebar', () => {
     })
   })
 
-  describe('open', () => {
-    it('sets isOpen to true', () => {
-      const { isOpen, open } = useSidebar()
-      open()
-      expect(isOpen.value).toBe(true)
-    })
-  })
-
   describe('isMobile', () => {
     it('returns a ref (boolean)', () => {
       const { isMobile } = useSidebar()
