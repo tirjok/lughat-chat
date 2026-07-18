@@ -6,7 +6,7 @@
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
 import WaveformCanvas from '../components/WaveformCanvas.vue'
-import { onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
 import { useScrollReveal } from '../composables/useScrollReveal'
@@ -112,7 +112,13 @@ async function handleKeydown(e: KeyboardEvent): Promise<void> {
 }
 
 // Health polling (model ready state tracked but not displayed)
-const { status: modelStatus } = useHealthPoll()
+const { status: modelStatus, modelLoaded } = useHealthPoll()
+
+// Compute whether the Generate button should be disabled
+// — during generation, or when model is not ready (loading/error/retrying)
+const isGenerateDisabled = computed(() => {
+  return isGenerating.value || !modelLoaded
+})
 const { voices, loadVoices } = useVoices()
 const selectedVoice = ref('KSA Zariyah - Female')
 const selectedVoiceName = ref(selectedVoice.value)
@@ -121,6 +127,16 @@ const selectedVoiceName = ref(selectedVoice.value)
 onMounted(() => {
   loadVoices()
 })
+
+// Show error toast when model enters error state (reactive watch on getter)
+watch(
+  () => modelStatus,
+  (status) => {
+    if (status === 'error') {
+      showToast('TTS model is not ready. Please try again later.', 'error')
+    }
+  }
+)
 
 // Cleanup audio URL on unmount
 onUnmounted(() => {
@@ -202,7 +218,7 @@ onUnmounted(() => {
           <GenerateButton
             :is-generating="isGenerating"
             :model-status="modelStatus"
-            :disabled="isGenerating"
+            :disabled="isGenerateDisabled"
             :text="textInput"
             @click="handleGenerate"
           />
@@ -319,7 +335,7 @@ onUnmounted(() => {
         <GenerateButton
           :is-generating="isGenerating"
           :model-status="modelStatus"
-          :disabled="isGenerating"
+          :disabled="isGenerateDisabled"
           :text="textInput"
           @click="handleGenerate"
         />
