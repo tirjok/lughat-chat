@@ -10,16 +10,14 @@
 //   const { progress, loading, error, fetchProgress } = useProgress()
 //   await fetchProgress(lessonId)
 
+import type { ActivityProgress } from '../shared/types'
+
 export interface ProgressData {
   status: string
   activities: Record<string, ActivityProgress>
 }
 
-export interface ActivityProgress {
-  score: number
-  status: string
-  attempts: number
-}
+export type { ActivityProgress }
 
 export interface UseProgressOptions {
   /** Base URL for the API. Defaults to runtime config public.apiBase. */

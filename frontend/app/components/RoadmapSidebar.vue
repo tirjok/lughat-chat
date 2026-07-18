@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { LessonSummary } from '~/composables/useLessons'
-
 interface Props {
   isOpen?: boolean
 }
@@ -12,31 +10,10 @@ interface Emits {
 defineProps<Props>()
 defineEmits<Emits>()
 
-const { lessons, loading, error, fetchLessons } = useLessons()
+const { lessons, loading, error, fetchLessons, groupedLessons } = useLessons()
 
 // Fetch lessons on mount
 fetchLessons()
-
-// Group lessons by level and compute progress
-const groupedLessons = computed(() => {
-  const groups: Record<string, LessonSummary[]> = {}
-  for (const lesson of lessons.value) {
-    const key = lesson.level
-    if (!groups[key]) {
-      groups[key] = []
-    }
-    groups[key]!.push(lesson)
-  }
-
-  return Object.entries(groups)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([level, ls]) => {
-      const total = (ls ?? []).length
-      const completed = (ls ?? []).filter(l => l.status === 'completed').length
-      const progress = total > 0 ? Math.round((completed / total) * 100) : 0
-      return { level, lessons: ls ?? [], progress }
-    })
-})
 </script>
 
 <template>

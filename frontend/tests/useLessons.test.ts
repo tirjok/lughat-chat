@@ -68,17 +68,34 @@ describe('useLessons', () => {
 
     it('returns lessons sorted by level then sequence', async () => {
       const mockLessons = [
+        { id: 3, level: 'A1', sequence: 3, title: 'Lesson 3', competency_count: 1, section_count: 1, status: 'locked' },
         { id: 1, level: 'A1', sequence: 1, title: 'Lesson 1', competency_count: 1, section_count: 1, status: 'available' },
         { id: 2, level: 'A1', sequence: 2, title: 'Lesson 2', competency_count: 1, section_count: 1, status: 'locked' },
-        { id: 3, level: 'A2', sequence: 1, title: 'Lesson 3', competency_count: 1, section_count: 1, status: 'locked' }
+        { id: 4, level: 'A2', sequence: 2, title: 'Lesson 4', competency_count: 1, section_count: 1, status: 'locked' },
+        { id: 5, level: 'A2', sequence: 1, title: 'Lesson 5', competency_count: 1, section_count: 1, status: 'locked' }
       ]
 
       registerEndpoint('/api/lessons', () => mockLessons)
 
-      const { fetchLessons } = useLessons()
-      const result = await fetchLessons()
+      const { lessons, fetchLessons, groupedLessons } = useLessons()
+      await fetchLessons()
 
-      expect(result).toEqual(mockLessons)
+      // The raw lessons array preserves API order (not sorted).
+      expect(lessons.value).toEqual(mockLessons)
+
+      // groupedLessons must sort by level first, then by sequence within each level.
+      const groups = groupedLessons.value
+      expect(groups.length).toBe(2)
+
+      // A1 group: lessons ordered by sequence 1, 2, 3
+      const a1 = groups.find(g => g.level === 'A1')
+      expect(a1).toBeDefined()
+      expect(a1!.lessons.map(l => l.sequence)).toEqual([1, 2, 3])
+
+      // A2 group: lessons ordered by sequence 1, 2 (reversed in API response)
+      const a2 = groups.find(g => g.level === 'A2')
+      expect(a2).toBeDefined()
+      expect(a2!.lessons.map(l => l.sequence)).toEqual([1, 2])
     })
   })
 })

@@ -110,8 +110,6 @@
 </template>
 
 <script setup lang="ts">
-import type { LessonSummary } from '~/composables/useLessons'
-
 const sidebar = useSidebar()
 
 // SEO metadata for dashboard page
@@ -120,29 +118,8 @@ useSeoMeta({
   description: 'Arabic language learning — view your 30-lesson roadmap across CEFR levels A1, A2, B1'
 })
 
-const { lessons, loading, error, fetchLessons } = useLessons()
+const { lessons, loading, error, fetchLessons, groupedLessons } = useLessons()
 
 // Fetch lessons on mount
 fetchLessons()
-
-// Group lessons by level and compute progress
-const groupedLessons = computed(() => {
-  const groups: Record<string, LessonSummary[]> = {}
-  for (const lesson of lessons.value) {
-    const key = lesson.level
-    if (!groups[key]) {
-      groups[key] = []
-    }
-    groups[key]!.push(lesson)
-  }
-
-  return Object.entries(groups)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([level, ls]) => {
-      const total = (ls ?? []).length
-      const completed = (ls ?? []).filter(l => l.status === 'completed').length
-      const progress = total > 0 ? Math.round((completed / total) * 100) : 0
-      return { level, lessons: ls ?? [], progress }
-    })
-})
 </script>

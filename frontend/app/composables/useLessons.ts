@@ -2,6 +2,8 @@
 // Lesson Content Types — derived from backend JSON (backend/content/a1/lesson-01.json)
 // ============================================================================
 
+import type { ActivityProgress } from '../shared/types'
+
 // Section types (used in sections array)
 
 export interface DialogueLine {
@@ -227,12 +229,6 @@ export interface LessonSummary {
   status: 'available' | 'locked' | 'completed' | 'in_progress'
 }
 
-export interface ActivityProgress {
-  score: number
-  status: string
-  attempts: number
-}
-
 export interface LessonProgress {
   status: string
   activities: Record<string, ActivityProgress>
@@ -251,6 +247,12 @@ export interface LessonDetail {
 
 export interface UseLessonsOptions {
   baseUrl?: string
+}
+
+export interface LevelGroup {
+  level: string
+  lessons: LessonSummary[]
+  progress: number
 }
 
 export const useLessons = (options: UseLessonsOptions = {}) => {
@@ -281,11 +283,44 @@ export const useLessons = (options: UseLessonsOptions = {}) => {
     }
   }
 
+  /**
+   * Group lessons by CEFR level, sort levels alphabetically, and sort
+   * lessons within each level by their `sequence` field.  Computes
+   * per-level progress (percentage of completed lessons).
+   */
+  const groupedLessons = computed<LevelGroup[]>(() => {
+    const groups: Record<string, LessonSummary[]> = {}
+    for (const lesson of lessons.value) {
+      const key = lesson.level
+      if (!groups[key]) {
+        groups[key] = []
+      }
+      groups[key]!.push(lesson)
+    }
+
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([level, ls]) => {
+        // Sort lessons within the level by sequence (ascending).
+        const sorted = [...(ls ?? [])].sort(
+          (a, b) => a.sequence - b.sequence
+        )
+        const total = sorted.length
+        const completed = sorted.filter(
+          l => l.status === 'completed'
+        ).length
+        const progress
+          = total > 0 ? Math.round((completed / total) * 100) : 0
+        return { level, lessons: sorted, progress }
+      })
+  })
+
   return {
     lessons,
     loading,
     error,
-    fetchLessons
+    fetchLessons,
+    groupedLessons
   }
 }
 
@@ -315,7 +350,7 @@ export const useLesson = (id: number) => {
   })
 
   return {
-    currentLesson: data as Ref<LessonDetail | null | undefined>,
+    currentLesson: data,
     currentLoading: computed(() => status.value === 'pending'),
     currentError: errorMessage,
     refresh

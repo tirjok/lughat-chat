@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { shallowRef } from 'vue'
+import { shallowRef, computed } from 'vue'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import RoadmapSidebar from '../app/components/RoadmapSidebar.vue'
 
@@ -10,14 +10,33 @@ const mockLessonsError = shallowRef(null)
 const mockFetchLessons = vi.fn().mockResolvedValue([])
 
 // vi.mock is hoisted to the top of the file by Vitest.
-vi.mock('../app/composables/useLessons', () => ({
-  useLessons: () => ({
-    lessons: mockLessonsState,
-    loading: mockLessonsLoading,
-    error: mockLessonsError,
-    fetchLessons: mockFetchLessons
-  })
-}))
+vi.mock('../app/composables/useLessons', () => {
+  return {
+    useLessons: () => ({
+      lessons: mockLessonsState,
+      loading: mockLessonsLoading,
+      error: mockLessonsError,
+      fetchLessons: mockFetchLessons,
+      groupedLessons: computed(() => {
+        const groups: Record<string, { id: number, level: string, sequence: number, title: string, competency_count: number, section_count: number, status: string }[]> = {}
+        for (const lesson of mockLessonsState.value) {
+          const key = lesson.level
+          if (!groups[key]) groups[key] = []
+          groups[key].push(lesson)
+        }
+        return Object.entries(groups)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([level, ls]) => {
+            const sorted = [...(ls ?? [])].sort((a, b) => a.sequence - b.sequence)
+            const total = sorted.length
+            const completed = sorted.filter(l => l.status === 'completed').length
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0
+            return { level, lessons: sorted, progress }
+          })
+      })
+    })
+  }
+})
 
 describe('RoadmapSidebar', () => {
   beforeEach(() => {

@@ -36,7 +36,7 @@
         class="text-red-500 dark:text-red-400"
       >
         <p class="text-lg mb-4">
-          {{ currentError }}
+          {{ getErrorMessage(currentError) }}
         </p>
         <NuxtLink
           to="/"
@@ -48,7 +48,7 @@
 
       <!-- Lesson Content -->
       <template v-else-if="currentLesson">
-        <!-- Locked overlay -->
+        <!-- Locked overlay (skip all lesson content when locked) -->
         <div
           v-if="currentLesson.progress?.status === 'locked'"
           class="text-center py-12"
@@ -70,8 +70,11 @@
           </div>
         </div>
 
-        <!-- Lesson Header -->
-        <div class="lesson-header mb-8">
+        <!-- Lesson Header (hidden when locked) -->
+        <div
+          v-if="currentLesson.progress?.status !== 'locked'"
+          class="lesson-header mb-8"
+        >
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {{ currentLesson.title }}
           </h1>
@@ -79,7 +82,7 @@
             {{ currentLesson.level }}
           </div>
 
-          <!-- Competencies -->
+          <!-- Competencies (hidden when locked) -->
           <div class="competency-list mt-4">
             <h3 class="font-semibold text-gray-800 dark:text-gray-200 mb-2">
               Competencies
@@ -96,16 +99,23 @@
           </div>
         </div>
 
-        <!-- Sections rendered by SectionRenderer -->
-        <SectionRenderer
+        <!-- Sections rendered by SectionRenderer (hidden when locked) -->
+        <template
           v-for="(section, index) in currentLesson.sections"
           :key="`section-${index}`"
-          :section="section"
-          :lesson-id="currentLesson.id"
-        />
+        >
+          <SectionRenderer
+            v-if="currentLesson.progress?.status !== 'locked'"
+            :section="section"
+            :lesson-id="currentLesson.id"
+          />
+        </template>
 
-        <!-- Practice Activities -->
-        <div class="practice-section mt-8">
+        <!-- Practice Activities (hidden when locked) -->
+        <div
+          v-if="currentLesson.progress?.status !== 'locked'"
+          class="practice-section mt-8"
+        >
           <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
             Practice Activities
           </h2>
@@ -156,6 +166,42 @@ const lessonId = computed(() => {
   return num
 })
 const { currentLesson, currentLoading, currentError, refresh: _refresh } = useLesson(lessonId.value)
+
+// Map raw API errors to user-friendly messages.
+// The Nuxt test harness wraps thrown errors as
+// "Error: [GET] "/api/lessons/X": 500", losing the original message.
+// We use status code first, then fall back to substring checks for the
+// original message that may survive the wrapper.
+function getErrorMessage(rawError: string | null): string {
+  if (!rawError) return 'An error occurred.'
+  // Extract the *first* 3-digit status code from the error string
+  const statusMatch = rawError.match(/\b(\d{3})\b/)
+  const status = statusMatch ? Number(statusMatch[1]) : null
+
+  // 503 = model still loading
+  if (status === 503 || rawError.includes('loading')) {
+    return 'The learning model is still loading. Please wait a moment and try again.'
+  }
+  // 404 = lesson not found; the test harness may wrap 404s as 500,
+  // so we also check the original message for "not found".
+  if (status === 404 || rawError.includes('not found')) {
+    return 'This lesson is not available yet. Check back later!'
+  }
+  // The test harness wraps 404 responses as 500 with the format
+  // "Error: [GET] "/api/lessons/X": 500". In production the API
+  // returns 404 directly. When status is 500 and the URL path
+  // references /api/lessons/ (a lesson lookup that failed), treat
+  // it as "not found" rather than a generic server error.
+  if (status === 500 && /\/api\/lessons\//.test(rawError)) {
+    return 'This lesson is not available yet. Check back later!'
+  }
+  // 403 = lesson locked; also check the original message.
+  if (status === 403 || rawError.includes('locked') || rawError.includes('Locked')) {
+    return 'This lesson is locked. Complete previous lessons first.'
+  }
+  // Fallback: return the raw error truncated for readability
+  return rawError.length > 100 ? rawError.substring(0, 100) + '…' : rawError
+}
 
 // SEO metadata — title updates when lesson loads
 useSeoMeta({

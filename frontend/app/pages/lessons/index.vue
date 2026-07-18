@@ -87,7 +87,7 @@ const { lessons, loading, error, fetchLessons } = useLessons()
 // Fetch lessons on mount
 fetchLessons()
 
-// Group lessons by level
+// Group lessons by level and sort by sequence
 const groupedLessons = computed(() => {
   const groups: Record<string, LessonSummary[]> = {}
   for (const lesson of lessons.value) {
@@ -99,6 +99,9 @@ const groupedLessons = computed(() => {
   }
   return Object.entries(groups)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([level, ls]) => ({ level, lessons: ls ?? [] }))
+    .map(([level, ls]) => ({
+      level,
+      lessons: [...(ls ?? [])].sort((a, b) => a.sequence - b.sequence)
+    }))
 })
 </script>

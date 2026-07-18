@@ -147,7 +147,10 @@ onUnmounted(() => {
     />
 
     <!-- Desktop: two-panel layout (padding-top from CSS variable) -->
-    <div class="hidden md:flex h-screen" style="padding-top: var(--nav-height, 56px)">
+    <div
+      class="hidden md:flex h-screen"
+      style="padding-top: var(--nav-height, 56px)"
+    >
       <!-- Left panel: Control Deck -->
       <div
         ref="controlDeckDesktopRef"
