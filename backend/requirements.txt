@@ -5,3 +5,4 @@ coqui-tts[codec]==0.27.5
 ffmpeg-python==0.2.0
 python-multipart==0.0.18
 jsonschema==4.25.1
+rapidfuzz==3.14.5

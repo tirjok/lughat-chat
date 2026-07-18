@@ -67,7 +67,7 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 
 | # | File | Slice | What |
 |---|------|-------|------|
-| 24 | `IMPLEMENTATION-activity-submission-and-scoring.md` | S-1 | Scoring library (5 algorithms) |
+| 24 | `IMPLEMENTATION-activity-submission-and-scoring.md` | S-1 | Scoring library (5 algorithms) ✅ DONE |
 | 25 | `IMPLEMENTATION-activity-submission-and-scoring.md` | S-2 | Submission endpoint |
 | 26 | `IMPLEMENTATION-activity-submission-and-scoring.md` | S-3 | Progress persistence |
 | 27 | `IMPLEMENTATION-activity-submission-and-scoring.md` | S-4 | Frontend submission composable |
