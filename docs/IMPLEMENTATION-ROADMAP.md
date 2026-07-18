@@ -58,8 +58,8 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 
 | # | File | Slice | What |
 |---|------|-------|------|
-| 20 | `IMPLEMENTATION-dashboard-navigation-and-roadmap.md` | S-1 | Create `/playground` route (move TTS Studio) |
-| 21 | `IMPLEMENTATION-dashboard-navigation-and-roadmap.md` | S-2 | Navigation bar component |
+| 20 | `IMPLEMENTATION-dashboard-navigation-and-roadmap.md` | S-1 | Create `/playground` route (move TTS Studio) ✅ DONE |
+| 21 | `IMPLEMENTATION-dashboard-navigation-and-roadmap.md` | S-2 | Navigation bar component ✅ DONE |
 | 22 | `IMPLEMENTATION-dashboard-navigation-and-roadmap.md` | S-3–5 | Dashboard page + roadmap sidebar + lesson click nav |
 | 23 | `IMPLEMENTATION-playground-access.md` | S-1–3 | Wire playground to nav, mobile layout, error states |
 
