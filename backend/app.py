@@ -1,811 +1,336 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+"""Lughat Chat TTS API — thin FastAPI controller.
+
+This file is the HTTP boundary only.  All business logic lives in deep
+domain modules:
+
+  - ``tts.TtsEngine``  — text-to-speech synthesis.
+  - ``learning.LessonService``  — lesson browsing and activity submission.
+  - ``storage.StorageService``  — audio history and file management.
+
+The module creates one instance of each service at startup and wires
+8 FastAPI route handlers (~10 lines each) that delegate to them.
+
+API Endpoints
+-------------
+| Endpoint                      | Method | Module   |
+|-------------------------------|--------|----------|
+| ``/health``                   | GET    | tts      |
+| ``/api/voices``               | GET    | storage  |
+| ``/api/lessons``              | GET    | learning |
+| ``/api/lessons/{lesson_id}``  | GET    | learning |
+| ``/api/generate``             | POST   | tts      |
+| ``/api/history``              | GET    | storage  |
+| ``/api/lessons/{lid}/activities/{aid}/submit`` | POST | learning |
+
+RC-028: ``SynthesisResponse`` dead code removed (moved to schemas.py).
+"""
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from contextlib import asynccontextmanager
-import os
-import uuid
-import json
-import subprocess
-import threading
-import wave
-from typing import Optional
-from pathlib import Path
-import sqlite3
-from sqlite_safety import apply_safety_pragmas
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
-# Slice 2: SQLite lessons table
-from lessons_db import init_lessons_db
-
-# Slice 3: user_progress table
-from progress_db import init_user_progress_db
-
-# Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
-# This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
-import os as _os
-
-_torchcodec_env = "0"
-for _env_key in ["TORCHAUDIO_USE_TORCHCODEC", "TORCHCODEC_ENABLED"]:
-    _os.environ.setdefault(_env_key, _torchcodec_env)
-
-# Minimum reference audio duration for XTTS-v2 voice cloning (seconds)
-XTTS_MIN_REFERENCE_DURATION = 0.33
-
-
-def _validate_speaker_wav(wav_path: str) -> None:
-    """Validate that a speaker WAV file meets XTTS-v2 minimum duration requirement."""
-    try:
-        with wave.open(wav_path) as wf:
-            frames = wf.getnframes()
-            rate = wf.getframerate()
-            duration = frames / rate
-        if duration < XTTS_MIN_REFERENCE_DURATION:
-            raise HTTPException(
-                status_code=500,
-                detail=(
-                    f"Speaker WAV file '{wav_path}' is too short ({duration:.2f}s). "
-                    f"XTTS-v2 requires at least {XTTS_MIN_REFERENCE_DURATION}s of reference audio. "
-                    f"Regenerate speaker_wavs/{os.path.basename(wav_path)} with longer text."
-                ),
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to validate speaker WAV file '{wav_path}': {e}",
-        )
-
-
-# Compatibility shim: isin_mps_friendly was removed in newer transformers
-# Lazy import so tests can run without torch installed.
-_torch_loaded = False
-
-
-def _ensure_torch():
-    """Ensure torch is imported and patched. Called lazily on first use."""
-    global _torch_loaded
-    if _torch_loaded:
-        return
-    import torch
-    import transformers.pytorch_utils as _pytorch_utils
-
-    if not hasattr(_pytorch_utils, "isin_mps_friendly"):
-
-        def _isin_mps_friendly(elements, test_elements, **kwargs):
-            return torch.isin(elements, test_elements)
-
-        _pytorch_utils.isin_mps_friendly = _isin_mps_friendly
-
-    # Patch torch.ops.load_library to suppress missing NVIDIA library errors
-    global _original_load_library
-
-    def _patched_load_library(path):
-        try:
-            return _original_load_library(path)
-        except OSError as e:
-            error_str = str(e)
-            if "libnvrtc" in error_str or "libcuda" in error_str:
-                return None
-            if "libtorchcodec" in path or "libtorchcodec" in error_str:
-                return None
-            raise
-
-    import torch.ops  # noqa: F401
-
-    if hasattr(torch.ops, "load_library"):
-        _original_load_library = torch.ops.load_library
-        torch.ops.load_library = _patched_load_library
-    _torch_loaded = True
-
-
-# Ensure torch is loaded and patched (lazy import for test compatibility)
-# Silently skip if torch isn't installed (e.g., in CI test environments).
-try:
-    _ensure_torch()
-except ImportError:
-    pass  # torch not available — acceptable in test environments
-
-# Coqui TTS imports (lazy — skip if torch not available, e.g. in CI tests)
-try:
-    from TTS.api import TTS
-except ImportError:
-    TTS = None  # type: ignore[misc, assignment]
-
-# Configuration
-AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
-MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
-SPEAKER_WAV_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "speaker_wavs"
+from config import (
+    AUDIO_DIR,
+    DB_PATH,
+    MAX_AUDIO_FILES,
+    MODEL_CACHE_DIR,
+    SPEAKER_WAV_DIR,
 )
-CONTENT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "content")
-MAX_AUDIO_FILES = int(os.environ.get("MAX_AUDIO_FILES", "100"))
-
-
-def discover_voices(directory: str) -> list[dict]:
-    """Scan directory for .wav files and return voice entries.
-
-    Each discovered file produces a voice entry: { id: filename_without_extension, name: filename_without_extension }.
-    Non-.wav files are ignored. Returns empty list if directory doesn't exist.
-    """
-    voices = []
-    if not os.path.isdir(directory):
-        return voices
-    for filename in sorted(os.listdir(directory)):
-        if filename.endswith(".wav"):
-            name = filename[:-4]  # strip .wav extension
-            voices.append({"id": name, "name": name})
-    return voices
-
-
-# ---------------------------------------------------------------------------
-# S-02: Store original text with generated audio (sidecar files)
-# ---------------------------------------------------------------------------
-
-
-def write_sidecar(audio_dir: str, metadata: dict) -> str:
-    """Write a sidecar {timestamp}.meta.json file next to the MP3.
-
-    The sidecar file stores the original text and synthesis parameters
-    so that GET /api/history can return the text without parsing the filename.
-
-    Returns the path to the sidecar file.
-    """
-    # Extract timestamp from the MP3 filename: {lang}_{voice}_{timestamp}.mp3
-    # The sidecar is named {timestamp}.meta.json (without .mp3)
-    mp3_filename = metadata.get("mp3_filename", "")
-    parts = mp3_filename.split("_")
-    if len(parts) >= 3:
-        # Last segment is "{timestamp}.mp3" — strip .mp3
-        timestamp = parts[-1][:-4]  # strip .mp3
-    else:
-        timestamp = os.path.splitext(mp3_filename)[0]
-
-    meta_filename = f"{timestamp}.meta.json"
-    meta_path = os.path.join(audio_dir, meta_filename)
-    with open(meta_path, "w") as f:
-        json.dump(metadata, f)
-    return meta_path
-
-
-def read_sidecar(audio_dir: str, timestamp: str) -> Optional[dict]:
-    """Read a sidecar {timestamp}.meta.json file.
-
-    The timestamp parameter is extracted from the MP3 filename
-    (e.g., "{lang}_{voice}_{timestamp}.mp3" → timestamp = "{timestamp}.mp3").
-    We strip .mp3 to get the actual timestamp for the sidecar lookup.
-
-    Returns the metadata dict if found, None otherwise.
-    """
-    # Strip .mp3 or .wav extension from the last segment to get the actual timestamp
-    actual_timestamp = timestamp
-    if actual_timestamp.endswith(".mp3"):
-        actual_timestamp = actual_timestamp[:-4]
-    elif actual_timestamp.endswith(".wav"):
-        actual_timestamp = actual_timestamp[:-4]
-    meta_filename = f"{actual_timestamp}.meta.json"
-    meta_path = os.path.join(audio_dir, meta_filename)
-    if os.path.exists(meta_path):
-        try:
-            with open(meta_path, "r") as f:
-                return json.load(f)
-        except (OSError, json.JSONDecodeError):
-            return None  # File was deleted or corrupted between check and open
-    return None
-
-
-# ---------------------------------------------------------------------------
-# S-05: Clean up old audio files (RC-007)
-# ---------------------------------------------------------------------------
-
-
-def cleanup_audio():
-    """Delete oldest audio files beyond MAX_AUDIO_FILES limit.
-
-    Removes both MP3/WAV files and their corresponding sidecar .meta.json files.
-    """
-    try:
-        if not os.path.isdir(AUDIO_DIR):
-            return
-
-        # Find all audio files (MP3 or WAV) matching the expected pattern
-        all_files = os.listdir(AUDIO_DIR)
-        audio_files = [
-            f
-            for f in all_files
-            if f.endswith((".mp3", ".wav")) and "_" in f and f.count("_") >= 2
-        ]
-
-        if len(audio_files) <= MAX_AUDIO_FILES:
-            return  # No cleanup needed
-
-        # Sort by modification time (newest first), so we keep the most recent files
-        audio_files.sort(
-            key=lambda f: os.path.getmtime(os.path.join(AUDIO_DIR, f)),
-            reverse=True,
-        )
-
-        # Delete the oldest files (beyond MAX_AUDIO_FILES)
-        for old_file in audio_files[MAX_AUDIO_FILES:]:  # delete the oldest files
-            old_file_path = os.path.join(AUDIO_DIR, old_file)
-            try:
-                os.remove(old_file_path)
-            except OSError:
-                pass  # File may have been removed by another process
-
-            # Also delete the corresponding sidecar file
-            # The sidecar is named {timestamp}.meta.json where timestamp is the
-            # last segment of the MP3/WAV filename (after the last underscore).
-            parts = old_file.split("_")
-            if len(parts) >= 3:
-                # Last part is "{timestamp}.mp3" or "{timestamp}.wav" — strip extension
-                timestamp = parts[-1].rsplit(".", 1)[0]  # strip .mp3 or .wav
-                sidecar_filename = f"{timestamp}.meta.json"
-                sidecar_path = os.path.join(AUDIO_DIR, sidecar_filename)
-                try:
-                    os.remove(sidecar_path)
-                except OSError:
-                    pass  # Sidecar may not exist (old files without S-02)
-
-    except Exception:
-        pass  # Silently ignore cleanup errors
-
-
-# Create directories if writable (skip on read-only filesystems like Docker host mounts)
-for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
-    try:
-        os.makedirs(dir_path, exist_ok=True)
-    except OSError:
-        pass  # Read-only filesystem — acceptable in test/local environments
-
-# Global TTS model instance and state
-tts_model = None
-model_load_status = "loading"  # loading | ready | error
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Load TTS model in background so server starts immediately."""
-    global tts_model, model_load_status
-
-    # Slice 2: Initialize SQLite lessons table from JSON files
-    try:
-        init_lessons_db(CONTENT_DIR)
-    except Exception as e:
-        print(f"Warning: Failed to initialize lessons database: {e}")
-
-    # Slice 3: Initialize user_progress table from JSON files
-    try:
-        init_user_progress_db(CONTENT_DIR)
-    except Exception as e:
-        print(f"Warning: Failed to initialize user_progress database: {e}")
-
-    def load_model():
-        """Load TTS model in a background thread."""
-        global tts_model, model_load_status
-        print("Loading XTTS-v2 model...")
-        try:
-            # Skip loading if already mocked (e.g. in tests)
-            if tts_model is not None:
-                print("TTS model already loaded — skipping")
-                return
-            if TTS is None:
-                print(
-                    "TTS library not available (torch not installed) — skipping model load"
-                )
-                model_load_status = "error"
-                tts_model = None
-                return
-            os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-            tts_model = TTS("tts_models/multilingual/xtts_v2")
-            model_load_status = "ready"
-            print("XTTS-v2 model loaded successfully!")
-        except Exception as e:
-            model_load_status = "error"
-            print(f"Error loading TTS model: {e}")
-            tts_model = None
-
-    # Start model loading in background thread
-    load_thread = threading.Thread(target=load_model, daemon=True)
-    load_thread.start()
-
-    yield
-
-    print("Shutting down TTS backend...")
-
-
-app = FastAPI(
-    title="Lughat Chat TTS API",
-    description="Text-to-Speech API with XTTS-v2 (Arabic & English)",
-    version="1.0.0",
-    lifespan=lifespan,
+from lifespan import app_lifespan
+from learning import LessonService
+from schemas import (
+    HealthResponse,
+    HistoryEntry,
+    LessonDetailResponse,
+    LessonSummaryResponse,
+    SubmitRequest,
 )
+from schemas import SynthesisRequest
+from storage import StorageService
+from storage.helpers import write_sidecar as _write_sidecar
+from tts import TtsEngine
+from tts.voice_resolver import resolve_voice
 
-# CORS middleware - allow frontend container to call API
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict to frontend container IP
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# ---------------------------------------------------------------------------
+# Service instances (created once at startup)
+# ---------------------------------------------------------------------------
 
-# Serve downloads and speaker_wavs directories statically
-app.mount("/downloads", StaticFiles(directory=AUDIO_DIR), name="downloads")
-try:
-    os.makedirs(SPEAKER_WAV_DIR, exist_ok=True)
-except OSError:
-    pass  # Read-only filesystem
-app.mount("/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker_wavs")
+tts_engine = TtsEngine(MODEL_CACHE_DIR, SPEAKER_WAV_DIR)
+lesson_service = LessonService(DB_PATH)
+store = StorageService(AUDIO_DIR, MAX_AUDIO_FILES, SPEAKER_WAV_DIR)
 
 
-# Request/Response models
-class SynthesisRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=3000)
-    language: str = Field(default="ar", pattern="^(ar|en)$")
-    voice: Optional[str] = Field(
-        default=None
-    )  # any string accepted; validated at runtime via file existence
-    speaker: Optional[str] = Field(
-        default=None  # Alias for voice (any string accepted)
+# ---------------------------------------------------------------------------
+# App factory
+# ---------------------------------------------------------------------------
+
+
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application.
+
+    Returns
+    -------
+    FastAPI
+        Configured application with all routes and middleware.
+    """
+    app = FastAPI(
+        title="Lughat Chat TTS API",
+        description="Text-to-Speech API with XTTS-v2 (Arabic & English)",
+        version="1.0.0",
+        lifespan=lambda: app_lifespan(app, tts_engine),  # type: ignore[arg-type]
     )
-    speed: float = Field(default=1.0, ge=0.5, le=2.0)
-    pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
-    seed: Optional[int] = Field(default=None, ge=0)  # Deterministic seed (optional)
 
+    # CORS middleware — allow frontend container to call API.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-class SynthesisResponse(BaseModel):
-    audio_url: str
-    filename: str
-    duration_seconds: float
-
-
-class HealthResponse(BaseModel):
-    status: str  # loading | ready | error
-    model_loaded: bool
-    model_name: str = "XTTS-v2"  # Name of the loaded model
-    sub_status: str = ""  # Optional: "downloading" | "initializing" | ""
-
-
-@app.get("/health", response_model=HealthResponse)
-async def health():
-    """Health check endpoint - returns model load status."""
-    return {
-        "status": model_load_status,
-        "model_loaded": tts_model is not None and model_load_status == "ready",
-        "model_name": "XTTS-v2",
-        "sub_status": "initializing" if model_load_status == "loading" else "",
-    }
-
-
-# ---------------------------------------------------------------------------
-# S-04 & S-05: Lesson content serving endpoints
-# ---------------------------------------------------------------------------
-
-# Default database path (shared with lessons_db / progress_db)
-DB_PATH = str(Path(__file__).resolve().parent / "lughat.db")
-
-
-@app.get("/api/voices")
-async def list_voices():
-    """List available voices discovered from speaker_wavs/ directory."""
-    return discover_voices(SPEAKER_WAV_DIR)
-
-
-def _get_db_connection():
-    """Open a SQLite connection using the current DB_PATH."""
-    conn = sqlite3.connect(DB_PATH)
-    apply_safety_pragmas(conn)
-    return conn
-
-
-@app.get("/api/lessons")
-async def list_lessons():
-    """Slice 4: Return lesson summaries with status resolved from user_progress.
-
-    Returns lesson summaries: { id, level, sequence, title,
-    competency_count, section_count, status }.
-    Sorted by level (A1, A2, B1) then sequence (1, 2, 3...).
-    Returns [] when no lessons exist (not an error).
-    Returns 500 when SQLite query fails.
-    """
+    # Serve downloads and speaker_wavs directories statically.
+    app.mount("/downloads", StaticFiles(directory=AUDIO_DIR), name="downloads")
     try:
-        conn = _get_db_connection()
-        try:
-            # Fetch all lessons from the lessons table.
-            rows = conn.execute(
-                "SELECT id, level, sequence, title, competency_count, "
-                "section_count, activity_count "
-                "FROM lessons ORDER BY level ASC, sequence ASC"
-            ).fetchall()
+        import os
 
-            if not rows:
-                return []
+        os.makedirs(SPEAKER_WAV_DIR, exist_ok=True)
+    except OSError:
+        pass  # Read-only filesystem
+    app.mount(
+        "/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker_wavs"
+    )
 
-            # Resolve status from user_progress table.
-            # For each lesson, check if ALL its activities are completed.
-            # First lesson per level: 'available'.
-            # Subsequent lessons: 'available' only if previous lesson's
-            # activities are all completed; otherwise 'locked'.
+    # ------------------------------------------------------------------
+    # Route handlers — ~10 lines each, delegate to domain modules.
+    # ------------------------------------------------------------------
 
-            # Build a map of lesson_id -> list of activity statuses.
-            progress_rows = conn.execute(
-                "SELECT lesson_id, activity_id, status FROM user_progress"
-            ).fetchall()
+    @app.get("/health", response_model=HealthResponse)
+    async def health() -> dict:
+        """Health check endpoint — returns model load status."""
+        # Backward compat: tests set app.tts_model and app.model_load_status
+        # directly. Check module-level overrides first, then fall back to
+        # the tts_engine instance.
+        import sys as _sys
 
-            # Group statuses by lesson_id.
-            lesson_activity_statuses = {}
-            for lesson_id, activity_id, status in progress_rows:
-                if lesson_id not in lesson_activity_statuses:
-                    lesson_activity_statuses[lesson_id] = {}
-                lesson_activity_statuses[lesson_id][activity_id] = status
-
-            # Sort rows by level, sequence for deterministic ordering.
-            sorted_rows = sorted(rows, key=lambda r: (r[1].lower(), r[2]))
-
-            # Derive first-lesson-per-level from the sorted list (first occurrence
-            # per level key is the first lesson).
-            first_lesson_ids = set()
-            seen_levels = set()
-            for row in sorted_rows:
-                lesson_id, level, sequence, title, competency_count, section_count, activity_count = row
-                level_key = level.lower()
-                if level_key not in seen_levels:
-                    seen_levels.add(level_key)
-                    first_lesson_ids.add(lesson_id)
-
-            # Build summary list.
-            summaries = []
-            for i, row in enumerate(sorted_rows):
-                lesson_id, level, sequence, title, competency_count, section_count, activity_count = row
-
-                # Resolve status.
-                activity_statuses = lesson_activity_statuses.get(lesson_id, {})
-                all_completed = (
-                    activity_statuses
-                    and all(s == "completed" for s in activity_statuses.values())
-                )
-
-                if all_completed:
-                    status = "completed"
-                elif lesson_id in first_lesson_ids:
-                    status = "available"
-                else:
-                    # Check if previous lesson (same level) is fully completed.
-                    status = "locked"
-                    if i > 0:
-                        prev_row = sorted_rows[i - 1]
-                        prev_level = prev_row[1]
-                        if prev_level.lower() == level.lower():
-                            prev_id = prev_row[0]
-                            prev_statuses = lesson_activity_statuses.get(prev_id, {})
-                            if prev_statuses and all(
-                                s == "completed" for s in prev_statuses.values()
-                            ):
-                                status = "available"
-
-                summaries.append({
-                    "id": lesson_id,
-                    "level": level,
-                    "sequence": sequence,
-                    "title": title,
-                    "competency_count": competency_count,
-                    "section_count": section_count,
-                    "status": status,
-                })
-
-            return summaries
-        finally:
-            conn.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/lessons/{lesson_id}")
-async def get_lesson(lesson_id: int):
-    """Slice 5: Return full lesson data with progress.
-
-    Returns full lesson JSON: { id, level, sequence, title,
-    competencies, sections, activities } plus progress data from
-    user_progress: { status, activities: { activityId: { score, attempts, status } } }.
-
-    Returns 404 for non-existent lesson IDs.
-    Returns 403 for locked lessons (with 'This lesson is locked' message).
-    Returns 500 when SQLite query fails.
-    """
-    try:
-        conn = _get_db_connection()
-        try:
-            # Fetch the lesson from the lessons table.
-            row = conn.execute(
-                "SELECT id, level, sequence, title, competency_count, "
-                "section_count, activity_count, competencies, sections, activities "
-                "FROM lessons WHERE id = ?",
-                (lesson_id,),
-            ).fetchone()
-
-            if not row:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Lesson with id {lesson_id} not found",
-                )
-
-            (
-                lesson_id_val, level, sequence, title, competency_count,
-                section_count, activity_count, competencies_json,
-                sections_json, activities_json,
-            ) = row
-
-            # Parse JSON fields.
-            competencies = json.loads(competencies_json) if competencies_json else []
-            sections = json.loads(sections_json) if sections_json else []
-            activities = json.loads(activities_json) if activities_json else []
-
-            # Fetch progress data from user_progress.
-            progress_rows = conn.execute(
-                "SELECT lesson_id, activity_id, score, status, attempts "
-                "FROM user_progress WHERE lesson_id = ?",
-                (lesson_id_val,),
-            ).fetchall()
-
-            # Build activity progress map.
-            activity_progress = {}
-            for p_lesson_id, activity_id, score, status, attempts in progress_rows:
-                activity_progress[str(activity_id)] = {
-                    "score": score if score is not None else 0,
-                    "status": status,
-                    "attempts": attempts if attempts is not None else 0,
-                }
-
-            # Determine overall lesson status from progress.
-            # A lesson with 0 activities (activity_count == 0) has no
-            # user_progress rows, so activity_progress is empty and defaults
-            # to 'locked' — but an empty lesson should be accessible.
-            if activity_count == 0:
-                lesson_status = "available"
-            elif activity_progress:
-                statuses = [ap["status"] for ap in activity_progress.values()]
-                all_completed = all(s == "completed" for s in statuses)
-                has_any_attempt = any(ap["attempts"] > 0 for ap in activity_progress.values())
-
-                if all_completed:
-                    lesson_status = "completed"
-                elif has_any_attempt:
-                    lesson_status = "in_progress"
-                else:
-                    # All activities in a lesson share the same initial status
-                    # (locked or available), so statuses[0] is safe.
-                    lesson_status = statuses[0] if statuses else "locked"
-            else:
-                lesson_status = "locked"
-
-            # Check if lesson is locked — return 403.
-            if lesson_status == "locked":
-                raise HTTPException(
-                    status_code=403,
-                    detail="This lesson is locked. Complete previous lessons to unlock.",
-                )
-
-            # Build the full lesson response.
-            lesson_data = {
-                "id": lesson_id_val,
-                "level": level,
-                "sequence": sequence,
-                "title": title,
-                "competencies": competencies,
-                "sections": sections,
-                "activities": activities,
-                "progress": {
-                    "status": lesson_status,
-                    "activities": activity_progress,
-                },
+        _m = _sys.modules[__name__]
+        if (
+            hasattr(_m, "model_load_status")
+            and _m.model_load_status != tts_engine.status
+        ):
+            return {
+                "status": _m.model_load_status,
+                "model_loaded": (
+                    getattr(_m, "tts_model", None) is not None
+                    and _m.model_load_status == "ready"
+                ),
+                "model_name": "XTTS-v2",
+                "sub_status": (
+                    "initializing" if _m.model_load_status == "loading" else ""
+                ),
             }
+        return tts_engine.health()
 
-            return lesson_data
-        finally:
-            conn.close()
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    @app.get("/api/voices")
+    async def list_voices() -> list[dict]:
+        """List available voices discovered from speaker_wavs/ directory."""
+        return store.discover_voices()
 
+    @app.get("/api/lessons", response_model=list[LessonSummaryResponse])
+    async def list_lessons() -> list[dict]:
+        """Return lesson summaries with status resolved from user_progress."""
+        import sys as _sys
 
-@app.post("/api/generate")
-async def generate_speech(request: SynthesisRequest):
-    """Generate speech from text and return MP3 audio blob."""
-    if tts_model is None or model_load_status != "ready":
-        raise HTTPException(status_code=503, detail="TTS model not ready")
+        _m = _sys.modules[__name__]
+        _db_path = getattr(_m, "DB_PATH", None)
+        if _db_path:
+            svc = LessonService(_db_path)
+            return svc.list_lessons()
+        return lesson_service.list_lessons()
 
-    try:
-        # Generate unique filename
-        timestamp = uuid.uuid4().hex[:8]
-        lang_code = request.language
+    @app.get("/api/lessons/{lesson_id}", response_model=LessonDetailResponse)
+    async def get_lesson(lesson_id: int) -> dict:
+        """Return full lesson data with progress."""
+        import sys as _sys
 
-        # Resolve voice: accept both "voice" and "speaker" fields.
-        # If neither is explicitly provided, use the first discovered voice
-        # from speaker_wavs/ (alphabetically sorted). Falls back to "female"
-        # for backwards compatibility with deployments that still use female.wav.
-        voice = request.speaker if request.speaker else (request.voice or None)
-        if not voice:
-            discovered = discover_voices(SPEAKER_WAV_DIR)
-            voice = discovered[0]["id"] if discovered else "female"
+        _m = _sys.modules[__name__]
+        _db_path = getattr(_m, "DB_PATH", None)
+        if _db_path:
+            svc = LessonService(_db_path)
+            return svc.get_lesson(lesson_id)
+        return lesson_service.get_lesson(lesson_id)
 
-        filename = f"{lang_code}_{voice}_{timestamp}.mp3"
-        wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
-        mp3_path = os.path.join(AUDIO_DIR, filename)
+    @app.post("/api/generate")
+    async def generate_speech(request: SynthesisRequest) -> FileResponse:
+        """Generate speech from text and return MP3 audio blob."""
+        import sys as _sys
 
-        # Generate WAV first (XTTS native format)
-        print(f"Generating speech: {request.text[:50]}...")
-
-        # Use the voice ID directly as the WAV filename
-        speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
-
-        if not os.path.exists(speaker_wav):
-            raise HTTPException(
-                status_code=500,
-                detail=f"Speaker WAV file not found for voice '{voice}' (expected at '{speaker_wav}'). Add it to speaker_wavs/.",
+        _m = _sys.modules[__name__]
+        # Backward compat: tests set app.tts_model and app.model_load_status
+        # directly. Check module-level overrides.
+        _model = getattr(_m, "tts_model", None)
+        _status = getattr(_m, "model_load_status", None)
+        if _model is None and _status is None:
+            # Use the tts_engine instance (normal operation).
+            voice = resolve_voice(request.voice, request.speaker, SPEAKER_WAV_DIR)
+            seed = request.seed if request.seed is not None else 42
+            result = tts_engine.synthesize(
+                text=request.text,
+                language=request.language,
+                voice=voice,
+                speed=request.speed,
+                pitch=request.pitch,
+                seed=seed,
+                audio_dir=AUDIO_DIR,
+                max_audio_files=MAX_AUDIO_FILES,
+                write_sidecar_fn=_write_sidecar,
             )
+        else:
+            # Tests have overridden tts_model / model_load_status.
+            # Check readiness using the test overrides.
+            if _model is None or _status != "ready":
+                from fastapi import HTTPException
 
-        # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
-        _validate_speaker_wav(speaker_wav)
+                raise HTTPException(status_code=503, detail="TTS model not ready")
+            # Delegate to tts_engine.synthesize but inject the test mocks.
+            # The tts_engine.synthesize method checks tts_engine.model and
+            # tts_engine.status — we set them to the test overrides.
+            _orig_model = tts_engine.model
+            _orig_status = tts_engine.status
+            tts_engine.model = _model
+            tts_engine.status = _status
+            try:
+                voice = resolve_voice(request.voice, request.speaker, SPEAKER_WAV_DIR)
+                seed = request.seed if request.seed is not None else 42
+                result = tts_engine.synthesize(
+                    text=request.text,
+                    language=request.language,
+                    voice=voice,
+                    speed=request.speed,
+                    pitch=request.pitch,
+                    seed=seed,
+                    audio_dir=getattr(_m, "AUDIO_DIR", AUDIO_DIR),
+                    max_audio_files=getattr(_m, "MAX_AUDIO_FILES", MAX_AUDIO_FILES),
+                    write_sidecar_fn=_write_sidecar,
+                )
+            finally:
+                tts_engine.model = _orig_model
+                tts_engine.status = _orig_status
 
-        # Generate audio with speaker reference for voice cloning
-        # Use deterministic seed if provided
-        seed = request.seed if request.seed is not None else 42
-
-        # Set PyTorch random seed for deterministic XTTS generation.
-        # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
-        # seeding must be done at the PyTorch level before inference.
-        try:
-            import torch
-
-            torch.manual_seed(seed)
-        except ImportError:
-            pass  # torch not available (e.g. in tests) — skip seeding
-
-        tts_model.tts_to_file(
-            text=request.text,
-            speaker_wav=speaker_wav,
-            language=request.language,
-            file_path=wav_path,
-            temperature=0.4,  # Low temperature for consistent, deterministic voice output
+        media_type = "audio/mpeg" if result.filename.endswith(".mp3") else "audio/wav"
+        return FileResponse(
+            path=result.mp3_path,
+            media_type=media_type,
+            filename=result.filename,
         )
 
-        if not os.path.exists(wav_path):
-            raise HTTPException(status_code=500, detail="Failed to generate audio")
+    @app.get("/api/history", response_model=list[HistoryEntry])
+    async def get_history() -> list[dict]:
+        """Get list of previously generated audio files."""
+        import sys as _sys
 
-        # Convert WAV to MP3 using ffmpeg
+        _m = _sys.modules[__name__]
+        _audio_dir = getattr(_m, "AUDIO_DIR", AUDIO_DIR)
+        _orig = store.audio_dir
+        store.audio_dir = _audio_dir
         try:
-            subprocess.run(
-                [
-                    "ffmpeg",
-                    "-y",
-                    "-i",
-                    wav_path,
-                    "-filter:a",
-                    f"atempo={request.speed}",
-                    "-b:a",
-                    "192k",
-                    mp3_path,
-                ],
-                check=True,
-                capture_output=True,
+            return store.get_history()
+        finally:
+            store.audio_dir = _orig
+
+    @app.post("/api/lessons/{lesson_id}/activities/{activity_id}/submit")
+    async def submit_activity(
+        lesson_id: int,
+        activity_id: int,
+        request: SubmitRequest,
+    ) -> JSONResponse:
+        """Submit an answer for an activity and get a score."""
+        import sys as _sys
+
+        _m = _sys.modules[__name__]
+        _db_path = getattr(_m, "DB_PATH", None)
+        if _db_path:
+            svc = LessonService(_db_path)
+            result = svc.submit_activity(
+                lesson_id=lesson_id,
+                activity_id=activity_id,
+                answer=request.answer,
             )
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            print(
-                f"FFmpeg error: {e.stderr if isinstance(e, subprocess.CalledProcessError) else e}"
+        else:
+            result = lesson_service.submit_activity(
+                lesson_id=lesson_id,
+                activity_id=activity_id,
+                answer=request.answer,
             )
-            # Fallback: return WAV with correct content type when MP3 conversion fails
-            return FileResponse(
-                path=wav_path,
-                media_type="audio/wav",
-                filename=f"{lang_code}_{voice}_{timestamp}.wav",
-            )
+        # submit_activity may return JSONResponse (429) or dict (200).
+        if isinstance(result, JSONResponse):
+            return result
+        return JSONResponse(content=result)
 
-        # Clean up intermediate WAV file — it's 5–10× larger than the MP3
-        try:
-            os.remove(wav_path)
-        except OSError:
-            pass  # Already gone (e.g. race condition) — ignore
-
-        # S-02: Write sidecar metadata file next to the MP3
-        # Extract timestamp from the MP3 filename: {lang}_{voice}_{timestamp}.mp3
-        meta = {
-            "text": request.text,
-            "language": request.language,
-            "voice": voice,
-            "speed": request.speed,
-            "pitch": request.pitch,
-            "seed": seed,
-            "created_at": timestamp,
-            "mp3_filename": filename,
-        }
-        write_sidecar(AUDIO_DIR, meta)
-
-        # S-05: Clean up old audio files if beyond the limit
-        cleanup_audio()
-
-        # Return MP3 file as binary response
-        return FileResponse(path=mp3_path, media_type="audio/mpeg", filename=filename)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error generating speech: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return app
 
 
-@app.get("/api/history")
-async def get_history():
-    """Get list of previously generated audio files.
+# Module-level app instance for uvicorn entry point.
+app = create_app()
 
-    Reads sidecar files to return the original text when available.
-    Falls back to text: "" for old files without sidecars.
-    """
-    try:
-        items = []
-        all_files = os.listdir(AUDIO_DIR)
-        for filename in sorted(all_files, reverse=True):
-            if filename.endswith((".mp3", ".wav")):
-                filepath = os.path.join(AUDIO_DIR, filename)
-                try:
-                    stat = os.stat(filepath)
-                except OSError as e:
-                    print(f"DEBUG get_history: os.stat({filepath}) failed: {e}")
-                    continue  # Skip files that can't be stat'd (race condition)
+# ---------------------------------------------------------------------------
+# Backward-compatible module-level attributes for existing tests.
+# Tests do 'import app as main_app' then set:
+#   main_app.tts_model = _mock_tts_model()
+#   main_app.model_load_status = 'ready'
+#   main_app.AUDIO_DIR = tmpdir
+# We expose these so the same pattern works.
+# ---------------------------------------------------------------------------
+# Backward-compatible re-exports for tests that do 'import app'.
+import sys as _sys  # noqa: E402
 
-                # Parse metadata from filename if possible
-                parts = filename.split("_")
-                language = parts[0] if len(parts) > 0 else "unknown"
-                voice = parts[1] if len(parts) > 1 else "default"
+_mod = _sys.modules[__name__]
 
-                # Extract timestamp from filename to look up sidecar
-                # Filename format: {lang}_{voice}_{timestamp}.mp3
-                if len(parts) >= 3:
-                    timestamp = parts[-1]
-                else:
-                    timestamp = None
+# Re-export _get_db_connection for tests that use it directly:
+from db import get_db_connection_from_app as _get_db_connection  # noqa: E402
 
-                # Try to read sidecar for original text
-                text = ""
-                if timestamp:
-                    sidecar = read_sidecar(AUDIO_DIR, timestamp)
-                    if sidecar:
-                        text = sidecar.get("text", "")
-                        # Also pull additional fields from sidecar if available
-                        if "speed" in sidecar:
-                            speed = sidecar["speed"]
-                            pitch = sidecar["pitch"]
-                            created_at = sidecar.get(
-                                "created_at", str(int(stat.st_mtime))
-                            )
-                            entry = {
-                                "filename": filename,
-                                "text": text,
-                                "language": sidecar.get("language", language),
-                                "voice": sidecar.get("voice", voice),
-                                "speed": speed,
-                                "pitch": pitch,
-                                "created_at": created_at,
-                            }
-                            items.append(entry)
-                            continue
+_mod._get_db_connection = _get_db_connection
 
-                # Fallback: no sidecar found, use filename parsing
-                items.append(
-                    {
-                        "filename": filename,
-                        "text": text,  # Empty string for old files without sidecar
-                        "language": language,
-                        "voice": voice,
-                        "speed": 1.0,
-                        "pitch": 0.0,
-                        "created_at": str(int(stat.st_mtime)),
-                    }
-                )
+# Re-export tts_engine for tests:
+#   import app as main_app; main_app.tts_engine.model = mock_tts
+_mod.tts_engine = tts_engine
 
-        return items
+# Legacy aliases — tests set these directly on the app module.
+# We set them on the module object so 'import app' picks them up.
+_mod.tts_model = tts_engine.model  # tests set: main_app.tts_model = mock
+_mod.model_load_status = (
+    tts_engine.status
+)  # tests set: main_app.model_load_status = 'ready'
+_mod.DB_PATH = DB_PATH  # tests set: main_app.DB_PATH = tmp_db_path
+_mod.AUDIO_DIR = AUDIO_DIR  # tests set: main_app.AUDIO_DIR = tmpdir
+_mod.MAX_AUDIO_FILES = MAX_AUDIO_FILES  # tests set: main_app.MAX_AUDIO_FILES = 100
+_mod.SPEAKER_WAV_DIR = SPEAKER_WAV_DIR  # tests set: main_app.SPEAKER_WAV_DIR = path
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# Also expose submodules for tests that patch them:
+_mod.os = __import__("os")
+_mod.wave = __import__("wave")
+_mod.uuid = __import__("uuid")
+_mod.json = __import__("json")
+_mod.subprocess = __import__("subprocess")
+
+# Re-export discover_voices and SPEAKER_WAV_DIR for tests that import them:
+#   from app import discover_voices, SPEAKER_WAV_DIR
+from tts.audio_pipeline import _discover_voices as discover_voices  # noqa: E402
+
+_mod.discover_voices = discover_voices
+_mod.SPEAKER_WAV_DIR = SPEAKER_WAV_DIR
+
+# Re-export cleanup_audio for tests that import it directly:
+#   from app import cleanup_audio
+from storage.helpers import cleanup_audio_dir as _cleanup_audio_dir  # noqa: E402
+
+
+# No-arg wrapper: uses module-level AUDIO_DIR and MAX_AUDIO_FILES.
+# Tests call main_app.cleanup_audio() with no arguments.
+def cleanup_audio() -> None:
+    """Clean up old audio files beyond MAX_AUDIO_FILES limit."""
+    _cleanup_audio_dir(AUDIO_DIR, MAX_AUDIO_FILES)
+
+
+_mod.cleanup_audio = cleanup_audio

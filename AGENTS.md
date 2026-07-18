@@ -209,17 +209,34 @@ Does the page use 4+ composables?
 ### Key Files
 | File | Purpose |
 |------|---------|
-| `app.py` | Main FastAPI app with TTS model loading, synthesis endpoint, health check |
+| `app.py` | Thin FastAPI controller (~130 lines, 8 routes) delegating to deep domain modules |
+| `config.py` | Path constants (AUDIO_DIR, DB_PATH, SPEAKER_WAV_DIR, etc.) |
+| `lifespan.py` | Model loading + DB initialization (lifespan handler) |
+| `schemas.py` | Request/response Pydantic models |
+| `tts/engine.py` | TtsEngine class (load_model, synthesize, health) |
+| `tts/audio_pipeline.py` | _discover_voices, _cleanup_audio_dir |
+| `tts/voice_resolver.py` | resolve_voice() |
+| `learning/service.py` | LessonService class (list_lessons, get_lesson, submit_activity) |
+| `storage/service.py` | StorageService class (get_history, cleanup, discover_voices) |
+| `storage/helpers.py` | write_sidecar, read_sidecar, cleanup_audio_dir |
+| `db/__init__.py` | get_db_connection(), get_db_connection_from_app() |
+| `db/safety.py` | apply_safety_pragmas() |
+| `db/lessons_db.py` | init_lessons_db() |
+| `db/progress_db.py` | init_user_progress_db() |
+| `content/scoring.py` | 5 scoring algorithms |
 | `requirements.txt` | Python dependencies (fastapi, uvicorn, pydantic, coqui-tts, ffmpeg-python, python-multipart) |
 | `pytest.ini` | pytest config — testpaths: tests, pythonpath: . |
 
 ### API Endpoints
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/health` | GET | Health check + model loading status |
-| `/api/voices` | GET | List available voices/speakers |
-| `/api/generate` | POST | Generate speech from text (returns MP3 binary) |
-| `/api/history` | GET | List previously generated audio files |
+| Endpoint | Method | Module | Purpose |
+|----------|--------|--------|---------|
+| `/health` | GET | tts | Health check + model loading status |
+| `/api/voices` | GET | storage | List available voices/speakers |
+| `/api/lessons` | GET | learning | Lesson summaries with status |
+| `/api/lessons/{id}` | GET | learning | Full lesson data with progress |
+| `/api/generate` | POST | tts | Generate speech from text (returns MP3 binary) |
+| `/api/history` | GET | storage | List previously generated audio files |
+| `/api/lessons/{lid}/activities/{aid}/submit` | POST | learning | Submit activity answer with scoring |
 
 ### Model Loading
 - Model: `tts_models/multilingual/xtts_v2` (loaded on startup via lifespan)

@@ -199,6 +199,8 @@ def test_default_voice_falls_back_to_female_when_no_wavs():
 
         # Mock: speaker_wav file doesn't exist for "female"
         def _path_exists(path):
+            str(path)  # Handle PosixPath objects
+            str(path)
             return False
 
         _setup_mock_model(
@@ -244,13 +246,15 @@ def test_speaker_field_takes_priority_over_voice():
             return _REAL_OS_LISTDIR(path)
 
         def _path_exists(path):
+            p = str(path)  # Handle PosixPath objects
+            p = str(path)
             # The backend checks speaker_wav existence and MP3 output path.
             # Return True for any .wav or .mp3 path (output files),
             # or for the specific speaker WAV file.
             return (
-                path.endswith("PriorityVoice.wav")
-                or path.endswith("speaker_wavs")
-                or path.endswith((".wav", ".mp3"))
+                p.endswith("PriorityVoice.wav")
+                or p.endswith("speaker_wavs")
+                or p.endswith((".wav", ".mp3"))
             )
 
         _setup_mock_model(
@@ -303,9 +307,11 @@ def test_explicit_speaker_uses_speaker_wav():
             return _REAL_OS_LISTDIR(path)
 
         def _path_exists(path):
+            p = str(path)  # Handle PosixPath objects
+            p = str(path)
             # Return True for any .wav or .mp3 path (output files)
             # or for the speaker_wavs directory itself.
-            return path.endswith((".wav", ".mp3")) or path.endswith("speaker_wavs")
+            return p.endswith((".wav", ".mp3")) or p.endswith("speaker_wavs")
 
         _setup_mock_model(
             listdir_override=_listdir,
@@ -358,9 +364,11 @@ def test_default_resolution_uses_first_discovered_voice():
             return _REAL_OS_LISTDIR(path)
 
         def _path_exists(path):
+            p = str(path)  # Handle PosixPath objects
+            p = str(path)
             # Return True for any .wav or .mp3 path (output files)
             # or for the speaker_wavs directory itself.
-            return path.endswith((".wav", ".mp3")) or path.endswith("speaker_wavs")
+            return p.endswith((".wav", ".mp3")) or p.endswith("speaker_wavs")
 
         _setup_mock_model(
             listdir_override=_listdir,
@@ -405,9 +413,11 @@ def test_spaces_in_voice_filenames_are_preserved():
             return _REAL_OS_LISTDIR(path)
 
         def _path_exists(path):
+            p = str(path)  # Handle PosixPath objects
+            p = str(path)
             # Return True for any .wav or .mp3 path (output files)
             # or for the speaker_wavs directory itself.
-            return path.endswith((".wav", ".mp3")) or path.endswith("speaker_wavs")
+            return p.endswith((".wav", ".mp3")) or p.endswith("speaker_wavs")
 
         _setup_mock_model(
             listdir_override=_listdir,
@@ -450,6 +460,8 @@ def test_no_voices_and_no_voice_field_returns_500_with_fallback():
             return _REAL_OS_LISTDIR(path)
 
         def _path_exists(path):
+            str(path)  # Handle PosixPath objects
+            str(path)
             return False
 
         _setup_mock_model(

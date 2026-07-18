@@ -88,7 +88,7 @@ The following RC numbers in the Interconnected Map and per-workflow docs duplica
 
 ### Next Available RC Number
 
-**RC-042** — now reclaimed (consolidated into RC-001). Reserve for new issues discovered during future audits.
+**RC-042** — Reclaimed. The backend modular monolith refactoring (ADR-014) resolved the underlying issue: `app.py` (1110 lines) was restructured into 4 deep domain modules (`tts/`, `learning/`, `storage/`, `db/`) with a thin controller (~130 lines). All 202 backend tests pass (FFmpeg-dependent tests excluded due to environment).
 
 ---
 

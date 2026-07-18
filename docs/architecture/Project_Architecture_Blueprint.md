@@ -194,13 +194,28 @@ Frontend (frontend/)
 
 ```
 Backend (backend/)
-├── app.py                      # Single-file FastAPI application
-│                               # Sections:
-│                               #   - Torch/transformers compatibility patches
-│                               #   - XTTS model loading (background thread)
-│                               #   - Pydantic request/response models
-│                               #   - REST endpoints (4 endpoints)
-│                               #   - Static file serving (/downloads, /speaker_wavs)
+├── app.py                      # Thin FastAPI controller (~312 lines, 8 routes)
+│                               # Delegates to deep domain modules:
+│                               #   - tts.TtsEngine (TTS synthesis)
+│                               #   - learning.LessonService (learning management)
+│                               #   - storage.StorageService (audio history)
+├── config.py                   # Path constants (AUDIO_DIR, DB_PATH, etc.)
+├── lifespan.py                 # Model loading + DB initialization (lifespan handler)
+├── schemas.py                  # Request/response Pydantic models
+├── tts/                        # TTS domain module
+│   ├── engine.py               # TtsEngine class (load_model, synthesize, health)
+│   ├── audio_pipeline.py       # _discover_voices, _cleanup_audio_dir
+│   └── voice_resolver.py       # resolve_voice()
+├── learning/                   # Learning domain module
+│   └── service.py              # LessonService class (list_lessons, get_lesson, submit_activity)
+├── storage/                    # Storage domain module
+│   ├── service.py              # StorageService class (get_history, cleanup)
+│   └── helpers.py              # write_sidecar, read_sidecar, cleanup_audio_dir
+├── db/                         # Data access layer
+│   ├── __init__.py             # get_db_connection(), get_db_connection_from_app()
+│   └── safety.py               # apply_safety_pragmas()
+├── content/                    # Scoring library (unchanged)
+│   └── scoring.py              # 5 scoring algorithms
 ├── speaker_wavs/               # Voice reference audio (dynamically discovered)
 │   ├── KSA Hamed - Male.wav    # Male voice preset (Saudi dialect)
 │   └── KSA Zariyah - Female.wav # Female voice preset (Saudi dialect)
@@ -498,7 +513,7 @@ run-tests.sh (single source of truth)
 | **CPU-only inference** | No GPU support; generation takes several seconds per request |
 | **Model loading ~120s** | First request after startup gets 503; health polling handles this |
 | **TTS model ~2 GB** | Not persisted across container restarts (cache volume path mismatch) |
-| **Single-file backend** | All backend logic in one `app.py` — functional but monolithic |
+| **Modular monolith backend** | Thin controller (312 lines) with 4 deep domain modules (TtsEngine, LessonService, StorageService) — fully testable without FastAPI/HTTP. See ADR-014. |
 | **No text persistence** | `/api/history` returns files but original text is always empty string |
 | **CORS `*`** | All origins allowed — should be restricted in production |
 | **No cleanup mechanism** | Generated MP3s accumulate in `tts-audio-cache` indefinitely |

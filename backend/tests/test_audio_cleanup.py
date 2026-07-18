@@ -320,10 +320,11 @@ def test_generate_speech_triggers_cleanup_after_synthesis():
                 json.dump({"text": f"Old text {i}", "created_at": ts}, f)
 
         def _path_exists(path):
+            p = str(path)
             return (
-                path.endswith((".wav", ".mp3"))
-                or path.endswith("speaker_wavs")
-                or path.endswith("downloads")
+                p.endswith((".wav", ".mp3"))
+                or p.endswith("speaker_wavs")
+                or p.endswith("downloads")
             )
 
         _setup_mock_model(

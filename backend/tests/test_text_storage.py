@@ -163,9 +163,9 @@ def test_generate_speech_writes_sidecar_metadata_file():
 
         def _path_exists(path):
             return (
-                path.endswith((".wav", ".mp3"))
-                or path.endswith("speaker_wavs")
-                or path.endswith("downloads")
+                str(path).endswith((".wav", ".mp3"))
+                or str(path).endswith("speaker_wavs")
+                or str(path).endswith("downloads")
             )
 
         # Create the speaker WAV in the real filesystem so the mock path_exists finds it
@@ -363,9 +363,9 @@ def test_sidecar_contains_all_required_metadata_fields():
 
         def _path_exists(path):
             return (
-                path.endswith((".wav", ".mp3"))
-                or path.endswith("speaker_wavs")
-                or path.endswith("downloads")
+                str(path).endswith((".wav", ".mp3"))
+                or str(path).endswith("speaker_wavs")
+                or str(path).endswith("downloads")
             )
 
         _setup_mock_model(
@@ -440,9 +440,9 @@ def test_multiple_syntheses_produce_multiple_sidecar_files():
 
         def _path_exists(path):
             return (
-                path.endswith((".wav", ".mp3"))
-                or path.endswith("speaker_wavs")
-                or path.endswith("downloads")
+                str(path).endswith((".wav", ".mp3"))
+                or str(path).endswith("speaker_wavs")
+                or str(path).endswith("downloads")
             )
 
         _setup_mock_model(
@@ -508,9 +508,9 @@ def test_default_seed_stored_in_sidecar_when_not_explicitly_provided():
 
         def _path_exists(path):
             return (
-                path.endswith((".wav", ".mp3"))
-                or path.endswith("speaker_wavs")
-                or path.endswith("downloads")
+                str(path).endswith((".wav", ".mp3"))
+                or str(path).endswith("speaker_wavs")
+                or str(path).endswith("downloads")
             )
 
         _setup_mock_model(

@@ -39,6 +39,7 @@ Lughat Chat is a **text-to-speech (TTS) web application** focused on Arabic spee
 | [ADR-011](./ADR-011-default-voice-resolution-and-voice-name-mismatch.md) | Default Voice Resolution and Voice Name Mismatch (RC-003) | **Accepted — Option A** |
 | [ADR-012](./ADR-012-model-cache-volume-and-audio-persistence.md) | Model Cache Volume Path, Audio Persistence, and FFmpeg Fallback (RC-004, RC-005, RC-006, RC-007) | **Proposed** |
 | [ADR-013](./ADR-013-testing-strategy-and-llm-test-generation.md) | Testing Strategy and LLM Test Generation (mocking decision tree, source-in-context, templates) | **Accepted** |
+| [ADR-014](./ADR-014-backend-modular-monolith-deep-domain-modules.md) | Backend Modular Monolith — Deep Domain Modules (TtsEngine, LessonService, StorageService) | **Accepted** |
 
 ## Diagram Index
 
@@ -47,7 +48,7 @@ Lughat Chat is a **text-to-speech (TTS) web application** focused on Arabic spee
 | [`c4-context.md`](c4-context.md) | **Level 1** — System Context | External actors (User, Browser) and external systems (Coqui XTTS-v2, Google Fonts, Phosphor Icons) |
 | [`c4-containers.md`](c4-containers.md) | **Level 2** — Containers | Nginx (reverse proxy), Nuxt SPA (frontend), FastAPI Server (backend), TTS Model, caches, and speaker WAV library |
 | [`c4-components-spa.md`](c4-components-spa.md) | **Level 3** — Frontend Components | 1 page, 10 Vue components, 7 composables with their relationships and data flow |
-| [`c4-components-backend.md`](c4-components-backend.md) | **Level 3** — Backend Components | Configuration, model management, 4 API endpoints, data models, utility functions |
+| [`c4-components-backend.md`](c4-components-backend.md) | **Level 3** — Backend Components | Thin controller (8 routes) delegating to 4 deep domain modules: TtsEngine, LessonService, StorageService, and data access layer |
 | [`c4-deployment.md`](c4-deployment.md) | **Level 4** — Deployment | Docker Compose topology: 2 containers, 2 volumes, 1 bridge network, host-mounted speaker_wavs directory |
 
 ---
