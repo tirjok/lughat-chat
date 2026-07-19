@@ -38,7 +38,19 @@ from config import (
     SPEAKER_WAV_DIR,
 )
 from lifespan import app_lifespan
-from learning import LessonService
+from learning import (
+    _IntroduceCharactersStrategy,
+    _ListenTranslateStrategy,
+    _RolePlayStrategy,
+    _TranslateToArabicStrategy,
+    _TranslateToEnglishStrategy,
+    ActivitySubmissionService,
+    LessonDetailService,
+    LessonListService,
+    LessonService,
+    ScoringDispatcher,
+    SqliteLessonRepository,
+)
 from schemas import (
     HealthResponse,
     HistoryEntry,
@@ -57,6 +69,25 @@ from tts.voice_resolver import resolve_voice
 # ---------------------------------------------------------------------------
 
 tts_engine = TtsEngine(MODEL_CACHE_DIR, SPEAKER_WAV_DIR)
+
+# SOLID architecture: three narrow services instead of one fat service.
+# The legacy LessonService wraps them for backward compatibility.
+_lesson_repo = SqliteLessonRepository(DB_PATH)
+_lesson_list_service = LessonListService(_lesson_repo)
+_lesson_detail_service = LessonDetailService(_lesson_repo)
+_lesson_submit_service = ActivitySubmissionService(
+    _lesson_repo,
+    scoring_dispatcher=ScoringDispatcher(
+        {
+            "listen-translate": _ListenTranslateStrategy(),
+            "translate-to-english": _TranslateToEnglishStrategy(),
+            "translate-to-arabic": _TranslateToArabicStrategy(),
+            "introduce-characters": _IntroduceCharactersStrategy(),
+            "role-play": _RolePlayStrategy(),
+        }
+    ),
+)
+# Legacy adapter — wraps SOLID services for backward-compatible API.
 lesson_service = LessonService(DB_PATH)
 store = StorageService(AUDIO_DIR, MAX_AUDIO_FILES, SPEAKER_WAV_DIR)
 

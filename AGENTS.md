@@ -607,6 +607,15 @@ Two separate workflows — one per service. Both run on `ubuntu-latest` and trig
 
 ## Agent Instructions — Do NOT Explore
 
+### ⚠️ Execution Context Gate (MUST CHECK BEFORE ANY COMMAND)
+
+**Before running ANY backend command (pytest, lint, typecheck, etc.), the agent MUST verify it is executing inside the container.** The backend environment (FFmpeg, Python deps, TTS model, frontend source mount) only exists inside the Podman container.
+
+- **Backend tests:** Always use `./scripts/run-backend-tests.sh` — never run `pytest` directly on the host.
+- **Frontend tests:** Always run from `frontend/` using `pnpm test` — never run `vitest` from the project root.
+- **If unsure:** Run `./run-tests.sh` from the project root. It runs backend tests (in Docker), lint, typecheck, and frontend tests — this is the single source of truth.
+- **Rule:** If a test fails on the host but passes in the container, the failure is a **false alarm caused by running outside the container**. Do NOT fix the test. Re-run inside the container.
+
 When the user asks about building features, modifying existing code, or understanding patterns:
 1. **Do NOT say "let me explore the codebase"** — you already have full context
 2. Read specific files directly using `read` tool when needed for current task details

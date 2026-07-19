@@ -12,6 +12,7 @@ Table schema::
         score REAL DEFAULT 0,
         status TEXT DEFAULT 'locked',  -- 'locked' | 'available' | 'in_progress' | 'completed'
         attempts INTEGER DEFAULT 0,
+        completed_at TEXT,              -- ISO 8601 timestamp when lesson completed
         PRIMARY KEY (lesson_id, activity_id)
     );
 """
@@ -21,6 +22,10 @@ import sqlite3
 from pathlib import Path
 
 from content_scanner import scan_content
+from learning.domain import COMPLETION_THRESHOLD  # noqa: F401
+from learning.sqlite_repository import (
+    SqliteLessonRepository,
+)
 from sqlite_safety import apply_safety_pragmas
 
 logger = logging.getLogger(__name__)
@@ -62,6 +67,7 @@ def init_user_progress_db(content_dir: str, db_path: str | None = None) -> None:
                 score REAL DEFAULT 0,
                 status TEXT DEFAULT 'locked',
                 attempts INTEGER DEFAULT 0,
+                completed_at TEXT,
                 PRIMARY KEY (lesson_id, activity_id)
             )
         """)
@@ -265,3 +271,56 @@ def _resolve_lesson_status(
                 return "available"
 
     return "locked"
+
+
+# ===========================================================================
+# Slice 3: Competency Score Computation & Lesson Completion
+# ===========================================================================
+
+# The core logic for Slice 3 (competency scores, lesson completion, sequential
+# unlock) lives in ``learning.sqlite_repository`` and is imported here for
+# backward compatibility with existing callers that import from progress_db.
+
+
+def compute_competency_scores(
+    conn: sqlite3.Connection,
+    lesson_id: int,
+) -> dict[str, float]:
+    """Compute weighted average per competency from all best activity scores.
+
+    This is a thin wrapper around ``SqliteLessonRepository.compute_competency_scores``
+    for backward compatibility.
+    """
+    repo = SqliteLessonRepository(conn, use_existing=True)
+    return repo.compute_competency_scores(lesson_id)
+
+
+def _check_and_mark_lesson_completed(
+    conn: sqlite3.Connection,
+    lesson_id: int,
+    submitted_activity_id: int | None = None,
+    submitted_score: float = 0.0,
+    original_status: str = "",
+) -> bool:
+    """Check if all activities are completed → mark lesson completed.
+
+    This is a thin wrapper around ``SqliteLessonRepository.check_and_mark_lesson_completed``
+    for backward compatibility.
+    """
+    repo = SqliteLessonRepository(conn, use_existing=True)
+    return repo.check_and_mark_lesson_completed(
+        lesson_id, submitted_activity_id, submitted_score, original_status
+    )
+
+
+def _unlock_next_lesson(
+    conn: sqlite3.Connection,
+    lesson_id: int,
+) -> bool:
+    """If this lesson just completed, unlock the next lesson (same level or next level).
+
+    This is a thin wrapper around ``SqliteLessonRepository.unlock_next_lesson``
+    for backward compatibility.
+    """
+    repo = SqliteLessonRepository(conn, use_existing=True)
+    return repo.unlock_next_lesson(lesson_id)
