@@ -126,6 +126,7 @@
               :activity="activity"
               :lesson-id="currentLesson.id"
               :activity-index="index"
+              @complete-lesson="handleCompleteLesson"
             />
           </div>
         </div>
@@ -166,6 +167,9 @@ const lessonId = computed(() => {
   return num
 })
 const { currentLesson, currentLoading, currentError, refresh: _refresh } = useLesson(lessonId.value)
+
+// Fetch the full lesson list (for roadmap refresh after completion)
+const { fetchLessons } = useLessons()
 
 // Map raw API errors to user-friendly messages.
 // The Nuxt test harness wraps thrown errors as
@@ -208,4 +212,9 @@ useSeoMeta({
   title: computed(() => currentLesson.value ? `${currentLesson.value.title} — LughatChat` : 'Loading lesson — LughatChat'),
   description: 'Arabic language learning — lesson content'
 })
+
+/** Refresh the roadmap by re-fetching /api/lessons after lesson completion. */
+async function handleCompleteLesson(): Promise<void> {
+  await fetchLessons()
+}
 </script>
