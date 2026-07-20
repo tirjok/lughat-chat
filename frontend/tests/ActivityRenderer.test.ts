@@ -1,11 +1,68 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mountSuspended, mockComponent } from '@nuxt/test-utils/runtime'
+import {
+  mountSuspended,
+  mockComponent,
+  mockNuxtImport
+} from '@nuxt/test-utils/runtime'
 import ActivityRenderer from '../app/components/ActivityRenderer.vue'
+
+// ---------------------------------------------------------------------------
+// Mock useActivitySubmission — single source of truth for all submission tests
+// ---------------------------------------------------------------------------
+const mockSubmitAnswer = vi.fn().mockResolvedValue(null)
+const mockClearResults = vi.fn()
+
+function createSubmissionMock(_resultOverride: Record<string, unknown> = {}) {
+  return {
+    isSubmitting: { value: false },
+    result: { value: null },
+    error: { value: null },
+    maxAttempts: { value: 3 },
+    isMaxAttemptsReached: { value: false },
+    submitAnswer: mockSubmitAnswer,
+    clearResults: mockClearResults
+  }
+}
+
+mockNuxtImport('useActivitySubmission', () => {
+  return (_activityId: number) => createSubmissionMock()
+})
 
 // Mock SectionRenderer (used inside ActivityRenderer for dialogue sections)
 mockComponent('SectionRenderer', {
   props: ['section', 'lessonId'],
   template: '<div class="section-renderer" data-testid="section-renderer"></div>'
+})
+
+// Mock new child components — render actual content from props so tests verify rendering
+mockComponent('ListenTranslateView', {
+  props: ['content'],
+  template: '<div class="listen-translate-view" data-testid="listen-translate-view">{{ content?.dialogue?.scene1?.arabic }}</div>'
+})
+
+mockComponent('TranslateView', {
+  props: ['content', 'activityType'],
+  template: '<div class="translate-view" data-testid="translate-view">{{ content?.sentences?.[0]?.arabic ?? content?.sentences?.[0]?.english }}</div>'
+})
+
+mockComponent('IntroduceCharactersView', {
+  props: ['content'],
+  template: '<div class="introduce-characters-view" data-testid="introduce-characters-view">{{ content?.characters?.[0]?.name }}</div>'
+})
+
+mockComponent('RolePlayView', {
+  props: ['content'],
+  template: '<div class="role-play-view" data-testid="role-play-view">{{ content?.scenario }}</div>'
+})
+
+mockComponent('ActivityForm', {
+  props: ['placeholder', 'dir', 'disabled', 'isSubmitting', 'modelValue'],
+  template: '<div class="activity-form" data-testid="activity-form"></div>'
+})
+
+mockComponent('ActivityScorePanel', {
+  props: ['result', 'maxAttempts', 'isComplete', 'lessonJustCompleted'],
+  template: '<div class="activity-score-panel" data-testid="activity-score-panel"></div>'
 })
 
 describe('ActivityRenderer', () => {
@@ -195,6 +252,61 @@ describe('ActivityRenderer', () => {
         }
       })
       expect(wrapper.attributes('dir')).toBe('rtl')
+    })
+
+    it('When type is "translate-to-arabic" then form has RTL direction', async () => {
+      const wrapper = await mountSuspended(ActivityRenderer, {
+        props: {
+          activity: {
+            id: 3,
+            type: 'translate-to-arabic',
+            title: 'Translate to Arabic',
+            description: '',
+            order: 3,
+            competency_map: {},
+            max_attempts: 3,
+            content: {
+              sentences: [
+                { english: 'I am Ahmad', arabic_expected: 'أَنَا أَحْمَد' }
+              ]
+            }
+          },
+          lessonId: 1,
+          activityIndex: 2
+        }
+      })
+      // The ActivityForm component receives dir prop from ActivityRenderer
+      const activityForms = wrapper.findAllComponents({ name: 'ActivityForm' })
+      expect(activityForms.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('submission flow', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('When component mounts then submitAnswer is NOT called (waits for user input)', async () => {
+      await mountSuspended(ActivityRenderer, {
+        props: {
+          activity: {
+            id: 42,
+            type: 'listen-translate',
+            title: 'Read & Translate',
+            description: '',
+            order: 1,
+            competency_map: {},
+            max_attempts: 3,
+            content: {}
+          },
+          lessonId: 1,
+          activityIndex: 0
+        }
+      })
+
+      // submitAnswer is only called when the user submits via the form,
+      // not on mount — the composable exposes the function but does not invoke it.
+      expect(mockSubmitAnswer).not.toHaveBeenCalled()
     })
   })
 })

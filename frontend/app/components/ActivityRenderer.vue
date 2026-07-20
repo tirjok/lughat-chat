@@ -1,158 +1,148 @@
 <script setup lang="ts">
 import type {
-  DialogueScene,
-  DialogueSceneFlat,
   IntroduceCharactersActivityContent,
   ListenTranslateActivityContent,
   RolePlayActivityContent,
   TranslateActivityContent
 } from '../composables/useLessons'
+import { useActivitySubmission } from '../composables/useActivitySubmission'
+import {
+  isIntroduceCharactersContent,
+  isListenTranslateContent,
+  isRolePlayContent,
+  isTranslateContent
+} from '../utils/activityGuards'
+import ActivityForm from './ActivityForm.vue'
+import ActivityScorePanel from './ActivityScorePanel.vue'
+import IntroduceCharactersView from './IntroduceCharactersView.vue'
+import ListenTranslateView from './ListenTranslateView.vue'
+import RolePlayView from './RolePlayView.vue'
+import TranslateView from './TranslateView.vue'
 
 interface Props {
   activity: import('../composables/useLessons').Activity
   lessonId: number
+  /** Total number of activities in the parent lesson. */
+  totalActivities?: number
+  /** Current activity index (for navigation display). */
   activityIndex?: number
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  totalActivities: undefined,
+  activityIndex: undefined
+})
 
-// --- Type guard: is this content a ListenTranslateActivityContent? ---
-function isListenTranslateContent(
-  content: unknown
-): content is ListenTranslateActivityContent {
-  return (
-    content !== null
-    && typeof content === 'object'
-    && 'dialogue' in content
-  )
-}
+const emit = defineEmits<{
+  'next-activity': []
+  'complete-lesson': []
+}>()
 
-// --- Type guard: is this content a TranslateActivityContent? ---
-function isTranslateContent(
-  content: unknown
-): content is TranslateActivityContent {
-  return (
-    content !== null
-    && typeof content === 'object'
-    && 'sentences' in content
-  )
-}
+// ---------------------------------------------------------------------------
+// Submission composable
+// ---------------------------------------------------------------------------
 
-// --- Type guard: is this content an IntroduceCharactersActivityContent? ---
-function isIntroduceCharactersContent(
-  content: unknown
-): content is IntroduceCharactersActivityContent {
-  return (
-    content !== null
-    && typeof content === 'object'
-    && 'characters' in content
-  )
-}
+const {
+  isSubmitting,
+  result,
+  error,
+  maxAttempts,
+  isMaxAttemptsReached,
+  submitAnswer,
+  clearResults
+} = useActivitySubmission(props.activity.id)
 
-// --- Type guard: is this content a RolePlayActivityContent? ---
-function isRolePlayContent(
-  content: unknown
-): content is RolePlayActivityContent {
-  return (
-    content !== null
-    && typeof content === 'object'
-    && 'scenario' in content
-  )
-}
+// ---------------------------------------------------------------------------
+// User answer state — shallowRef for primitives (better performance)
+// ---------------------------------------------------------------------------
 
-// --- Computed properties (type-safe narrowing via activity.type) ---
+const userAnswer = shallowRef('')
+const inlineError = shallowRef<string | null>(null)
+
+// Maximum allowed answer length (matches backend validation).
+const MAX_ANSWER_LENGTH = 1000
+
+// ---------------------------------------------------------------------------
+// Derived state
+// ---------------------------------------------------------------------------
 
 const activityType = computed<string>(() => props.activity.type)
 
-// Dialogue scenes for listen-translate (structured: scenes with lines)
-const dialogueScenes = computed<DialogueScene[]>(() => {
-  if (props.activity.type !== 'listen-translate') return []
+const listenTranslateContent = computed<ListenTranslateActivityContent | undefined>(() => {
+  if (props.activity.type !== 'listen-translate') return undefined
   const content = props.activity.content
-  if (!isListenTranslateContent(content)) return []
-  const dialogue = content.dialogue
-  if (!dialogue) return []
-  // Convert Record<string, DialogueSceneFlat> → DialogueScene[]
-  return Object.values(dialogue).map(flat => ({
-    label: flat.label,
-    lines: [
-      {
-        speaker: flat.label,
-        arabic: flat.arabic,
-        english: flat.english_expected ?? ''
-      }
-    ]
-  }))
+  if (!isListenTranslateContent(content)) return undefined
+  return content
 })
 
-// Simple dialogues for listen-translate (flat: { arabic: '...' })
-const simpleDialogues = computed<DialogueSceneFlat[]>(() => {
-  if (props.activity.type !== 'listen-translate') return []
+const translateContent = computed<TranslateActivityContent | undefined>(() => {
+  if (props.activity.type !== 'translate-to-english' && props.activity.type !== 'translate-to-arabic') return undefined
   const content = props.activity.content
-  if (!isListenTranslateContent(content)) return []
-  const dialogue = content.dialogue
-  if (!dialogue) return []
-  const entries = Object.values(dialogue)
-  // Check if entries have 'arabic' directly (simple format)
-  const hasArabic = entries.some(e => 'arabic' in e)
-  if (hasArabic) return entries as DialogueSceneFlat[]
-  return []
+  if (!isTranslateContent(content)) return undefined
+  return content
 })
 
-// Sentences for translate activities
-const sentences = computed(() => {
-  const type = props.activity.type
-  if (type === 'translate-to-english' || type === 'translate-to-arabic') {
-    const content = props.activity.content
-    if (isTranslateContent(content)) return content.sentences
-  }
-  return []
+const introduceCharactersContent = computed<IntroduceCharactersActivityContent | undefined>(() => {
+  if (props.activity.type !== 'introduce-characters') return undefined
+  const content = props.activity.content
+  if (!isIntroduceCharactersContent(content)) return undefined
+  return content
 })
 
-// Characters for introduce-characters
-const characters = computed(() => {
-  if (props.activity.type === 'introduce-characters') {
-    const content = props.activity.content
-    if (isIntroduceCharactersContent(content)) return content.characters
-  }
-  return []
-})
-
-// Role-play content (narrowed)
 const rolePlayContent = computed<RolePlayActivityContent | undefined>(() => {
-  if (props.activity.type === 'role-play') {
-    const content = props.activity.content
-    if (isRolePlayContent(content)) return content
-  }
-  return undefined
+  if (props.activity.type !== 'role-play') return undefined
+  const content = props.activity.content
+  if (!isRolePlayContent(content)) return undefined
+  return content
 })
 
-// Section content for SectionRenderer (narrowed)
-const sectionContent = computed<LessonSection | null>(() => {
-  const type = props.activity.type
-  if (type === 'listen-translate') {
-    const content = props.activity.content
-    if (!isListenTranslateContent(content)) return null
-    const c = content.dialogue
-    if (!c) return null
-    const entries = Object.values(c)
-    const hasLines = entries.some(e => 'lines' in e)
-    if (hasLines) {
-      // Build a pseudo-section for SectionRenderer
-      const scenes = Object.values(c).map(flat => ({
-        label: flat.label,
-        lines: [
-          {
-            speaker: flat.label,
-            arabic: flat.arabic,
-            english: flat.english_expected ?? ''
-          }
-        ]
-      }))
-      return { type: 'dialogue', title: '', content: { type: 'dialogue', scenes } } as LessonSection
-    }
+// ---------------------------------------------------------------------------
+// Submit logic
+// ---------------------------------------------------------------------------
+
+function validateAnswer(answer: string): string | null {
+  const trimmed = answer.trim()
+  if (!trimmed) {
+    return 'Please enter your answer'
+  }
+  if (trimmed.length > MAX_ANSWER_LENGTH) {
+    return `Answer must be ${MAX_ANSWER_LENGTH} characters or less`
   }
   return null
-})
+}
+
+async function handleAnswerSubmitted(): Promise<void> {
+  inlineError.value = null
+
+  const validationError = validateAnswer(userAnswer.value)
+  if (validationError) {
+    inlineError.value = validationError
+    return
+  }
+
+  await submitAnswer(props.activity.id, userAnswer.value)
+}
+
+function handleKeyDown(event: KeyboardEvent): void {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    handleAnswerSubmitted()
+  }
+}
+
+function handleNextActivity(): void {
+  emit('next-activity')
+}
+
+function handleCompleteLesson(): void {
+  emit('complete-lesson')
+}
+
+function resetSubmission(): void {
+  userAnswer.value = ''
+  inlineError.value = null
+  clearResults()
+}
 </script>
 
 <template>
@@ -171,127 +161,137 @@ const sectionContent = computed<LessonSection | null>(() => {
       {{ activity.description }}
     </p>
 
-    <!-- SectionRenderer for dialogue sections -->
-    <SectionRenderer
-      v-if="sectionContent"
-      :section="sectionContent!"
-      :lesson-id="lessonId"
-    />
-
-    <!-- Listen-Translate: Simple dialogue (arabic only) -->
+    <!-- Error display -->
     <div
-      v-else-if="activityType === 'listen-translate' && simpleDialogues.length > 0"
-      class="space-y-2"
+      v-if="error"
+      class="mb-3 p-3 rounded bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800"
     >
-      <div
-        v-for="(entry, idx) in simpleDialogues"
-        :key="idx"
-        class="p-2 rounded bg-gray-50 dark:bg-gray-700"
-      >
-        <p class="arabic-text text-gray-900 dark:text-white">
-          {{ entry.arabic }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Listen-Translate: Structured dialogue (scenes with lines) -->
-    <div
-      v-else-if="activityType === 'listen-translate'"
-      class="space-y-3"
-    >
-      <div
-        v-for="(scene, sceneIdx) in dialogueScenes"
-        :key="sceneIdx"
-        class="p-3 rounded bg-gray-50 dark:bg-gray-700"
-      >
-        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          {{ scene.label }}
-        </p>
-        <div class="space-y-1">
-          <p
-            v-for="line in scene.lines"
-            :key="line.speaker"
-            class="text-gray-900 dark:text-white"
-          >
-            <span class="font-medium">{{ line.speaker }}:</span>
-            <span class="arabic-text">{{ line.arabic }}</span>
-            <span class="english-text text-gray-500 dark:text-gray-400">
-              — {{ line.english }}
-            </span>
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Translate-to-English: Arabic sentences -->
-    <div
-      v-else-if="activityType === 'translate-to-english'"
-      class="space-y-2"
-    >
-      <div
-        v-for="(sentence, idx) in sentences"
-        :key="idx"
-        class="p-2 rounded bg-gray-50 dark:bg-gray-700"
-      >
-        <p class="arabic-text text-gray-900 dark:text-white">
-          {{ sentence.arabic }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Translate-to-Arabic: English sentences -->
-    <div
-      v-else-if="activityType === 'translate-to-arabic'"
-      class="space-y-2"
-    >
-      <div
-        v-for="(sentence, idx) in sentences"
-        :key="idx"
-        class="p-2 rounded bg-gray-50 dark:bg-gray-700"
-      >
-        <p class="text-gray-900 dark:text-white">
-          {{ sentence.english }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Introduce-Characters: Character list -->
-    <div
-      v-else-if="activityType === 'introduce-characters'"
-      class="space-y-2"
-    >
-      <div
-        v-for="(character, idx) in characters"
-        :key="idx"
-        class="p-3 rounded bg-gray-50 dark:bg-gray-700"
-      >
-        <p class="font-medium text-gray-900 dark:text-white">
-          {{ character.name }}
-          <span class="text-sm text-gray-500 dark:text-gray-400">
-            ({{ character.arabic }})
-          </span>
-        </p>
-      </div>
-    </div>
-
-    <!-- Role-Play: Scenario -->
-    <div
-      v-else-if="activityType === 'role-play'"
-      class="space-y-2"
-    >
-      <p class="text-gray-900 dark:text-white">
-        {{ rolePlayContent?.scenario }}
+      <p class="text-sm text-red-700 dark:text-red-300">
+        {{ error.message }}
       </p>
-      <ul class="space-y-1">
-        <li
-          v-for="(element, idx) in rolePlayContent?.expected_elements"
-          :key="idx"
-          class="text-sm text-gray-600 dark:text-gray-400"
-        >
-          • {{ element }}
-        </li>
-      </ul>
     </div>
+
+    <!-- Inline error (empty answer) — shown without API call -->
+    <div
+      v-if="inlineError"
+      class="mb-3 p-2 rounded bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800"
+    >
+      <p class="text-sm text-yellow-700 dark:text-yellow-300">
+        {{ inlineError }}
+      </p>
+    </div>
+
+    <!-- Inline correct answer (max attempts reached) — shown without API call -->
+    <div
+      v-if="isMaxAttemptsReached && result?.correct_answer"
+      class="mb-3 p-3 rounded bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800"
+    >
+      <p class="text-sm font-medium text-green-700 dark:text-green-300">
+        Correct answer:
+      </p>
+      <p class="text-sm text-green-800 dark:text-green-200">
+        {{ result.correct_answer }}
+      </p>
+    </div>
+
+    <!-- Listen-Translate: dispatch to ListenTranslateView + shared form -->
+    <template v-if="listenTranslateContent">
+      <ListenTranslateView :content="listenTranslateContent" />
+      <ActivityForm
+        v-model="userAnswer"
+        placeholder="Type your translation here..."
+        :disabled="isMaxAttemptsReached || (result?.activity_complete ?? false)"
+        :is-submitting="isSubmitting"
+        @submit="handleAnswerSubmitted"
+        @keydown="handleKeyDown"
+      >
+        <template #label>
+          Translate this to English:
+        </template>
+        <template #buttonText>
+          Submit Answer
+        </template>
+      </ActivityForm>
+    </template>
+
+    <!-- Translate-to-English / Translate-to-Arabic -->
+    <template v-else-if="translateContent">
+      <TranslateView
+        :content="translateContent"
+        :activity-type="activityType"
+      />
+      <ActivityForm
+        v-model="userAnswer"
+        :placeholder="activityType === 'translate-to-arabic' ? 'اكتب ترجمتك هنا...' : 'Type your translation here...'"
+        :dir="activityType === 'translate-to-arabic' ? 'rtl' : 'ltr'"
+        :disabled="isMaxAttemptsReached || (result?.activity_complete ?? false)"
+        :is-submitting="isSubmitting"
+        @submit="handleAnswerSubmitted"
+        @keydown="handleKeyDown"
+      >
+        <template #label>
+          <span v-if="activityType === 'translate-to-english'">Translate to English:</span>
+          <span v-else>Translate to Arabic:</span>
+        </template>
+        <template #buttonText>
+          Submit Answer
+        </template>
+      </ActivityForm>
+    </template>
+
+    <!-- Introduce-Characters -->
+    <template v-else-if="introduceCharactersContent">
+      <IntroduceCharactersView :content="introduceCharactersContent" />
+      <ActivityForm
+        v-model="userAnswer"
+        placeholder="اكتب مقدمة الشخصية..."
+        dir="rtl"
+        :disabled="isMaxAttemptsReached || (result?.activity_complete ?? false)"
+        :is-submitting="isSubmitting"
+        @submit="handleAnswerSubmitted"
+        @keydown="handleKeyDown"
+      >
+        <template #label>
+          Introduce this character in Arabic:
+        </template>
+        <template #buttonText>
+          Submit Answer
+        </template>
+      </ActivityForm>
+    </template>
+
+    <!-- Role-Play -->
+    <template v-else-if="rolePlayContent">
+      <RolePlayView :content="rolePlayContent" />
+      <ActivityForm
+        v-model="userAnswer"
+        placeholder="Type your response..."
+        :disabled="isMaxAttemptsReached || (result?.activity_complete ?? false)"
+        :is-submitting="isSubmitting"
+        @submit="handleAnswerSubmitted"
+        @keydown="handleKeyDown"
+      >
+        <template #label>
+          Complete the dialogue:
+        </template>
+        <template #buttonText>
+          Submit Answer
+        </template>
+      </ActivityForm>
+    </template>
+
+    <!-- Score display (shown after submission) -->
+    <ActivityScorePanel
+      :result="result"
+      :max-attempts="maxAttempts"
+      :is-complete="result?.activity_complete ?? false"
+      :lesson-just-completed="result?.lesson_just_completed ?? false"
+      :total-activities="totalActivities"
+      :activity-index="activityIndex"
+      @next-activity="handleNextActivity"
+      @complete-lesson="handleCompleteLesson"
+      @retry="resetSubmission"
+    />
   </div>
 </template>
 

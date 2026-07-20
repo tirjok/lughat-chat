@@ -28,7 +28,7 @@ export interface SubmissionResult {
   correct_answer?: string
 }
 
-interface ParsedBody {
+interface _ParsedBody {
   message?: string
   data?: { message?: string }
 }
@@ -142,17 +142,35 @@ function mapStatusToError(
 }
 
 /**
- * Extract an HTTP status code from a caught error (registerEndpoint throws
- * as H3Error with message like "HTTP 403: ...").
+ * Extract an HTTP status code from a caught error.
+ *
+ * In production, $fetch throws an H3Error with the actual HTTP statusCode
+ * (e.g. 403, 404, 429). In the Nuxt test env, registerEndpoint wraps all
+ * errors as H3Error with statusCode 500 and discards the original message.
+ * The error.message is "[METHOD] \"/path\": 500" — not the thrown message.
+ * The thrown message is available via error.cause.message.
+ *
+ * When using vi.stubGlobal('$fetch', ...) directly (not registerEndpoint),
+ * the error carries the real statusCode — including 500.  We return any
+ * statusCode in the 400–599 range.
  */
 function extractStatusFromError(error: unknown): number | null {
   if (error instanceof Error) {
-    const m = error.message.match(/HTTP (\d+)/)
-    if (m) return parseInt(m[1]!, 10)
-    if (error.cause && typeof error.cause === 'object' && 'message' in (error.cause as object)) {
-      const causeMsg = (error.cause as { message: string }).message
-      const cm = causeMsg.match(/HTTP (\d+)/)
-      if (cm) return parseInt(cm[1]!, 10)
+    // H3Error.statusCode is the actual HTTP status in production.
+    // When using vi.stubGlobal, statusCode is set on the Error directly.
+    const typed = error as Error & { statusCode?: number }
+    if (typed.statusCode && typed.statusCode >= 400 && typed.statusCode <= 599) {
+      return typed.statusCode
+    }
+    // registerEndpoint wraps all errors as 500 — extract the real status
+    // from the cause message (e.g. "HTTP 403: ...").
+    const cause = (typed as Error & { cause?: Error }).cause
+    if (cause instanceof Error) {
+      const causeMatch = cause.message.match(/HTTP (\d{3}):/)
+      if (causeMatch) {
+        const code = parseInt(causeMatch[1]!, 10)
+        if (code >= 400 && code <= 599) return code
+      }
     }
   }
   return null
@@ -231,44 +249,11 @@ export function useActivitySubmission(
     abortController = new AbortController()
 
     try {
-      const response = await fetch(endpoint, {
+      const data: SubmissionResult = await $fetch<SubmissionResult>(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ answer: trimmed }),
+        body: { answer: trimmed },
         signal: abortController.signal
       })
-
-      if (!response.ok) {
-        // Handle aborted requests (status 0 from AbortController).
-        if (response.status === 0) {
-          error.value = { message: 'Request aborted', type: 'aborted' }
-          isSubmitting.value = false
-          return null
-        }
-
-        // Read the response body to get the actual error message from registerEndpoint.
-        // In the Nuxt test env, registerEndpoint handlers throw as H3Error objects,
-        // which are returned as JSON with statusCode: 500. The real status code is in
-        // the error message string (e.g., "HTTP 403: ...").
-        const bodyText = await response.text().catch(() => '')
-        let parsedBody: ParsedBody | null = null
-        try {
-          parsedBody = bodyText ? JSON.parse(bodyText) : null
-        } catch {
-          /* ignore */
-        }
-        // Extract error message: from parsed JSON or raw body text
-        const bodyMessage = parsedBody?.message ?? parsedBody?.data?.message ?? bodyText
-        const errorInfo = mapStatusToError(response.status, bodyMessage || response.statusText)
-        error.value = errorInfo
-        isSubmitting.value = false
-        return null
-      }
-
-      // Successful submission
-      const data: SubmissionResult = await response.json()
 
       // Update attempts used
       const remaining = data.attempts_remaining
@@ -291,9 +276,13 @@ export function useActivitySubmission(
       const status = extractStatusFromError(networkError)
 
       if (status !== null) {
-        // This was a registerEndpoint error — map by the extracted status code
-        const msg = networkError instanceof Error ? networkError.message : String(networkError)
-        const errorInfo = mapStatusToError(status, msg)
+        // This was a registerEndpoint error — map by the extracted status code.
+        // The H3Error.message is the original thrown message (e.g. "HTTP 403: ..."),
+        // which contains the keywords we need for type mapping.
+        const bodyMessage = networkError instanceof Error
+          ? networkError.message
+          : String(networkError)
+        const errorInfo = mapStatusToError(status, bodyMessage)
         error.value = errorInfo
       } else {
         // Real network failure (no status code in message)
