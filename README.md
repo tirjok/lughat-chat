@@ -37,40 +37,73 @@ A **text-to-speech (TTS) web application** for Arabic speech synthesis, powered 
 ## Quick Start
 
 ### Prerequisites
-- [Podman](https://podman.io/) (with `podman-compose`) **or** Docker with Docker Compose
-- At least 4GB RAM (XTTS-v2 model loads into memory)
+- [Podman](https://podman.io/) 5+ with [`podman-compose`](https://github.com/containers/podman-compose) (recommended) **or** Docker 24+ with Docker Compose v2
+- At least 4 GB RAM (XTTS-v2 model loads into memory)
+- ~8–10 GB disk space (TTS model ~2 GB + container images ~5 GB + audio cache)
 
-> **Note:** This project supports both Docker and Podman. Podman is the recommended runtime for rootless containers. Install [`podman-compose`](https://github.com/containers/podman-compose) for Docker Compose file support.
+> **Note:** This project supports both Docker and Podman. Podman is the recommended runtime for rootless containers. All scripts auto-detect the container runtime.
+
+### macOS (Podman)
+```bash
+brew install podman podman-compose
+podman machine init    # Create the Linux VM
+podman machine start   # Start the VM
+```
+
+### Linux
+```bash
+# Fedora/RHEL
+sudo dnf install podman podman-compose
+# Debian/Ubuntu
+sudo apt install podman podman-compose
+```
 
 ### Run with Podman (or Docker)
 
 ```bash
-# Start all services (model downloads on first run — ~2GB)
+# Start production services (model downloads on first run — ~2 GB)
 ./dev.sh up
 
-# Or directly:
+# Or directly (production only):
 podman-compose up --build    # Podman (recommended)
 # or
 docker compose up --build    # Docker
-
-# Access the app at http://localhost:9001 (prod) or http://localhost:3000 (dev)
 ```
 
 The TTS model is cached in a named volume (`tts-model-cache`) so it only downloads once. Generated audio files are persisted in `tts-audio-cache`.
 
-### Start Development + Production Simultaneously
+#### Backend Only
+
+To run just the backend (no frontend):
 
 ```bash
-# Start both environments (see docs/docker/DOCKER-GUIDE.md)
-./dev.sh up
-
-# Development:  http://localhost:3000  (hot reload)
-# Production:   http://localhost:9001  (Nginx)
+./dev.sh up backend          # Start both prod + dev backends
+./dev.sh up backend prod     # Production backend only
+./dev.sh up backend dev      # Development backend only
+./dev.sh backend prod        # Production backend only (shortcut)
+./dev.sh backend dev         # Development backend only (shortcut)
+podman-compose -f docker-compose.yml up -d backend    # Production backend only
+podman-compose -f docker-compose.dev.yml up -d backend-dev  # Development backend only
 ```
+
+### Run a Specific Service
+
+```bash
+./dev.sh up frontend         # Start development frontend only
+```
+
+### Access URLs
+
+| Environment | Frontend | Backend API | Command |
+|-------------|----------|-------------|---------|
+| Production | http://localhost:9101 | http://localhost:9100 | `./dev.sh up` |
+| Development | http://localhost:3000 | http://localhost:9100 | `podman-compose -f docker-compose.dev.yml up -d` |
+
+> **Important:** Both environments share host port 9100 for the backend. They use **separate bridge networks** so there's no port conflict — each environment has its own backend container. You can run **either** production **or** development at a time, but not both simultaneously.
 
 > **Full container reference:** [`docs/docker/DOCKER-GUIDE.md`](docs/docker/DOCKER-GUIDE.md) — environments, Dockerfiles, Nginx config, volumes, networks, troubleshooting.
 
-#### Environment Variables (in `.env`)
+#### Environment Variables (pre-configured in compose files)
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
@@ -78,7 +111,7 @@ The TTS model is cached in a named volume (`tts-model-cache`) so it only downloa
 | `TTS_MODEL_CACHE` | `/app/.cache/tts` | Path to the TTS model cache directory |
 | `TZ` | `UTC` | Timezone for log timestamps |
 
-> **Note:** These are pre-configured in `docker-compose.yml`. You only need to change them if you want custom behavior.
+> **Note:** These values are hardcoded in `docker-compose.yml` and `docker-compose.dev.yml`. The `.env` file at the project root is documentation only.
 
 ### Run Locally (Development)
 
@@ -146,7 +179,7 @@ Returns `audio/mpeg` (MP3 binary). On error:
 │   ├── nuxt.config.ts       # Nuxt configuration
 │   ├── uno.config.ts        # UnoCSS presets (presetWind3) & shortcuts
 │   └── tests/               # Vitest test suite
-├── docker-compose.yml        # Docker deployment (backend: 9000, frontend: 9001)
+├── docker-compose.yml        # Docker deployment (backend: 9100, frontend: 9101)
 └── scripts/                  # Backend test runner (Docker)
 ```
 
@@ -200,7 +233,7 @@ git add . && git commit -m "fix: something"
 4. **Tests mirror source**: all test files live in `frontend/tests/` (no inline test files)
 5. **ESLint**: flat config via `@nuxt/eslint`, rules: `commaDangle: 'never'`, `braceStyle: '1tbs'`
 6. **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script) + Lucide + Simple Icons
-7. **Host ports**: Docker backend on 9000, frontend on 9001. Local dev proxies to localhost:9000.
+7. **Host ports**: Docker backend on 9100, frontend on 9101. Local dev proxies to localhost:9100.
 
 ## Custom Voices
 
@@ -227,7 +260,81 @@ After adding a file, restart the backend container. The new voice will appear in
 - **CPU-only inference** — No GPU support; generation takes several seconds per request.
 - **Language support** — Only `ar` (Arabic) and `en` (English) are accepted.
 - **Audio file persistence** — Generated MP3s accumulate in `tts-audio-cache`. No automatic cleanup.
-- **Host ports** — Backend on 9000, frontend on 9001 (not 8000/80).
+- **Host ports** — Backend on 9100, frontend on 9101 (not 8000/80).
+- **Port sharing** — Both environments share backend port 9100. Run **one environment at a time** (production or development, not both simultaneously).
+
+## Docker / Podman Troubleshooting
+
+### Containers stuck in `Created` state
+
+```bash
+# List all containers
+podman ps -a
+
+# Force-remove stale containers
+podman rm -f $(podman ps -aq)
+
+# Remove orphaned pods (left behind by crashed compose sessions)
+podman pod rm -f $(podman pod ps -q)
+
+# Remove orphaned networks
+podman network ls | grep lughat  # find network IDs
+podman network rm <network-id>
+```
+
+### Port already in use
+
+```bash
+# Check what's using port 9100 or 9101
+lsof -i :9100  # macOS / Linux
+lsof -i :9101
+
+# Stop any existing containers using those ports
+podman-compose down    # production
+podman-compose -f docker-compose.dev.yml down    # development
+```
+
+### TTS model re-downloads on every restart
+
+Verify the named volume exists and is mounted correctly:
+
+```bash
+podman volume inspect tts-model-cache    # Podman
+# or
+docker volume inspect tts-model-cache    # Docker
+```
+
+If the volume is missing or empty, remove it and restart — the model will re-download once:
+
+```bash
+podman volume rm tts-model-cache    # Podman
+docker volume rm tts-model-cache    # Docker
+```
+
+### Frontend can't reach backend
+
+Both containers must be on the same network. Check:
+
+```bash
+podman network inspect lughat-network    # Podman
+docker network inspect lughat-network    # Docker
+```
+
+### Container won't start — check logs
+
+```bash
+podman-compose logs -f backend    # Production backend logs
+podman-compose logs -f frontend   # Production frontend logs
+podman-compose -f docker-compose.dev.yml logs -f backend-dev    # Development backend
+podman-compose -f docker-compose.dev.yml logs -f frontend-dev   # Development frontend
+```
+
+### Full cleanup (removes all volumes!)
+
+```bash
+podman-compose down -v    # Production + dev
+podman-compose -f docker-compose.dev.yml down -v    # Development only
+```
 
 ## Contributing
 

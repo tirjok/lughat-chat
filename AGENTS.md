@@ -529,6 +529,8 @@ The project runs **two independent Docker Compose environments simultaneously** 
 
 ```bash
 ./dev.sh up          # Start both prod + dev environments
+./dev.sh up backend  # Start backend only (prod + dev)
+./dev.sh up frontend # Start frontend only (dev)
 ./dev.sh down        # Stop all services
 ./dev.sh restart     # Restart all
 ./dev.sh logs        # View production backend logs

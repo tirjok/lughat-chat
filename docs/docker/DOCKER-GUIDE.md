@@ -166,6 +166,16 @@ This starts:
 - **Production**: Backend on `localhost:9000`, Frontend on `localhost:9001`
 - **Development**: Backend on `localhost:9000`, Frontend on `localhost:3000`
 
+### Start a Specific Service
+
+```bash
+# Start only the development backend (both prod + dev)
+./dev.sh up backend
+
+# Start only the development frontend
+./dev.sh up frontend
+```
+
 ### Access URLs
 
 | Environment | Frontend | Backend API |
@@ -558,12 +568,17 @@ The `.env` file at the project root defines configuration values used by documen
 ### `./dev.sh` — Development Environment Manager
 
 ```bash
-./dev.sh [up|down|restart|logs]
+./dev.sh [up|backend|down|restart|logs]
 ```
 
 | Command | Action |
 |---------|--------|
 | `up` | Builds backend + frontend-dev images, starts both production and development environments |
+| `up backend` | Builds backend + frontend-dev images, starts only backend services (both prod + dev) |
+| `up frontend` | Builds frontend-dev image, starts only the development frontend |
+| `backend` | Builds backend + frontend-dev images, starts both backend services (prod + dev) |
+| `backend prod` | Builds and starts only production backend |
+| `backend dev` | Builds and starts only development backend |
 | `down` | Stops all services (production + development) |
 | `restart` | Stops all, then runs `up` |
 | `logs` | Shows production backend logs (`docker compose logs -f backend`) |
