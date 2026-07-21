@@ -2,19 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { shallowRef } from 'vue'
 
+import type { UseHealthPollOptions } from '../app/composables/useHealthPoll'
 import ModelStatusIndicator from '../app/components/ModelStatusIndicator.vue'
 
-// Module-level reactive ref — the mock returns this directly
-// so Vue's reactivity system tracks it and triggers re-renders
-// when its `.value` changes.
+// Module-level reactive refs — the mock returns these directly
+// so Vue's reactivity system tracks them and triggers re-renders
+// when their `.value` changes.
 const mockStatus = shallowRef<'loading' | 'ready' | 'error' | 'retrying'>('loading')
+const mockModelName = shallowRef<string>('')
+const mockSubStatus = shallowRef<string>('')
 
 vi.mock('../app/composables/useHealthPoll', () => ({
-  useHealthPoll: () => ({
+  useHealthPoll: (_options?: UseHealthPollOptions) => ({
     get status() { return mockStatus.value },
     get modelLoaded() { return mockStatus.value === 'ready' },
-    get modelName() { return '' },
-    get subStatus() { return '' },
+    get modelName() { return mockModelName.value },
+    get subStatus() { return mockSubStatus.value },
     stop: vi.fn(),
     retry: vi.fn(),
     start: vi.fn()
@@ -25,6 +28,8 @@ describe('ModelStatusIndicator', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockStatus.value = 'loading'
+    mockModelName.value = ''
+    mockSubStatus.value = ''
   })
 
   describe('loading state', () => {
@@ -208,6 +213,95 @@ describe('ModelStatusIndicator', () => {
       const wrapper = mount(ModelStatusIndicator)
       const textSpan = wrapper.find('span.text-xs')
       expect(textSpan.exists()).toBe(true)
+    })
+  })
+
+  // ─── M-06: model_name + sub_status display ──────────────────────────
+
+  describe('M-06: model_name display', () => {
+    it('When modelName is set and subStatus is "initializing" then shows "Loading XTTS-v2..."', () => {
+      // Arrange
+      mockStatus.value = 'loading'
+      mockModelName.value = 'XTTS-v2'
+      mockSubStatus.value = 'initializing'
+
+      // Act
+      const wrapper = mount(ModelStatusIndicator)
+
+      // Assert
+      expect(wrapper.text()).toContain('Loading XTTS-v2...')
+    })
+
+    it('When modelName is set to a custom name and subStatus is "initializing" then shows that name', () => {
+      // Arrange
+      mockStatus.value = 'loading'
+      mockModelName.value = 'CustomModel'
+      mockSubStatus.value = 'initializing'
+
+      // Act
+      const wrapper = mount(ModelStatusIndicator)
+
+      // Assert
+      expect(wrapper.text()).toContain('Loading CustomModel...')
+    })
+
+    it('When modelName is set but subStatus is empty then falls back to "Loading..."', () => {
+      // Arrange
+      mockStatus.value = 'loading'
+      mockModelName.value = 'XTTS-v2'
+      mockSubStatus.value = ''
+
+      // Act
+      const wrapper = mount(ModelStatusIndicator)
+
+      // Assert
+      expect(wrapper.text()).toContain('Loading...')
+      expect(wrapper.text()).not.toContain('XTTS-v2')
+    })
+
+    it('When modelName is empty and subStatus is "initializing" then shows "Loading XTTS-v2..." (fallback)', () => {
+      // Arrange
+      mockStatus.value = 'loading'
+      mockModelName.value = ''
+      mockSubStatus.value = 'initializing'
+
+      // Act
+      const wrapper = mount(ModelStatusIndicator)
+
+      // Assert — when modelName is empty, the component falls back to "XTTS-v2"
+      expect(wrapper.text()).toContain('Loading XTTS-v2...')
+    })
+  })
+
+  describe('M-06: tooltip reflects model_name', () => {
+    it('When subStatus is "initializing" then tooltip shows model name', () => {
+      // Arrange
+      mockStatus.value = 'loading'
+      mockModelName.value = 'XTTS-v2'
+      mockSubStatus.value = 'initializing'
+
+      // Act
+      const wrapper = mount(ModelStatusIndicator)
+      const root = wrapper.find('[class*="flex"]')
+
+      // Assert
+      expect(root.attributes('title')).toContain('XTTS-v2')
+      expect(root.attributes('title')).toContain('Loading')
+    })
+
+    it('When subStatus is empty then tooltip shows generic "Model Loading..."', () => {
+      // Arrange
+      mockStatus.value = 'loading'
+      mockModelName.value = ''
+      mockSubStatus.value = ''
+
+      // Act
+      const wrapper = mount(ModelStatusIndicator)
+      const root = wrapper.find('[class*="flex"]')
+
+      // Assert
+      expect(root.attributes('title')).toContain('Model Loading')
+      expect(root.attributes('title')).not.toContain('XTTS-v2')
     })
   })
 })

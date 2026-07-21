@@ -81,8 +81,8 @@ docs/architecture/RC-REGISTRY.md    → WHAT'S BROKEN (43 known issues)
 Slices M-01 (polling fix) and M-04 (volume path fix) are **done**. Next available:
 
 - `IMPLEMENTATION-model-loading-polling-fix.md` — Slice M-02: Update tests for 60-retry default ✅ DONE
-- `IMPLEMENTATION-model-loading-polling-fix.md` — Slice M-03: Update GenerateButton loading text
-- `IMPLEMENTATION-model-loading-progress.md` — Slice M-06: Add `model_name` + `sub_status` to `/health`
+- `IMPLEMENTATION-model-loading-polling-fix.md` — Slice M-03: Update GenerateButton loading text ✅ DONE
+- `IMPLEMENTATION-model-loading-progress.md` — Slice M-06: Add `model_name` + `sub_status` to `/health` ✅ DONE
 
 All remaining slices (M-02 through M-13, S-01 through S-08) depend on these Phase 1 slices completing first.
 
