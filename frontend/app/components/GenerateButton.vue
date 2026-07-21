@@ -1,28 +1,41 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface Props {
   isGenerating: boolean
   modelStatus: 'loading' | 'ready' | 'error' | 'retrying'
   disabled: boolean
 }
 
-defineProps<Props>()
-
+const props = defineProps<Props>()
 const emit = defineEmits<{
   click: []
 }>()
+
+const isReadyState = computed(
+  () => !props.isGenerating && props.modelStatus === 'ready'
+)
+
+const isBusyState = computed(
+  () =>
+    props.modelStatus === 'loading'
+    || props.modelStatus === 'retrying'
+    || props.modelStatus === 'error'
+    || props.isGenerating
+)
 </script>
 
 <template>
   <button
-    :disabled="disabled"
-    :aria-busy="modelStatus === 'loading'"
-    :aria-disabled="disabled"
+    :disabled="props.disabled || props.isGenerating"
+    :aria-busy="isBusyState"
+    :aria-disabled="props.disabled || props.isGenerating"
     class="generate-btn group"
     @click="emit('click')"
   >
     <!-- Ready state: Button-in-Button trailing icon -->
     <div
-      v-if="!isGenerating && modelStatus === 'ready'"
+      v-if="isReadyState"
       class="btn-content"
     >
       <span
@@ -46,10 +59,10 @@ const emit = defineEmits<{
       v-else
       class="btn-content loading-state"
     >
-      <div class="loader" />
       <span class="font-medium text-sunrise-orange animate-pulse text-sm md:text-base">
-        {{ modelStatus === 'retrying' ? 'Retrying...' : 'Loading TTS Model...' }}
+        {{ props.modelStatus === 'retrying' ? 'Retrying...' : 'Loading TTS Model...' }}
       </span>
+      <div class="loader" />
       <!-- Trailing icon circle (disabled state) -->
       <span
         class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center shrink-0"
@@ -66,7 +79,7 @@ const emit = defineEmits<{
 /* Outer Shell: spring hover + press on active */
 .generate-btn {
   position: relative;
-  background: #1A1A1A;
+  background: var(--bg-primary, #1A1A1A);
   border-radius: 1.25rem;
   overflow: hidden;
   z-index: 1;
@@ -78,15 +91,15 @@ const emit = defineEmits<{
   cursor: pointer;
   /* Ring-based subtle border (replaces 1px solid gray) */
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    0 0 0 0.5px rgba(255, 255, 255, 0.06);
+    inset 0 1px 1px var(--ring-subtle, rgba(255, 255, 255, 0.08)),
+    0 0 0 0.5px var(--ring-subtle, rgba(255, 255, 255, 0.06));
 }
 
 .generate-btn:hover {
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    0 0 0 0.5px rgba(255, 255, 255, 0.12),
-    0 8px 24px rgba(221, 36, 118, 0.1);
+    inset 0 1px 1px var(--ring-highlight, rgba(255, 255, 255, 0.1)),
+    0 0 0 0.5px var(--ring-highlight, rgba(255, 255, 255, 0.12)),
+    0 8px 24px var(--shadow-magenta, rgba(221, 36, 118, 0.1));
   transform: translateY(-1px);
 }
 
@@ -104,7 +117,7 @@ const emit = defineEmits<{
   content: '';
   position: absolute;
   inset: 1px;
-  background: #1A1A1A;
+  background: var(--bg-inner, #1A1A1A);
   border-radius: 1.15rem;
   z-index: 0;
   transition: background 700ms var(--ease-spring);
@@ -112,7 +125,7 @@ const emit = defineEmits<{
 }
 
 .generate-btn:hover::before {
-  background: #1f1f1f;
+  background: var(--bg-inner-hover, #1f1f1f);
 }
 
 /* Spinning conic-gradient accent (behind everything) */
@@ -127,8 +140,8 @@ const emit = defineEmits<{
     from 0deg,
     transparent 0%,
     transparent 70%,
-    #DD2476 85%,
-    #FF512F 100%
+    var(--accent-magenta, #DD2476) 85%,
+    var(--accent-orange, #FF512F) 100%
   );
   animation: spin 4s linear infinite;
   z-index: -1;
@@ -150,8 +163,8 @@ const emit = defineEmits<{
 }
 
 .loader {
-  border: 3px solid rgba(255, 81, 47, 0.3);
-  border-top: 3px solid #FF512F;
+  border: 3px solid var(--loader-border, rgba(255, 81, 47, 0.3));
+  border-top: 3px solid var(--loader-top, #FF512F);
   border-radius: 50%;
   width: 24px;
   height: 24px;
