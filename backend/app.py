@@ -375,12 +375,6 @@ _mod._get_db_connection = _get_db_connection
 #   import app as main_app; main_app.tts_engine.model = mock_tts
 _mod.tts_engine = tts_engine
 
-# Legacy aliases — tests set these directly on the app module.
-# We set them on the module object so 'import app' picks them up.
-_mod.tts_model = tts_engine.model  # tests set: main_app.tts_model = mock
-_mod.model_load_status = (
-    tts_engine.status
-)  # tests set: main_app.model_load_status = 'ready'
 _mod.DB_PATH = DB_PATH  # tests set: main_app.DB_PATH = tmp_db_path
 _mod.AUDIO_DIR = AUDIO_DIR  # tests set: main_app.AUDIO_DIR = tmpdir
 _mod.MAX_AUDIO_FILES = MAX_AUDIO_FILES  # tests set: main_app.MAX_AUDIO_FILES = 100
