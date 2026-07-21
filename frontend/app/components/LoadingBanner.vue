@@ -4,10 +4,10 @@ import { useHealthPoll } from '../composables/useHealthPoll'
 const { status, modelName } = useHealthPoll()
 
 function bannerText(): string {
-  if (status === 'retrying') {
+  if (status.value === 'retrying') {
     return 'Retrying connection... Please wait'
   }
-  const name = modelName || 'TTS Model'
+  const name = modelName.value || 'TTS Model'
   return `Loading ${name}... This may take up to 2 minutes`
 }
 </script>

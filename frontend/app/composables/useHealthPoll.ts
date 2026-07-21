@@ -14,6 +14,9 @@ export type HealthStatus = 'loading' | 'ready' | 'error' | 'retrying'
  * `.value`, `ShallowRef`, or `ComputedRef`.  The composable manages its own
  * reactive state; the returned object exposes **getters** that always read
  * the latest internal values.
+ *
+ * Uses a module-level `started` flag to ensure only one polling interval runs,
+ * no matter how many components call useHealthPoll().
  */
 export interface HealthPollResult {
   /** Current polling status */
@@ -31,6 +34,10 @@ export interface HealthPollResult {
   /** Start polling (called automatically onMounted; exposed for testing) */
   start: () => void
 }
+
+// Module-level flag ensures only ONE polling interval is ever created,
+// no matter how many components call useHealthPoll().
+let started = false
 
 export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollResult => {
   const status = shallowRef<HealthStatus>('loading')
@@ -104,6 +111,8 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollRes
   }
 
   function startPolling() {
+    if (started) return
+    started = true
     intervalId = setInterval(checkHealth, 2000)
 
     // Fire first check immediately

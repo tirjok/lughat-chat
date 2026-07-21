@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { registerEndpoint } from '@nuxt/test-utils/runtime'
-import { useVoices } from '../app/composables/useVoices'
+import { useVoices, __resetVoicesState } from '../app/composables/useVoices'
 
 describe('useVoices', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    __resetVoicesState()
   })
 
   describe('initial state', () => {

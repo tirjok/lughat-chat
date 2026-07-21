@@ -7,6 +7,10 @@ export interface Voice {
   speaker_wav: string
 }
 
+// Module-level flag ensures only one voice fetch is ever triggered,
+// no matter how many components call useVoices().
+let started = false
+
 export const useVoices = () => {
   const voices = ref<Voice[]>([])
   const loading = ref(false)
@@ -32,8 +36,14 @@ export const useVoices = () => {
   }
 
   onMounted(() => {
+    if (started) return
+    started = true
     loadVoices()
   })
 
   return { voices, loading, error, loadVoices }
+}
+/** Reset the singleton (for testing only). */
+export function __resetVoicesState(): void {
+  started = false
 }
