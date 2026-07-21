@@ -32,6 +32,7 @@ from fastapi.staticfiles import StaticFiles
 
 from config import (
     AUDIO_DIR,
+    CONTENT_DIR,
     DB_PATH,
     MAX_AUDIO_FILES,
     MODEL_CACHE_DIR,
@@ -90,6 +91,46 @@ _lesson_submit_service = ActivitySubmissionService(
 # Legacy adapter — wraps SOLID services for backward-compatible API.
 lesson_service = LessonService(DB_PATH)
 store = StorageService(AUDIO_DIR, MAX_AUDIO_FILES, SPEAKER_WAV_DIR)
+
+
+def _ensure_db_initialized(db_path: str, content_dir: str) -> None:
+    """Lazy-initialize the database if tables are missing.
+
+    When the SQLite file exists but is empty (no tables), this helper
+    creates the ``lessons`` and ``user_progress`` tables from JSON
+    content.  Called by the API endpoints as a fallback when the
+    lifespan handler's ``_init_databases()`` has not yet run (or
+    failed silently).
+
+    Parameters
+    ----------
+    db_path : str
+        Path to the SQLite database file.
+    content_dir : str
+        Path to the content directory containing lesson JSON files.
+    """
+    import sqlite3
+
+    try:
+        conn = sqlite3.connect(db_path)
+        tables = {
+            row[0]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+        conn.close()
+
+        if "lessons" not in tables or "user_progress" not in tables:
+            from lessons_db import init_lessons_db
+            from progress_db import init_user_progress_db
+
+            init_lessons_db(content_dir, db_path=db_path)
+            init_user_progress_db(content_dir, db_path=db_path)
+    except Exception:
+        # If lazy init fails (e.g. content_dir doesn't exist), let the
+        # endpoint handle the empty-result case gracefully.
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -176,8 +217,12 @@ def create_app() -> FastAPI:
         _m = _sys.modules[__name__]
         _db_path = getattr(_m, "DB_PATH", None)
         if _db_path:
+            # Lazy-initialize tables if they don't exist yet.
+            _ensure_db_initialized(_db_path, CONTENT_DIR)
             svc = LessonService(_db_path)
             return svc.list_lessons()
+        # Lazy-initialize with the default DB path.
+        _ensure_db_initialized(DB_PATH, CONTENT_DIR)
         return lesson_service.list_lessons()
 
     @app.get("/api/lessons/{lesson_id}", response_model=LessonDetailResponse)
@@ -188,8 +233,11 @@ def create_app() -> FastAPI:
         _m = _sys.modules[__name__]
         _db_path = getattr(_m, "DB_PATH", None)
         if _db_path:
+            # Lazy-initialize tables if they don't exist yet.
+            _ensure_db_initialized(_db_path, CONTENT_DIR)
             svc = LessonService(_db_path)
             return svc.get_lesson(lesson_id)
+        _ensure_db_initialized(DB_PATH, CONTENT_DIR)
         return lesson_service.get_lesson(lesson_id)
 
     @app.post("/api/generate")
