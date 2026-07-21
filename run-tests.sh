@@ -4,44 +4,48 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Detect container runtime: prefer podman-compose, fall back to docker-compose
-if command -v podman-compose &>/dev/null; then
-    COMPOSE_CMD="podman-compose"
-elif command -v docker-compose &>/dev/null; then
-    COMPOSE_CMD="docker-compose"
-elif command -v docker &>/dev/null && docker compose version &>/dev/null 2>&1; then
-    COMPOSE_CMD="docker compose"
-else
-    echo "ERROR: No container runtime found. Install podman-compose or Docker."
-    exit 1
-fi
-
 # ── Backend tests (pytest inside container) ──────────────
 echo "▶ Running backend tests..."
 ./scripts/run-backend-tests.sh "$@"
 
-# ── Frontend: lint (inside container dev environment) ────
+# ── Frontend: lint/typecheck/tests (inside running dev container) ──
 # Skip frontend steps if production containers are running on
-# conflicting ports (production backend uses host port 9100,
+# conflicting ports (production backend uses host port 9000,
 # which collides with the dev backend container port mapping).
-if $COMPOSE_CMD -f docker-compose.yml ps --format name 2>/dev/null | grep -q 'lughat-backend'; then
+# Production containers are named 'lughat-backend' and 'lughat-frontend'
+# (no '-dev' suffix), whereas dev containers are 'lughat-backend-dev'
+# and 'lughat-frontend-dev'.
+if podman ps --format '{{.Names}}' 2>/dev/null | grep -q '^lughat-backend$'; then
   echo ""
   echo "⏭ Skipping frontend lint/typecheck/tests — production containers are running."
-  echo "  (Dev backend port 9100 conflicts with production backend.)"
+  echo "  (Dev backend port 9200 conflicts with production backend.)"
 else
+  # Ensure the frontend-dev container is running.
+  FRONTEND_CONTAINER="lughat-frontend-dev"
+  if ! podman ps --format '{{.Names}}' 2>/dev/null | grep -q "^${FRONTEND_CONTAINER}$"; then
+    echo "Starting frontend-dev container..."
+    podman-compose -f docker-compose.dev.yml up -d frontend-dev 2>&1
+    # Wait for the container to become healthy-ish.
+    sleep 5
+  fi
+
+  _exec_frontend() {
+    podman exec "$FRONTEND_CONTAINER" sh -c "$1"
+  }
+
   echo ""
   echo "▶ Running frontend lint..."
-  $COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm lint" "$@"
+  _exec_frontend "cd /app && pnpm lint"
 
   # ── Frontend: typecheck (inside container dev environment) ──
   echo ""
   echo "▶ Running frontend typecheck..."
-  $COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm typecheck"
+  _exec_frontend "cd /app && pnpm typecheck"
 
   # ── Frontend tests (vitest inside container dev environment) ─
   echo ""
   echo "▶ Running frontend tests..."
-  $COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm test"
+  _exec_frontend "cd /app && npx vitest run --no-watch"
 
   echo ""
   echo "✓ All checks passed!"
