@@ -5,7 +5,9 @@
 // it uses the hardcoded container service name.
 
 export default defineEventHandler(async (event) => {
-  const backendUrl = `http://backend-dev:8000${event.path}`
+  const backendUrl = process.env.NODE_ENV === 'docker'
+    ? `http://localhost:9100${event.path}`
+    : `http://localhost:9200${event.path}`
 
   const body = await readBody(event).catch(() => undefined)
 

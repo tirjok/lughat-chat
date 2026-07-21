@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from 'vue'
+import { nextTick, ref, watch, type Ref } from 'vue'
 
 export interface AudioModuleOptions {
   onPlaybackEnd?: () => void
@@ -44,6 +44,7 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
 
   // ── Play (nextTick handled internally) ───────────
   async function play() {
+    await nextTick()
     if (!audioRef.value) return
     try {
       await audioRef.value.play()
@@ -63,6 +64,7 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
 
   // ── Toggle play/pause ────────────────────────────
   async function toggle() {
+    await nextTick()
     if (!audioRef.value) return
     if (isPlaying.value && !isPaused.value) {
       pause()

@@ -6,7 +6,7 @@
 import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
 import WaveformCanvas from '../components/WaveformCanvas.vue'
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
 import { useScrollReveal } from '../composables/useScrollReveal'
@@ -22,13 +22,26 @@ useSeoMeta({
 })
 
 const { activePanel } = usePanelToggle()
+const audioModule = useAudioModule({
+  onPlaybackEnd: () => {
+    isPlaying.value = false
+    isPaused.value = false
+  }
+})
 const {
   isPlaying,
   isPaused,
   currentTime,
   duration,
-  audioUrl: audioUrlRef
-} = useAudioModule()
+  audioUrl: audioUrlRef,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- template ref binding
+  audioRef,
+  load: audioLoad,
+  toggle: audioToggle,
+  seek: audioSeek,
+  download: audioDownload,
+  dispose
+} = audioModule
 
 // Template binding state
 const speedValue = ref(1.0)
@@ -74,7 +87,6 @@ function onDragEnd() {
 // Keyboard shortcut: Ctrl/Cmd+Enter triggers synthesis
 const isGenerating = ref(false)
 const textInput = ref('')
-const audioUrl = ref<string | null>(null)
 
 async function handleGenerate(): Promise<void> {
   if (!textInput.value.trim()) {
@@ -90,7 +102,7 @@ async function handleGenerate(): Promise<void> {
       speaker: selectedVoice.value || 'female',
       speed: speedValue.value
     })
-    audioUrl.value = URL.createObjectURL(blob)
+    audioLoad(blob)
     showToast('Speech generated successfully!', 'success')
   } catch {
     showToast('Failed to generate speech. Please try again.', 'error')
@@ -140,9 +152,7 @@ watch(
 
 // Cleanup audio URL on unmount
 onUnmounted(() => {
-  if (audioUrl.value) {
-    URL.revokeObjectURL(audioUrl.value)
-  }
+  dispose()
 })
 </script>
 
@@ -152,15 +162,12 @@ onUnmounted(() => {
     dir="ltr"
     @keydown="handleKeydown"
   >
-    <!-- Navigation bar (compact: no hamburger since Playground has no sidebar) -->
-    <NavBar compact />
-    <!-- Hidden audio element for download -->
+    <!-- Hidden audio element (bound to composable's audioRef for playback) -->
     <audio
-      v-if="audioUrl"
-      ref="audioRef"
-      :src="audioUrl"
+      :src="audioUrlRef || undefined"
       class="hidden"
     />
+    <NavBar compact />
 
     <!-- Desktop: two-panel layout (padding-top from CSS variable) -->
     <div
@@ -256,7 +263,7 @@ onUnmounted(() => {
 
         <!-- Audio Player Panel -->
         <AudioPlayerPanel
-          v-if="audioUrl"
+          v-if="audioUrlRef"
           :audio-url="audioUrlRef"
           :is-playing="isPlaying"
           :is-paused="isPaused"
@@ -265,7 +272,10 @@ onUnmounted(() => {
           :visible="activePanel === 'canvas'"
           :selected-voice-name="selectedVoiceName"
           :speed-value="speedValue"
-          @toggle="() => {}"
+          @toggle="audioToggle"
+          @close="dispose"
+          @download="audioDownload(selectedVoiceName)"
+          @seek="audioSeek"
         />
       </div>
     </div>
@@ -290,7 +300,7 @@ onUnmounted(() => {
             :visible="true"
           />
           <AudioPlayerPanel
-            v-if="audioUrl"
+            v-if="audioUrlRef"
             :audio-url="audioUrlRef"
             :is-playing="isPlaying"
             :is-paused="isPaused"
@@ -299,7 +309,10 @@ onUnmounted(() => {
             :visible="activePanel === 'canvas'"
             :selected-voice-name="selectedVoiceName"
             :speed-value="speedValue"
-            @toggle="() => {}"
+            @toggle="audioToggle"
+            @close="dispose"
+            @download="audioDownload(selectedVoiceName)"
+            @seek="audioSeek"
           />
         </div>
       </div>

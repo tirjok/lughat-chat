@@ -2,7 +2,9 @@
 // In production, Nginx handles proxying (see nginx.conf).
 
 export default defineEventHandler(async () => {
-  const backendUrl = 'http://backend-dev:8000/health'
+  const backendUrl = process.env.NODE_ENV === 'docker'
+    ? 'http://localhost:9100/health'
+    : 'http://localhost:9200/health'
 
   const response = await $fetch(backendUrl, {
     method: 'GET'

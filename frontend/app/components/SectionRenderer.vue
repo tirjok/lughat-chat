@@ -3,6 +3,12 @@
     class="section-card mb-6"
     :data-section-type="section.type"
   >
+    <!-- Hidden audio element for TTS playback -->
+    <audio
+      ref="audioRef"
+      :src="audioUrl || undefined"
+      class="hidden"
+    />
     <h3 class="section-title text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
       {{ section.title }}
     </h3>
@@ -215,10 +221,26 @@ interface SectionRendererProps {
 const props = defineProps<SectionRendererProps>()
 
 const { synthesize } = useTtsApi()
+const audioModule = useAudioModule()
+const { audioUrl, audioRef, load, play: audioPlay, dispose } = audioModule
+let isDisposed = false
 
-function handleTTS(text: string) {
-  synthesize({ text })
+async function handleTTS(text: string) {
+  if (isDisposed) return
+  try {
+    const blob = await synthesize({ text })
+    load(blob)
+    // Play after load() sets the src on the audio element
+    await audioPlay()
+  } catch {
+    // Error already surfaced by synthesize via toast — nothing to do
+  }
 }
+
+onBeforeUnmount(() => {
+  isDisposed = true
+  dispose()
+})
 
 // Type-safe narrowing: each computed returns the correctly-typed content for its section type.
 const unknownSectionType = computed<string>(() => props.section.type)
