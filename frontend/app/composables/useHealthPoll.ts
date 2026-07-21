@@ -15,8 +15,10 @@ export type HealthStatus = 'loading' | 'ready' | 'error' | 'retrying'
  * reactive state; the returned object exposes **getters** that always read
  * the latest internal values.
  *
- * Uses a module-level `started` flag to ensure only one polling interval runs,
- * no matter how many components call useHealthPoll().
+ * Uses a module-level singleton so only one polling interval runs,
+ * no matter how many components call useHealthPoll().  When a new
+ * component mounts (e.g. after a route switch), it adopts the existing
+ * poll instead of being stuck in 'loading' forever.
  */
 export interface HealthPollResult {
   /** Current polling status */
@@ -35,23 +37,28 @@ export interface HealthPollResult {
   start: () => void
 }
 
-// Module-level flag ensures only ONE polling interval is ever created,
-// no matter how many components call useHealthPoll().
+// ── Module-level singleton state ──────────────────────────────────────
+// Shared across all component instances.  When navigating between routes,
+// new instances read the same reactive state instead of being stuck on
+// 'loading' forever.
 let started = false
+let intervalId: ReturnType<typeof setInterval> | null = null
+let retryCount = 0
+let isRetrying = false
+
+// Reactive refs that ALL instances share — updated by checkHealth,
+// read by every instance's getters.
+const status = shallowRef<HealthStatus>('loading')
+const modelName = shallowRef<string>('')
+const subStatus = shallowRef<string>('')
 
 export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollResult => {
-  const status = shallowRef<HealthStatus>('loading')
-  const modelName = shallowRef<string>('')
-  const subStatus = shallowRef<string>('')
-
   const baseUrl = options.baseUrl || ''
   const maxRetries = options.maxRetries ?? 60
   const retryAfterError = options.retryAfterError ?? true
   const retryInterval = options.retryInterval ?? 30000 // 30 seconds
 
-  let intervalId: ReturnType<typeof setInterval> | null = null
-  let retryCount = 0
-  let isRetrying = false
+  // ── Internal helpers (closure-local) ────────────────────────────────
 
   async function checkHealth() {
     try {

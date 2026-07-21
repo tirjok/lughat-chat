@@ -1,32 +1,32 @@
 <script setup lang="ts">
 import { useHealthPoll } from '../composables/useHealthPoll'
 
-const { status, modelLoaded, modelName, subStatus, retry } = useHealthPoll()
+const health = useHealthPoll({ maxRetries: 10 })
 
 function displayText(): string {
-  if (status === 'loading') {
-    const name = modelName || 'XTTS-v2'
-    return subStatus === 'initializing'
+  if (health.status === 'loading') {
+    const name = health.modelName || 'XTTS-v2'
+    return health.subStatus === 'initializing'
       ? `Loading ${name}...`
       : 'Loading...'
   }
-  if (status === 'retrying') {
+  if (health.status === 'retrying') {
     return 'Retrying...'
   }
-  return modelLoaded ? 'Ready' : 'Error'
+  return health.modelLoaded ? 'Ready' : 'Error'
 }
 
 function tooltipText(): string {
-  if (status === 'loading') {
-    const name = modelName || 'XTTS-v2'
-    return subStatus === 'initializing'
+  if (health.status === 'loading') {
+    const name = health.modelName || 'XTTS-v2'
+    return health.subStatus === 'initializing'
       ? `Model ${name} Loading...`
       : 'Model Loading...'
   }
-  if (status === 'retrying') {
+  if (health.status === 'retrying') {
     return 'Model XTTS-v2 — Retrying...'
   }
-  return modelLoaded ? 'Model Ready' : 'Model Error'
+  return health.modelLoaded ? 'Model Ready' : 'Model Error'
 }
 </script>
 
@@ -42,21 +42,21 @@ function tooltipText(): string {
     >
       <!-- Loading state: pulsing orange dot -->
       <span
-        v-if="status === 'loading'"
+        v-if="health.status === 'loading'"
         aria-hidden="true"
         class="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse"
       />
 
       <!-- Ready state: green dot with glow -->
       <span
-        v-else-if="modelLoaded"
+        v-else-if="health.modelLoaded"
         aria-hidden="true"
         class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"
       />
 
       <!-- Retrying state: orange dot with slow pulse (same as loading) -->
       <span
-        v-else-if="status === 'retrying'"
+        v-else-if="health.status === 'retrying'"
         aria-hidden="true"
         class="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse"
       />
@@ -74,10 +74,10 @@ function tooltipText(): string {
 
       <!-- Manual retry button: visible in retrying and error states -->
       <button
-        v-if="status === 'retrying' || status === 'error'"
+        v-if="health.status === 'retrying' || health.status === 'error'"
         aria-label="Retry health check"
         class="rounded-full bg-studio-900 text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] cursor-pointer active:scale-95"
-        @click="retry"
+        @click="health.retry"
       >
         <span
           aria-hidden="true"
