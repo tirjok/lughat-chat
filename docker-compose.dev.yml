@@ -12,13 +12,15 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: lughat-backend-dev
+    mem_limit: 16g
     ports:
       - "9200:8000"  # Host port 9200 → container port 8000 (avoids conflict with prod 9100)
     volumes:
       # Mount source code — changes reflected without rebuild
       - ./backend:/app
       # Persist model cache across restarts
-      - tts-model-cache-dev:/app/.cache/tts
+      # Coqui TTS writes to /root/.local/share/tts (ignores COQUI_TTS_CACHE env var)
+      - tts-model-cache-dev:/root/.local/share/tts
       # Persist generated audio files
       - tts-audio-cache-dev:/app/downloads
       # Mount speaker_wavs
