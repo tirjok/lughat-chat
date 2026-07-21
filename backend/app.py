@@ -109,7 +109,7 @@ def create_app() -> FastAPI:
         title="Lughat Chat TTS API",
         description="Text-to-Speech API with XTTS-v2 (Arabic & English)",
         version="1.0.0",
-        lifespan=lambda: app_lifespan(app, tts_engine),  # type: ignore[arg-type]
+        lifespan=lambda a: app_lifespan(a, tts_engine),
     )
 
     # CORS middleware — allow frontend container to call API.

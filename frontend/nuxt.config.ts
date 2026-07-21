@@ -50,7 +50,7 @@ export default defineNuxtConfig({
       '/health': {
         target: process.env.NODE_ENV === 'docker'
           ? 'http://backend-dev:8000/health'
-          : 'http://localhost:9100/health',
+          : 'http://localhost:9200/health',
         changeOrigin: true
       }
     }

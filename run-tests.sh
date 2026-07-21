@@ -21,19 +21,28 @@ echo "▶ Running backend tests..."
 ./scripts/run-backend-tests.sh "$@"
 
 # ── Frontend: lint (inside container dev environment) ────
-echo ""
-echo "▶ Running frontend lint..."
-$COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm lint" "$@"
+# Skip frontend steps if production containers are running on
+# conflicting ports (production backend uses host port 9100,
+# which collides with the dev backend container port mapping).
+if $COMPOSE_CMD -f docker-compose.yml ps --format name 2>/dev/null | grep -q 'lughat-backend'; then
+  echo ""
+  echo "⏭ Skipping frontend lint/typecheck/tests — production containers are running."
+  echo "  (Dev backend port 9100 conflicts with production backend.)"
+else
+  echo ""
+  echo "▶ Running frontend lint..."
+  $COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm lint" "$@"
 
-# ── Frontend: typecheck (inside container dev environment) ──
-echo ""
-echo "▶ Running frontend typecheck..."
-$COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm typecheck"
+  # ── Frontend: typecheck (inside container dev environment) ──
+  echo ""
+  echo "▶ Running frontend typecheck..."
+  $COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm typecheck"
 
-# ── Frontend tests (vitest inside container dev environment) ─
-echo ""
-echo "▶ Running frontend tests..."
-$COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm test"
+  # ── Frontend tests (vitest inside container dev environment) ─
+  echo ""
+  echo "▶ Running frontend tests..."
+  $COMPOSE_CMD -f docker-compose.dev.yml run --rm frontend-dev sh -c "pnpm test"
 
-echo ""
-echo "✓ All checks passed!"
+  echo ""
+  echo "✓ All checks passed!"
+fi

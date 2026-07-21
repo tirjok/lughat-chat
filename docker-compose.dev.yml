@@ -13,7 +13,7 @@ services:
       dockerfile: Dockerfile
     container_name: lughat-backend-dev
     ports:
-      - "9100:8000"
+      - "9200:8000"  # Host port 9200 → container port 8000 (avoids conflict with prod 9100)
     volumes:
       # Mount source code — changes reflected without rebuild
       - ./backend:/app
