@@ -24,10 +24,14 @@ function createSubmissionMock(_resultOverride: Record<string, unknown> = {}) {
   }
 }
 
-mockNuxtImport('useActivitySubmission', () => {
-  return (_activityId: number) => createSubmissionMock()
-})
+let capturedLessonId: number | undefined
 
+mockNuxtImport('useActivitySubmission', () => {
+  return (lessonId: number) => {
+    capturedLessonId = lessonId
+    return createSubmissionMock()
+  }
+})
 // Mock SectionRenderer (used inside ActivityRenderer for dialogue sections)
 mockComponent('SectionRenderer', {
   props: ['section', 'lessonId'],
@@ -307,6 +311,33 @@ describe('ActivityRenderer', () => {
       // submitAnswer is only called when the user submits via the form,
       // not on mount — the composable exposes the function but does not invoke it.
       expect(mockSubmitAnswer).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('regression tests', () => {
+    it('passes lessonId (not activityId) to useActivitySubmission', async () => {
+      capturedLessonId = undefined
+
+      const mockActivity = {
+        id: 7,
+        title: 'Test Activity',
+        type: 'translate-to-english' as const,
+        description: 'Test description',
+        content: {
+          source_sentence: 'Hello world',
+          target_language: 'ar'
+        } as any
+      }
+
+      await mountSuspended(ActivityRenderer, {
+        props: {
+          activity: mockActivity,
+          lessonId: 42
+        }
+      })
+
+      expect(capturedLessonId).toBe(42)
+      expect(capturedLessonId).not.toBe(mockActivity.id)
     })
   })
 })

@@ -21,7 +21,7 @@ useSeoMeta({
   description: 'Arabic Text-to-Speech Studio — Generate speech with XTTS-v2'
 })
 
-const { activePanel } = usePanelToggle()
+const { activePanel, togglePanel } = usePanelToggle()
 const audioModule = useAudioModule({
   onPlaybackEnd: () => {
     isPlaying.value = false
@@ -124,13 +124,14 @@ async function handleKeydown(e: KeyboardEvent): Promise<void> {
 }
 
 // Health polling (model ready state tracked but not displayed)
-const { status: modelStatus, modelLoaded } = useHealthPoll()
+const health = useHealthPoll()
 
 // Compute whether the Generate button should be disabled
 // — during generation, or when model is not ready (loading/error/retrying)
 const isGenerateDisabled = computed(() => {
-  return isGenerating.value || !modelLoaded
+  return isGenerating.value || !health.modelLoaded
 })
+
 const { voices, loadVoices } = useVoices()
 const selectedVoice = ref('KSA Zariyah - Female')
 const selectedVoiceName = ref(selectedVoice.value)
@@ -142,7 +143,7 @@ onMounted(() => {
 
 // Show error toast when model enters error state (reactive watch on getter)
 watch(
-  () => modelStatus,
+  () => health.status,
   (status) => {
     if (status === 'error') {
       showToast('TTS model is not ready. Please try again later.', 'error')
@@ -165,6 +166,7 @@ onUnmounted(() => {
     <!-- Hidden audio element (bound to composable's audioRef for playback) -->
     <audio
       :src="audioUrlRef || undefined"
+      ref="audioRef"
       class="hidden"
     />
     <NavBar compact />
@@ -224,7 +226,7 @@ onUnmounted(() => {
         <div class="mb-6">
           <GenerateButton
             :is-generating="isGenerating"
-            :model-status="modelStatus"
+            :model-status="health.status"
             :disabled="isGenerateDisabled"
             :text="textInput"
             @click="handleGenerate"
@@ -243,6 +245,7 @@ onUnmounted(() => {
         ref="canvasHeaderRef"
         class="canvas flex-1 p-8 overflow-y-auto"
         data-panel="canvas"
+        @click.stop="togglePanel"
       >
         <!-- Canvas header -->
         <div class="mb-6">
@@ -289,6 +292,7 @@ onUnmounted(() => {
       <div
         class="canvas-mobile flex-shrink-0 overflow-y-auto"
         :style="{ height: `${canvasRatio * 100}%` }"
+        @click.stop="togglePanel"
       >
         <div class="p-4">
           <WaveformCanvas
@@ -347,7 +351,7 @@ onUnmounted(() => {
         <SpeedSlider />
         <GenerateButton
           :is-generating="isGenerating"
-          :model-status="modelStatus"
+          :model-status="health.status"
           :disabled="isGenerateDisabled"
           :text="textInput"
           @click="handleGenerate"

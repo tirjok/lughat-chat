@@ -210,6 +210,42 @@ describe('Playground (playground.vue) — TTS Studio', () => {
       expect(mobileStatus.exists()).toBe(true)
     })
   })
+  // ─── Reactivity (Slice: Health → Generate Button) ──────────────────
+
+  describe('health → generate button reactivity', () => {
+    it('When health is "loading" then Generate button is disabled', async () => {
+      mockHealthStatus.value = 'loading'
+      const wrapper = await mountSuspended(Playground)
+      const btn = wrapper.find('[data-testid="generate-button"]')
+      expect(btn.attributes('disabled')).toBe('')
+    })
+
+    it('When health transitions from "loading" to "ready" then Generate button becomes enabled', async () => {
+      mockHealthStatus.value = 'loading'
+      const wrapper = await mountSuspended(Playground)
+      const btn = wrapper.find('[data-testid="generate-button"]')
+      expect(btn.attributes('disabled')).toBe('')
+
+      // Transition to ready — the button should become enabled
+      mockHealthStatus.value = 'ready'
+      await wrapper.vm.$nextTick()
+      expect(btn.attributes('disabled')).toBeUndefined()
+    })
+
+    it('When health is "error" then Generate button is disabled', async () => {
+      mockHealthStatus.value = 'error'
+      const wrapper = await mountSuspended(Playground)
+      const btn = wrapper.find('[data-testid="generate-button"]')
+      expect(btn.attributes('disabled')).toBe('')
+    })
+
+    it('When health is "retrying" then Generate button is disabled', async () => {
+      mockHealthStatus.value = 'retrying'
+      const wrapper = await mountSuspended(Playground)
+      const btn = wrapper.find('[data-testid="generate-button"]')
+      expect(btn.attributes('disabled')).toBe('')
+    })
+  })
 
   // ─── Layout & Responsive (Slice 1) ──────────────────────────────────
 
