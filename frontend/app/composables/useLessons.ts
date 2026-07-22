@@ -255,12 +255,16 @@ export interface LevelGroup {
   progress: number
 }
 
+// Module-level singleton state — shared across all consumers.
+// When navigating between pages, new instances read the same reactive
+// state instead of triggering a second fetch.
+let started = false
+const lessons = shallowRef<LessonSummary[]>([])
+const loading = shallowRef(false)
+const error = shallowRef<string | null>(null)
+
 export const useLessons = (options: UseLessonsOptions = {}) => {
   const baseUrl = options.baseUrl || ''
-
-  const lessons = ref<LessonSummary[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
 
   // Fetch all lesson summaries
   async function fetchLessons(): Promise<LessonSummary[]> {
@@ -315,6 +319,12 @@ export const useLessons = (options: UseLessonsOptions = {}) => {
       })
   })
 
+  // Trigger fetch once (singleton pattern).
+  if (!started) {
+    started = true
+    fetchLessons()
+  }
+
   return {
     lessons,
     loading,
@@ -322,6 +332,14 @@ export const useLessons = (options: UseLessonsOptions = {}) => {
     fetchLessons,
     groupedLessons
   }
+}
+
+/** Reset the singleton (for testing only). */
+export function __resetLessonsState(): void {
+  started = false
+  lessons.value = []
+  loading.value = false
+  error.value = null
 }
 
 /**

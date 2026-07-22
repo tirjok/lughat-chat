@@ -10,10 +10,7 @@ interface Emits {
 defineProps<Props>()
 defineEmits<Emits>()
 
-const { lessons, loading, error, fetchLessons, groupedLessons } = useLessons()
-
-// Fetch lessons on mount
-fetchLessons()
+const { lessons, loading, error, groupedLessons } = useLessons()
 </script>
 
 <template>

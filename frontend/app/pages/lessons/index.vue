@@ -82,10 +82,7 @@
 <script setup lang="ts">
 import type { LessonSummary } from '~/composables/useLessons'
 
-const { lessons, loading, error, fetchLessons } = useLessons()
-
-// Fetch lessons on mount
-fetchLessons()
+const { lessons, loading, error } = useLessons()
 
 // Group lessons by level and sort by sequence
 const groupedLessons = computed(() => {

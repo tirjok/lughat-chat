@@ -118,8 +118,5 @@ useSeoMeta({
   description: 'Arabic language learning — view your 30-lesson roadmap across CEFR levels A1, A2, B1'
 })
 
-const { lessons, loading, error, fetchLessons, groupedLessons } = useLessons()
-
-// Fetch lessons on mount
-fetchLessons()
+const { lessons, loading, error, groupedLessons } = useLessons()
 </script>

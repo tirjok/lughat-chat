@@ -50,7 +50,7 @@ const {
   isMaxAttemptsReached,
   submitAnswer,
   clearResults
-} = useActivitySubmission(props.activity.id)
+} = useActivitySubmission(props.lessonId)
 
 // ---------------------------------------------------------------------------
 // User answer state — shallowRef for primitives (better performance)

@@ -1,20 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { registerEndpoint } from '@nuxt/test-utils/runtime'
-import { useLessons } from '../app/composables/useLessons'
+import { useLessons, __resetLessonsState } from '../app/composables/useLessons'
 
 describe('useLessons', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+  vi.clearAllMocks()
+  __resetLessonsState()
 
   describe('initial state', () => {
+    beforeEach(() => {
+      registerEndpoint('/api/lessons', () => [])
+    })
+
     it('returns empty lessons array', () => {
       const { lessons } = useLessons()
       expect(lessons.value).toEqual([])
     })
 
-    it('has loading and error as false/null', () => {
-      const { loading, error } = useLessons()
+    it('has loading and error as false/null after fetch completes', async () => {
+      const { loading, error, fetchLessons } = useLessons()
+      await fetchLessons()
       expect(loading.value).toBe(false)
       expect(error.value).toBeNull()
     })
