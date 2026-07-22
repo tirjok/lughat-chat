@@ -28,7 +28,6 @@ function tooltipText(): string {
   }
   return health.modelLoaded ? 'Model Ready' : 'Model Error'
 }
-
 </script>
 
 <template>

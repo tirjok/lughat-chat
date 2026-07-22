@@ -12,7 +12,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: lughat-backend-dev
-    mem_limit: 16g
+    mem_limit: 8g
     ports:
       - "9200:8000"  # Host port 9200 → container port 8000 (avoids conflict with prod 9100)
     volumes:
@@ -44,14 +44,28 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     container_name: lughat-frontend-dev
+    mem_limit: 8g
     ports:
       - "3000:3000"
     volumes:
-      # Mount source code — changes reflected without rebuild.
-      # node_modules is mounted as a named volume so the container's
-      # platform-specific bindings (linux-arm64-musl) are preserved
-      # instead of being overwritten by the host's darwin bindings.
-      - ./frontend:/app:delegated
+      # Mount only source subdirectories — node_modules and .nuxt come from the
+      # built image. Mounting ./frontend:/app would overwrite node_modules
+      # (darwin bindings) and .nuxt (generated during build), causing OOM kills.
+      - ./frontend/app:/app/app:delegated
+      - ./frontend/tests:/app/tests:delegated
+      - ./frontend/public:/app/public:delegated
+      - ./frontend/server:/app/server:delegated
+      # Config files (read-only)
+      - ./frontend/nuxt.config.ts:/app/nuxt.config.ts:ro
+      - ./frontend/eslint.config.mjs:/app/eslint.config.mjs:ro
+      - ./frontend/uno.config.ts:/app/uno.config.ts:ro
+      - ./frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./frontend/vitest.config.ts:/app/vitest.config.ts:ro
+      - ./frontend/vitest.component.config.ts:/app/vitest.component.config.ts:ro
+      - ./frontend/app.config.ts:/app/app.config.ts:ro
+      - ./frontend/renovate.json:/app/renovate.json:ro
+      - ./frontend/nginx.conf:/app/nginx.conf:ro
+      # Preserve node_modules from the built image (linux-arm64-musl bindings)
       - frontend-node-modules:/app/node_modules
     environment:
       - NUXT_TELEMETRY_DISABLED=1

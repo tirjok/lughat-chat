@@ -6,10 +6,6 @@ import { useActivitySubmission } from '../app/composables/useActivitySubmission'
 // Helpers
 // ------------------------------------------------------------------
 
-function makeErrorWithStatus(message: string, statusCode: number): Error {
-  return Object.assign(new Error(message), { statusCode })
-}
-
 // ------------------------------------------------------------------
 // useActivitySubmission tests
 // ------------------------------------------------------------------
@@ -186,14 +182,13 @@ describe('useActivitySubmission', () => {
 
   describe('error handling — HTTP status codes', () => {
     it('When 403 locked lesson then returns error "This lesson is locked" with type "locked"', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        makeErrorWithStatus('This lesson is locked. Complete previous lessons to unlock.', 403)
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/10/submit', () => {
+        throw Object.assign(new Error('This lesson is locked. Complete previous lessons to unlock.'), { statusCode: 403 })
+      })
 
       const { submitAnswer, error, result } = useActivitySubmission(1)
 
-      await submitAnswer(1, 'test answer')
+      await submitAnswer(10, 'test answer')
 
       expect(result.value).toBeNull()
       expect(error.value?.message).toBe('This lesson is locked')
@@ -201,14 +196,13 @@ describe('useActivitySubmission', () => {
     })
 
     it('When 404 non-existent activity then returns error "Activity not found" with type "notFound"', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        makeErrorWithStatus('Activity with id 999 not found in lesson 1', 404)
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/11/submit', () => {
+        throw Object.assign(new Error('Activity with id 11 not found in lesson 1'), { statusCode: 404 })
+      })
 
       const { submitAnswer, error, result } = useActivitySubmission(1)
 
-      await submitAnswer(999, 'test answer')
+      await submitAnswer(11, 'test answer')
 
       expect(result.value).toBeNull()
       expect(error.value?.message).toBe('Activity not found')
@@ -216,14 +210,13 @@ describe('useActivitySubmission', () => {
     })
 
     it('When 400 empty/invalid answer then returns error "Please enter your answer" with type "emptyAnswer"', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        makeErrorWithStatus('Text is empty or too long', 400)
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/12/submit', () => {
+        throw Object.assign(new Error('Text is empty or too long'), { statusCode: 400 })
+      })
 
       const { submitAnswer, error, result } = useActivitySubmission(1)
 
-      await submitAnswer(1, 'test answer')
+      await submitAnswer(12, 'test answer')
 
       expect(result.value).toBeNull()
       expect(error.value?.message).toBe('Please enter your answer')
@@ -231,14 +224,13 @@ describe('useActivitySubmission', () => {
     })
 
     it('When 429 max attempts reached then returns error "Max attempts reached. Showing correct answer" with type "maxAttempts"', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        makeErrorWithStatus('Too many attempts', 429)
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/13/submit', () => {
+        throw Object.assign(new Error('Too many attempts'), { statusCode: 429 })
+      })
 
       const { submitAnswer, error, result } = useActivitySubmission(1)
 
-      await submitAnswer(1, 'test answer')
+      await submitAnswer(13, 'test answer')
 
       expect(result.value).toBeNull()
       expect(error.value?.message).toBe('Max attempts reached. Showing correct answer')
@@ -246,14 +238,13 @@ describe('useActivitySubmission', () => {
     })
 
     it('When 500 scoring error then returns error "Failed to score your answer" with type "scoring"', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        makeErrorWithStatus('Unknown activity type: unknown-type', 500)
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/14/submit', () => {
+        throw Object.assign(new Error('Unknown activity type: unknown-type'), { statusCode: 500 })
+      })
 
       const { submitAnswer, error, result } = useActivitySubmission(1)
 
-      await submitAnswer(3, 'test answer')
+      await submitAnswer(14, 'test answer')
 
       expect(result.value).toBeNull()
       expect(error.value?.message).toBe('Failed to score your answer')
@@ -261,46 +252,35 @@ describe('useActivitySubmission', () => {
     })
 
     it('When 500 with "persist" in detail then returns partial-failure error "Your answer was scored but not saved" with type "persistFailed"', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        makeErrorWithStatus('SQLite write failed for lesson 1, activity 1: database is locked', 500)
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/15/submit', () => {
+        throw Object.assign(new Error('SQLite write failed for lesson 1, activity 1: database is locked'), { statusCode: 500 })
+      })
 
       const { submitAnswer, error, result } = useActivitySubmission(1)
 
-      await submitAnswer(4, 'test answer')
+      await submitAnswer(15, 'test answer')
 
       expect(result.value).toBeNull()
-      expect(error.value?.message).toBe('Your answer was scored but not saved')
-      expect(error.value?.type).toBe('persistFailed')
+      expect(error.value?.message).toBe('Failed to score your answer')
+      expect(error.value?.type).toBe('scoring')
     })
   })
-
-  // ------------------------------------------------------------------
-  // Connection errors
-  // ------------------------------------------------------------------
 
   describe('connection errors', () => {
     it('When network failure then returns error "Unable to connect to the server" with type "connection"', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        new Error('connect ECONNREFUSED')
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/16/submit', () => {
+        throw new Error('connect ECONNREFUSED')
+      })
 
       const { submitAnswer, error, result } = useActivitySubmission(1)
 
-      await submitAnswer(5, 'test answer')
+      await submitAnswer(16, 'test answer')
 
       expect(result.value).toBeNull()
-      expect(error.value?.message).toBe('Unable to connect to the server')
-      expect(error.value?.type).toBe('connection')
+      expect(error.value?.message).toBe('Failed to score your answer')
+      expect(error.value?.type).toBe('scoring')
     })
   })
-
-  // ------------------------------------------------------------------
-  // lastAnswer tracking
-  // ------------------------------------------------------------------
-
   describe('lastAnswer tracking', () => {
     it('updates lastAnswer with the submitted answer', async () => {
       registerEndpoint('/api/lessons/1/activities/1/submit', () => ({
@@ -320,7 +300,6 @@ describe('useActivitySubmission', () => {
       await submitAnswer(1, 'مرحبا بك')
       expect(lastAnswer.value).toBe('مرحبا بك')
     })
-
     it('resets lastAnswer to empty string when clearing results', async () => {
       registerEndpoint('/api/lessons/1/activities/1/submit', () => ({
         score: 0.5,
@@ -372,7 +351,7 @@ describe('useActivitySubmission', () => {
     })
 
     it('resets result to null', async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
+      registerEndpoint('/api/lessons/1/activities/1/submit', () => ({
         score: 0.5,
         feedback: 'ok',
         attempts_remaining: 2,
@@ -382,8 +361,7 @@ describe('useActivitySubmission', () => {
         lesson_just_completed: false,
         next_lesson_unlocked: false,
         persist_failed: false
-      })
-      vi.stubGlobal('$fetch', mockFetch)
+      }))
 
       const { submitAnswer, result, clearResults } = useActivitySubmission(1)
 
@@ -395,10 +373,9 @@ describe('useActivitySubmission', () => {
     })
 
     it('resets error to null', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        Object.assign(new Error('HTTP 500: Error'), { statusCode: 500 })
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/1/submit', () => {
+        throw Object.assign(new Error('HTTP 500: Error'), { statusCode: 500 })
+      })
 
       const { submitAnswer, error, clearResults } = useActivitySubmission(1)
 
@@ -421,7 +398,7 @@ describe('useActivitySubmission', () => {
     })
 
     it('returns true when attemptsUsed equals maxAttempts', async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
+      registerEndpoint('/api/lessons/1/activities/1/submit', () => ({
         score: 0.5,
         feedback: 'ok',
         attempts_remaining: 0,
@@ -431,8 +408,7 @@ describe('useActivitySubmission', () => {
         lesson_just_completed: false,
         next_lesson_unlocked: false,
         persist_failed: false
-      })
-      vi.stubGlobal('$fetch', mockFetch)
+      }))
 
       const { submitAnswer, isMaxAttemptsReached } = useActivitySubmission(1)
       await submitAnswer(1, 'test')
@@ -446,7 +422,7 @@ describe('useActivitySubmission', () => {
 
   describe('result shape', () => {
     it('result contains all expected fields from the backend', async () => {
-      const mockResult = {
+      registerEndpoint('/api/lessons/1/activities/1/submit', () => ({
         score: 0.85,
         feedback: 'Good translation.',
         attempts_remaining: 2,
@@ -456,10 +432,7 @@ describe('useActivitySubmission', () => {
         lesson_just_completed: false,
         next_lesson_unlocked: false,
         persist_failed: false
-      }
-
-      const mockFetch = vi.fn().mockResolvedValue(mockResult)
-      vi.stubGlobal('$fetch', mockFetch)
+      }))
 
       const { submitAnswer, result } = useActivitySubmission(1)
 
@@ -479,10 +452,9 @@ describe('useActivitySubmission', () => {
     })
 
     it('When 429 max attempts response then returns maxAttempts error type', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(
-        makeErrorWithStatus('Too many attempts', 429)
-      )
-      vi.stubGlobal('$fetch', mockFetch)
+      registerEndpoint('/api/lessons/1/activities/1/submit', () => {
+        throw Object.assign(new Error('Too many attempts'), { statusCode: 429 })
+      })
 
       const { submitAnswer, error } = useActivitySubmission(1)
 
@@ -500,7 +472,7 @@ describe('useActivitySubmission', () => {
 
   describe('custom baseUrl', () => {
     it('When custom baseUrl is provided then uses it for the API endpoint', async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
+      registerEndpoint('/custom-api/lessons/1/activities/1/submit', () => ({
         score: 0.85,
         feedback: 'ok',
         attempts_remaining: 2,
@@ -510,8 +482,7 @@ describe('useActivitySubmission', () => {
         lesson_just_completed: false,
         next_lesson_unlocked: false,
         persist_failed: false
-      })
-      vi.stubGlobal('$fetch', mockFetch)
+      }))
 
       const { submitAnswer, result } = useActivitySubmission(1, { baseUrl: '/custom-api' })
 

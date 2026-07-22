@@ -18,8 +18,8 @@ export function useInputValidation(
   const trimmed = textInput.trim()
 
   // Determine validation state
-  let isValid = false
-  let error: string | null = null
+  let isValid: boolean
+  let error: string | null
 
   if (trimmed.length === 0) {
     // Empty text error always takes priority

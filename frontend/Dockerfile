@@ -1,8 +1,8 @@
 # Stage 1: Build the Nuxt.js application
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Install pnpm globally
-RUN corepack enable && corepack prepare pnpm@10.33.4 --activate
+RUN corepack enable && corepack prepare pnpm@11.13.1 --activate
 
 WORKDIR /app
 

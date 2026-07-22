@@ -1,9 +1,9 @@
 # Development Dockerfile — Nuxt dev server with hot reload
-# Node 22+ required: ESLint 10.x uses Object.groupBy (Node 21+ feature).
-FROM node:22-alpine
+# Node 24+ required: ESLint 10.x uses Object.groupBy (Node 21+ feature).
+FROM node:24-alpine
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.33.4 --activate
+RUN corepack enable && corepack prepare pnpm@11.13.1 --activate
 
 WORKDIR /app
 
@@ -29,4 +29,4 @@ ENV HOST=0.0.0.0
 # Run dev server with hot reload
 # Clean .nuxt on startup to avoid stale socket paths from volume mounts
 ENTRYPOINT ["sh", "-c"]
-CMD ["rm -rf /app/.nuxt && pnpm dev"]
+CMD ["pnpm dev"]

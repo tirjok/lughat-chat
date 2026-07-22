@@ -44,8 +44,8 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
           seed: request.seed
         })
       })
-    } catch {
-      throw new Error('Unable to connect to the server')
+    } catch (e) {
+      throw new Error('Unable to connect to the server', { cause: e })
     }
 
     if (!response.ok) {
@@ -103,7 +103,7 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
         throw error
       }
       const message = error instanceof Error ? error.message : String(error)
-      throw new Error(`Unable to check health status: ${message}`)
+      throw new Error(`Unable to check health status: ${message}`, { cause: error })
     }
   }
 

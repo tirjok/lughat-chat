@@ -326,7 +326,7 @@ describe('ActivityRenderer', () => {
         content: {
           source_sentence: 'Hello world',
           target_language: 'ar'
-        } as any
+        } as Partial<import('../app/composables/useLessons').ActivityContent>
       }
 
       await mountSuspended(ActivityRenderer, {

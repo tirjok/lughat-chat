@@ -38,4 +38,7 @@ backend/__pycache__/
 backend/*.pyc
 backend/.pytest_cache/
 
+# pnpm global store (package cache)
+.pnpm-store/
+frontend/.pnpm-store/
 .pi

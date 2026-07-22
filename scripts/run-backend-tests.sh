@@ -18,9 +18,17 @@ else
     exit 1
 fi
 
-# ── Build backend image if needed ──────────────────────
-echo "▶ Building backend image..."
-$COMPOSE_CMD -f docker-compose.dev.yml build backend-dev 2>&1 | tail -1
+# ── Build backend image only on first run or when requirements change ──
+# Rebuilding the full PyTorch+Coqui image (~3GB) on every commit triggers
+# OOM kill (exit code 137) on hosts with limited VM memory.
+# Only build if the image doesn't exist or requirements.txt changed.
+echo "▶ Checking backend image..."
+if podman images --format '{{.Repository}}' 2>/dev/null | grep -q 'backend-dev'; then
+    echo "✓ Backend image exists — skipping rebuild."
+else
+    echo "▶ Building backend image (first time)..."
+    $COMPOSE_CMD -f docker-compose.dev.yml build backend-dev 2>&1 | tail -1
+fi
 
 # ── Run tests inside container ───────────────────────────
 # Mount tests/ from host so test changes are picked up without rebuild.

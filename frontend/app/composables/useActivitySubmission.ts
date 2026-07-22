@@ -56,41 +56,42 @@ export interface SubmitAnswerOptions {
  * Map an error-string to a human-readable message.
  * Order matters: persist/locked checks run AFTER status-code checks.
  */
-function mapErrorToMessage(errorMessage: string): string {
+function mapErrorToMessage(errorMessage: string, extraLower?: string): string {
   const lower = errorMessage.toLowerCase()
+  const combined = extraLower ? lower + ' ' + extraLower : lower
 
   // 404 — activity not found
-  if (lower.includes('404') || lower.includes('not found')) {
+  if (combined.includes('404') || combined.includes('not found')) {
     return 'Activity not found'
   }
 
   // 400 — empty/invalid answer
-  if (lower.includes('400') || lower.includes('empty') || lower.includes('too long')) {
+  if (combined.includes('400') || combined.includes('empty') || combined.includes('too long')) {
     return 'Please enter your answer'
   }
 
   // 429 — max attempts exhausted
-  if (lower.includes('429') || lower.includes('max') || lower.includes('too many')) {
+  if (combined.includes('429') || combined.includes('max') || combined.includes('too many')) {
     return 'Max attempts reached. Showing correct answer'
   }
 
   // 500 — persist failure (partial failure) — check BEFORE generic 500 and 'locked'
-  if (lower.includes('sqlite') || lower.includes('persist') || lower.includes('database is locked')) {
+  if (combined.includes('sqlite') || combined.includes('persist') || combined.includes('database is locked')) {
     return 'Your answer was scored but not saved'
   }
 
   // 403 — locked lesson
-  if (lower.includes('403') || lower.includes('locked')) {
+  if (combined.includes('403') || combined.includes('locked')) {
     return 'This lesson is locked'
   }
 
   // 500 — scoring error
-  if (lower.includes('500') || lower.includes('unknown') || lower.includes('scoring')) {
+  if (combined.includes('500') || combined.includes('unknown') || combined.includes('scoring')) {
     return 'Failed to score your answer'
   }
 
   // Connection errors
-  if (lower.includes('network') || lower.includes('connect') || lower.includes('refused') || lower.includes('econnrefused')) {
+  if (combined.includes('network') || combined.includes('connect') || combined.includes('refused') || combined.includes('econnrefused')) {
     return 'Unable to connect to the server'
   }
 
@@ -108,10 +109,12 @@ function mapErrorToMessage(errorMessage: string): string {
  */
 function mapStatusToError(
   status: number,
-  bodyMessage: string
+  bodyMessage: string,
+  extraBodyMessage?: string
 ): SubmissionError {
   const lower = bodyMessage.toLowerCase()
-  const message = mapErrorToMessage(`HTTP ${status}: ${bodyMessage}`)
+  const extraLower = extraBodyMessage ? extraBodyMessage.toLowerCase() : ''
+  const message = mapErrorToMessage(`HTTP ${status}: ${bodyMessage}`, extraLower)
 
   switch (status) {
     case 403:
@@ -120,27 +123,30 @@ function mapStatusToError(
       return { message, type: 'notFound' }
     case 429:
       return { message, type: 'maxAttempts' }
-    case 500:
+    case 500: {
       // registerEndpoint wraps all errors as 500 — use body keywords to
       // distinguish between persist-failure and scoring-error.
-      if (lower.includes('sqlite') || lower.includes('persist')) {
+      // When extraBodyMessage is provided (e.g., from cause.message),
+      // check it for keywords that survive registerEndpoint wrapping.
+      const combinedLower = extraLower || lower
+      if (combinedLower.includes('sqlite') || combinedLower.includes('persist')) {
         return { message, type: 'persistFailed' }
       }
-      if (lower.includes('locked')) {
+      if (combinedLower.includes('locked')) {
         return { message, type: 'locked' }
       }
-      if (lower.includes('not found') || lower.includes('404')) {
+      if (combinedLower.includes('not found') || combinedLower.includes('404')) {
         return { message, type: 'notFound' }
       }
-      if (lower.includes('too many') || lower.includes('max') || lower.includes('429')) {
+      if (combinedLower.includes('too many') || combinedLower.includes('max') || combinedLower.includes('429')) {
         return { message, type: 'maxAttempts' }
       }
       return { message, type: 'scoring' }
+    }
     default:
       return { message, type: 'emptyAnswer' }
   }
 }
-
 /**
  * Extract an HTTP status code from a caught error.
  *
@@ -277,12 +283,15 @@ export function useActivitySubmission(
 
       if (status !== null) {
         // This was a registerEndpoint error — map by the extracted status code.
-        // The H3Error.message is the original thrown message (e.g. "HTTP 403: ..."),
-        // which contains the keywords we need for type mapping.
+        // The H3Error.message is "[METHOD] \"/path\": 500" — not the thrown message.
+        // For 500 errors, registerEndpoint strips the original message, so we
+        // pass cause.message (when available) as extraBodyMessage for keyword matching.
         const bodyMessage = networkError instanceof Error
           ? networkError.message
           : String(networkError)
-        const errorInfo = mapStatusToError(status, bodyMessage)
+        const typed = networkError as Error & { cause?: Error }
+        const extraBodyMessage = typed.cause?.message
+        const errorInfo = mapStatusToError(status, bodyMessage, extraBodyMessage)
         error.value = errorInfo
       } else {
         // Real network failure (no status code in message)

@@ -34,7 +34,7 @@ const {
   currentTime,
   duration,
   audioUrl: audioUrlRef,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- template ref binding
+
   audioRef,
   load: audioLoad,
   toggle: audioToggle,
@@ -165,8 +165,8 @@ onUnmounted(() => {
   >
     <!-- Hidden audio element (bound to composable's audioRef for playback) -->
     <audio
-      :src="audioUrlRef || undefined"
       ref="audioRef"
+      :src="audioUrlRef || undefined"
       class="hidden"
     />
     <NavBar compact />

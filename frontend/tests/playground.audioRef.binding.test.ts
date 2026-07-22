@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { shallowRef, ref, nextTick } from 'vue'
-import { mountSuspended, registerEndpoint, mockNuxtImport, mockComponent } from '@nuxt/test-utils/runtime'
-import { useToast } from '../app/composables/useToast'
+import { ref, nextTick } from 'vue'
+import { mountSuspended, mockNuxtImport, mockComponent } from '@nuxt/test-utils/runtime'
 import Playground from '../app/pages/playground.vue'
-import Dashboard from '../app/pages/index.vue'
 
 // ─── Composable Mocks (module-level, hoisted by Vitest) ───────────────
 
