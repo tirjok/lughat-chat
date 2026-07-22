@@ -190,10 +190,10 @@ describe('Playground (playground.vue) — TTS Studio', () => {
       expect(speedSlider.exists()).toBe(true)
     })
 
-    it('When rendered then WaveformCanvas component exists', async () => {
+    it('When rendered then no WaveformCanvas on initial render (canvas is empty until generation)', async () => {
       const wrapper = await mountSuspended(Playground)
       const waveform = wrapper.find('[data-testid="waveform"]')
-      expect(waveform.exists()).toBe(true)
+      expect(waveform.exists()).toBe(false)
     })
 
     it('When rendered then AudioPlayerPanel component exists (conditionally)', async () => {

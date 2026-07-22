@@ -3,7 +3,6 @@
 // Two-panel layout: Left (Control Deck) + Right (Canvas)
 // Mobile: both panels stacked vertically (canvas top, controls bottom)
 // Desktop: side-by-side panels
-import AudioPlayerPanel from '../components/AudioPlayerPanel.vue'
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
 import WaveformCanvas from '../components/WaveformCanvas.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
@@ -21,7 +20,7 @@ useSeoMeta({
   description: 'Arabic Text-to-Speech Studio — Generate speech with XTTS-v2'
 })
 
-const { activePanel, togglePanel } = usePanelToggle()
+const { togglePanel } = usePanelToggle()
 const audioModule = useAudioModule({
   onPlaybackEnd: () => {
     isPlaying.value = false
@@ -155,6 +154,13 @@ watch(
 onUnmounted(() => {
   dispose()
 })
+
+function formatTime(seconds: number): string {
+  if (!seconds || isNaN(seconds)) return '0:00'
+  const minutes = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${minutes}:${secs.toString().padStart(2, '0')}`
+}
 </script>
 
 <template>
@@ -254,32 +260,115 @@ onUnmounted(() => {
           </h2>
         </div>
 
-        <!-- Waveform Canvas -->
-        <WaveformCanvas
-          :audio-url="audioUrlRef"
-          :is-playing="isPlaying"
-          :is-generating="isGenerating"
-          :current-time="currentTime"
-          :duration="duration"
-          :visible="true"
-        />
-
+        <!-- No-audio placeholder (hidden when audio exists — inline player takes over) -->
+        <div
+          v-if="!audioUrlRef"
+          class="flex flex-col items-center justify-center py-12 text-gray-500"
+        >
+          <span
+            aria-hidden="true"
+            class="ph ph-speaker-simple-none text-4xl mb-3 opacity-40"
+          />
+          <p class="text-sm">
+            Generate speech to see audio output
+          </p>
+        </div>
         <!-- Audio Player Panel -->
-        <AudioPlayerPanel
+        <!-- Audio Player Panel (inline in canvas flow) -->
+        <div
           v-if="audioUrlRef"
-          :audio-url="audioUrlRef"
-          :is-playing="isPlaying"
-          :is-paused="isPaused"
-          :current-time="currentTime"
-          :duration="duration"
-          :visible="activePanel === 'canvas'"
-          :selected-voice-name="selectedVoiceName"
-          :speed-value="speedValue"
-          @toggle="audioToggle"
-          @close="dispose"
-          @download="audioDownload(selectedVoiceName)"
-          @seek="audioSeek"
-        />
+          class="mt-6 animate-slide-up"
+        >
+          <div
+            class="rounded-2xl bg-studio-800 border border-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.2)] overflow-hidden"
+          >
+            <!-- Player Header -->
+            <div class="flex justify-between items-center px-4 py-3 gap-2">
+              <div class="flex items-center gap-3 min-w-0">
+                <div
+                  class="w-8 h-8 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="ph-fill ph-music-notes text-white text-sm"
+                  />
+                </div>
+                <div class="overflow-hidden min-w-0">
+                  <h3 class="text-white font-semibold text-xs truncate">
+                    Generated Audio
+                  </h3>
+                  <p class="text-[10px] text-gray-400 truncate">
+                    {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-white text-gray-400 transition-all"
+                  title="Download MP3"
+                  @click="audioDownload(selectedVoiceName)"
+                >
+                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                    <span
+                      aria-hidden="true"
+                      class="ph ph-download-simple text-lg"
+                    />
+                  </span>
+                </button>
+                <button
+                  class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-red-400 text-gray-400 transition-all"
+                  title="Close Player"
+                  @click="dispose"
+                >
+                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                    <span
+                      aria-hidden="true"
+                      class="ph ph-x text-lg"
+                    />
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Player Controls -->
+            <div class="px-4 pb-4">
+              <div class="rounded-xl bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex items-center gap-3">
+                <!-- Play/Pause -->
+                <button
+                  class="rounded-full bg-sunrise-magenta text-white flex items-center justify-center shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-10 h-10 transition-all"
+                  @click="audioToggle"
+                >
+                  <span
+                    v-if="isPlaying && !isPaused"
+                    aria-hidden="true"
+                    class="ph-fill ph-pause text-lg"
+                  />
+                  <span
+                    v-else
+                    aria-hidden="true"
+                    class="ph-fill ph-play text-lg"
+                  />
+                </button>
+
+                <!-- Waveform -->
+                <div class="flex-1 h-8 relative w-full overflow-hidden min-w-[100px]">
+                  <WaveformCanvas
+                    :visible="true"
+                    :is-playing="isPlaying"
+                    :current-time="currentTime"
+                    :duration="duration"
+                    @seek="audioSeek"
+                  />
+                </div>
+
+                <!-- Time -->
+                <span class="text-[10px] font-mono text-gray-400 flex-shrink-0 w-10 text-right">
+                  {{ formatTime(duration) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -295,29 +384,106 @@ onUnmounted(() => {
         @click.stop="togglePanel"
       >
         <div class="p-4">
-          <WaveformCanvas
-            :audio-url="audioUrlRef"
-            :is-playing="isPlaying"
-            :is-generating="isGenerating"
-            :current-time="currentTime"
-            :duration="duration"
-            :visible="true"
-          />
-          <AudioPlayerPanel
+          <!-- No-audio placeholder (hidden when audio exists) -->
+          <div
+            v-if="!audioUrlRef"
+            class="flex flex-col items-center justify-center py-8 text-gray-500"
+          >
+            <span
+              aria-hidden="true"
+              class="ph ph-speaker-simple-none text-3xl mb-2 opacity-40"
+            />
+            <p class="text-xs">
+              Generate speech to see audio output
+            </p>
+          </div>
+          <div
             v-if="audioUrlRef"
-            :audio-url="audioUrlRef"
-            :is-playing="isPlaying"
-            :is-paused="isPaused"
-            :current-time="currentTime"
-            :duration="duration"
-            :visible="activePanel === 'canvas'"
-            :selected-voice-name="selectedVoiceName"
-            :speed-value="speedValue"
-            @toggle="audioToggle"
-            @close="dispose"
-            @download="audioDownload(selectedVoiceName)"
-            @seek="audioSeek"
-          />
+            class="mt-4"
+          >
+            <div
+              class="rounded-2xl bg-studio-800 border border-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.2)] overflow-hidden"
+            >
+              <div class="flex justify-between items-center px-3 py-2.5 gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div
+                    class="w-7 h-7 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
+                  >
+                    <span
+                      aria-hidden="true"
+                      class="ph-fill ph-music-notes text-white text-xs"
+                    />
+                  </div>
+                  <div class="overflow-hidden min-w-0">
+                    <h3 class="text-white font-semibold text-xs truncate">
+                      Generated Audio
+                    </h3>
+                    <p class="text-[10px] text-gray-400 truncate">
+                      {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button
+                    class="w-7 h-7 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-white text-gray-400"
+                    title="Download MP3"
+                    @click="audioDownload(selectedVoiceName)"
+                  >
+                    <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                      <span
+                        aria-hidden="true"
+                        class="ph ph-download-simple text-base"
+                      />
+                    </span>
+                  </button>
+                  <button
+                    class="w-7 h-7 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-red-400 text-gray-400"
+                    title="Close Player"
+                    @click="dispose"
+                  >
+                    <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                      <span
+                        aria-hidden="true"
+                        class="ph ph-x text-base"
+                      />
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="px-3 pb-3">
+                <div class="rounded-xl bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-2.5 flex items-center gap-2">
+                  <button
+                    class="rounded-full bg-sunrise-magenta text-white flex items-center justify-center shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-8 h-8 transition-all"
+                    @click="audioToggle"
+                  >
+                    <span
+                      v-if="isPlaying && !isPaused"
+                      aria-hidden="true"
+                      class="ph-fill ph-pause text-base"
+                    />
+                    <span
+                      v-else
+                      aria-hidden="true"
+                      class="ph-fill ph-play text-base"
+                    />
+                  </button>
+                  <div class="flex-1 h-8 relative w-full overflow-hidden min-w-[80px]">
+                    <WaveformCanvas
+                      :visible="true"
+                      :is-playing="isPlaying"
+                      :current-time="currentTime"
+                      :duration="duration"
+                      @seek="audioSeek"
+                    />
+                  </div>
+                  <span class="text-[10px] font-mono text-gray-400 flex-shrink-0 w-9 text-right">
+                    {{ formatTime(duration) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -368,5 +534,20 @@ onUnmounted(() => {
 
 .dragging .drag-divider {
   background-color: rgb(22, 163, 74); /* green-600 */
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 </style>
