@@ -143,7 +143,7 @@ describe('Playground (playground.vue) — TTS Studio', () => {
   describe('component tree', () => {
     it('When rendered then TextArea exists', async () => {
       const wrapper = await mountSuspended(Playground)
-      const textarea = wrapper.find('textarea')
+      const textarea = wrapper.find('[data-testid="text-input"]')
       expect(textarea.exists()).toBe(true)
     })
 
@@ -167,15 +167,14 @@ describe('Playground (playground.vue) — TTS Studio', () => {
 
     it('When rendered then text input (textarea) exists', async () => {
       const wrapper = await mountSuspended(Playground)
-      const textareas = wrapper.findAll('textarea')
-      expect(textareas.length).toBeGreaterThan(0)
+      const textInput = wrapper.find('[data-testid="text-input"]')
+      expect(textInput.exists()).toBe(true)
     })
 
     it('When rendered then text input has dir="rtl" (Arabic input)', async () => {
       const wrapper = await mountSuspended(Playground)
-      const textareas = wrapper.findAll('textarea')
-      const inputTextarea = textareas.find(ta => ta.attributes('dir') === 'rtl')
-      expect(inputTextarea).toBeDefined()
+      const textInput = wrapper.find('[data-testid="text-input"]')
+      expect(textInput.attributes('dir')).toBe('rtl')
     })
 
     it('When rendered then VoiceSelector component exists', async () => {
@@ -275,26 +274,26 @@ describe('Playground (playground.vue) — TTS Studio', () => {
 
     it('When rendered then drag divider exists (mobile split-screen)', async () => {
       const wrapper = await mountSuspended(Playground)
-      const divider = wrapper.find('.drag-divider')
+      const divider = wrapper.find('[data-testid="drag-divider"]')
       expect(divider.exists()).toBe(true)
     })
 
     it('When rendered then canvas top panel exists in mobile layout', async () => {
       const wrapper = await mountSuspended(Playground)
-      const canvasMobile = wrapper.find('.canvas-mobile')
+      const canvasMobile = wrapper.find('[data-testid="canvas-panel"]')
       expect(canvasMobile.exists()).toBe(true)
     })
 
     it('When rendered then control deck bottom panel exists in mobile layout', async () => {
       const wrapper = await mountSuspended(Playground)
-      const controlDeckMobile = wrapper.find('.control-deck-mobile')
+      const controlDeckMobile = wrapper.find('[data-testid="control-deck-panel"]')
       expect(controlDeckMobile.exists()).toBe(true)
     })
 
     it('When rendered then mobile panels have height styling (canvasRatio)', async () => {
       const wrapper = await mountSuspended(Playground)
-      const canvasMobile = wrapper.find('.canvas-mobile')
-      expect(canvasMobile.attributes('style')).toContain('height')
+      const controlDeckMobile = wrapper.find('[data-testid="control-deck-panel"]')
+      expect(controlDeckMobile.attributes('style')).toContain('height')
     })
   })
 
@@ -325,7 +324,7 @@ describe('Playground (playground.vue) — TTS Studio', () => {
 
     it('When rendered then the page has padding-top from nav bar (CSS variable)', async () => {
       const wrapper = await mountSuspended(Playground)
-      const desktopPanels = wrapper.find('[style*="padding-top"]')
+      const desktopPanels = wrapper.find('[data-testid="desktop-panels"]')
       expect(desktopPanels.exists()).toBe(true)
     })
 

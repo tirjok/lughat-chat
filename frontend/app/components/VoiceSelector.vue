@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Voice } from '../composables/useVoices'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import { showToast } from '../composables/useToast'
 
 interface Props {
@@ -20,6 +21,11 @@ const isOpen = ref(false)
 const dropdownRef = ref<HTMLDivElement | null>(null)
 const triggerRef = ref<HTMLButtonElement | null>(null)
 const menuRef = ref<HTMLDivElement | null>(null)
+
+// VueUse: declarative click-outside handler (no manual add/removeEventListener)
+onClickOutside(dropdownRef, () => {
+  isOpen.value = false
+}, { ignore: [menuRef] })
 
 const selectedVoice = computed(() => {
   const voice = props.voices.find(v => v.id === props.modelValue)
@@ -62,16 +68,6 @@ function previewVoice(voice: Voice) {
   showToast(`Playing 1-second preview of ${voice.name}...`, 'info')
 }
 
-function handleOutsideMousedown(e: MouseEvent) {
-  if (!isOpen.value) return
-  const target = e.target as Node
-  const insideTrigger = dropdownRef.value && dropdownRef.value.contains(target)
-  const insideMenu = menuRef.value && menuRef.value.contains(target)
-  if (!insideTrigger && !insideMenu) {
-    isOpen.value = false
-  }
-}
-
 const menuPositionStyle = computed(() => {
   if (!triggerRef.value) return {}
   const rect = triggerRef.value.getBoundingClientRect()
@@ -80,14 +76,6 @@ const menuPositionStyle = computed(() => {
     left: `${rect.left}px`,
     width: `${rect.width}px`
   }
-})
-
-onMounted(() => {
-  document.addEventListener('mousedown', handleOutsideMousedown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('mousedown', handleOutsideMousedown)
 })
 </script>
 

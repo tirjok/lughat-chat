@@ -6,6 +6,7 @@ describe('usePanelToggle composable', () => {
   let originalInnerWidth: number
 
   beforeEach(() => {
+    setBreakpoint(1024) // Mock matchMedia so VueUse's useMediaQuery works
     originalInnerWidth = window.innerWidth
   })
 

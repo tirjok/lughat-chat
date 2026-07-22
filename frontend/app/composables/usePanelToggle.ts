@@ -1,5 +1,5 @@
 import { nextTick, ref, watch } from 'vue'
-import { useEventListener, tryOnMounted } from '@vueuse/core'
+import { useMediaQuery } from '@vueuse/core'
 
 export type PanelName = 'control-deck' | 'canvas'
 
@@ -7,15 +7,8 @@ export const BREAKPOINT_MOBILE = 768
 
 export function usePanelToggle() {
   const activePanel = ref<PanelName>('control-deck')
-  const isMobile = ref(false)
-
-  function updateMobileStatus() {
-    if (typeof window === 'undefined') return
-    isMobile.value = window.innerWidth < BREAKPOINT_MOBILE
-  }
-
-  useEventListener(window, 'resize', updateMobileStatus, { passive: true })
-  tryOnMounted(updateMobileStatus) // initial check (SSR-safe)
+  // VueUse: reactive mobile detection (no manual window.innerWidth check)
+  const isMobile = useMediaQuery(`(max-width: ${BREAKPOINT_MOBILE - 1}px)`)
 
   function togglePanel() {
     activePanel.value = activePanel.value === 'control-deck' ? 'canvas' : 'control-deck'

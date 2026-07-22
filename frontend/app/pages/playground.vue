@@ -5,7 +5,7 @@
 // Desktop: side-by-side panels
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
 import WaveformCanvas from '../components/WaveformCanvas.vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
 import { useScrollReveal } from '../composables/useScrollReveal'
@@ -13,6 +13,7 @@ import { useHealthPoll } from '../composables/useHealthPoll'
 import { useVoices } from '../composables/useVoices'
 import { useTtsApi } from '../composables/useTtsApi'
 import { showToast } from '../composables/useToast'
+import { useMagicKeys, whenever } from '@vueuse/core'
 
 // SEO metadata for playground page
 useSeoMeta({
@@ -21,12 +22,7 @@ useSeoMeta({
 })
 
 const { togglePanel } = usePanelToggle()
-const audioModule = useAudioModule({
-  onPlaybackEnd: () => {
-    isPlaying.value = false
-    isPaused.value = false
-  }
-})
+const audioModule = useAudioModule()
 const {
   isPlaying,
   isPaused,
@@ -83,7 +79,7 @@ function onDragEnd() {
   document.body.classList.remove('dragging')
 }
 
-// Keyboard shortcut: Ctrl/Cmd+Enter triggers synthesis
+// Keyboard shortcut: VueUse useMagicKeys handles Ctrl/Cmd+Enter declaratively
 const isGenerating = ref(false)
 const textInput = ref('')
 
@@ -110,17 +106,11 @@ async function handleGenerate(): Promise<void> {
   }
 }
 
-// Handle keyboard shortcut
-async function handleKeydown(e: KeyboardEvent): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const key = (e as any).key
-  const modifier = e.ctrlKey || e.metaKey
-
-  if (key === 'Enter' && modifier) {
-    e.preventDefault()
-    await handleGenerate()
-  }
-}
+// VueUse: reactive Ctrl+Enter shortcut (no manual keydown handler)
+const { Ctrl_Enter: ctrlEnter } = useMagicKeys()
+whenever(computed(() => ctrlEnter!.value), async () => {
+  await handleGenerate()
+})
 
 // Health polling (model ready state tracked but not displayed)
 const health = useHealthPoll()
@@ -167,7 +157,6 @@ function formatTime(seconds: number): string {
   <div
     class="tts-page min-h-screen bg-[#121212] dark:bg-[#0a0a0a]"
     dir="ltr"
-    @keydown="handleKeydown"
   >
     <!-- Hidden audio element (bound to composable's audioRef for playback) -->
     <audio
@@ -179,6 +168,7 @@ function formatTime(seconds: number): string {
 
     <!-- Desktop: two-panel layout (padding-top from CSS variable) -->
     <div
+      data-testid="desktop-panels"
       class="hidden md:flex h-screen"
       style="padding-top: var(--nav-height, 56px)"
     >
@@ -217,6 +207,7 @@ function formatTime(seconds: number): string {
           <textarea
             id="text-input"
             v-model="textInput"
+            data-testid="text-input"
             placeholder="Type or paste Arabic text here..."
             class="tts-input w-full min-h-[150px] resize-y"
             dir="rtl"
@@ -249,6 +240,7 @@ function formatTime(seconds: number): string {
       <!-- Right panel: Canvas -->
       <div
         ref="canvasHeaderRef"
+        data-testid="canvas-panel"
         class="canvas flex-1 p-8 overflow-y-auto"
         data-panel="canvas"
         @click.stop="togglePanel"
@@ -273,7 +265,6 @@ function formatTime(seconds: number): string {
             Generate speech to see audio output
           </p>
         </div>
-        <!-- Audio Player Panel -->
         <!-- Audio Player Panel (inline in canvas flow) -->
         <div
           v-if="audioUrlRef"
@@ -374,154 +365,196 @@ function formatTime(seconds: number): string {
 
     <!-- Mobile: stacked layout -->
     <div class="md:hidden h-screen flex flex-col">
-      <!-- Mobile status indicator (FAB) -->
-      <MobileStatusIndicator />
-
-      <!-- Canvas top -->
+      <!-- Canvas (top) -->
       <div
-        class="canvas-mobile flex-shrink-0 overflow-y-auto"
-        :style="{ height: `${canvasRatio * 100}%` }"
+        class="canvas flex-1 overflow-y-auto relative"
+        style="height: calc(100vh - 56px - 44px)"
         @click.stop="togglePanel"
       >
-        <div class="p-4">
-          <!-- No-audio placeholder (hidden when audio exists) -->
+        <!-- Canvas header -->
+        <div class="mb-6 px-4 pt-2">
+          <h2 class="text-xl font-semibold text-white">
+            Output
+          </h2>
+        </div>
+
+        <!-- No-audio placeholder -->
+        <div
+          v-if="!audioUrlRef"
+          class="flex flex-col items-center justify-center py-12 text-gray-500"
+        >
+          <span
+            aria-hidden="true"
+            class="ph ph-speaker-simple-none text-4xl mb-3 opacity-40"
+          />
+          <p class="text-sm">
+            Generate speech to see audio output
+          </p>
+        </div>
+
+        <!-- Audio Player Panel (inline in canvas flow) -->
+        <div
+          v-if="audioUrlRef"
+          class="mt-6 animate-slide-up px-4"
+        >
           <div
-            v-if="!audioUrlRef"
-            class="flex flex-col items-center justify-center py-8 text-gray-500"
+            class="rounded-2xl bg-studio-800 border border-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.2)] overflow-hidden"
           >
-            <span
-              aria-hidden="true"
-              class="ph ph-speaker-simple-none text-3xl mb-2 opacity-40"
-            />
-            <p class="text-xs">
-              Generate speech to see audio output
-            </p>
-          </div>
-          <div
-            v-if="audioUrlRef"
-            class="mt-4"
-          >
-            <div
-              class="rounded-2xl bg-studio-800 border border-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.2)] overflow-hidden"
-            >
-              <div class="flex justify-between items-center px-3 py-2.5 gap-2">
-                <div class="flex items-center gap-2 min-w-0">
-                  <div
-                    class="w-7 h-7 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
-                  >
-                    <span
-                      aria-hidden="true"
-                      class="ph-fill ph-music-notes text-white text-xs"
-                    />
-                  </div>
-                  <div class="overflow-hidden min-w-0">
-                    <h3 class="text-white font-semibold text-xs truncate">
-                      Generated Audio
-                    </h3>
-                    <p class="text-[10px] text-gray-400 truncate">
-                      {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
-                    </p>
-                  </div>
+            <!-- Player Header -->
+            <div class="flex justify-between items-center px-4 py-3 gap-2">
+              <div class="flex items-center gap-3 min-w-0">
+                <div
+                  class="w-8 h-8 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="ph-fill ph-music-notes text-white text-sm"
+                  />
                 </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <button
-                    class="w-7 h-7 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-white text-gray-400"
-                    title="Download MP3"
-                    @click="audioDownload(selectedVoiceName)"
-                  >
-                    <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
-                      <span
-                        aria-hidden="true"
-                        class="ph ph-download-simple text-base"
-                      />
-                    </span>
-                  </button>
-                  <button
-                    class="w-7 h-7 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-red-400 text-gray-400"
-                    title="Close Player"
-                    @click="dispose"
-                  >
-                    <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
-                      <span
-                        aria-hidden="true"
-                        class="ph ph-x text-base"
-                      />
-                    </span>
-                  </button>
+                <div class="overflow-hidden min-w-0">
+                  <h3 class="text-white font-semibold text-xs truncate">
+                    Generated Audio
+                  </h3>
+                  <p class="text-[10px] text-gray-400 truncate">
+                    {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
+                  </p>
                 </div>
               </div>
-
-              <div class="px-3 pb-3">
-                <div class="rounded-xl bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-2.5 flex items-center gap-2">
-                  <button
-                    class="rounded-full bg-sunrise-magenta text-white flex items-center justify-center shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-8 h-8 transition-all"
-                    @click="audioToggle"
-                  >
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-white text-gray-400 transition-all"
+                  title="Download MP3"
+                  @click="audioDownload(selectedVoiceName)"
+                >
+                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
                     <span
-                      v-if="isPlaying && !isPaused"
                       aria-hidden="true"
-                      class="ph-fill ph-pause text-base"
+                      class="ph ph-download-simple text-lg"
                     />
-                    <span
-                      v-else
-                      aria-hidden="true"
-                      class="ph-fill ph-play text-base"
-                    />
-                  </button>
-                  <div class="flex-1 h-8 relative w-full overflow-hidden min-w-[80px]">
-                    <WaveformCanvas
-                      :visible="true"
-                      :is-playing="isPlaying"
-                      :current-time="currentTime"
-                      :duration="duration"
-                      @seek="audioSeek"
-                    />
-                  </div>
-                  <span class="text-[10px] font-mono text-gray-400 flex-shrink-0 w-9 text-right">
-                    {{ formatTime(duration) }}
                   </span>
+                </button>
+                <button
+                  class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-red-400 text-gray-400 transition-all"
+                  title="Close Player"
+                  @click="dispose"
+                >
+                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                    <span
+                      aria-hidden="true"
+                      class="ph ph-x text-lg"
+                    />
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Player Controls -->
+            <div class="px-4 pb-4">
+              <div class="rounded-xl bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex items-center gap-3">
+                <!-- Play/Pause -->
+                <button
+                  class="rounded-full bg-sunrise-magenta text-white flex items-center justify-center shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-10 h-10 transition-all"
+                  @click="audioToggle"
+                >
+                  <span
+                    v-if="isPlaying && !isPaused"
+                    aria-hidden="true"
+                    class="ph-fill ph-pause text-lg"
+                  />
+                  <span
+                    v-else
+                    aria-hidden="true"
+                    class="ph-fill ph-play text-lg"
+                  />
+                </button>
+
+                <!-- Waveform -->
+                <div class="flex-1 h-8 relative w-full overflow-hidden min-w-[100px]">
+                  <WaveformCanvas
+                    :visible="true"
+                    :is-playing="isPlaying"
+                    :current-time="currentTime"
+                    :duration="duration"
+                    @seek="audioSeek"
+                  />
                 </div>
+
+                <!-- Time -->
+                <span class="text-[10px] font-mono text-gray-400 flex-shrink-0 w-10 text-right">
+                  {{ formatTime(duration) }}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Drag divider -->
+      <!-- Mobile FAB: status indicator -->
+      <div class="fixed bottom-4 right-4 z-40 md:hidden">
+        <MobileStatusIndicator />
+      </div>
+
+      <!-- Control Deck (bottom, draggable divider) -->
       <div
-        class="drag-divider h-4 bg-gray-800 cursor-ns-resize flex-center"
-        :class="{ 'bg-green-600': isDragging }"
+        data-testid="control-deck-panel"
+        class="control-deck border-t border-white/[0.06]"
+        :style="{ height: `${canvasRatio * 100}%`, maxHeight: '85vh' }"
         @touchstart="onDragStart"
         @touchmove="onDragMove"
         @touchend="onDragEnd"
         @mousedown="onDragStart"
       >
-        <div class="w-12 h-1 bg-gray-500 rounded-full" />
-      </div>
+        <!-- Drag divider handle -->
+        <div
+          data-testid="drag-divider"
+          class="drag-divider h-1.5 cursor-ns-resize flex items-center justify-center"
+        >
+          <div class="w-12 h-1 bg-gray-600 rounded-full" />
+        </div>
 
-      <!-- Control deck bottom -->
-      <div
-        class="control-deck-mobile flex-1 overflow-y-auto p-4"
-        :style="{ height: `${(1 - canvasRatio) * 100}%` }"
-      >
-        <VoiceSelector
-          v-model="selectedVoice"
-          :voices="voices"
-        />
-        <textarea
-          v-model="textInput"
-          placeholder="Type or paste Arabic text here..."
-          class="tts-input w-full min-h-[100px] resize-y"
-          dir="rtl"
-        />
-        <SpeedSlider />
-        <GenerateButton
-          :is-generating="isGenerating"
-          :model-status="health.status"
-          :disabled="isGenerateDisabled"
-          :text="textInput"
-          @click="handleGenerate"
-        />
+        <!-- Content -->
+        <div class="p-4 overflow-y-auto">
+          <!-- Voice Selector -->
+          <div class="mb-4">
+            <VoiceSelector
+              v-model="selectedVoice"
+              :voices="voices"
+            />
+          </div>
+
+          <!-- Text Input -->
+          <div class="mb-4">
+            <label
+              for="text-input-mobile"
+              class="block text-sm font-medium text-gray-300 mb-2"
+            >
+              Enter Arabic Text
+            </label>
+            <textarea
+              id="text-input-mobile"
+              v-model="textInput"
+              placeholder="Type or paste Arabic text here..."
+              class="tts-input w-full min-h-[100px] resize-y"
+              dir="rtl"
+            />
+          </div>
+
+          <!-- Speed Slider -->
+          <div class="mb-4">
+            <SpeedSlider />
+          </div>
+
+          <!-- Generate Button -->
+          <div class="mb-4">
+            <GenerateButton
+              :is-generating="isGenerating"
+              :model-status="health.status"
+              :disabled="isGenerateDisabled"
+              :text="textInput"
+              @click="handleGenerate"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </div>

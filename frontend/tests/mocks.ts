@@ -15,9 +15,11 @@ export function setBreakpoint(width: number): void {
       const widthMatch = query.match(/\(max-width:\s*(\d+)px\)/)
       if (widthMatch) {
         const breakpoint = parseInt(widthMatch[1], 10)
-        return { matches: width <= breakpoint, media: query } as MediaQueryList
+        const matches = width <= breakpoint
+        // VueUse's useMediaQuery calls addEventListener on the MediaQueryList
+        return { matches, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() } as unknown as MediaQueryList
       }
-      return { matches: false, media: query } as MediaQueryList
+      return { matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() } as unknown as MediaQueryList
     },
     writable: true
   })

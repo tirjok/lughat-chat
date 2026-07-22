@@ -1,53 +1,42 @@
-import { nextTick, ref, watch, type Ref } from 'vue'
+import { nextTick, ref, computed } from 'vue'
+import { useObjectUrl, useMediaControls } from '@vueuse/core'
 
 export interface AudioModuleOptions {
   onPlaybackEnd?: () => void
 }
 
-export function useAudioModule(options: AudioModuleOptions = {}) {
-  // ── State (exposed to callers) ────────────────────
-  const isPlaying = ref(false)
-  const isPaused = ref(false)
-  const currentTime = ref(0)
-  const duration = ref(0)
-  const error = ref<string | null>(null)
-  const isLoading = ref(false)
-  const audioUrl = ref<string | null>(null)
-
+export function useAudioModule(_options: AudioModuleOptions = {}) {
   // ── Internal refs ────────────────────────────────
   const blobRef = ref<Blob | null>(null)
-  let currentObjectUrl: string | null = null
-  const audioRef = ref<HTMLAudioElement | null>(null) as Ref<HTMLAudioElement | null>
+  const audioRef = ref<HTMLAudioElement | null>(null)
 
-  // ── Internal: revoke previous object URL ─────────
-  function revokePrevious() {
-    if (currentObjectUrl) {
-      URL.revokeObjectURL(currentObjectUrl)
-      currentObjectUrl = null
-    }
-    blobRef.value = null
-  }
+  // VueUse: reactive URL from blob (auto-creates + revokes object URLs)
+  const audioUrl = useObjectUrl(blobRef)
 
-  // ── Load: blob → objectURL → wire element ────────
+  // VueUse: reactive media controls — playing, currentTime, duration, waiting, ended
+  const {
+    playing,
+    currentTime,
+    duration,
+    waiting,
+    ended,
+    onSourceError,
+    onPlaybackError
+  } = useMediaControls(audioRef, { src: computed(() => audioUrl.value ?? '') })
+  // ── Load: blob → objectURL (triggers useObjectUrl + useMediaControls) ──
   function load(blob: Blob) {
-    revokePrevious()
-    currentObjectUrl = URL.createObjectURL(blob)
-    blobRef.value = blob
-    audioUrl.value = currentObjectUrl
-    isLoading.value = true
-    error.value = null
-
-    if (audioRef.value) {
-      audioRef.value.src = currentObjectUrl
+    // Create an <audio> element and assign it to audioRef if not already set
+    if (!audioRef.value) {
+      audioRef.value = document.createElement('audio')
     }
+    blobRef.value = blob
   }
-
-  // ── Play (nextTick handled internally) ───────────
+  // ── Play ─────────────────────────────────────────
   async function play() {
     await nextTick()
     if (!audioRef.value) return
     try {
-      await audioRef.value.play()
+      playing.value = true
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       error.value = `Unable to play audio: ${msg}`
@@ -56,30 +45,23 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
 
   // ── Pause ────────────────────────────────────────
   function pause() {
-    if (audioRef.value) {
-      audioRef.value.pause()
-      isPlaying.value = false
-    }
+    playing.value = false
   }
 
   // ── Toggle play/pause ────────────────────────────
   async function toggle() {
     await nextTick()
     if (!audioRef.value) return
-    if (isPlaying.value && !isPaused.value) {
-      pause()
-    } else {
-      await play()
-    }
+    playing.value = !playing.value
   }
 
   // ── Seek ─────────────────────────────────────────
   function seek(ratio: number) {
     if (!audioRef.value || !duration.value) return
-    audioRef.value.currentTime = ratio * duration.value
+    currentTime.value = ratio * duration.value
   }
 
-  // ── Download ─────────────────────────────────────
+  // ── Download (unchanged — uses blobRef directly) ──
   function download(filename?: string) {
     if (!blobRef.value) return
     const url = URL.createObjectURL(blobRef.value)
@@ -92,71 +74,34 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
-  // ── Wire event listeners ─────────────────────────
-  function wireEvents() {
-    const audio = audioRef.value
-    if (!audio) return
+  // ── Error state (from VueUse error events) ───────
+  const error = ref<string | null>(null)
 
-    audio.addEventListener('loadedmetadata', () => {
-      duration.value = audio.duration
-      isLoading.value = false
-    })
-
-    audio.addEventListener('timeupdate', () => {
-      currentTime.value = audio.currentTime
-    })
-
-    audio.addEventListener('ended', () => {
-      isPlaying.value = false
-      isPaused.value = false
-      if (audioRef.value) {
-        audioRef.value.currentTime = 0
-      }
-      options.onPlaybackEnd?.()
-    })
-
-    audio.addEventListener('error', () => {
-      error.value = 'Failed to load audio'
-      isLoading.value = false
-    })
-
-    audio.addEventListener('loadstart', () => {
-      isLoading.value = true
-    })
-
-    audio.addEventListener('play', () => {
-      isPlaying.value = true
-      isPaused.value = false
-    })
-
-    audio.addEventListener('pause', () => {
-      isPaused.value = true
-    })
-  }
-
-  // ── Watch for audio element attachment ───────────
-  watch(audioRef, (el) => {
-    if (el) {
-      wireEvents()
-      if (audioUrl.value) {
-        el.src = audioUrl.value
-      }
-    }
+  onSourceError(() => {
+    error.value = 'Failed to load audio'
+  })
+  onPlaybackError(() => {
+    error.value = 'Playback error occurred'
   })
 
   // ── Dispose: safety net (caller may or may not use)
   function dispose() {
-    revokePrevious()
+    blobRef.value = null
     if (audioRef.value) {
       audioRef.value.src = ''
     }
   }
 
-  // ── Expose ───────────────────────────────────────
+  // ── Expose (maintain API compat with callers) ────
   return {
-    // State
-    isPlaying, isPaused, currentTime, duration,
-    audioUrl,
+    // State — delegates to VueUse refs
+    get isPlaying() { return playing.value },
+    get isPaused() { return !playing.value && !ended.value },
+    get currentTime() { return currentTime.value },
+    get duration() { return duration.value },
+    get audioUrl() { return audioUrl.value ?? null },
+    get error() { return error.value },
+    get isLoading() { return waiting.value },
 
     // Template binding
     audioRef,

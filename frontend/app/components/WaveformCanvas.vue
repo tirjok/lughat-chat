@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
 
 const props = defineProps<{
   visible: boolean
@@ -127,14 +128,14 @@ function handleCanvasClick(e: MouseEvent) {
 
 onMounted(async () => {
   await ensureCanvasReady()
-  window.addEventListener('resize', resizeCanvas)
+  // VueUse: element-level resize detection (no window listener needed)
+  useResizeObserver(canvasRef, resizeCanvas)
   setTimeout(() => {
     drawWaveform()
   }, 100)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeCanvas)
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId)
   }

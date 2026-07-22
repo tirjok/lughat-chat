@@ -1,3 +1,6 @@
+import { onMounted, shallowRef } from 'vue'
+import { useTimeoutPoll } from '@vueuse/core'
+
 export interface UseHealthPollOptions {
   baseUrl?: string
   maxRetries?: number
@@ -42,7 +45,6 @@ export interface HealthPollResult {
 // new instances read the same reactive state instead of being stuck on
 // 'loading' forever.
 let started = false
-let intervalId: ReturnType<typeof setInterval> | null = null
 let retryCount = 0
 let isRetrying = false
 
@@ -51,6 +53,9 @@ let isRetrying = false
 const status = shallowRef<HealthStatus>('loading')
 const modelName = shallowRef<string>('')
 const subStatus = shallowRef<string>('')
+
+let pauseFn: (() => void) | null = null
+let resumeFn: (() => void) | null = null
 
 export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollResult => {
   const baseUrl = options.baseUrl || ''
@@ -67,10 +72,6 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollRes
       if (!response.ok) {
         status.value = 'error'
         retryCount = maxRetries
-        if (intervalId !== null) {
-          clearInterval(intervalId)
-          intervalId = null
-        }
         return
       }
 
@@ -85,12 +86,9 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollRes
         if (isRetrying) {
           // Recovery: transition from retrying → ready, resume 2s polling
           isRetrying = false
-          intervalId = setInterval(checkHealth, 2000)
+          resumeFn?.()
         } else {
-          if (intervalId !== null) {
-            clearInterval(intervalId)
-            intervalId = null
-          }
+          pauseFn?.()
         }
       }
     } catch {
@@ -100,27 +98,38 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollRes
           // Enter retrying state instead of error
           status.value = 'retrying'
           isRetrying = true
-          // Stop the fast polling interval and restart at a slower one
-          if (intervalId !== null) {
-            clearInterval(intervalId)
-            intervalId = null
-          }
-          intervalId = setInterval(checkHealth, retryInterval)
+          // Switch to slow polling interval
+          pauseFn?.()
+          // Restart slow polling via new timeout poll
+          _startSlowPoll(checkHealth, retryInterval)
         } else {
           status.value = 'error'
-          if (intervalId !== null) {
-            clearInterval(intervalId)
-            intervalId = null
-          }
+          pauseFn?.()
         }
       }
     }
   }
 
+  function startFastPoll() {
+    // Use VueUse's useTimeoutPoll for the core polling mechanism
+    const { pause, resume } = useTimeoutPoll(checkHealth, 2000, { immediate: false })
+    pauseFn = pause
+    resumeFn = resume
+  }
+
+  // Slow retry poll (30s interval) — separate from fast poll
+  let slowPoll: { pause: () => void } | null = null
+
+  function _startSlowPoll(fn: () => Promise<void>, intervalMs: number) {
+    const { pause } = useTimeoutPoll(fn, intervalMs, { immediate: true })
+    slowPoll = { pause }
+  }
+
   function startPolling() {
     if (started) return
     started = true
-    intervalId = setInterval(checkHealth, 2000)
+    startFastPoll()
+    resumeFn?.()
 
     // Fire first check immediately
     void checkHealth()
@@ -131,22 +140,20 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}): HealthPollRes
   })
 
   function stop() {
-    if (intervalId !== null) {
-      clearInterval(intervalId)
-      intervalId = null
-    }
+    pauseFn?.()
+    slowPoll?.pause()
     isRetrying = false
   }
 
   function retry() {
     if (isRetrying) {
-      // Clear the slow retry interval
-      if (intervalId !== null) {
-        clearInterval(intervalId)
-        intervalId = null
-      }
+      // Clear the slow retry poll
+      slowPoll = null
       // Restart fast polling (2s)
-      intervalId = setInterval(checkHealth, 2000)
+      pauseFn?.()
+      started = false // Reset singleton flag to allow fresh poll
+      startFastPoll()
+      resumeFn?.()
       // Trigger an immediate health check
       void checkHealth()
     }

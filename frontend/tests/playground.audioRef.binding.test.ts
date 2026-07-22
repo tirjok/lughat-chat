@@ -153,7 +153,8 @@ describe('Playground — audioRef binding integration', () => {
 
   it('When canvas area is clicked then togglePanel is called (mobile layout)', async () => {
     const wrapper = await mountSuspended(Playground)
-    const mobileCanvas = wrapper.element.querySelector('.canvas-mobile')
+    // The mobile canvas is now inside .md:hidden section with data-panel="canvas"
+    const mobileCanvas = wrapper.element.querySelector('[data-panel="canvas"]')
     expect(mobileCanvas).not.toBeNull()
 
     // Simulate clicking the mobile canvas area
