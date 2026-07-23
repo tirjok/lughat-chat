@@ -53,20 +53,30 @@
     <template v-if="vocabularyContent">
       <div class="space-y-2">
         <div
-          v-for="entry in vocabularyContent.entries"
-          :key="entry.word"
-          class="p-3 rounded-lg bg-studio-800 border border-white/[0.04] flex items-center justify-between"
+          v-for="category in vocabularyContent.categories"
+          :key="category.label"
         >
-          <div>
-            <span class="font-arabic text-ink">{{ entry.arabic }}</span>
-            <span class="text-ink-dim text-xs ml-3">{{ entry.english }}</span>
+          <p class="text-xs font-semibold text-gold/70 mb-1">
+            {{ category.label }}
+          </p>
+          <div class="space-y-1">
+            <div
+              v-for="word in category.words"
+              :key="word.arabic"
+              class="p-3 rounded-lg bg-studio-800 border border-white/[0.04] flex items-center justify-between"
+            >
+              <div>
+                <span class="font-arabic text-ink">{{ word.arabic }}</span>
+                <span class="text-ink-dim text-xs ml-3">{{ word.english }}</span>
+              </div>
+              <button
+                class="text-gold/70 hover:text-gold transition-colors"
+                @click="handleTTS(word.arabic)"
+              >
+                <span class="ph ph-speaker text-sm" />
+              </button>
+            </div>
           </div>
-          <button
-            class="text-gold/70 hover:text-gold transition-colors"
-            @click="handleTTS(entry.arabic)"
-          >
-            <span class="ph ph-speaker text-sm" />
-          </button>
         </div>
       </div>
     </template>
@@ -75,18 +85,18 @@
     <template v-if="pronounsContent">
       <div class="space-y-2">
         <div
-          v-for="entry in pronounsContent.entries"
-          :key="entry.pronoun"
+          v-for="entry in pronounsContent.pronouns"
+          :key="entry.arabic"
           class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
         >
           <div class="flex items-center justify-between">
             <div>
-              <span class="font-arabic text-ink">{{ entry.pronoun }}</span>
+              <span class="font-arabic text-ink">{{ entry.arabic }}</span>
               <span class="text-ink-dim text-xs ml-3">{{ entry.english }}</span>
             </div>
             <button
               class="text-gold/70 hover:text-gold transition-colors"
-              @click="handleTTS(entry.pronoun)"
+              @click="handleTTS(entry.arabic)"
             >
               <span class="ph ph-speaker text-sm" />
             </button>
@@ -99,7 +109,7 @@
     <template v-if="expressionsContent">
       <div class="space-y-2">
         <div
-          v-for="expr in expressionsContent.entries"
+          v-for="expr in expressionsContent.expressions"
           :key="expr.arabic"
           class="p-3 rounded-lg bg-studio-800 border border-white/[0.04] flex items-center justify-between"
         >
@@ -121,19 +131,19 @@
     <template v-if="grammarContent">
       <div class="space-y-4">
         <div
-          v-for="rule in grammarContent.rules"
-          :key="rule.title"
+          v-for="topic in grammarContent.topics"
+          :key="topic.name"
           class="p-4 rounded-lg bg-studio-800 border border-white/[0.04]"
         >
           <h4 class="text-sm font-semibold text-gold mb-2">
-            {{ rule.title }}
+            {{ topic.name }}
           </h4>
           <p class="text-sm text-ink mb-2">
-            {{ rule.explanation }}
+            {{ topic.description }}
           </p>
           <div class="space-y-1">
             <div
-              v-for="ex in rule.examples"
+              v-for="ex in topic.examples"
               :key="ex.arabic"
               class="text-sm"
             >
