@@ -33,126 +33,92 @@ const panelShown = computed(() => props.visible)
 </script>
 
 <template>
-  <!--
-    Outer Shell: subtle background + hairline ring + padding + large radius
-    Always in DOM so CSS transitions fire when `visible` toggles.
-    Spring slide-in animation.
-  -->
   <div
-    class="fixed bottom-0 left-0 right-0 md:left-[35%] lg:left-[30%] xl:left-[25%] bg-studio-800 border-t md:border-l ring-white/[0.06] p-1.5 flex flex-col z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
-    :class="panelShown ? 'visible-slide' : 'hidden-slide'"
-    style="transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);"
+    class="rounded-xl bg-studio-800 border border-white/[0.04] shadow-soft overflow-hidden"
+    :class="[panelShown ? 'visible-slide' : 'hidden-slide']"
   >
-    <!-- Inner Core: distinct background + inner highlight + smaller radius -->
-    <div
-      class="rounded-[calc(1.125rem-0.375rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex flex-col gap-3 md:gap-4 overflow-hidden"
-    >
-      <!-- Player Header -->
-      <div class="flex justify-between items-center mb-1 md:mb-2 gap-2">
-        <div class="flex items-center gap-3 min-w-0">
-          <!-- Gradient audio icon -->
-          <div
-            class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
-          >
-            <span
-              aria-hidden="true"
-              class="ph-fill ph-music-notes text-white text-sm md:text-base"
-            />
-          </div>
-          <div class="overflow-hidden min-w-0">
-            <h3 class="text-white font-semibold text-xs md:text-sm truncate">
-              Generated Audio
-            </h3>
-            <p class="text-[10px] md:text-xs text-gray-400 truncate">
-              {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
-            </p>
-          </div>
+    <!-- Player Header -->
+    <div class="flex justify-between items-center px-4 py-3 gap-2">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center shrink-0">
+          <span
+            aria-hidden="true"
+            class="ph-fill ph-music-notes text-gold text-sm"
+          />
         </div>
-        <!-- Action buttons: Double-Bezel per button -->
-        <div class="flex items-center gap-1 md:gap-2 shrink-0">
-          <button
-            class="w-8 h-8 md:w-10 md:h-10 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-white text-gray-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-            title="Download MP3"
-            @click="emit('download')"
-          >
-            <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
-              <span
-                aria-hidden="true"
-                class="ph ph-download-simple text-lg"
-              />
-            </span>
-          </button>
-          <button
-            class="w-8 h-8 md:w-10 md:h-10 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-red-400 text-gray-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-            title="Close Player"
-            @click="emit('close')"
-          >
-            <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
-              <span
-                aria-hidden="true"
-                class="ph ph-x text-lg"
-              />
-            </span>
-          </button>
+        <div class="overflow-hidden min-w-0">
+          <h3 class="text-ink font-semibold text-xs truncate">
+            Generated Audio
+          </h3>
+          <p class="text-[10px] text-ink-dim truncate">
+            {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
+          </p>
         </div>
       </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button
+          class="w-8 h-8 rounded-full bg-studio-900 flex items-center justify-center text-ink-dim hover:text-gold transition-colors"
+          title="Download MP3"
+          @click="emit('download')"
+        >
+          <span class="ph ph-download-simple text-lg" />
+        </button>
+        <button
+          class="w-8 h-8 rounded-full bg-studio-900 flex items-center justify-center text-ink-dim hover:text-error transition-colors"
+          title="Close Player"
+          @click="emit('close')"
+        >
+          <span class="ph ph-x text-lg" />
+        </button>
+      </div>
+    </div>
 
-      <!-- Heatmap Waveform Container: Double-Bezel -->
-      <!-- Outer Shell -->
-      <div class="w-full rounded-[1.125rem] ring-1 ring-white/[0.06] p-1.5 flex items-center gap-2 md:gap-4 bg-white/[0.02]">
-        <!-- Inner Core -->
-        <div class="w-full rounded-[calc(1.125rem-0.375rem)] bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-2 md:p-4 flex items-center gap-2 md:gap-4">
-          <!-- Play/Pause button: Double-Bezel + Magnetic -->
-          <!-- Outer Shell: spring hover -->
-          <span class="magnetic-hover rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex-shrink-0">
-            <!-- Inner Core: scale on hover, press on active -->
-            <button
-              class="group rounded-full bg-sunrise-magenta text-white flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-10 h-10 md:w-12 md:h-12"
-              @click="emit('toggle')"
-            >
-              <span
-                v-if="isPlaying && !isPaused"
-                aria-hidden="true"
-                class="ph-fill ph-pause text-lg md:text-xl"
-              />
-              <span
-                v-else
-                aria-hidden="true"
-                class="ph-fill ph-play text-lg md:text-xl"
-              />
-            </button>
-          </span>
+    <!-- Player Controls -->
+    <div class="px-4 pb-4">
+      <div class="rounded-lg bg-studio-900 p-3 flex items-center gap-3">
+        <!-- Play/Pause -->
+        <button
+          class="rounded-full bg-gold text-studio-900 flex items-center justify-center shadow-gold active:scale-[0.96] hover:scale-[1.04] w-10 h-10 transition-all"
+          @click="emit('toggle')"
+        >
+          <span
+            v-if="isPlaying && !isPaused"
+            aria-hidden="true"
+            class="ph-fill ph-pause text-lg"
+          />
+          <span
+            v-else
+            aria-hidden="true"
+            class="ph-fill ph-play text-lg"
+          />
+        </button>
 
-          <!-- Canvas for dynamic waveform -->
-          <div class="flex-1 h-8 md:h-12 relative w-full overflow-hidden min-w-[100px]">
-            <WaveformCanvas
-              :visible="visible"
-              :is-playing="isPlaying"
-              :current-time="currentTime"
-              :duration="duration"
-              @seek="(ratio) => emit('seek', ratio)"
-            />
-          </div>
-
-          <!-- Time display -->
-          <span class="text-[10px] md:text-xs font-mono text-gray-400 flex-shrink-0 w-8 md:w-10 text-right">
-            {{ formatTime(duration) }}
-          </span>
+        <!-- Waveform -->
+        <div class="flex-1 h-8 relative w-full overflow-hidden min-w-[100px]">
+          <WaveformCanvas
+            :visible="true"
+            :is-playing="isPlaying"
+            :current-time="currentTime"
+            :duration="duration"
+            @seek="emit('seek', $event)"
+          />
         </div>
+
+        <!-- Time -->
+        <span class="text-[10px] font-mono text-ink-dim flex-shrink-0 w-10 text-right">
+          {{ formatTime(duration) }}
+        </span>
       </div>
     </div>
   </div>
 </template>
 
 <style>
-/* Hidden state: off-screen (downward) */
 .hidden-slide {
   transform: translateY(150%);
   opacity: 0;
   pointer-events: none;
 }
-
-/* Visible state: on-screen */
 .visible-slide {
   transform: translateY(0);
   opacity: 1;

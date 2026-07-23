@@ -98,41 +98,67 @@
 }
 
 /* ===================================
-   Global Styles (fixed dark theme — "Sunrise Surge")
+   Global Styles — "Manuscript Dark"
+   Deep warm background · Gold accent · Warm ivory text
    =================================== */
 
-/* Premium cubic-bezier for all transitions (replaces ease-in-out / ease-out) */
+/* Premium easing curves — spring for interactive, slide for layout */
 :root {
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-slide: cubic-bezier(0.16, 1, 0.3, 1);
-  --ring-subtle: rgba(255, 255, 255, 0.06);
-  --ring-highlight: rgba(255, 255, 255, 0.08);
-  --shadow-ambient: 0 8px 32px rgba(0, 0, 0, 0.25);
-  --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.2);
-  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.35);
+  --ease-subtle: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Gold accent (primary) */
+  --gold: #C8A45C;
+  --gold-dim: rgba(200, 164, 92, 0.15);
+  --gold-glow: rgba(200, 164, 92, 0.3);
+
+  /* Warm ivory text */
+  --ink: #E8E0D4;
+  --ink-dim: #8A7E72;
+  --ink-faint: rgba(232, 224, 212, 0.06);
+
+  /* Surface */
+  --bg-deep: #0C0A09;
+  --bg-card: #1A1714;
+  --bg-elevated: #221F1B;
+
+  /* Semantic */
+  --success: #5CB87A;
+  --error: #B85C38;
+  --error-dim: rgba(184, 92, 56, 0.15);
+
+  /* Shadows — warm-tinted */
+  --shadow-ambient: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.4);
+  --shadow-gold: 0 4px 20px rgba(200, 164, 92, 0.15);
 }
 
-/* Base element */
+/* Base element — Latin body */
 html {
   @apply font-sans;
+  background: var(--bg-deep);
 }
 
 body {
   @apply antialiased;
   margin: 0;
   padding: 0;
-  /* Safe area insets for notched phones (iPhone notch, Android nav bar) */
+  background: var(--bg-deep);
+  color: var(--ink);
+  /* Safe area insets for notched phones */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
-  /* On desktop, no overflow; on mobile, allow scrolling via parent containers */
   overflow: visible;
 }
 
 /* ===================================
-   Ethereal Glass: Gradient Mesh Background
-   Fixed radial orbs — GPU-safe (no scroll repaint)
+   Ambient Background — Single warm orb
+   Replaces the tri-color gradient mesh with one subtle gold orb.
+   GPU-safe (fixed, no scroll repaint).
    =================================== */
 body::before {
   content: '';
@@ -141,219 +167,137 @@ body::before {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(221, 36, 118, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 70%, rgba(255, 81, 47, 0.05) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+    radial-gradient(ellipse 70% 50% at 30% 20%, rgba(200, 164, 92, 0.03) 0%, transparent 65%);
 }
 
-/* ===================================
-   Film-Grain Noise Overlay
-   Fixed, pointer-events-none — no scroll repaint
-   =================================== */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 128px 128px;
-  mix-blend-mode: overlay;
-}
-
-/* Ensure app content renders above background layers */
+/* Ensure app content renders above background */
 #__nuxt,
 #__next {
   position: relative;
   z-index: 1;
 }
 
-/* Textarea caret color (orange, matches prototype) */
+/* Textarea caret — gold accent */
 textarea {
-  caret-color: #FF512F;
+  caret-color: var(--gold);
 }
 
-/* Placeholder color (gray-700) */
+/* Placeholder — muted ink */
 ::placeholder {
-  color: #404040;
+  color: var(--ink-dim);
 }
 
-/* Custom scrollbar — dark UI with subtle ring */
+/* Custom scrollbar — warm dark */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #121212;
+  background: var(--bg-deep);
 }
 ::-webkit-scrollbar-thumb {
-  background: #2A2A2A;
+  background: #2A2622;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(200, 164, 92, 0.08);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3A3A3A;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: #3A3530;
+  border-color: rgba(200, 164, 92, 0.15);
 }
 
 /* ===================================
-   Animations (fixed dark theme)
+   Animations (preserved — theme-agnostic)
    =================================== */
 
-/* Loading spinner */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
-/* Spin-slow for conic-gradient border (4s linear infinite) */
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
 .animate-spin-slow {
   animation: spin-slow 4s linear infinite;
 }
 
-/* Pulse-glow for focus effects (2s cubic-bezier infinite) */
 @keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 0.8;
-    filter: brightness(1.5);
-  }
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.5); }
 }
-
 .animate-pulse-glow {
   animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Panel slide-up animation for mobile toggle */
 @keyframes slide-up {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
-
 @keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
-/* Panel transition classes (spring easing) */
 .panel-slide-enter {
   animation: slide-up 700ms var(--ease-slide) forwards;
 }
-
 .panel-slide-leave {
   animation: fade-out 500ms var(--ease-spring) forwards;
 }
 
-/* ===================================
-   Scroll-Entry Fade-Up Animations
-   Elements fade up from translate-y-16 blur-md opacity-0
-   Triggered via IntersectionObserver — no scroll listeners
-   Elements are VISIBLE by default — fade-up only adds the
-   animated entrance when the observer fires.
-   =================================== */
+/* Scroll-Entry Fade-Up — IntersectionObserver driven */
 .fade-up {
   opacity: 1;
   transform: translateY(0);
   filter: blur(0);
-  transition:
-    opacity 800ms var(--ease-spring),
-    transform 800ms var(--ease-spring),
-    filter 800ms var(--ease-spring);
+  transition: opacity 800ms var(--ease-spring), transform 800ms var(--ease-spring), filter 800ms var(--ease-spring);
 }
-
-/* Staggered delays for sequential elements */
 .fade-up.delay-100 { transition-delay: 100ms; }
 .fade-up.delay-150 { transition-delay: 150ms; }
 .fade-up.delay-200 { transition-delay: 200ms; }
 .fade-up.delay-300 { transition-delay: 300ms; }
-
-/* Animated state: set by IntersectionObserver when element enters viewport */
 .fade-up.animate {
   opacity: 0;
   transform: translateY(24px);
   filter: blur(4px);
 }
-
 .fade-up.animate.visible {
   opacity: 1;
   transform: translateY(0);
   filter: blur(0);
 }
 
-/* Staggered delays for sequential elements */
-.fade-up.delay-100 { transition-delay: 100ms; }
-.fade-up.delay-150 { transition-delay: 150ms; }
-.fade-up.delay-200 { transition-delay: 200ms; }
-.fade-up.delay-300 { transition-delay: 300ms; }
-
-/* Magnetic hover: scale down on active (physical press feel) */
+/* Magnetic hover — interactive feel */
 .magnetic-hover:active {
   transform: scale(0.97);
   transition: transform 300ms var(--ease-spring);
 }
-
-/* Magnetic hover: subtle lift on hover (kinetic tension) */
 .magnetic-hover {
   transition: transform 500ms var(--ease-spring);
 }
-
 .magnetic-hover:hover {
   transform: translateY(-2px);
 }
 
-/* Reduced motion: slow down or disable animations */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  /* Spinners continue but at reduced speed (2x slower) */
-  .animate-spin {
-    animation-duration: 2s;
-  }
-  .animate-spin-slow {
-    animation-duration: 8s;
-  }
-  /* Pulse-glow animation is disabled */
-  .animate-pulse-glow {
-    animation: none;
-  }
-  /* Panel slide transitions reduced to 50ms (no opacity change) */
-  .panel-slide-enter {
+  .animate-spin { animation-duration: 2s; }
+  .animate-spin-slow { animation-duration: 8s; }
+  .animate-pulse-glow { animation: none; }
+  .panel-slide-enter, .panel-slide-leave {
     animation-duration: 50ms !important;
     animation-fill-mode: forwards;
   }
-  .panel-slide-leave {
-    animation-duration: 50ms !important;
-    animation-fill-mode: forwards;
-  }
-  /* Scroll fade-up: instant, no transform or blur */
   .fade-up.animate {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
     transition: none !important;
   }
-  /* Magnetic hover: no transform */
   .magnetic-hover {
     transform: none !important;
     transition: none !important;

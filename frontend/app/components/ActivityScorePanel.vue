@@ -31,7 +31,6 @@ const emit = defineEmits<Emits>()
 // Derived state
 // ---------------------------------------------------------------------------
 
-const hasResult = computed(() => props.result !== null)
 const score = computed(() => props.result?.score ?? 0)
 const feedback = computed(() => props.result?.feedback ?? '')
 const attemptsRemaining = computed(() => props.result?.attempts_remaining ?? props.maxAttempts)
@@ -54,101 +53,82 @@ const barColorClass = computed(() =>
 </script>
 
 <template>
-  <!-- Score display (shown after submission) -->
-  <div
-    v-if="hasResult"
-    class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3"
-  >
-    <!-- Score bar -->
-    <div>
-      <div class="flex-between mb-1">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Score
-        </span>
-        <span
-          class="text-sm font-bold"
-          :class="scoreColorClass"
-        >
-          {{ score }}
-        </span>
-      </div>
-      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-        <div
-          class="h-2 rounded-full transition-all"
-          :class="barColorClass"
-          :style="{ width: `${score * 100}%` }"
-        />
-      </div>
+  <div class="mt-4 p-4 rounded-lg bg-studio-800 border border-white/[0.04]">
+    <!-- Score Header -->
+    <div class="flex-between mb-3">
+      <span class="text-sm font-semibold text-ink">Score</span>
+      <span
+        class="text-2xl font-bold"
+        :class="scoreColorClass"
+      >
+        {{ (score * 100).toFixed(0) }}%
+      </span>
+    </div>
+
+    <!-- Score Bar -->
+    <div class="h-2 rounded-full bg-studio-700 overflow-hidden mb-3">
+      <div
+        class="h-full rounded-full transition-all duration-500"
+        :class="barColorClass"
+        :style="{ width: `${score * 100}%` }"
+      />
     </div>
 
     <!-- Feedback -->
     <p
       v-if="feedback"
-      class="text-sm text-gray-700 dark:text-gray-300"
+      class="text-sm text-ink mb-3"
     >
       {{ feedback }}
     </p>
 
-    <!-- Remaining attempts -->
-    <p
-      v-if="!isComplete"
-      class="text-sm text-gray-500 dark:text-gray-400"
-    >
-      {{ attemptsRemaining }} attempts remaining
-    </p>
-
-    <!-- Correct answer (max attempts reached) -->
+    <!-- Correct Answer (max attempts reached) -->
     <div
       v-if="correctAnswer"
-      class="p-3 rounded bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800"
+      class="p-3 rounded-lg bg-studio-700/50 border border-white/[0.04] mb-3"
     >
-      <p class="text-sm font-medium text-green-700 dark:text-green-300">
-        Correct answer:
+      <p class="text-xs text-ink-dim mb-1">
+        Correct Answer:
       </p>
-      <p class="text-sm text-green-800 dark:text-green-200">
+      <p
+        class="text-sm text-ink font-arabic"
+        dir="rtl"
+      >
         {{ correctAnswer }}
       </p>
     </div>
 
-    <!-- Navigation buttons -->
-    <div class="flex gap-2 mt-3">
+    <!-- Actions -->
+    <div class="flex gap-2">
       <button
-        v-if="isComplete && hasMoreActivities"
+        v-if="attemptsRemaining > 0 && !isComplete"
+        class="btn flex-1"
+        @click="emit('retry')"
+      >
+        Try Again
+      </button>
+      <button
+        v-if="hasMoreActivities"
         class="btn flex-1"
         @click="emit('next-activity')"
       >
         Next Activity
       </button>
       <button
-        v-if="isComplete && lessonJustCompleted"
+        v-if="lessonJustCompleted"
         class="btn flex-1"
         @click="emit('complete-lesson')"
       >
         Complete Lesson
       </button>
-      <button
-        v-if="isComplete"
-        class="btn flex-1"
-        @click="emit('retry')"
-      >
-        Try Again
-      </button>
     </div>
-  </div>
 
-  <!-- Lesson completed message -->
-  <div
-    v-if="lessonJustCompleted"
-    class="mt-4 p-4 rounded bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-center"
-  >
-    <p class="text-lg font-semibold text-green-700 dark:text-green-300">
-      Lesson completed ✓
-    </p>
-    <button
-      class="btn mt-2"
-      @click="emit('complete-lesson')"
+    <!-- Attempts remaining -->
+    <p
+      v-if="attemptsRemaining > 0 && !isComplete"
+      class="text-xs text-ink-dim mt-2"
     >
-      Back to Roadmap
-    </button>
+      {{ attemptsRemaining }} attempt{{ attemptsRemaining > 1 ? 's' : '' }} remaining
+    </p>
   </div>
 </template>

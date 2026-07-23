@@ -12,22 +12,21 @@ const sentences = computed(() => content.sentences)
 </script>
 
 <template>
-  <div class="space-y-3">
-    <!-- Sentence list -->
+  <div class="space-y-2">
     <div
       v-for="(sentence, idx) in sentences"
       :key="idx"
-      class="p-2 rounded bg-gray-50 dark:bg-gray-700"
+      class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
     >
       <p
         v-if="sentence.arabic"
-        class="arabic-text text-gray-900 dark:text-white"
+        class="font-arabic text-ink"
       >
         {{ sentence.arabic }}
       </p>
       <p
         v-else
-        class="text-gray-900 dark:text-white"
+        class="text-ink"
       >
         {{ sentence.english }}
       </p>

@@ -2,61 +2,52 @@
 interface Props {
   isOpen?: boolean
 }
-
-interface Emits {
-  close: []
-}
-
 defineProps<Props>()
-defineEmits<Emits>()
+defineEmits<{ close: [] }>()
 
-const { lessons, loading, error, groupedLessons } = useLessons()
+const { lessons: _lessons, loading, error, groupedLessons } = useLessons()
 </script>
 
 <template>
   <aside
-    class="roadmap-sidebar fixed top-0 right-0 h-full bg-white dark:bg-gray-800 shadow-lg overflow-y-auto"
+    class="roadmap-sidebar fixed top-0 right-0 h-full bg-studio-900/98 backdrop-blur-sm border-l border-white/[0.04] overflow-y-auto"
     :class="{ open: isOpen }"
   >
     <div class="p-4">
-      <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">
-        Learning Roadmap
-      </h2>
-
-      <!-- Loading state -->
-      <div
-        v-if="loading"
-        class="text-gray-500 dark:text-gray-400"
-      >
-        Loading roadmap...
+      <div class="mb-4">
+        <h2
+          class="font-arabic text-xl font-bold text-gold mb-1"
+          dir="rtl"
+        >
+          خريطة التعلم
+        </h2>
+        <p class="text-[10px] font-sans text-ink-dim tracking-[0.15em] uppercase">
+          Learning Roadmap
+        </p>
       </div>
 
-      <!-- Error state -->
+      <div
+        v-if="loading"
+        class="text-ink-dim text-sm"
+      >
+        Loading lessons...
+      </div>
       <div
         v-else-if="error"
-        class="text-red-500 dark:text-red-400"
+        class="text-error text-sm"
       >
         {{ error }}
       </div>
 
-      <!-- Lessons grouped by level -->
       <div v-else>
         <div
           v-for="levelGroup in groupedLessons"
           :key="levelGroup.level"
           class="mb-6"
         >
-          <!-- Level header with progress -->
-          <div class="flex-between mb-2">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200">
-              {{ levelGroup.level }} Level
-            </h3>
-            <span class="text-sm text-gray-500 dark:text-gray-400">
-              {{ levelGroup.progress }}%
-            </span>
-          </div>
-
-          <!-- Lesson cards -->
+          <h3 class="text-xs font-sans font-semibold text-gold tracking-wider uppercase mb-3">
+            {{ levelGroup.level }}
+          </h3>
           <div class="space-y-2">
             <NuxtLink
               v-for="lesson in levelGroup.lessons"
@@ -65,39 +56,32 @@ const { lessons, loading, error, groupedLessons } = useLessons()
               class="block"
             >
               <div
-                class="sidebar-lesson-card flex-between px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                :class="{ 'opacity-50': lesson.status === 'locked' }"
+                class="flex items-center gap-3 p-2 rounded-lg hover:bg-studio-700/40 transition-colors"
+                :class="{ 'opacity-40': lesson.status === 'locked' }"
               >
-                <span class="text-sm text-gray-900 dark:text-white">
-                  {{ lesson.title }}
-                </span>
+                <span class="text-xs font-mono text-ink-dim w-6 text-center">{{ lesson.sequence }}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-ink truncate">{{ lesson.title }}</p>
+                </div>
                 <span
-                  v-if="lesson.status === 'available'"
-                  class="text-green-500"
-                >✓</span>
-                <span
-                  v-else-if="lesson.status === 'locked'"
-                  class="text-gray-400"
-                >🔒</span>
-                <span
-                  v-else-if="lesson.status === 'completed'"
-                  class="text-green-600"
-                >✓</span>
+                  v-if="lesson.status === 'completed'"
+                  class="text-gold"
+                ><span class="ph ph-check-circle" /></span>
                 <span
                   v-else-if="lesson.status === 'in_progress'"
-                  class="text-blue-500"
-                >→</span>
+                  class="text-gold"
+                ><span class="ph ph-arrow-right" /></span>
+                <span
+                  v-else-if="lesson.status === 'available'"
+                  class="text-ink-dim"
+                ><span class="ph ph-lock-key-open" /></span>
+                <span
+                  v-else
+                  class="text-ink-dim/40"
+                ><span class="ph ph-lock" /></span>
               </div>
             </NuxtLink>
           </div>
-        </div>
-
-        <!-- Empty state -->
-        <div
-          v-if="lessons.length === 0"
-          class="text-gray-500 dark:text-gray-400"
-        >
-          No lessons available
         </div>
       </div>
     </div>
@@ -106,11 +90,11 @@ const { lessons, loading, error, groupedLessons } = useLessons()
 
 <style scoped>
 .roadmap-sidebar {
+  width: 288px;
   transform: translateX(100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--ease-slide);
   z-index: 50;
 }
-
 .roadmap-sidebar.open {
   transform: translateX(0);
 }

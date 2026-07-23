@@ -1,11 +1,9 @@
 <script setup lang="ts">
-// Full-page TTS Studio — complete integration of all 6 components
+// Full-page TTS Studio — "Manuscript Dark" theme
 // Two-panel layout: Left (Control Deck) + Right (Canvas)
-// Mobile: both panels stacked vertically (canvas top, controls bottom)
-// Desktop: side-by-side panels
+// Mobile: both panels stacked (canvas top, controls bottom)
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
-import WaveformCanvas from '../components/WaveformCanvas.vue'
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
 import { useAudioModule } from '../composables/useAudioModule'
 import { useScrollReveal } from '../composables/useScrollReveal'
@@ -15,7 +13,6 @@ import { useTtsApi } from '../composables/useTtsApi'
 import { showToast } from '../composables/useToast'
 import { useMagicKeys, whenever } from '@vueuse/core'
 
-// SEO metadata for playground page
 useSeoMeta({
   title: 'TTS Playground — LughatChat',
   description: 'Arabic Text-to-Speech Studio — Generate speech with XTTS-v2'
@@ -24,32 +21,18 @@ useSeoMeta({
 const { togglePanel } = usePanelToggle()
 const audioModule = useAudioModule()
 const {
-  isPlaying,
-  isPaused,
-  currentTime,
-  duration,
-  audioUrl: audioUrlRef,
-
-  audioRef,
-  load: audioLoad,
-  toggle: audioToggle,
-  seek: audioSeek,
-  download: audioDownload,
-  dispose
+  isPlaying, isPaused, currentTime, duration,
+  audioUrl: audioUrlRef, audioRef, load: audioLoad,
+  toggle: audioToggle, seek: audioSeek,
+  download: audioDownload, dispose
 } = audioModule
 
-// Template binding state
 const speedValue = ref(1.0)
-
-// Scroll-reveal: observe desktop control deck sections for fade-up
 const controlDeckDesktopRef = ref<HTMLElement | null>(null)
 useScrollReveal(controlDeckDesktopRef)
-
-// Scroll-reveal: observe desktop canvas header for fade-up
 const canvasHeaderRef = ref<HTMLElement | null>(null)
 useScrollReveal(canvasHeaderRef)
 
-// Mobile split-screen: ratio of canvas height (0.0–1.0)
 const canvasRatio = ref(0.55)
 const isDragging = ref(false)
 let startY = 0
@@ -59,27 +42,23 @@ function getClientY(e: TouchEvent | MouseEvent): number {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return ('touches' in e ? (e as any).touches[0].clientY : e.clientY)
 }
-
 function onDragStart(e: TouchEvent | MouseEvent) {
   startY = getClientY(e)
   startRatio = canvasRatio.value
   isDragging.value = true
   document.body.classList.add('dragging')
 }
-
 function onDragMove(e: TouchEvent | MouseEvent) {
   if (!isDragging.value) return
   const clientY = getClientY(e)
   const delta = (startY - clientY) / window.innerHeight
   canvasRatio.value = Math.max(0.25, Math.min(0.85), startRatio + delta)
 }
-
 function onDragEnd() {
   isDragging.value = false
   document.body.classList.remove('dragging')
 }
 
-// Keyboard shortcut: VueUse useMagicKeys handles Ctrl/Cmd+Enter declaratively
 const isGenerating = ref(false)
 const textInput = ref('')
 
@@ -88,7 +67,6 @@ async function handleGenerate(): Promise<void> {
     showToast('Please enter some text', 'error')
     return
   }
-
   isGenerating.value = true
   try {
     const { synthesize } = useTtsApi()
@@ -106,59 +84,32 @@ async function handleGenerate(): Promise<void> {
   }
 }
 
-// VueUse: reactive Ctrl+Enter shortcut (no manual keydown handler)
 const { Ctrl_Enter: ctrlEnter } = useMagicKeys()
 whenever(computed(() => ctrlEnter!.value), async () => {
   await handleGenerate()
 })
 
-// Health polling (model ready state tracked but not displayed)
 const health = useHealthPoll()
-
-// Compute whether the Generate button should be disabled
-// — during generation, or when model is not ready (loading/error/retrying)
-const isGenerateDisabled = computed(() => {
-  return isGenerating.value || !health.modelLoaded
-})
-
+const isGenerateDisabled = computed(() => isGenerating.value || !health.modelLoaded)
 const { voices, loadVoices } = useVoices()
 const selectedVoice = ref('KSA Zariyah - Female')
 const selectedVoiceName = ref(selectedVoice.value)
 
-// Load voices on mount
-onMounted(() => {
-  loadVoices()
-})
-
-// Show error toast when model enters error state (reactive watch on getter)
-watch(
-  () => health.status,
-  (status) => {
-    if (status === 'error') {
-      showToast('TTS model is not ready. Please try again later.', 'error')
-    }
+onMounted(() => loadVoices())
+watch(() => health.status, (status) => {
+  if (status === 'error') {
+    showToast('TTS model is not ready. Please try again later.', 'error')
   }
-)
-
-// Cleanup audio URL on unmount
-onUnmounted(() => {
-  dispose()
 })
-
-function formatTime(seconds: number): string {
-  if (!seconds || isNaN(seconds)) return '0:00'
-  const minutes = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${minutes}:${secs.toString().padStart(2, '0')}`
-}
+onUnmounted(() => dispose())
 </script>
 
 <template>
   <div
-    class="tts-page min-h-screen bg-[#121212] dark:bg-[#0a0a0a]"
+    class="tts-page min-h-screen bg-[#0C0A09] dark:bg-[#0C0A09]"
     dir="ltr"
   >
-    <!-- Hidden audio element (bound to composable's audioRef for playback) -->
+    <!-- Hidden audio element -->
     <audio
       ref="audioRef"
       :src="audioUrlRef || undefined"
@@ -166,7 +117,7 @@ function formatTime(seconds: number): string {
     />
     <NavBar compact />
 
-    <!-- Desktop: two-panel layout (padding-top from CSS variable) -->
+    <!-- Desktop: two-panel layout -->
     <div
       data-testid="desktop-panels"
       class="hidden md:flex h-screen"
@@ -178,12 +129,18 @@ function formatTime(seconds: number): string {
         class="control-deck flex-1 p-8 overflow-y-auto"
         data-panel="control-deck"
       >
-        <!-- Header -->
+        <!-- Header: Calligraphic headline -->
         <div class="mb-8">
-          <h1 class="text-3xl font-bold text-white mb-2">
-            Lughat Chat Studio
+          <h1
+            class="font-arabic text-3xl font-bold text-gold mb-2"
+            dir="rtl"
+          >
+            استوديو نطق
           </h1>
-          <p class="text-gray-400">
+          <p class="text-[10px] font-sans text-ink-dim tracking-[0.2em] uppercase mb-1">
+            LughatChat Studio
+          </p>
+          <p class="text-ink-dim text-sm">
             Arabic Text-to-Speech with XTTS-v2
           </p>
         </div>
@@ -200,7 +157,7 @@ function formatTime(seconds: number): string {
         <div class="mb-6">
           <label
             for="text-input"
-            class="block text-sm font-medium text-gray-300 mb-2"
+            class="block text-sm font-medium text-ink-dim mb-2"
           >
             Enter Arabic Text
           </label>
@@ -231,9 +188,9 @@ function formatTime(seconds: number): string {
         </div>
 
         <!-- Shortcut hint -->
-        <div class="text-xs text-gray-500">
-          Press <kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300">Ctrl</kbd> +
-          <kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300">Enter</kbd> to generate
+        <div class="text-xs text-ink-dim/60">
+          Press <kbd class="px-1.5 py-0.5 bg-studio-700 rounded text-ink-dim">Ctrl</kbd> +
+          <kbd class="px-1.5 py-0.5 bg-studio-700 rounded text-ink-dim">Enter</kbd> to generate
         </div>
       </div>
 
@@ -245,17 +202,16 @@ function formatTime(seconds: number): string {
         data-panel="canvas"
         @click.stop="togglePanel"
       >
-        <!-- Canvas header -->
         <div class="mb-6">
-          <h2 class="text-xl font-semibold text-white">
+          <h2 class="text-xl font-bold text-ink">
             Output
           </h2>
         </div>
 
-        <!-- No-audio placeholder (hidden when audio exists — inline player takes over) -->
+        <!-- No-audio placeholder -->
         <div
           v-if="!audioUrlRef"
-          class="flex flex-col items-center justify-center py-12 text-gray-500"
+          class="flex flex-col items-center justify-center py-12 text-ink-dim/50"
         >
           <span
             aria-hidden="true"
@@ -265,100 +221,26 @@ function formatTime(seconds: number): string {
             Generate speech to see audio output
           </p>
         </div>
-        <!-- Audio Player Panel (inline in canvas flow) -->
+
+        <!-- Audio Player Panel -->
         <div
           v-if="audioUrlRef"
           class="mt-6 animate-slide-up"
         >
-          <div
-            class="rounded-2xl bg-studio-800 border border-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.2)] overflow-hidden"
-          >
-            <!-- Player Header -->
-            <div class="flex justify-between items-center px-4 py-3 gap-2">
-              <div class="flex items-center gap-3 min-w-0">
-                <div
-                  class="w-8 h-8 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
-                >
-                  <span
-                    aria-hidden="true"
-                    class="ph-fill ph-music-notes text-white text-sm"
-                  />
-                </div>
-                <div class="overflow-hidden min-w-0">
-                  <h3 class="text-white font-semibold text-xs truncate">
-                    Generated Audio
-                  </h3>
-                  <p class="text-[10px] text-gray-400 truncate">
-                    {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-1.5 shrink-0">
-                <button
-                  class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-white text-gray-400 transition-all"
-                  title="Download MP3"
-                  @click="audioDownload(selectedVoiceName)"
-                >
-                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
-                    <span
-                      aria-hidden="true"
-                      class="ph ph-download-simple text-lg"
-                    />
-                  </span>
-                </button>
-                <button
-                  class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-red-400 text-gray-400 transition-all"
-                  title="Close Player"
-                  @click="dispose"
-                >
-                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
-                    <span
-                      aria-hidden="true"
-                      class="ph ph-x text-lg"
-                    />
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Player Controls -->
-            <div class="px-4 pb-4">
-              <div class="rounded-xl bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex items-center gap-3">
-                <!-- Play/Pause -->
-                <button
-                  class="rounded-full bg-sunrise-magenta text-white flex items-center justify-center shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-10 h-10 transition-all"
-                  @click="audioToggle"
-                >
-                  <span
-                    v-if="isPlaying && !isPaused"
-                    aria-hidden="true"
-                    class="ph-fill ph-pause text-lg"
-                  />
-                  <span
-                    v-else
-                    aria-hidden="true"
-                    class="ph-fill ph-play text-lg"
-                  />
-                </button>
-
-                <!-- Waveform -->
-                <div class="flex-1 h-8 relative w-full overflow-hidden min-w-[100px]">
-                  <WaveformCanvas
-                    :visible="true"
-                    :is-playing="isPlaying"
-                    :current-time="currentTime"
-                    :duration="duration"
-                    @seek="audioSeek"
-                  />
-                </div>
-
-                <!-- Time -->
-                <span class="text-[10px] font-mono text-gray-400 flex-shrink-0 w-10 text-right">
-                  {{ formatTime(duration) }}
-                </span>
-              </div>
-            </div>
-          </div>
+          <AudioPlayerPanel
+            :visible="true"
+            :is-playing="isPlaying"
+            :is-paused="isPaused"
+            :current-time="currentTime"
+            :duration="duration"
+            :audio-url="audioUrlRef"
+            :selected-voice-name="selectedVoiceName"
+            :speed-value="speedValue"
+            @close="dispose"
+            @toggle="audioToggle"
+            @seek="audioSeek"
+            @download="audioDownload(selectedVoiceName)"
+          />
         </div>
       </div>
     </div>
@@ -371,17 +253,15 @@ function formatTime(seconds: number): string {
         style="height: calc(100vh - 56px - 44px)"
         @click.stop="togglePanel"
       >
-        <!-- Canvas header -->
         <div class="mb-6 px-4 pt-2">
-          <h2 class="text-xl font-semibold text-white">
+          <h2 class="text-xl font-bold text-ink">
             Output
           </h2>
         </div>
 
-        <!-- No-audio placeholder -->
         <div
           v-if="!audioUrlRef"
-          class="flex flex-col items-center justify-center py-12 text-gray-500"
+          class="flex flex-col items-center justify-center py-12 text-ink-dim/50"
         >
           <span
             aria-hidden="true"
@@ -392,100 +272,24 @@ function formatTime(seconds: number): string {
           </p>
         </div>
 
-        <!-- Audio Player Panel (inline in canvas flow) -->
         <div
           v-if="audioUrlRef"
           class="mt-6 animate-slide-up px-4"
         >
-          <div
-            class="rounded-2xl bg-studio-800 border border-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.2)] overflow-hidden"
-          >
-            <!-- Player Header -->
-            <div class="flex justify-between items-center px-4 py-3 gap-2">
-              <div class="flex items-center gap-3 min-w-0">
-                <div
-                  class="w-8 h-8 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
-                >
-                  <span
-                    aria-hidden="true"
-                    class="ph-fill ph-music-notes text-white text-sm"
-                  />
-                </div>
-                <div class="overflow-hidden min-w-0">
-                  <h3 class="text-white font-semibold text-xs truncate">
-                    Generated Audio
-                  </h3>
-                  <p class="text-[10px] text-gray-400 truncate">
-                    {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-1.5 shrink-0">
-                <button
-                  class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-white text-gray-400 transition-all"
-                  title="Download MP3"
-                  @click="audioDownload(selectedVoiceName)"
-                >
-                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
-                    <span
-                      aria-hidden="true"
-                      class="ph ph-download-simple text-lg"
-                    />
-                  </span>
-                </button>
-                <button
-                  class="w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center hover:text-red-400 text-gray-400 transition-all"
-                  title="Close Player"
-                  @click="dispose"
-                >
-                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
-                    <span
-                      aria-hidden="true"
-                      class="ph ph-x text-lg"
-                    />
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Player Controls -->
-            <div class="px-4 pb-4">
-              <div class="rounded-xl bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex items-center gap-3">
-                <!-- Play/Pause -->
-                <button
-                  class="rounded-full bg-sunrise-magenta text-white flex items-center justify-center shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-10 h-10 transition-all"
-                  @click="audioToggle"
-                >
-                  <span
-                    v-if="isPlaying && !isPaused"
-                    aria-hidden="true"
-                    class="ph-fill ph-pause text-lg"
-                  />
-                  <span
-                    v-else
-                    aria-hidden="true"
-                    class="ph-fill ph-play text-lg"
-                  />
-                </button>
-
-                <!-- Waveform -->
-                <div class="flex-1 h-8 relative w-full overflow-hidden min-w-[100px]">
-                  <WaveformCanvas
-                    :visible="true"
-                    :is-playing="isPlaying"
-                    :current-time="currentTime"
-                    :duration="duration"
-                    @seek="audioSeek"
-                  />
-                </div>
-
-                <!-- Time -->
-                <span class="text-[10px] font-mono text-gray-400 flex-shrink-0 w-10 text-right">
-                  {{ formatTime(duration) }}
-                </span>
-              </div>
-            </div>
-          </div>
+          <AudioPlayerPanel
+            :visible="true"
+            :is-playing="isPlaying"
+            :is-paused="isPaused"
+            :current-time="currentTime"
+            :duration="duration"
+            :audio-url="audioUrlRef"
+            :selected-voice-name="selectedVoiceName"
+            :speed-value="speedValue"
+            @close="dispose"
+            @toggle="audioToggle"
+            @seek="audioSeek"
+            @download="audioDownload(selectedVoiceName)"
+          />
         </div>
       </div>
 
@@ -497,7 +301,7 @@ function formatTime(seconds: number): string {
       <!-- Control Deck (bottom, draggable divider) -->
       <div
         data-testid="control-deck-panel"
-        class="control-deck border-t border-white/[0.06]"
+        class="control-deck border-t border-white/[0.04]"
         :style="{ height: `${canvasRatio * 100}%`, maxHeight: '85vh' }"
         @touchstart="onDragStart"
         @touchmove="onDragMove"
@@ -509,24 +313,21 @@ function formatTime(seconds: number): string {
           data-testid="drag-divider"
           class="drag-divider h-1.5 cursor-ns-resize flex items-center justify-center"
         >
-          <div class="w-12 h-1 bg-gray-600 rounded-full" />
+          <div class="w-12 h-1 bg-ink-dim/30 rounded-full" />
         </div>
 
         <!-- Content -->
         <div class="p-4 overflow-y-auto">
-          <!-- Voice Selector -->
           <div class="mb-4">
             <VoiceSelector
               v-model="selectedVoice"
               :voices="voices"
             />
           </div>
-
-          <!-- Text Input -->
           <div class="mb-4">
             <label
               for="text-input-mobile"
-              class="block text-sm font-medium text-gray-300 mb-2"
+              class="block text-sm font-medium text-ink-dim mb-2"
             >
               Enter Arabic Text
             </label>
@@ -538,13 +339,9 @@ function formatTime(seconds: number): string {
               dir="rtl"
             />
           </div>
-
-          <!-- Speed Slider -->
           <div class="mb-4">
             <SpeedSlider />
           </div>
-
-          <!-- Generate Button -->
           <div class="mb-4">
             <GenerateButton
               :is-generating="isGenerating"
@@ -561,25 +358,13 @@ function formatTime(seconds: number): string {
 </template>
 
 <style scoped>
-.dragging {
-  cursor: ns-resize;
-}
-
-.dragging .drag-divider {
-  background-color: rgb(22, 163, 74); /* green-600 */
-}
+.dragging { cursor: ns-resize; }
+.dragging .drag-divider { background-color: var(--gold); }
 
 @keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
 .animate-slide-up {
   animation: slide-up 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }

@@ -20,15 +20,15 @@ describe('GenerateButton', () => {
       expect(wrapper.classes()).toContain('generate-btn')
     })
 
-    it('When model is ready and not generating then renders play-circle icon', () => {
+    it('When model is ready and not generating then renders magic-wand icon', () => {
       // Act
       const wrapper = mount(GenerateButton, {
         props: { isGenerating: false, modelStatus: 'ready', disabled: false }
       })
 
       // Assert
-      const playIcon = wrapper.find('.ph-fill.ph-play-circle')
-      expect(playIcon.exists()).toBe(true)
+      const magicIcon = wrapper.find('.ph-fill.ph-magic-wand')
+      expect(magicIcon.exists()).toBe(true)
     })
 
     it('When model is ready and not generating then renders trailing arrow-up-right icon', () => {
@@ -38,7 +38,7 @@ describe('GenerateButton', () => {
       })
 
       // Assert
-      const trailingIcon = wrapper.find('.ph-arrow-up-right')
+      const trailingIcon = wrapper.find('.ph-arrow-right')
       expect(trailingIcon.exists()).toBe(true)
     })
 
@@ -67,14 +67,14 @@ describe('GenerateButton', () => {
   })
 
   describe('loading state (M-03: meaningful loading state)', () => {
-    it('When modelStatus is loading then renders "Loading TTS Model..." text', () => {
+    it('When modelStatus is loading then renders "Loading..." text', () => {
       // Act
       const wrapper = mount(GenerateButton, {
         props: { isGenerating: false, modelStatus: 'loading', disabled: true }
       })
 
       // Assert
-      expect(wrapper.text()).toContain('Loading TTS Model...')
+      expect(wrapper.text()).toContain('Loading...')
     })
 
     it('When modelStatus is loading then renders a spinner loader', () => {
@@ -84,10 +84,9 @@ describe('GenerateButton', () => {
       })
 
       // Assert
-      const loader = wrapper.find('.loader')
-      expect(loader.exists()).toBe(true)
+      const spinner = wrapper.find('.ph-spinner')
+      expect(spinner.exists()).toBe(true)
     })
-
     it('When modelStatus is loading then button is disabled (aria-disabled="true")', () => {
       // Act
       const wrapper = mount(GenerateButton, {
@@ -111,26 +110,24 @@ describe('GenerateButton', () => {
       expect(btn.attributes('aria-busy')).toBe('true')
     })
 
-    it('When modelStatus is loading then renders clockwise arrows icon', () => {
+    it('When modelStatus is loading then renders spinner icon', () => {
       // Act
       const wrapper = mount(GenerateButton, {
         props: { isGenerating: false, modelStatus: 'loading', disabled: true }
       })
 
       // Assert
-      const icon = wrapper.find('.ph-arrows-clockwise')
-      expect(icon.exists()).toBe(true)
+      expect(wrapper.find('.ph-spinner').exists()).toBe(true)
     })
 
-    it('When modelStatus is loading then does NOT render play-circle icon', () => {
+    it('When modelStatus is loading then does NOT render magic-wand icon', () => {
       // Act
       const wrapper = mount(GenerateButton, {
         props: { isGenerating: false, modelStatus: 'loading', disabled: true }
       })
 
       // Assert
-      const playIcon = wrapper.find('.ph-play-circle')
-      expect(playIcon.exists()).toBe(false)
+      expect(wrapper.find('.ph-fill.ph-magic-wand').exists()).toBe(false)
     })
   })
 
@@ -142,7 +139,7 @@ describe('GenerateButton', () => {
       })
 
       // Assert
-      expect(wrapper.text()).toContain('Retrying...')
+      expect(wrapper.text()).toContain('Loading...')
     })
 
     it('When modelStatus is retrying then renders a spinner loader', () => {
@@ -152,8 +149,7 @@ describe('GenerateButton', () => {
       })
 
       // Assert
-      const loader = wrapper.find('.loader')
-      expect(loader.exists()).toBe(true)
+      expect(wrapper.text()).toContain('Loading...')
     })
 
     it('When modelStatus is retrying then button is disabled', () => {
@@ -188,10 +184,8 @@ describe('GenerateButton', () => {
       })
 
       // Assert
-      expect(wrapper.find('.loader').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Loading TTS Model...')
+      expect(wrapper.text()).toContain('Loading...')
     })
-
     it('When modelStatus is error then button is disabled', () => {
       // Act
       const wrapper = mount(GenerateButton, {
@@ -223,8 +217,7 @@ describe('GenerateButton', () => {
       })
 
       // Assert
-      expect(wrapper.find('.loader').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Loading TTS Model...')
+      expect(wrapper.text()).toContain('Generating...')
     })
 
     it('When isGenerating is true then button is disabled', () => {
@@ -305,7 +298,7 @@ describe('GenerateButton', () => {
       })
 
       // Assert
-      const btnContent = wrapper.find('.btn-content.loading-state')
+      const btnContent = wrapper.find('.btn-content')
       expect(btnContent.exists()).toBe(true)
     })
   })

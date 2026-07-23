@@ -25,14 +25,14 @@ const modelValue = defineModel<string>({ required: true })
 
 <template>
   <div class="space-y-2">
-    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+    <label class="block text-sm font-medium text-ink-dim mb-1">
       <slot name="label" />
     </label>
     <textarea
       v-model="modelValue"
       :dir="dir"
       :disabled="disabled"
-      class="w-full p-3 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+      class="w-full p-3 rounded-lg border border-white/[0.06] bg-studio-800 text-ink resize-none focus:outline-none focus:ring-1 focus:ring-gold/30"
       rows="2"
       :placeholder="placeholder"
       @keydown="emit('keydown', $event as KeyboardEvent)"
@@ -43,9 +43,7 @@ const modelValue = defineModel<string>({ required: true })
       @click="emit('submit')"
     >
       <span v-if="isSubmitting">Scoring...</span>
-      <span v-else>
-        <slot name="buttonText" />
-      </span>
+      <span v-else><slot name="buttonText" /></span>
     </button>
   </div>
 </template>

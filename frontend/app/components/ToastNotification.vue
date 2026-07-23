@@ -30,35 +30,26 @@ function toastBgClass(type: ToastType): string {
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        class="flex items-center gap-3 rounded-[1.125rem] ring-1 ring-white/[0.06] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.25)] max-w-md bg-white/[0.02]"
+        class="flex items-center gap-3 rounded-xl px-4 py-3 bg-studio-800/95 backdrop-blur-sm border border-white/[0.04] shadow-ambient max-w-md"
         :class="toastBgClass(toast.type)"
         aria-live="polite"
       >
-        <!-- Inner Core -->
-        <div
-          class="flex items-center gap-3 rounded-[calc(1.125rem-0.375rem)] px-4 py-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] max-w-md"
-        >
-          <span
-            aria-hidden="true"
-            :class="toastIconClass(toast.type)"
-          />
-          <p class="text-sm text-white flex-1">
-            {{ toast.message }}
-          </p>
-          <!-- Close button: Double-Bezel -->
-          <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
-            <button
-              class="rounded-full bg-studio-700 text-gray-500 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
-              aria-label="Close notification"
-              @click="toasts.splice(toasts.indexOf(toast), 1)"
-            >
-              <span
-                aria-hidden="true"
-                class="ph ph-x text-sm"
-              />
-            </button>
-          </span>
-        </div>
+        <span
+          aria-hidden="true"
+          :class="toastIconClass(toast.type)"
+        />
+        <p class="text-sm text-ink flex-1">
+          {{ toast.message }}
+        </p>
+        <span class="rounded-full bg-studio-900 p-0.5">
+          <button
+            class="rounded-full bg-studio-800 text-ink-dim hover:text-gold transition-colors cursor-pointer active:scale-95"
+            aria-label="Close notification"
+            @click="toasts.splice(toasts.indexOf(toast), 1)"
+          >
+            <span class="ph ph-x text-sm" />
+          </button>
+        </span>
       </div>
     </TransitionGroup>
   </div>
@@ -69,13 +60,11 @@ function toastBgClass(type: ToastType): string {
 .toast-slide-leave-active {
   transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 .toast-slide-enter-from,
 .toast-slide-leave-to {
   opacity: 0;
   transform: translateX(100%);
 }
-
 .toast-slide-leave-active {
   transition-duration: 0.5s;
 }

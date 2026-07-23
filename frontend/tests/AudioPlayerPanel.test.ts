@@ -22,7 +22,7 @@ describe('AudioPlayerPanel', () => {
         props: { visible: false, isPlaying: false, currentTime: 0, duration: 0, audioUrl: null, selectedVoiceName: '', speedValue: 1.0, isPaused: false }
       })
       // Act
-      const panel = wrapper.find('.fixed.bottom-0')
+      const panel = wrapper.find('[class*="hidden-slide"]')
       // Assert
       expect(panel.exists()).toBe(true)
       expect(panel.classes()).toContain('hidden-slide')
@@ -50,7 +50,7 @@ describe('AudioPlayerPanel', () => {
         props: { visible: true, isPlaying: false, currentTime: 0, duration: 10, audioUrl: null, selectedVoiceName: '', speedValue: 1.0, isPaused: false }
       })
       // Act
-      const panel = wrapper.find('.fixed.bottom-0.right-0')
+      const panel = wrapper.find('[class*="rounded"]')
       // Assert
       expect(panel.exists()).toBe(true)
     })
@@ -134,7 +134,7 @@ describe('AudioPlayerPanel', () => {
         global: { components: stubComponents },
         props: { visible: true, isPlaying: false, currentTime: 0, duration: 10, audioUrl: null, selectedVoiceName: '', speedValue: 1.0, isPaused: false }
       })
-      const playBtn = wrapper.find('button.bg-sunrise-magenta')
+      const playBtn = wrapper.find('button.rounded-full.bg-gold')
       // Act
       expect(playBtn.exists()).toBe(true)
       await playBtn.trigger('click')
@@ -168,10 +168,10 @@ describe('AudioPlayerPanel', () => {
         props: { visible: true, isPlaying: true, currentTime: 5, duration: 10, audioUrl: 'http://test.url/audio.mp3', selectedVoiceName: 'Test Voice', speedValue: 1.0, isPaused: false }
       })
       // Act
-      let panel = wrapper.find('.fixed.bottom-0')
+      let panel = wrapper.find('[class*="visible-slide"]')
       expect(panel.exists()).toBe(true)
       wrapper.setProps({ isPlaying: false })
-      panel = wrapper.find('.fixed.bottom-0')
+      panel = wrapper.find('[class*="visible-slide"]')
       // Assert
       expect(panel.exists()).toBe(true)
     })

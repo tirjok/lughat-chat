@@ -1,205 +1,159 @@
 <template>
-  <div
-    class="section-card mb-6"
-    :data-section-type="section.type"
-  >
-    <!-- Hidden audio element for TTS playback -->
+  <div dir="rtl">
+    <!-- Section Header: Calligraphic -->
+    <div class="mb-4 pb-3 border-b border-white/[0.04]">
+      <h3
+        class="font-arabic text-xl font-bold text-gold mb-0.5"
+        dir="rtl"
+      >
+        {{ section.title }}
+      </h3>
+      <p class="text-[10px] font-sans text-ink-dim tracking-[0.15em] uppercase">
+        {{ section.type }}
+      </p>
+    </div>
+
+    <!-- Dialogue Section -->
+    <template v-if="dialogueContent">
+      <div
+        v-for="(scene, sceneIdx) in dialogueContent.scenes"
+        :key="sceneIdx"
+        class="mb-4"
+      >
+        <p class="text-xs font-sans text-gold/70 mb-2 font-medium">
+          {{ scene.label }}
+        </p>
+        <div class="space-y-2">
+          <div
+            v-for="line in scene.lines"
+            :key="line.speaker"
+            class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
+          >
+            <p class="text-sm">
+              <span class="font-semibold text-ink">{{ line.speaker }}:</span>
+              <span
+                class="font-arabic text-ink"
+                dir="rtl"
+              > {{ line.arabic }}</span>
+              <span class="text-ink-dim text-xs"> — {{ line.english }}</span>
+            </p>
+            <button
+              class="mt-2 text-xs text-gold/70 hover:text-gold transition-colors flex items-center gap-1"
+              @click="handleTTS(line.arabic)"
+            >
+              <span class="ph ph-speaker text-sm" />
+              <span>Listen</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Vocabulary Section -->
+    <template v-if="vocabularyContent">
+      <div class="space-y-2">
+        <div
+          v-for="entry in vocabularyContent.entries"
+          :key="entry.word"
+          class="p-3 rounded-lg bg-studio-800 border border-white/[0.04] flex items-center justify-between"
+        >
+          <div>
+            <span class="font-arabic text-ink">{{ entry.arabic }}</span>
+            <span class="text-ink-dim text-xs ml-3">{{ entry.english }}</span>
+          </div>
+          <button
+            class="text-gold/70 hover:text-gold transition-colors"
+            @click="handleTTS(entry.arabic)"
+          >
+            <span class="ph ph-speaker text-sm" />
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Pronouns Section -->
+    <template v-if="pronounsContent">
+      <div class="space-y-2">
+        <div
+          v-for="entry in pronounsContent.entries"
+          :key="entry.pronoun"
+          class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-arabic text-ink">{{ entry.pronoun }}</span>
+              <span class="text-ink-dim text-xs ml-3">{{ entry.english }}</span>
+            </div>
+            <button
+              class="text-gold/70 hover:text-gold transition-colors"
+              @click="handleTTS(entry.pronoun)"
+            >
+              <span class="ph ph-speaker text-sm" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Expressions Section -->
+    <template v-if="expressionsContent">
+      <div class="space-y-2">
+        <div
+          v-for="expr in expressionsContent.entries"
+          :key="expr.arabic"
+          class="p-3 rounded-lg bg-studio-800 border border-white/[0.04] flex items-center justify-between"
+        >
+          <div>
+            <span class="font-arabic text-ink">{{ expr.arabic }}</span>
+            <span class="text-ink-dim text-xs ml-3">{{ expr.english }}</span>
+          </div>
+          <button
+            class="text-gold/70 hover:text-gold transition-colors"
+            @click="handleTTS(expr.arabic)"
+          >
+            <span class="ph ph-speaker text-sm" />
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Grammar Section -->
+    <template v-if="grammarContent">
+      <div class="space-y-4">
+        <div
+          v-for="rule in grammarContent.rules"
+          :key="rule.title"
+          class="p-4 rounded-lg bg-studio-800 border border-white/[0.04]"
+        >
+          <h4 class="text-sm font-semibold text-gold mb-2">
+            {{ rule.title }}
+          </h4>
+          <p class="text-sm text-ink mb-2">
+            {{ rule.explanation }}
+          </p>
+          <div class="space-y-1">
+            <div
+              v-for="ex in rule.examples"
+              :key="ex.arabic"
+              class="text-sm"
+            >
+              <span
+                class="font-arabic text-ink"
+                dir="rtl"
+              >{{ ex.arabic }}</span>
+              <span class="text-ink-dim text-xs"> — {{ ex.english }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Audio element (shared) -->
     <audio
       ref="audioRef"
       :src="audioUrl || undefined"
       class="hidden"
     />
-    <h3 class="section-title text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
-      {{ section.title }}
-    </h3>
-
-    <!-- Dialogue Section -->
-    <div
-      v-if="section.type === 'dialogue'"
-      class="dialogue-content"
-    >
-      <div
-        v-for="scene in dialogueContent?.scenes"
-        :key="scene.label"
-        class="scene mb-4"
-      >
-        <p class="scene-label text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-          {{ scene.label }}
-        </p>
-        <div
-          v-for="line in scene.lines"
-          :key="line.speaker"
-          class="line flex gap-3 items-start mb-2"
-          dir="rtl"
-        >
-          <span class="speaker font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ line.speaker }}:</span>
-          <div class="flex-1 space-y-1">
-            <span
-              class="arabic-text text-lg"
-              dir="rtl"
-            >{{ line.arabic }}</span>
-            <span class="english-text text-sm text-gray-500 dark:text-gray-400">{{ line.english }}</span>
-            <button
-              v-if="line.arabic"
-              class="tts-btn text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
-              :data-tts-text="line.arabic"
-              @click="handleTTS(line.arabic)"
-            >
-              🔊 Listen
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Vocabulary Section -->
-    <div
-      v-else-if="section.type === 'vocabulary'"
-      class="vocabulary-content"
-    >
-      <div
-        v-for="category in vocabularyContent?.categories"
-        :key="category.label"
-        class="vocab-category mb-4"
-      >
-        <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          {{ category.label }}
-        </h4>
-        <div
-          v-for="word in category.words"
-          :key="word.arabic"
-          class="vocab-word flex gap-3 items-center mb-2"
-          dir="rtl"
-        >
-          <span class="arabic text-lg font-medium">{{ word.arabic }}</span>
-          <span class="english text-sm text-gray-500 dark:text-gray-400">{{ word.english }}</span>
-          <span
-            v-if="word.plural"
-            class="text-xs text-gray-400 dark:text-gray-500"
-          >pl: {{ word.plural }}</span>
-          <button
-            class="tts-btn text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
-            :data-tts-text="word.arabic"
-            @click="handleTTS(word.arabic)"
-          >
-            🔊
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Pronouns Section -->
-    <div
-      v-else-if="section.type === 'pronouns'"
-      class="pronouns-content"
-    >
-      <table class="pronoun-table w-full border-collapse">
-        <thead>
-          <tr class="border-b border-gray-200 dark:border-gray-700">
-            <th class="text-left py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">
-              Arabic
-            </th>
-            <th class="text-left py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">
-              English
-            </th>
-            <th class="text-left py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">
-              Example
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="pronoun in pronounsContent?.pronouns"
-            :key="pronoun.arabic"
-            class="border-b border-gray-100 dark:border-gray-800"
-          >
-            <td
-              class="py-2 px-4 arabic-text"
-              dir="rtl"
-            >
-              {{ pronoun.arabic }}
-            </td>
-            <td class="py-2 px-4">
-              {{ pronoun.english }}
-            </td>
-            <td
-              class="py-2 px-4 arabic-text"
-              dir="rtl"
-            >
-              {{ pronoun.example }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Expressions Section -->
-    <div
-      v-else-if="section.type === 'expressions'"
-      class="expressions-content"
-    >
-      <div
-        v-for="expr in expressionsContent?.expressions"
-        :key="expr.arabic"
-        class="expression flex gap-3 items-center mb-2"
-        dir="rtl"
-      >
-        <span class="arabic text-lg font-medium">{{ expr.arabic }}</span>
-        <span class="english text-sm text-gray-500 dark:text-gray-400">{{ expr.english }}</span>
-        <button
-          class="tts-btn text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
-          :data-tts-text="expr.arabic"
-          @click="handleTTS(expr.arabic)"
-        >
-          🔊
-        </button>
-      </div>
-    </div>
-
-    <!-- Grammar Section -->
-    <div
-      v-else-if="section.type === 'grammar'"
-      class="grammar-content"
-    >
-      <div
-        v-for="topic in grammarContent?.topics"
-        :key="topic.name"
-        class="grammar-topic mb-4"
-      >
-        <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-1">
-          {{ topic.name }}
-        </h4>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-          {{ topic.description }}
-        </p>
-        <div
-          v-for="ex in topic.examples"
-          :key="ex.arabic"
-          class="grammar-example flex gap-3 items-center mb-1"
-          dir="rtl"
-        >
-          <span class="arabic text-lg font-medium">{{ ex.arabic }}</span>
-          <span class="english text-sm text-gray-500 dark:text-gray-400">{{ ex.english }}</span>
-          <button
-            class="tts-btn text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
-            :data-tts-text="ex.arabic"
-            @click="handleTTS(ex.arabic)"
-          >
-            🔊
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Unknown Section Type -->
-    <div
-      v-else
-      class="unknown-section"
-    >
-      <p class="text-red-500 dark:text-red-400">
-        Unknown section type: {{ unknownSectionType }}
-      </p>
-    </div>
   </div>
 </template>
 
@@ -243,7 +197,6 @@ onBeforeUnmount(() => {
 })
 
 // Type-safe narrowing: each computed returns the correctly-typed content for its section type.
-const unknownSectionType = computed<string>(() => props.section.type)
 
 const dialogueContent = computed<DialogueSectionContent | undefined>(() => {
   if (props.section.type === 'dialogue') return props.section.content as DialogueSectionContent

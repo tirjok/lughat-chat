@@ -38,23 +38,23 @@ describe('ModelStatusIndicator', () => {
       expect(wrapper.text()).toContain('Loading...')
     })
 
-    it('renders the loader indicator (orange dot) in loading state', () => {
+    it('renders the loader indicator (gold dot) in loading state', () => {
       const wrapper = mount(ModelStatusIndicator)
-      const dot = wrapper.find('span.bg-orange-500')
+      const dot = wrapper.find('span.bg-gold')
       expect(dot.exists()).toBe(true)
     })
 
-    it('does not render green or red dots in loading state', () => {
+    it('does not render success or error dots in loading state', () => {
       const wrapper = mount(ModelStatusIndicator)
-      const greenDot = wrapper.find('span.bg-green-500')
-      const redDot = wrapper.find('span.bg-red-500')
-      expect(greenDot.exists()).toBe(false)
-      expect(redDot.exists()).toBe(false)
+      const successDot = wrapper.find('span.bg-success')
+      const errorDot = wrapper.find('span.bg-error')
+      expect(successDot.exists()).toBe(false)
+      expect(errorDot.exists()).toBe(false)
     })
   })
 
   describe('ready state', () => {
-    it('renders green indicator dot and "Ready" text when model is loaded', () => {
+    it('renders success indicator dot and "Ready" text when model is loaded', () => {
       mockStatus.value = 'ready'
       const wrapper = mount(ModelStatusIndicator)
       expect(wrapper.text()).toContain('Ready')
@@ -63,17 +63,17 @@ describe('ModelStatusIndicator', () => {
     it('renders the green dot indicator element', () => {
       mockStatus.value = 'ready'
       const wrapper = mount(ModelStatusIndicator)
-      const dot = wrapper.find('span.bg-green-500')
+      const dot = wrapper.find('span.bg-success')
       expect(dot.exists()).toBe(true)
     })
 
-    it('does not render orange or red dots in ready state', () => {
+    it('does not render gold or error dots in ready state', () => {
       mockStatus.value = 'ready'
       const wrapper = mount(ModelStatusIndicator)
-      const orangeDot = wrapper.find('span.bg-orange-500')
-      const redDot = wrapper.find('span.bg-red-500')
-      expect(orangeDot.exists()).toBe(false)
-      expect(redDot.exists()).toBe(false)
+      const goldDot = wrapper.find('span.bg-gold')
+      const errorDot = wrapper.find('span.bg-error')
+      expect(goldDot.exists()).toBe(false)
+      expect(errorDot.exists()).toBe(false)
     })
   })
 
@@ -84,10 +84,10 @@ describe('ModelStatusIndicator', () => {
       expect(wrapper.text()).toContain('Retrying...')
     })
 
-    it('renders the orange dot with pulse animation in retrying state', () => {
+    it('renders the gold dot with pulse animation in retrying state', () => {
       mockStatus.value = 'retrying'
       const wrapper = mount(ModelStatusIndicator)
-      const dot = wrapper.find('span.bg-orange-500')
+      const dot = wrapper.find('span.bg-gold')
       expect(dot.exists()).toBe(true)
     })
 
@@ -98,18 +98,18 @@ describe('ModelStatusIndicator', () => {
       expect(root.attributes('title')).toContain('Retrying')
     })
 
-    it('does not render green or red dots in retrying state', () => {
+    it('does not render success or error dots in retrying state', () => {
       mockStatus.value = 'retrying'
       const wrapper = mount(ModelStatusIndicator)
-      const greenDot = wrapper.find('span.bg-green-500')
-      const redDot = wrapper.find('span.bg-red-500')
-      expect(greenDot.exists()).toBe(false)
-      expect(redDot.exists()).toBe(false)
+      const successDot = wrapper.find('span.bg-success')
+      const errorDot = wrapper.find('span.bg-error')
+      expect(successDot.exists()).toBe(false)
+      expect(errorDot.exists()).toBe(false)
     })
   })
 
   describe('error state', () => {
-    it('renders red indicator dot and "Error" text when model is not loaded', () => {
+    it('renders error indicator dot and "Error" text when model is not loaded', () => {
       mockStatus.value = 'error'
       const wrapper = mount(ModelStatusIndicator)
       expect(wrapper.text()).toContain('Error')
@@ -118,17 +118,17 @@ describe('ModelStatusIndicator', () => {
     it('renders the red dot indicator element', () => {
       mockStatus.value = 'error'
       const wrapper = mount(ModelStatusIndicator)
-      const dot = wrapper.find('span.bg-red-500')
+      const dot = wrapper.find('span.bg-error')
       expect(dot.exists()).toBe(true)
     })
 
-    it('does not render orange or green dots in error state', () => {
+    it('does not render gold or success dots in error state', () => {
       mockStatus.value = 'error'
       const wrapper = mount(ModelStatusIndicator)
-      const orangeDot = wrapper.find('span.bg-orange-500')
-      const greenDot = wrapper.find('span.bg-green-500')
-      expect(orangeDot.exists()).toBe(false)
-      expect(greenDot.exists()).toBe(false)
+      const goldDot = wrapper.find('span.bg-gold')
+      const successDot = wrapper.find('span.bg-success')
+      expect(goldDot.exists()).toBe(false)
+      expect(successDot.exists()).toBe(false)
     })
   })
 
@@ -137,14 +137,14 @@ describe('ModelStatusIndicator', () => {
       mockStatus.value = 'ready'
       const wrapper = mount(ModelStatusIndicator)
       expect(wrapper.text()).toContain('Ready')
-      expect(wrapper.find('span.bg-green-500').exists()).toBe(true)
+      expect(wrapper.find('span.bg-success').exists()).toBe(true)
     })
 
     it('shows correct state when mounted in error state', () => {
       mockStatus.value = 'error'
       const wrapper = mount(ModelStatusIndicator)
       expect(wrapper.text()).toContain('Error')
-      expect(wrapper.find('span.bg-red-500').exists()).toBe(true)
+      expect(wrapper.find('span.bg-error').exists()).toBe(true)
     })
   })
 

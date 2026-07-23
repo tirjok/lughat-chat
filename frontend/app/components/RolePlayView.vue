@@ -9,16 +9,16 @@ const { content } = defineProps<{
 
 <template>
   <div class="space-y-3">
-    <p class="text-gray-900 dark:text-white">
+    <p class="text-ink">
       {{ content.scenario }}
     </p>
     <ul class="space-y-1">
       <li
         v-for="element in content.expected_elements"
         :key="element"
-        class="text-sm text-gray-600 dark:text-gray-400"
+        class="text-sm text-ink-dim"
       >
-        • {{ element }}
+        <span class="text-gold">•</span> {{ element }}
       </li>
     </ul>
   </div>

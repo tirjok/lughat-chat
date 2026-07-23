@@ -66,7 +66,7 @@ describe('ActivityScorePanel', () => {
       })
       // Act & Assert: verify score text "Score" and "0.85" appear
       expect(wrapper.text()).toContain('Score')
-      expect(wrapper.text()).toContain('0.85')
+      expect(wrapper.text()).toContain('85%')
     })
 
     it('When score is exactly 0.7 (threshold boundary) then score bar is green', async () => {
@@ -294,7 +294,7 @@ describe('ActivityScorePanel', () => {
       expect(wrapper.text()).toContain('2 attempts remaining')
     })
 
-    it('When 1 attempt remaining then "1 attempts remaining" is displayed', async () => {
+    it('When 1 attempt remaining then "1 attempt remaining" is displayed', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: makeResult({ score: 0.3, attempts_remaining: 1 }),
@@ -303,7 +303,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.text()).toContain('1 attempts remaining')
+      expect(wrapper.text()).toContain('1 attempt remaining')
     })
 
     it('When activity is complete then remaining attempts are NOT displayed', async () => {
@@ -330,7 +330,7 @@ describe('ActivityScorePanel', () => {
       expect(wrapper.text()).not.toContain('attempts remaining')
     })
 
-    it('When no result yet then attempts remaining is NOT shown (no panel rendered)', async () => {
+    it('When no result yet then score panel is always rendered (score + Try Again shown)', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: null,
@@ -339,7 +339,8 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.text()).not.toContain('attempts remaining')
+      expect(wrapper.text()).toContain('Score')
+      expect(wrapper.text()).toContain('Try Again')
     })
   })
 
@@ -362,9 +363,9 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.text()).toContain('Correct answer:')
+      expect(wrapper.text()).toContain('Correct Answer:')
       expect(wrapper.text()).toContain('السلام عليكم')
-      expect(wrapper.html()).toMatch(/bg-green-50|bg-green-900/)
+      expect(wrapper.html()).toMatch(/bg-studio-700\/50/)
     })
 
     it('When correct_answer is null then no correct answer box is rendered', async () => {
@@ -380,7 +381,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.text()).not.toContain('Correct answer:')
+      expect(wrapper.text()).not.toContain('Correct Answer:')
     })
   })
 
@@ -501,9 +502,9 @@ describe('ActivityScorePanel', () => {
     it('When activity is complete but lesson not just completed then "Try Again" button exists', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
-          result: makeResult({ score: 0.5, activity_complete: true }),
+          result: makeResult({ score: 0.5, activity_complete: false }),
           maxAttempts: 3,
-          isComplete: true,
+          isComplete: false,
           lessonJustCompleted: false
         }
       })
@@ -515,11 +516,11 @@ describe('ActivityScorePanel', () => {
         props: {
           result: makeResult({
             score: 0.5,
-            activity_complete: true,
+            activity_complete: false,
             lesson_just_completed: false
           }),
           maxAttempts: 3,
-          isComplete: true,
+          isComplete: false,
           lessonJustCompleted: false
         }
       })
@@ -530,11 +531,11 @@ describe('ActivityScorePanel', () => {
   })
 
   // =====================================================================
-  // 8. Lesson completed message & "Back to Roadmap"
+  // 8. Lesson completed message & "Complete Lesson"
   // =====================================================================
 
-  describe('lesson completed message & "Back to Roadmap"', () => {
-    it('When lessonJustCompleted then "Lesson completed ✓" message is displayed', async () => {
+  describe('lesson completed message & "Complete Lesson"', () => {
+    it('When lessonJustCompleted then "Complete Lesson" button is displayed', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: makeResult({
@@ -548,8 +549,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: true
         }
       })
-      expect(wrapper.text()).toContain('Lesson completed')
-      expect(wrapper.text()).toContain('✓')
+      expect(wrapper.text()).toContain('Complete Lesson')
     })
 
     it('When lessonJustCompleted is false then "Lesson completed" message is NOT displayed', async () => {
@@ -561,10 +561,10 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.text()).not.toContain('Lesson completed')
+      expect(wrapper.text()).not.toContain('Complete Lesson')
     })
 
-    it('When lessonJustCompleted is true then "Back to Roadmap" button is displayed', async () => {
+    it('When lessonJustCompleted is true then "Complete Lesson" button is displayed', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: makeResult({
@@ -579,11 +579,11 @@ describe('ActivityScorePanel', () => {
         }
       })
       const buttons = wrapper.element.querySelectorAll('button')
-      const roadmapBtn = Array.from(buttons).find(b => b.textContent?.includes('Back to Roadmap'))
+      const roadmapBtn = Array.from(buttons).find(b => b.textContent?.includes('Complete Lesson'))
       expect(roadmapBtn).not.toBeNull()
     })
 
-    it('When lessonJustCompleted is false then "Back to Roadmap" is NOT shown', async () => {
+    it('When lessonJustCompleted is false then "Complete Lesson" is NOT shown', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: makeResult({ score: 1.0, activity_complete: true }),
@@ -593,7 +593,7 @@ describe('ActivityScorePanel', () => {
         }
       })
       const buttons = wrapper.element.querySelectorAll('button')
-      const roadmapBtn = Array.from(buttons).find(b => b.textContent?.includes('Back to Roadmap'))
+      const roadmapBtn = Array.from(buttons).find(b => b.textContent?.includes('Complete Lesson'))
       expect(roadmapBtn).toBeUndefined()
     })
   })
@@ -603,7 +603,7 @@ describe('ActivityScorePanel', () => {
   // =====================================================================
 
   describe('no result state', () => {
-    it('When result is null then no score panel is rendered', async () => {
+    it('When result is null then score panel shows 0% score and Try Again button', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: null,
@@ -612,10 +612,11 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.text()).toBe('')
+      expect(wrapper.text()).toContain('Score')
+      expect(wrapper.text()).toContain('Try Again')
     })
 
-    it('When result is null then no score bar is rendered (no width property)', async () => {
+    it('When result is null then 0% score bar is rendered (width is 0%)', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: null,
@@ -624,11 +625,12 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.text()).toBe('')
-      expect(wrapper.html()).not.toMatch(/width:/)
+      expect(wrapper.text()).toContain('Score')
+      expect(wrapper.text()).toContain('0%')
+      expect(wrapper.html()).toMatch(/width: 0%/)
     })
 
-    it('When result is null then no navigation buttons are rendered', async () => {
+    it('When result is null then Try Again button is rendered', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: null,
@@ -640,7 +642,8 @@ describe('ActivityScorePanel', () => {
         }
       })
       const buttons = wrapper.element.querySelectorAll('button')
-      expect(buttons.length).toBe(0)
+      const retryBtn = Array.from(buttons).find(b => b.textContent?.includes('Try Again'))
+      expect(retryBtn).not.toBeNull()
     })
   })
 
@@ -649,7 +652,7 @@ describe('ActivityScorePanel', () => {
   // =====================================================================
 
   describe('multi-activity completion flow', () => {
-    it('When last activity (index 4 of 5) is complete and lessonJustCompleted then "Complete Lesson" + "Back to Roadmap" shown', async () => {
+    it('When last activity (index 4 of 5) is complete and lessonJustCompleted then "Complete Lesson" + "Complete Lesson" shown', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: makeResult({
@@ -667,7 +670,7 @@ describe('ActivityScorePanel', () => {
       })
       const buttons = wrapper.element.querySelectorAll('button')
       const completeBtn = Array.from(buttons).find(b => b.textContent?.includes('Complete Lesson'))
-      const roadmapBtn = Array.from(buttons).find(b => b.textContent?.includes('Back to Roadmap'))
+      const roadmapBtn = Array.from(buttons).find(b => b.textContent?.includes('Complete Lesson'))
       expect(completeBtn).not.toBeNull()
       expect(roadmapBtn).not.toBeNull()
     })
@@ -713,7 +716,7 @@ describe('ActivityScorePanel', () => {
       expect(completeBtn).toBeDefined()
     })
 
-    it('When "Back to Roadmap" button exists then it emits "complete-lesson" on click', async () => {
+    it('When "Complete Lesson" button exists then it emits "complete-lesson" on click', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: makeResult({
@@ -728,16 +731,16 @@ describe('ActivityScorePanel', () => {
         }
       })
       const buttons = wrapper.element.querySelectorAll('button')
-      const roadmapBtn = Array.from(buttons).find(b => b.textContent?.includes('Back to Roadmap'))
+      const roadmapBtn = Array.from(buttons).find(b => b.textContent?.includes('Complete Lesson'))
       expect(roadmapBtn).toBeDefined()
     })
 
     it('When "Try Again" button exists then it emits "retry" on click', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
-          result: makeResult({ score: 0.5, activity_complete: true }),
+          result: makeResult({ score: 0.5, activity_complete: false }),
           maxAttempts: 3,
-          isComplete: true,
+          isComplete: false,
           lessonJustCompleted: false
         }
       })

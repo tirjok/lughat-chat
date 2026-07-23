@@ -16,14 +16,22 @@ export default defineConfig({
     },
     colors: {
       studio: {
-        900: '#121212',
-        800: '#1A1A1A',
-        700: '#333333'
+        900: '#0C0A09',
+        800: '#1A1714',
+        700: '#221F1B',
+        600: '#2A2622'
       },
-      sunrise: {
-        orange: '#FF512F',
-        magenta: '#DD2476'
-      }
+      gold: {
+        DEFAULT: '#C8A45C',
+        dim: 'rgba(200, 164, 92, 0.15)',
+        glow: 'rgba(200, 164, 92, 0.3)'
+      },
+      ink: {
+        DEFAULT: '#E8E0D4',
+        dim: '#8A7E72'
+      },
+      success: '#5CB87A',
+      error: '#B85C38'
     },
     // Match Tailwind CSS v3 (sample design) shadow values exactly
     // UnoCSS presetWind3 uses slightly different values for shadow-2xl
@@ -52,15 +60,14 @@ export default defineConfig({
     })
   ],
   shortcuts: {
-    'btn': 'px-4 py-2 rounded font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors',
-    'card': 'rounded-lg border p-4 shadow-sm bg-white dark:bg-gray-800',
+    'btn': 'px-4 py-2 rounded font-semibold text-sm tracking-wide bg-gold text-studio-900 hover:bg-gold/90 transition-colors active:scale-[0.98]',
+    'card': 'rounded-lg border border-white/[0.04] bg-studio-800',
     'flex-center': 'flex items-center justify-center',
     'flex-between': 'flex items-center justify-between'
   },
   rules: [
-    // Custom text gradient utility
-    ['text-gradient', {
-      'background': 'linear-gradient(to right, #3b82f6, #8b5cf6)',
+    ['text-gold-gradient', {
+      'background': 'linear-gradient(to right, #C8A45C, #E8C878)',
       '-webkit-background-clip': 'text',
       '-webkit-text-fill-color': 'transparent'
     }]

@@ -22,13 +22,12 @@ const activeElement = useActiveElement()
   left: 0;
   right: 0;
   height: 100px;
-  background: radial-gradient(ellipse at center, rgba(255, 81, 47, 0.15) 0%, rgba(221, 36, 118, 0.05) 50%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(200, 164, 92, 0.12) 0%, transparent 70%);
   opacity: 0;
   transition: opacity 700ms var(--ease-spring);
   pointer-events: none;
   z-index: 0;
 }
-
 .canvas-halo.active {
   opacity: 1;
 }

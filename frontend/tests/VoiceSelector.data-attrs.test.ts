@@ -102,7 +102,7 @@ describe('VoiceSelector data attributes', () => {
     await nextTick()
 
     // Aisha and Laila are orange, Tariq is magenta
-    expect(document.querySelector('[data-color="text-sunrise-orange"]')).not.toBeNull()
-    expect(document.querySelector('[data-color="text-sunrise-magenta"]')).not.toBeNull()
+    expect(document.querySelector('[data-color="text-gold"]')).not.toBeNull()
+    expect(document.querySelector('[data-color="text-ink-dim"]')).not.toBeNull()
   })
 })

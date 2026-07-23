@@ -8,17 +8,17 @@ const { content } = defineProps<{
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div class="space-y-2">
     <div
       v-for="(character, idx) in content.characters"
       :key="idx"
-      class="p-3 rounded bg-gray-50 dark:bg-gray-700"
+      class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
     >
-      <p class="font-medium text-gray-900 dark:text-white">
+      <p class="font-arabic text-ink">
+        {{ character.arabic }}
+      </p>
+      <p class="text-sm text-ink-dim">
         {{ character.name }}
-        <span class="text-sm text-gray-500 dark:text-gray-400">
-          ({{ character.arabic }})
-        </span>
       </p>
     </div>
   </div>

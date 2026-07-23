@@ -57,23 +57,24 @@ const simpleEntries = computed<DialogueSceneFlat[]>(() => {
     <div
       v-for="(scene, sceneIdx) in structuredScenes"
       :key="sceneIdx"
-      class="p-3 rounded bg-gray-50 dark:bg-gray-700"
+      class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
     >
-      <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <p class="text-xs font-sans text-gold/70 mb-2 font-medium">
         {{ scene.label }}
       </p>
-      <div class="space-y-1">
-        <p
+      <div class="space-y-2">
+        <div
           v-for="line in scene.lines"
           :key="line.speaker"
-          class="text-gray-900 dark:text-white"
+          class="text-ink"
         >
-          <span class="font-medium">{{ line.speaker }}:</span>
-          <span class="arabic-text">{{ line.arabic }}</span>
-          <span class="english-text text-gray-500 dark:text-gray-400">
-            — {{ line.english }}
-          </span>
-        </p>
+          <span class="font-semibold text-ink">{{ line.speaker }}:</span>
+          <span
+            class="font-arabic"
+            dir="rtl"
+          > {{ line.arabic }}</span>
+          <span class="text-ink-dim text-xs"> — {{ line.english }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -86,9 +87,12 @@ const simpleEntries = computed<DialogueSceneFlat[]>(() => {
     <div
       v-for="entry in simpleEntries"
       :key="entry.arabic"
-      class="p-2 rounded bg-gray-50 dark:bg-gray-700"
+      class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
     >
-      <p class="arabic-text text-gray-900 dark:text-white">
+      <p
+        class="font-arabic text-ink"
+        dir="rtl"
+      >
         {{ entry.arabic }}
       </p>
     </div>

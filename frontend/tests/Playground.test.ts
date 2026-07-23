@@ -300,10 +300,10 @@ describe('Playground (playground.vue) — TTS Studio', () => {
   // ─── SEO Metadata (Slice 1) ─────────────────────────────────────────
 
   describe('SEO metadata', () => {
-    it('When rendered then page content contains "Lughat Chat Studio" (TTS Studio heading)', async () => {
+    it('When rendered then page content contains Arabic studio heading', async () => {
       const wrapper = await mountSuspended(Playground)
       const html = wrapper.html()
-      expect(html).toContain('Lughat Chat Studio')
+      expect(html).toContain('استوديو نطق')
     })
 
     it('When rendered then page contains "Text-to-Speech" description', async () => {
@@ -330,8 +330,7 @@ describe('Playground (playground.vue) — TTS Studio', () => {
 
     it('When on /playground then the page renders the full TTS Studio', async () => {
       const wrapper = await mountSuspended(Playground)
-      const html = wrapper.html()
-      expect(html).toContain('Lughat Chat Studio')
+      expect(wrapper.html()).toContain('استوديو نطق')
     })
 
     it('When rendered then all 7 composables are wired (mocked)', async () => {
@@ -374,7 +373,7 @@ describe('Playground (playground.vue) — TTS Studio', () => {
       mockLessonsError.value = null
       const wrapper = await mountSuspended(Dashboard)
       const html = wrapper.html()
-      expect(html).not.toContain('Lughat Chat Studio')
+      expect(html).not.toContain('استوديو نطق')
       expect(html).not.toContain('Generate Speech')
       expect(html).not.toContain('tts-page')
     })

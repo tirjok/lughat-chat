@@ -29,7 +29,7 @@ function updateSliderFill() {
   const max = parseFloat(el.max)
   const val = clampedValue.value
   const percentage = ((val - min) / (max - min)) * 100
-  el.style.background = `linear-gradient(to right, #DD2476, #FF512F ${percentage}%, #2A2A2A ${percentage}%, #2A2A2A 100%)`
+  el.style.background = `linear-gradient(to right, #C8A45C ${percentage}%, #2A2622 ${percentage}%, #2A2622 100%)`
 }
 
 watch(clampedValue, updateSliderFill, { immediate: true })

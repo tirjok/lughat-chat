@@ -31,58 +31,46 @@ function tooltipText(): string {
 </script>
 
 <template>
-  <!-- Outer Shell: subtle background + hairline ring -->
   <div
-    class="flex items-center gap-2 rounded-full ring-1 ring-white/[0.06] px-2.5 py-1 bg-white/[0.02]"
+    class="flex items-center gap-2 rounded-full px-2.5 py-1 bg-studio-900/50"
     :title="tooltipText()"
   >
-    <!-- Inner Core -->
-    <div
-      class="flex items-center gap-2 rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] px-3 py-1.5"
-    >
-      <!-- Loading state: pulsing orange dot -->
+    <!-- Inner Core — gold ring -->
+    <div class="flex items-center gap-2 rounded-full bg-studio-800 px-3 py-1.5">
+      <!-- Status dot -->
       <span
         v-if="health.status === 'loading'"
         aria-hidden="true"
-        class="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse"
+        class="w-2 h-2 rounded-full bg-gold shadow-[0_0_8px_#C8A45C] animate-pulse"
       />
-
-      <!-- Ready state: green dot with glow -->
       <span
         v-else-if="health.modelLoaded"
         aria-hidden="true"
-        class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"
+        class="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_#5CB87A]"
       />
-
-      <!-- Retrying state: orange dot with slow pulse (same as loading) -->
       <span
         v-else-if="health.status === 'retrying'"
         aria-hidden="true"
-        class="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse"
+        class="w-2 h-2 rounded-full bg-gold shadow-[0_0_8px_#C8A45C] animate-pulse"
       />
-
-      <!-- Error state: red dot -->
       <span
         v-else
         aria-hidden="true"
-        class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"
+        class="w-2 h-2 rounded-full bg-error shadow-[0_0_8px_#B85C38]"
       />
 
-      <span class="text-xs font-medium text-gray-300">
+      <span class="text-xs font-medium text-ink-dim">
         {{ displayText() }}
       </span>
 
-      <!-- Manual retry button: visible in retrying and error states -->
+      <!-- Retry button -->
       <button
         v-if="health.status === 'retrying' || health.status === 'error'"
         aria-label="Retry health check"
-        class="rounded-full bg-studio-900 text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] cursor-pointer active:scale-95"
+        class="rounded-full bg-studio-900 text-ink-dim hover:text-gold transition-colors cursor-pointer active:scale-95"
         @click="health.retry"
       >
-        <span
-          aria-hidden="true"
-          class="ph ph-arrow-counter-clockwise text-sm"
-        />
+        <span class="ph ph-arrow-counter-clockwise text-sm" />
       </button>
     </div>
   </div>

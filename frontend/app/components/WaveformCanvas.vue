@@ -76,17 +76,16 @@ function drawWaveform() {
     const y = centerY - (height / 2)
 
     const ratio = bar.currentHeight
-    const r = Math.round(221 + (255 - 221) * ratio)
-    const g = Math.round(36 + (81 - 36) * ratio)
-    const b = Math.round(118 + (47 - 118) * ratio)
+    // Gold gradient: dark gold to bright gold
+    const r = Math.round(160 + (200 - 160) * ratio)
+    const g = Math.round(120 + (164 - 120) * ratio)
+    const b = Math.round(60 + (92 - 60) * ratio)
 
     // Color bars differently based on whether they've been played
     if (barProgress <= progress) {
-      // Played portion: orange-to-magenta gradient
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
     } else {
-      // Unplayed portion: dim gray
-      ctx.fillStyle = 'rgba(100, 100, 100, 0.3)'
+      ctx.fillStyle = 'rgba(138, 126, 114, 0.2)'
     }
 
     ctx.beginPath()

@@ -36,6 +36,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'next-activity': []
   'complete-lesson': []
+  'retry': []
 }>()
 
 // ---------------------------------------------------------------------------
@@ -46,7 +47,6 @@ const {
   isSubmitting,
   result,
   error,
-  maxAttempts,
   isMaxAttemptsReached,
   submitAnswer,
   clearResults
@@ -65,8 +65,6 @@ const MAX_ANSWER_LENGTH = 1000
 // ---------------------------------------------------------------------------
 // Derived state
 // ---------------------------------------------------------------------------
-
-const activityType = computed<string>(() => props.activity.type)
 
 const listenTranslateContent = computed<ListenTranslateActivityContent | undefined>(() => {
   if (props.activity.type !== 'listen-translate') return undefined
@@ -94,6 +92,12 @@ const rolePlayContent = computed<RolePlayActivityContent | undefined>(() => {
   const content = props.activity.content
   if (!isRolePlayContent(content)) return undefined
   return content
+})
+
+// Inline correct answer: shown when max attempts are reached.
+const inlineCorrectAnswer = computed<string | null>(() => {
+  if (!isMaxAttemptsReached.value || !result.value) return null
+  return result.value.correct_answer ?? null
 })
 
 // ---------------------------------------------------------------------------
@@ -130,12 +134,8 @@ function handleKeyDown(event: KeyboardEvent): void {
   }
 }
 
-function handleNextActivity(): void {
-  emit('next-activity')
-}
-
-function handleCompleteLesson(): void {
-  emit('complete-lesson')
+function handleRetry(): void {
+  resetSubmission()
 }
 
 function resetSubmission(): void {
@@ -147,50 +147,48 @@ function resetSubmission(): void {
 
 <template>
   <div
-    class="activity-renderer card"
+    class="activity-renderer rounded-lg border border-white/[0.04] bg-studio-800 p-4"
     dir="rtl"
   >
     <!-- Activity header -->
-    <div class="flex-between mb-3">
-      <h3 class="font-semibold text-gray-900 dark:text-white">
+    <div class="mb-3">
+      <h4 class="font-sans font-semibold text-ink text-base">
         {{ activity.title }}
-      </h3>
+      </h4>
+      <p class="text-xs text-ink-dim mt-1">
+        {{ activity.description }}
+      </p>
     </div>
-
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
-      {{ activity.description }}
-    </p>
 
     <!-- Error display -->
     <div
       v-if="error"
-      class="mb-3 p-3 rounded bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800"
+      class="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error mb-3"
     >
-      <p class="text-sm text-red-700 dark:text-red-300">
-        {{ error.message }}
-      </p>
+      {{ error }}
     </div>
 
-    <!-- Inline error (empty answer) — shown without API call -->
+    <!-- Inline error (empty answer) -->
     <div
       v-if="inlineError"
-      class="mb-3 p-2 rounded bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800"
+      class="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error mb-3"
     >
-      <p class="text-sm text-yellow-700 dark:text-yellow-300">
-        {{ inlineError }}
-      </p>
+      {{ inlineError }}
     </div>
 
-    <!-- Inline correct answer (max attempts reached) — shown without API call -->
+    <!-- Inline correct answer (max attempts reached) -->
     <div
-      v-if="isMaxAttemptsReached && result?.correct_answer"
-      class="mb-3 p-3 rounded bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800"
+      v-if="inlineCorrectAnswer"
+      class="p-3 rounded-lg bg-studio-700/50 border border-white/[0.04] mb-3"
     >
-      <p class="text-sm font-medium text-green-700 dark:text-green-300">
-        Correct answer:
+      <p class="text-xs text-ink-dim mb-1">
+        Correct Answer:
       </p>
-      <p class="text-sm text-green-800 dark:text-green-200">
-        {{ result.correct_answer }}
+      <p
+        class="text-sm text-ink font-arabic"
+        dir="rtl"
+      >
+        {{ inlineCorrectAnswer }}
       </p>
     </div>
 
@@ -199,17 +197,18 @@ function resetSubmission(): void {
       <ListenTranslateView :content="listenTranslateContent" />
       <ActivityForm
         v-model="userAnswer"
-        placeholder="Type your translation here..."
-        :disabled="isMaxAttemptsReached || (result?.activity_complete ?? false)"
+        dir="rtl"
+        :disabled="isMaxAttemptsReached"
         :is-submitting="isSubmitting"
+        placeholder="Type your translation here..."
         @submit="handleAnswerSubmitted"
         @keydown="handleKeyDown"
       >
         <template #label>
-          Translate this to English:
+          Translate to English
         </template>
         <template #buttonText>
-          Submit Answer
+          Submit Translation
         </template>
       </ActivityForm>
     </template>
@@ -218,23 +217,22 @@ function resetSubmission(): void {
     <template v-else-if="translateContent">
       <TranslateView
         :content="translateContent"
-        :activity-type="activityType"
+        :activity-type="activity.type"
       />
       <ActivityForm
         v-model="userAnswer"
-        :placeholder="activityType === 'translate-to-arabic' ? 'اكتب ترجمتك هنا...' : 'Type your translation here...'"
-        :dir="activityType === 'translate-to-arabic' ? 'rtl' : 'ltr'"
-        :disabled="isMaxAttemptsReached || (result?.activity_complete ?? false)"
+        :dir="activity.type === 'translate-to-arabic' ? 'rtl' : 'ltr'"
+        :disabled="isMaxAttemptsReached"
         :is-submitting="isSubmitting"
+        :placeholder="activity.type === 'translate-to-arabic' ? 'اكتب الترجمة بالعربية...' : 'Type your translation...'"
         @submit="handleAnswerSubmitted"
         @keydown="handleKeyDown"
       >
         <template #label>
-          <span v-if="activityType === 'translate-to-english'">Translate to English:</span>
-          <span v-else>Translate to Arabic:</span>
+          {{ activity.type === 'translate-to-arabic' ? 'Translate to Arabic' : 'Translate to English' }}
         </template>
         <template #buttonText>
-          Submit Answer
+          Submit Translation
         </template>
       </ActivityForm>
     </template>
@@ -244,15 +242,15 @@ function resetSubmission(): void {
       <IntroduceCharactersView :content="introduceCharactersContent" />
       <ActivityForm
         v-model="userAnswer"
-        placeholder="اكتب مقدمة الشخصية..."
         dir="rtl"
-        :disabled="isMaxAttemptsReached || (result?.activity_complete ?? false)"
+        :disabled="isMaxAttemptsReached"
         :is-submitting="isSubmitting"
+        placeholder="Write an introduction sentence..."
         @submit="handleAnswerSubmitted"
         @keydown="handleKeyDown"
       >
         <template #label>
-          Introduce this character in Arabic:
+          Introduce Characters
         </template>
         <template #buttonText>
           Submit Answer
@@ -265,17 +263,18 @@ function resetSubmission(): void {
       <RolePlayView :content="rolePlayContent" />
       <ActivityForm
         v-model="userAnswer"
-        placeholder="Type your response..."
-        :disabled="isMaxAttemptsReached || (result?.activity_complete ?? false)"
+        dir="rtl"
+        :disabled="isMaxAttemptsReached"
         :is-submitting="isSubmitting"
+        placeholder="Write your response..."
         @submit="handleAnswerSubmitted"
         @keydown="handleKeyDown"
       >
         <template #label>
-          Complete the dialogue:
+          Role-Play Response
         </template>
         <template #buttonText>
-          Submit Answer
+          Submit Response
         </template>
       </ActivityForm>
     </template>
@@ -283,14 +282,14 @@ function resetSubmission(): void {
     <!-- Score display (shown after submission) -->
     <ActivityScorePanel
       :result="result"
-      :max-attempts="maxAttempts"
-      :is-complete="result?.activity_complete ?? false"
+      :max-attempts="activity.max_attempts"
+      :is-complete="isMaxAttemptsReached"
       :lesson-just-completed="result?.lesson_just_completed ?? false"
       :total-activities="totalActivities"
       :activity-index="activityIndex"
-      @next-activity="handleNextActivity"
-      @complete-lesson="handleCompleteLesson"
-      @retry="resetSubmission"
+      @next-activity="emit('next-activity')"
+      @complete-lesson="emit('complete-lesson')"
+      @retry="handleRetry"
     />
   </div>
 </template>

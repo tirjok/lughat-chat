@@ -68,15 +68,15 @@ describe('VoiceSelector', () => {
     it('When no voice selected then label and icon are rendered', () => {
       const wrapper = getVoiceSelectorWrapper()
       const html = wrapper.html()
-      expect(html).toContain('Voice Model')
-      expect(html).toContain('ph-user-sound')
+      expect(html).toContain('ph-waves')
+      expect(html).toContain('Aisha')
     })
 
     it('When voice selected then trigger shows selected voice icon with color', () => {
       const wrapper = getVoiceSelectorWrapper({ modelValue: 'aisha' })
       const html = wrapper.html()
       expect(html).toContain('ph-waves')
-      expect(html).toContain('text-sunrise-orange')
+      expect(html).toContain('text-gold')
     })
   })
 

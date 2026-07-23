@@ -137,7 +137,7 @@ describe('Dashboard (index.vue)', () => {
       const wrapper = await mountSuspended(Dashboard)
       const cards = wrapper.findAll('.dashboard-lesson-card')
       const card = cards[0]
-      expect(card.classes()).toContain('opacity-50')
+      expect(card.classes()).toContain('opacity-40')
     })
   })
 })

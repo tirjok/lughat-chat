@@ -33,7 +33,7 @@ describe('NavBar — interactions and routing', () => {
       // Find the Roadmap link by its text content (not the logo link)
       const allLinks = wrapper.findAll('a')
       const roadmapLinkEl = allLinks.find(link => link.text().includes('Roadmap'))
-      expect(roadmapLinkEl?.classes()).toContain('active')
+      expect(roadmapLinkEl?.classes()).toContain('text-gold')
     })
 
     it('When on "/playground" then Playground link is highlighted as active', async () => {
@@ -44,7 +44,7 @@ describe('NavBar — interactions and routing', () => {
       })
       const allLinks = wrapper.findAll('a')
       const playgroundLinkEl = allLinks.find(link => link.text().includes('Playground'))
-      expect(playgroundLinkEl?.classes()).toContain('active')
+      expect(playgroundLinkEl?.classes()).toContain('text-gold')
     })
 
     it('When on "/" then Playground link is NOT highlighted', async () => {
@@ -65,7 +65,7 @@ describe('NavBar — interactions and routing', () => {
       })
       const allLinks = wrapper.findAll('a')
       const roadmapLinkEl = allLinks.find(link => link.text().includes('Roadmap'))
-      expect(roadmapLinkEl?.classes()).not.toContain('active')
+      expect(roadmapLinkEl?.classes()).not.toContain('text-gold')
     })
   })
 
@@ -87,8 +87,7 @@ describe('NavBar — interactions and routing', () => {
         attachTo: document.body
       })
       const nav = wrapper.find('nav')
-      const navClasses = nav.classes().join(' ')
-      expect(navClasses).toContain('rtl')
+      expect(nav.attributes('dir')).toBe('rtl')
     })
   })
 
@@ -136,19 +135,16 @@ describe('NavBar — interactions and routing', () => {
       expect(playgroundLink.attributes('href')).toBe('/playground')
     })
   })
-
   // ── Mobile responsive layout ──────────────────────────────────────
 
-  describe('mobile responsive layout', () => {
-    it('When viewport is < 768px then nav bar uses compact mobile styles', async () => {
-      registerEndpoint('/api/lessons', () => [])
-      const wrapper = await mountSuspended(NavBar, {
-        attachTo: document.body
-      })
-      const nav = wrapper.find('nav')
-      const navClasses = nav.classes().join(' ')
-      // UnoCSS processes responsive utilities into classes containing the breakpoint prefix
-      expect(navClasses).toContain('md:')
+  it('When viewport is < 768px then nav bar uses compact mobile styles', async () => {
+    registerEndpoint('/api/lessons', () => [])
+    const wrapper = await mountSuspended(NavBar, {
+      attachTo: document.body
     })
+    const nav = wrapper.find('nav')
+    const navClasses = nav.classes().join(' ')
+    // Compact NavBar uses fixed height (no responsive breakpoint)
+    expect(navClasses).toContain('h-[56px]')
   })
 })

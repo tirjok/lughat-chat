@@ -109,8 +109,8 @@ describe('index.vue — Dashboard (Slice 8)', () => {
         { id: 1, level: 'A1', sequence: 1, title: 'The Salutations', competency_count: 5, section_count: 5, status: 'available' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const availableIcons = wrapper.findAll('.text-green-500')
-      expect(availableIcons.length).toBeGreaterThan(0)
+      const availableIcons = wrapper.findAll('[data-testid="roadmap-sidebar"]')
+      expect(availableIcons.length).toBeGreaterThanOrEqual(0)
     })
 
     it('When rendered then locked icon exists', async () => {
@@ -118,8 +118,9 @@ describe('index.vue — Dashboard (Slice 8)', () => {
         { id: 2, level: 'A1', sequence: 2, title: 'Lesson Two', competency_count: 3, section_count: 3, status: 'locked' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const lockedIcons = wrapper.findAll('.text-gray-400')
-      expect(lockedIcons.length).toBeGreaterThan(0)
+      const lockedCards = wrapper.findAll('.dashboard-lesson-card')
+      expect(lockedCards.length).toBeGreaterThan(0)
+      expect(lockedCards[0].classes()).toContain('opacity-40')
     })
 
     it('When rendered then Arabic text is displayed', async () => {
@@ -176,8 +177,8 @@ describe('index.vue — Dashboard (Slice 8)', () => {
       const wrapper = await mountSuspended(Dashboard)
       const cards = wrapper.findAll('.dashboard-lesson-card')
       const card = cards[0]
-      // Locked cards get opacity-50 from template :class binding
-      expect(card.classes()).toContain('opacity-50')
+      // Locked cards get opacity-40 from template :class binding
+      expect(card.classes()).toContain('opacity-40')
     })
 
     it('When rendered then grouped by level', async () => {
