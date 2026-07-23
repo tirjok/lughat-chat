@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// Full-page TTS Studio — "Manuscript Dark" theme
-// Two-panel layout: Left (Control Deck) + Right (Canvas)
-// Mobile: both panels stacked (canvas top, controls bottom)
+// Full-page TTS Studio — "Ethereal Glass" redesign
+// Bento grid layout: Control Deck + Canvas as nested Double-Bezel cards
+// Mobile: stacked with touch-draggable divider
 import MobileStatusIndicator from '../components/MobileStatusIndicator.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { usePanelToggle } from '../composables/usePanelToggle'
@@ -106,7 +106,7 @@ onUnmounted(() => dispose())
 
 <template>
   <div
-    class="tts-page min-h-screen bg-[#0C0A09] dark:bg-[#0C0A09]"
+    class="tts-page min-h-[100dvh] bg-[#050505] dark:bg-[#050505]"
     dir="ltr"
   >
     <!-- Hidden audio element -->
@@ -115,69 +115,89 @@ onUnmounted(() => dispose())
       :src="audioUrlRef || undefined"
       class="hidden"
     />
+
+    <!-- Floating glass pill nav -->
     <NavBar compact />
 
-    <!-- Desktop: two-panel layout -->
+    <!-- Desktop: bento grid layout -->
     <div
       data-testid="desktop-panels"
-      class="hidden md:flex h-screen"
-      style="padding-top: var(--nav-height, 56px)"
+      class="hidden md:flex min-h-[100dvh]"
+      style="padding-top: calc(var(--nav-height, 48px) + 12px)"
     >
-      <!-- Left panel: Control Deck -->
+      <!-- Control Deck — Left bento column (taller, 45% width) -->
       <div
         ref="controlDeckDesktopRef"
-        class="control-deck flex-1 p-8 overflow-y-auto"
         data-panel="control-deck"
+        class="control-deck flex flex-col p-6 md:p-8 overflow-y-auto"
+        style="width: 45%; max-width: 520px; min-width: 320px;"
       >
+        <!-- Eyebrow badge -->
+        <div class="mb-3 fade-up">
+          <span class="eyebrow-badge">Studio</span>
+        </div>
+
         <!-- Header: Calligraphic headline -->
-        <div class="mb-8">
+        <div class="mb-8 fade-up delay-100">
           <h1
-            class="font-arabic text-3xl font-bold text-gold mb-2"
+            class="font-arabic text-4xl font-bold text-gold mb-2"
             dir="rtl"
           >
             استوديو نطق
           </h1>
-          <p class="text-[10px] font-sans text-ink-dim tracking-[0.2em] uppercase mb-1">
-            LughatChat Studio
-          </p>
           <p class="text-ink-dim text-sm">
             Arabic Text-to-Speech with XTTS-v2
           </p>
         </div>
 
-        <!-- Voice Selector -->
-        <div class="mb-6">
-          <VoiceSelector
-            v-model="selectedVoice"
-            :voices="voices"
-          />
+        <!-- Voice Selector — Double-Bezel card -->
+        <div class="mb-6 fade-up delay-150">
+          <div class="bezel mb-3">
+            <div class="bezel-inner p-4">
+              <label class="block text-xs font-medium text-ink-dim/70 mb-2 tracking-wide">
+                Voice
+              </label>
+              <VoiceSelector
+                v-model="selectedVoice"
+                :voices="voices"
+              />
+            </div>
+          </div>
         </div>
 
-        <!-- Text Input -->
-        <div class="mb-6">
-          <label
-            for="text-input"
-            class="block text-sm font-medium text-ink-dim mb-2"
-          >
-            Enter Arabic Text
-          </label>
-          <textarea
-            id="text-input"
-            v-model="textInput"
-            data-testid="text-input"
-            placeholder="Type or paste Arabic text here..."
-            class="tts-input w-full min-h-[150px] resize-y"
-            dir="rtl"
-          />
+        <!-- Text Input — Double-Bezel card -->
+        <div class="mb-6 fade-up delay-200">
+          <div class="bezel">
+            <div class="bezel-inner p-4">
+              <label
+                for="text-input"
+                class="block text-xs font-medium text-ink-dim/70 mb-2 tracking-wide"
+              >
+                Arabic Text
+              </label>
+              <textarea
+                id="text-input"
+                v-model="textInput"
+                data-testid="text-input"
+                placeholder="Type or paste Arabic text here..."
+                class="tts-input w-full min-h-[140px] resize-y rounded-xl bg-studio-900 text-ink font-arabic text-sm leading-relaxed p-4 border border-white/[0.04] focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all duration-500"
+                dir="rtl"
+              />
+            </div>
+          </div>
         </div>
 
-        <!-- Speed Slider -->
-        <div class="mb-6">
-          <SpeedSlider />
+        <!-- Speed Slider — Double-Bezel card -->
+        <div class="mb-6 fade-up delay-200">
+          <div class="bezel">
+            <div class="bezel-inner p-4">
+              <SpeedSlider />
+            </div>
+          </div>
         </div>
 
-        <!-- Generate Button -->
-        <div class="mb-6">
+        <!-- Generate Button — Island pill -->
+        <div class="mb-6 fade-up delay-300">
           <GenerateButton
             :is-generating="isGenerating"
             :model-status="health.status"
@@ -188,44 +208,48 @@ onUnmounted(() => dispose())
         </div>
 
         <!-- Shortcut hint -->
-        <div class="text-xs text-ink-dim/60">
-          Press <kbd class="px-1.5 py-0.5 bg-studio-700 rounded text-ink-dim">Ctrl</kbd> +
-          <kbd class="px-1.5 py-0.5 bg-studio-700 rounded text-ink-dim">Enter</kbd> to generate
+        <div class="text-[11px] text-ink-dim/50 fade-up delay-300">
+          <kbd class="px-1.5 py-0.5 bg-studio-700/80 rounded text-ink-dim/80 border border-white/[0.04]">Ctrl</kbd>
+          <span class="mx-1">+</span>
+          <kbd class="px-1.5 py-0.5 bg-studio-700/80 rounded text-ink-dim/80 border border-white/[0.04]">Enter</kbd>
+          <span class="ml-1">to generate</span>
         </div>
       </div>
 
-      <!-- Right panel: Canvas -->
+      <!-- Canvas — Right bento column (flex-1) -->
       <div
         ref="canvasHeaderRef"
         data-testid="canvas-panel"
-        class="canvas flex-1 p-8 overflow-y-auto"
+        class="canvas flex-1 p-6 md:p-8 overflow-y-auto"
         data-panel="canvas"
         @click.stop="togglePanel"
       >
-        <div class="mb-6">
-          <h2 class="text-xl font-bold text-ink">
-            Output
-          </h2>
+        <!-- Eyebrow badge -->
+        <div class="mb-3 fade-up">
+          <span class="eyebrow-badge">Output</span>
         </div>
 
         <!-- No-audio placeholder -->
         <div
           v-if="!audioUrlRef"
-          class="flex flex-col items-center justify-center py-12 text-ink-dim/50"
+          class="flex flex-col items-center justify-center py-20 text-ink-dim/40 fade-up"
         >
           <span
             aria-hidden="true"
-            class="ph ph-speaker-simple-none text-4xl mb-3 opacity-40"
+            class="ph ph-speaker-simple-none text-5xl mb-4 opacity-30"
           />
-          <p class="text-sm">
+          <p class="text-sm font-medium">
             Generate speech to see audio output
+          </p>
+          <p class="text-xs text-ink-dim/50 mt-1">
+            Your waveform will appear here
           </p>
         </div>
 
         <!-- Audio Player Panel -->
         <div
           v-if="audioUrlRef"
-          class="mt-6 animate-slide-up"
+          class="mt-6 fade-up"
         >
           <AudioPlayerPanel
             :visible="true"
@@ -246,22 +270,24 @@ onUnmounted(() => dispose())
     </div>
 
     <!-- Mobile: stacked layout -->
-    <div class="md:hidden h-screen flex flex-col">
+    <div class="md:hidden min-h-[100dvh] flex flex-col">
       <!-- Canvas (top) -->
       <div
         class="canvas flex-1 overflow-y-auto relative"
-        style="height: calc(100vh - 56px - 44px)"
+        style="height: calc(100dvh - 48px - 44px)"
         @click.stop="togglePanel"
       >
-        <div class="mb-6 px-4 pt-2">
-          <h2 class="text-xl font-bold text-ink">
-            Output
+        <div class="px-4 pt-2 pb-4">
+          <!-- Eyebrow badge -->
+          <span class="eyebrow-badge mb-2 inline-block">Output</span>
+          <h2 class="text-lg font-bold text-ink">
+            Audio
           </h2>
         </div>
 
         <div
           v-if="!audioUrlRef"
-          class="flex flex-col items-center justify-center py-12 text-ink-dim/50"
+          class="flex flex-col items-center justify-center py-16 text-ink-dim/50 px-4"
         >
           <span
             aria-hidden="true"
@@ -274,7 +300,7 @@ onUnmounted(() => dispose())
 
         <div
           v-if="audioUrlRef"
-          class="mt-6 animate-slide-up px-4"
+          class="mt-4 px-4"
         >
           <AudioPlayerPanel
             :visible="true"
@@ -294,7 +320,7 @@ onUnmounted(() => dispose())
       </div>
 
       <!-- Mobile FAB: status indicator -->
-      <div class="fixed bottom-4 right-4 z-40 md:hidden">
+      <div class="fixed bottom-3 right-3 z-40 md:hidden">
         <MobileStatusIndicator />
       </div>
 
@@ -318,30 +344,52 @@ onUnmounted(() => dispose())
 
         <!-- Content -->
         <div class="p-4 overflow-y-auto">
+          <!-- Voice Selector -->
           <div class="mb-4">
-            <VoiceSelector
-              v-model="selectedVoice"
-              :voices="voices"
-            />
+            <div class="bezel mb-3">
+              <div class="bezel-inner p-3">
+                <label class="block text-[10px] font-medium text-ink-dim/60 mb-2 tracking-wide">
+                  Voice
+                </label>
+                <VoiceSelector
+                  v-model="selectedVoice"
+                  :voices="voices"
+                />
+              </div>
+            </div>
           </div>
+
+          <!-- Text Input -->
           <div class="mb-4">
-            <label
-              for="text-input-mobile"
-              class="block text-sm font-medium text-ink-dim mb-2"
-            >
-              Enter Arabic Text
-            </label>
-            <textarea
-              id="text-input-mobile"
-              v-model="textInput"
-              placeholder="Type or paste Arabic text here..."
-              class="tts-input w-full min-h-[100px] resize-y"
-              dir="rtl"
-            />
+            <div class="bezel">
+              <div class="bezel-inner p-3">
+                <label
+                  for="text-input-mobile"
+                  class="block text-[10px] font-medium text-ink-dim/60 mb-2 tracking-wide"
+                >
+                  Arabic Text
+                </label>
+                <textarea
+                  id="text-input-mobile"
+                  v-model="textInput"
+                  placeholder="Type or paste Arabic text here..."
+                  class="tts-input w-full min-h-[80px] resize-y rounded-lg bg-studio-900 text-ink text-xs font-arabic p-3 border border-white/[0.04] focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all duration-500"
+                  dir="rtl"
+                />
+              </div>
+            </div>
           </div>
+
+          <!-- Speed Slider -->
           <div class="mb-4">
-            <SpeedSlider />
+            <div class="bezel">
+              <div class="bezel-inner p-3">
+                <SpeedSlider />
+              </div>
+            </div>
           </div>
+
+          <!-- Generate Button -->
           <div class="mb-4">
             <GenerateButton
               :is-generating="isGenerating"

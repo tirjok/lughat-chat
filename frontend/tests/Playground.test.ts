@@ -257,7 +257,7 @@ describe('Playground (playground.vue) — TTS Studio', () => {
     it('When rendered then the page has min-h-screen class', async () => {
       const wrapper = await mountSuspended(Playground)
       const classes = wrapper.classes()
-      expect(classes).toContain('min-h-screen')
+      expect(classes).toContain('min-h-[100dvh]')
     })
 
     it('When rendered then desktop panels are hidden on mobile (md:hidden)', async () => {

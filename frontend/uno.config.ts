@@ -16,22 +16,17 @@ export default defineConfig({
     },
     colors: {
       studio: {
-        900: '#0C0A09',
-        800: '#1A1714',
-        700: '#221F1B',
+        900: '#050505',
+        800: '#0F0E0C',
+        700: '#1A1714',
         600: '#2A2622'
       },
       gold: {
         DEFAULT: '#C8A45C',
         dim: 'rgba(200, 164, 92, 0.15)',
-        glow: 'rgba(200, 164, 92, 0.3)'
-      },
-      ink: {
-        DEFAULT: '#E8E0D4',
-        dim: '#8A7E72'
-      },
-      success: '#5CB87A',
-      error: '#B85C38'
+        glow: 'rgba(200, 164, 92, 0.3)',
+        bright: '#E8C878'
+      }
     },
     // Match Tailwind CSS v3 (sample design) shadow values exactly
     // UnoCSS presetWind3 uses slightly different values for shadow-2xl
@@ -60,8 +55,12 @@ export default defineConfig({
     })
   ],
   shortcuts: {
-    'btn': 'px-4 py-2 rounded font-semibold text-sm tracking-wide bg-gold text-studio-900 hover:bg-gold/90 transition-colors active:scale-[0.98]',
-    'card': 'rounded-lg border border-white/[0.04] bg-studio-800',
+    'glass-card': 'rounded-[1.5rem] bg-studio-800/80 backdrop-blur-xl border border-white/[0.06] shadow-ambient',
+    'bezel': 'rounded-[2rem] p-1.5 bg-white/[0.02] ring-1 ring-white/[0.06]',
+    'bezel-inner': 'rounded-[calc(2rem-0.375rem)] bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]',
+    'eyebrow-badge': 'rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-gold-dim text-gold',
+    'pill-btn': 'rounded-full px-6 py-3 font-semibold text-sm tracking-wide bg-gold text-studio-900 hover:bg-gold/90 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]',
+    'bento-card': 'rounded-[1.5rem] bg-studio-800/60 border border-white/[0.04] shadow-soft',
     'flex-center': 'flex items-center justify-center',
     'flex-between': 'flex items-center justify-between'
   },

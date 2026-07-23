@@ -28,7 +28,7 @@ describe('VoiceSelector click bug', () => {
     await wrapper.vm.$nextTick()
 
     // The dropdown is Teleported to body, so find it in the document
-    const dropdown = document.querySelector('.fixed.z-50.bg-studio-800')
+    const dropdown = document.querySelector('[class*="fixed"][class*="z-50"]')
 
     expect(dropdown).not.toBeNull()
   })

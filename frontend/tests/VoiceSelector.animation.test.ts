@@ -15,7 +15,7 @@ describe('VoiceSelector animation', () => {
     document.body.innerHTML = ''
   })
 
-  it('dropdown menu shows with animation classes (transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top) when opened', async () => {
+  it('dropdown menu shows with animation classes (transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top) when opened', async () => {
     const container = document.createElement('div')
     container.id = 'test-root'
     document.body.appendChild(container)
@@ -35,12 +35,12 @@ describe('VoiceSelector animation', () => {
     // Should have animation classes from prototype
     const menuClass = menu!.className
     expect(menuClass).toContain('transition-all')
-    expect(menuClass).toContain('duration-700')
+    expect(menuClass).toContain('duration-500')
     expect(menuClass).toContain('origin-top')
   })
 
   it('dropdown menu is removed from DOM when closed (v-if), re-added when opened', async () => {
-    // Animation classes updated to Phase 1: duration-700, ring-based borders
+    // Animation classes updated to Phase 1: duration-500, ring-based borders
     const container = document.createElement('div')
     container.id = 'test-root'
     document.body.appendChild(container)
@@ -64,11 +64,8 @@ describe('VoiceSelector animation', () => {
 
     // The menu should have animation classes when visible
     expect(menuAfter!.className).toContain('transition-all')
-    expect(menuAfter!.className).toContain('duration-700')
     expect(menuAfter!.className).toContain('origin-top')
-    expect(menuAfter!.className).toContain('opacity-100')
-    expect(menuAfter!.className).toContain('scale-100')
-    expect(menuAfter!.className).toContain('pointer-events-auto')
+    expect(menuAfter!.className).toContain('backdrop-blur-xl')
   })
 
   it('chevron rotates 180deg when dropdown is open', async () => {

@@ -199,19 +199,19 @@ describe('ModelStatusIndicator', () => {
     it('renders indicator dot and text with gap spacing', () => {
       const wrapper = mount(ModelStatusIndicator)
       const root = wrapper.find('[class*="flex"]')
-      expect(root.classes()).toContain('gap-2')
+      expect(root.classes()).toContain('gap-1.5')
     })
 
     it('renders indicator dot with consistent dimensions', () => {
       const wrapper = mount(ModelStatusIndicator)
-      const dot = wrapper.find('span.w-2')
+      const dot = wrapper.find('span[aria-hidden]')
       expect(dot.exists()).toBe(true)
-      expect(dot.classes()).toContain('h-2')
+      expect(dot.classes()).toContain('rounded-full')
     })
 
     it('renders text with small font size', () => {
       const wrapper = mount(ModelStatusIndicator)
-      const textSpan = wrapper.find('span.text-xs')
+      const textSpan = wrapper.find('span.font-medium')
       expect(textSpan.exists()).toBe(true)
     })
   })

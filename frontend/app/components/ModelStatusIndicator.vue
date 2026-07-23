@@ -32,34 +32,33 @@ function tooltipText(): string {
 
 <template>
   <div
-    class="flex items-center gap-2 rounded-full px-2.5 py-1 bg-studio-900/50"
+    class="flex items-center gap-1.5 rounded-full px-2 py-0.5 bg-white/[0.03]"
     :title="tooltipText()"
   >
-    <!-- Inner Core — gold ring -->
-    <div class="flex items-center gap-2 rounded-full bg-studio-800 px-3 py-1.5">
+    <div class="flex items-center gap-2 rounded-full bg-studio-800/80 px-2.5 py-1">
       <!-- Status dot -->
       <span
         v-if="health.status === 'loading'"
         aria-hidden="true"
-        class="w-2 h-2 rounded-full bg-gold shadow-[0_0_8px_#C8A45C] animate-pulse"
+        class="w-1.5 h-1.5 rounded-full bg-gold shadow-[0_0_6px_#C8A45C] animate-pulse"
       />
       <span
         v-else-if="health.modelLoaded"
         aria-hidden="true"
-        class="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_#5CB87A]"
+        class="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_6px_#5CB87A]"
       />
       <span
         v-else-if="health.status === 'retrying'"
         aria-hidden="true"
-        class="w-2 h-2 rounded-full bg-gold shadow-[0_0_8px_#C8A45C] animate-pulse"
+        class="w-1.5 h-1.5 rounded-full bg-gold shadow-[0_0_6px_#C8A45C] animate-pulse"
       />
       <span
         v-else
         aria-hidden="true"
-        class="w-2 h-2 rounded-full bg-error shadow-[0_0_8px_#B85C38]"
+        class="w-1.5 h-1.5 rounded-full bg-error shadow-[0_0_6px_#B85C38]"
       />
 
-      <span class="text-xs font-medium text-ink-dim">
+      <span class="text-[10px] font-medium text-ink-dim/70">
         {{ displayText() }}
       </span>
 
@@ -67,10 +66,10 @@ function tooltipText(): string {
       <button
         v-if="health.status === 'retrying' || health.status === 'error'"
         aria-label="Retry health check"
-        class="rounded-full bg-studio-900 text-ink-dim hover:text-gold transition-colors cursor-pointer active:scale-95"
+        class="rounded-full bg-studio-900 text-ink-dim/50 hover:text-gold transition-colors duration-500 cursor-pointer active:scale-90"
         @click="health.retry"
       >
-        <span class="ph ph-arrow-counter-clockwise text-sm" />
+        <span class="ph ph-arrow-counter-clockwise text-[10px]" />
       </button>
     </div>
   </div>

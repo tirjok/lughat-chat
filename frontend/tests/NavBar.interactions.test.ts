@@ -144,7 +144,7 @@ describe('NavBar — interactions and routing', () => {
     })
     const nav = wrapper.find('nav')
     const navClasses = nav.classes().join(' ')
-    // Compact NavBar uses fixed height (no responsive breakpoint)
-    expect(navClasses).toContain('h-[56px]')
+    // Floating nav uses 48px height
+    expect(navClasses).toContain('h-[48px]')
   })
 })

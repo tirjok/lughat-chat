@@ -18,8 +18,8 @@ function displayText(): string {
 </script>
 
 <template>
-  <div class="flex items-center gap-1.5 rounded-full px-2 py-0.5 bg-studio-900/50">
-    <div class="flex items-center gap-1.5 rounded-full bg-studio-800 px-2.5 py-1">
+  <div class="flex items-center gap-1.5 rounded-full px-2 py-0.5 bg-white/[0.03]">
+    <div class="flex items-center gap-1.5 rounded-full bg-studio-800/80 px-2 py-0.5">
       <span
         v-if="health.status === 'loading'"
         aria-hidden="true"
@@ -40,16 +40,16 @@ function displayText(): string {
         aria-hidden="true"
         class="w-1.5 h-1.5 rounded-full bg-error shadow-[0_0_6px_#B85C38]"
       />
-      <span class="text-[10px] font-medium text-ink-dim">
+      <span class="text-[9px] font-medium text-ink-dim/60">
         {{ displayText() }}
       </span>
       <button
         v-if="health.status === 'retrying' || health.status === 'error'"
         aria-label="Retry health check"
-        class="rounded-full bg-studio-900 text-ink-dim hover:text-gold transition-colors cursor-pointer active:scale-95"
+        class="rounded-full bg-studio-900 text-ink-dim/50 hover:text-gold transition-colors duration-500 cursor-pointer active:scale-90"
         @click="health.retry"
       >
-        <span class="ph ph-arrow-counter-clockwise text-sm" />
+        <span class="ph ph-arrow-counter-clockwise text-[9px]" />
       </button>
     </div>
   </div>

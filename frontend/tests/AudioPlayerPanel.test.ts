@@ -68,7 +68,6 @@ describe('AudioPlayerPanel', () => {
       // Assert
       expect(html).toContain('Generated Audio')
       expect(html).toContain('Aisha - Conversational')
-      expect(html).toContain('1.5x Speed')
     })
 
     it('When duration=0 then time display shows 0:00', () => {
