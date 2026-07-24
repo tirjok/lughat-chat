@@ -68,7 +68,7 @@ describe('Dashboard integration (NavBar + RoadmapSidebar)', () => {
 
     it('When rendered then page heading "Learning Roadmap" exists', async () => {
       const wrapper = await mountSuspended(Dashboard)
-      expect(wrapper.text()).toContain('Learning Roadmap')
+      expect(wrapper.text()).toContain('خريطة التعلم')
     })
 
     it('When rendered then page has RTL direction', async () => {
@@ -116,7 +116,7 @@ describe('Dashboard integration (NavBar + RoadmapSidebar)', () => {
     it('When loading then sidebar renders alongside loading message', async () => {
       mockLessonsLoading.value = true
       const wrapper = await mountSuspended(Dashboard)
-      expect(wrapper.text()).toContain('Loading')
+      expect(wrapper.html()).toContain('animate-pulse')
       expect(wrapper.find('[data-testid="nav-bar"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="roadmap-sidebar"]').exists()).toBe(true)
     })

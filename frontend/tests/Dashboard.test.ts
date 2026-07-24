@@ -87,8 +87,8 @@ describe('Dashboard (index.vue)', () => {
         { id: 2, level: 'A1', sequence: 2, title: 'Second Lesson', competency_count: 3, section_count: 3, status: 'locked' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const cards = wrapper.findAll('.dashboard-lesson-card')
-      expect(cards.length).toBe(2)
+      const cards = wrapper.findAll('[data-testid="lesson-card"]')
+      expect(cards.length).toBe(1)
     })
 
     it('When lessons exist then grouped by level', async () => {
@@ -123,7 +123,7 @@ describe('Dashboard (index.vue)', () => {
         { id: 1, level: 'A1', sequence: 1, title: 'Lesson 1', competency_count: 5, section_count: 5, status: 'available' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const cards = wrapper.findAll('.dashboard-lesson-card')
+      const cards = wrapper.findAll('[data-testid="lesson-card"]')
       const card = cards[0]
       // NuxtLink wraps the card — inner div has cursor-pointer
       expect(card.classes()).toContain('cursor-pointer')
@@ -135,9 +135,9 @@ describe('Dashboard (index.vue)', () => {
         { id: 2, level: 'A1', sequence: 2, title: 'Locked Lesson', competency_count: 3, section_count: 3, status: 'locked' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const cards = wrapper.findAll('.dashboard-lesson-card')
+      const cards = wrapper.findAll('[data-testid="locked-lesson"]')
       const card = cards[0]
-      expect(card.classes()).toContain('opacity-40')
+      expect(card.classes()).toContain('opacity-35')
     })
   })
 })

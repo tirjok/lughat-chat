@@ -12,7 +12,7 @@ const { content } = defineProps<{
     <div
       v-for="(character, idx) in content.characters"
       :key="idx"
-      class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
+      class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4"
     >
       <p class="font-arabic text-ink">
         {{ character.arabic }}

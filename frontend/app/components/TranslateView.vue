@@ -16,7 +16,7 @@ const sentences = computed(() => content.sentences)
     <div
       v-for="(sentence, idx) in sentences"
       :key="idx"
-      class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
+      class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4"
     >
       <p
         v-if="sentence.arabic"

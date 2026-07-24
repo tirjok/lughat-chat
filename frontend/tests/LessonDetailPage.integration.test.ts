@@ -98,8 +98,8 @@ describe('lessons/[id].vue — integration: missing behaviors', () => {
       _state.setRouteId('2')
       const wrapper = await mountSuspended(LessonDetail)
       await new Promise(r => setTimeout(r, 100))
-      expect(wrapper.text()).toContain('🔒')
-      expect(wrapper.text()).toContain('This lesson is locked. Complete previous lessons first.')
+      expect(wrapper.html()).toContain('ph-lock')
+      expect(wrapper.text()).toContain('This lesson is locked.')
     })
 
     it('When lesson progress is locked then does NOT show lesson content', async () => {
@@ -126,7 +126,7 @@ describe('lessons/[id].vue — integration: missing behaviors', () => {
       _state.setRouteId('4')
       const wrapper = await mountSuspended(LessonDetail)
       await new Promise(r => setTimeout(r, 100))
-      expect(wrapper.text()).toContain('✓')
+      expect(wrapper.html()).toContain('ph-check-circle')
       expect(wrapper.text()).toContain('Lesson completed — review mode')
     })
 

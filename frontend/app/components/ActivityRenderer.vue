@@ -53,7 +53,7 @@ const {
 } = useActivitySubmission(props.lessonId)
 
 // ---------------------------------------------------------------------------
-// User answer state — shallowRef for primitives (better performance)
+// User answer state
 // ---------------------------------------------------------------------------
 
 const userAnswer = shallowRef('')
@@ -143,19 +143,39 @@ function resetSubmission(): void {
   inlineError.value = null
   clearResults()
 }
+
+// Activity type labels
+const activityTypeLabel: Record<string, string> = {
+  'listen-translate': 'Listen & Translate',
+  'translate-to-english': 'Translate to English',
+  'translate-to-arabic': 'Translate to Arabic',
+  'introduce-characters': 'Introduce Characters',
+  'role-play': 'Role-Play',
+}
+
+function getActivityLabel(type: string): string {
+  return activityTypeLabel[type] || type
+}
 </script>
 
 <template>
   <div
-    class="activity-renderer rounded-lg border border-white/[0.04] bg-studio-800 p-4"
+    class="activity-renderer rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5"
     dir="rtl"
   >
     <!-- Activity header -->
-    <div class="mb-3">
+    <div class="mb-4">
+      <div class="flex items-center gap-2 mb-1.5">
+        <span
+          class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gold-dim text-gold border border-gold/25"
+        >
+          {{ getActivityLabel(activity.type) }}
+        </span>
+      </div>
       <h4 class="font-sans font-semibold text-ink text-base">
         {{ activity.title }}
       </h4>
-      <p class="text-xs text-ink-dim mt-1">
+      <p class="text-xs text-ink-dim/60 mt-0.5">
         {{ activity.description }}
       </p>
     </div>
@@ -163,7 +183,7 @@ function resetSubmission(): void {
     <!-- Error display -->
     <div
       v-if="error"
-      class="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error mb-3"
+      class="p-3 rounded-2xl bg-error/10 border border-error/20 text-sm text-ink mb-3"
     >
       {{ error }}
     </div>
@@ -171,7 +191,7 @@ function resetSubmission(): void {
     <!-- Inline error (empty answer) -->
     <div
       v-if="inlineError"
-      class="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error mb-3"
+      class="p-3 rounded-2xl bg-error/10 border border-error/20 text-sm text-ink mb-3"
     >
       {{ inlineError }}
     </div>
@@ -179,11 +199,14 @@ function resetSubmission(): void {
     <!-- Inline correct answer (max attempts reached) -->
     <div
       v-if="inlineCorrectAnswer"
-      class="p-3 rounded-lg bg-studio-700/50 border border-white/[0.04] mb-3"
+      class="p-4 rounded-2xl bg-emerald-500/8 border border-emerald-500/25 mb-4"
     >
-      <p class="text-xs text-ink-dim mb-1">
-        Correct Answer:
-      </p>
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="ph ph-check-circle text-emerald-400 text-sm" />
+        <p class="text-xs text-emerald-400/80 font-semibold">
+          Correct Answer:
+        </p>
+      </div>
       <p
         class="text-sm text-ink font-arabic"
         dir="rtl"

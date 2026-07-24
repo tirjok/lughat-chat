@@ -42,33 +42,48 @@ const hasMoreActivities = computed(() => {
   return props.activityIndex < props.totalActivities - 1
 })
 
-// Score bar color class
-const scoreColorClass = computed(() =>
-  score.value >= 0.7 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-)
+// Score label text
+const scoreLabel = computed(() => {
+  if (score.value >= 0.9) return 'Excellent!'
+  if (score.value >= 0.7) return 'Great job!'
+  if (score.value >= 0.4) return 'Good effort!'
+  return 'Keep practicing!'
+})
 
-const barColorClass = computed(() =>
-  score.value >= 0.7 ? 'bg-green-500' : 'bg-red-500'
-)
+// Score bar color
+const barColorClass = computed(() => {
+  if (score.value >= 0.7) return 'bg-emerald-400'
+  if (score.value >= 0.4) return 'bg-amber-400'
+  return 'bg-red-400'
+})
 </script>
 
 <template>
-  <div class="mt-4 p-4 rounded-lg bg-studio-800 border border-white/[0.04]">
+  <div class="mt-4 p-5 rounded-2xl border border-white/[0.06] bg-white/[0.03]">
     <!-- Score Header -->
     <div class="flex-between mb-3">
-      <span class="text-sm font-semibold text-ink">Score</span>
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-semibold text-ink">Score</span>
+        <span
+          v-if="result"
+          class="text-xs font-medium"
+          :class="score >= 0.7 ? 'text-emerald-400' : score >= 0.4 ? 'text-amber-400' : 'text-red-400'"
+        >
+          {{ scoreLabel }}
+        </span>
+      </div>
       <span
         class="text-2xl font-bold"
-        :class="scoreColorClass"
+        :class="score >= 0.7 ? 'text-emerald-400' : score >= 0.4 ? 'text-amber-400' : 'text-red-400'"
       >
         {{ (score * 100).toFixed(0) }}%
       </span>
     </div>
 
     <!-- Score Bar -->
-    <div class="h-2 rounded-full bg-studio-700 overflow-hidden mb-3">
+    <div class="h-2 rounded-full bg-white/[0.06] overflow-hidden mb-3">
       <div
-        class="h-full rounded-full transition-all duration-500"
+        class="h-full rounded-full transition-all duration-700"
         :class="barColorClass"
         :style="{ width: `${score * 100}%` }"
       />
@@ -85,11 +100,14 @@ const barColorClass = computed(() =>
     <!-- Correct Answer (max attempts reached) -->
     <div
       v-if="correctAnswer"
-      class="p-3 rounded-lg bg-studio-700/50 border border-white/[0.04] mb-3"
+      class="p-4 rounded-2xl bg-emerald-500/8 border border-emerald-500/25 mb-4"
     >
-      <p class="text-xs text-ink-dim mb-1">
-        Correct Answer:
-      </p>
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="ph ph-check-circle text-emerald-400 text-sm" />
+        <p class="text-xs text-emerald-400/80 font-semibold">
+          Correct Answer:
+        </p>
+      </div>
       <p
         class="text-sm text-ink font-arabic"
         dir="rtl"
@@ -105,6 +123,7 @@ const barColorClass = computed(() =>
         class="btn flex-1"
         @click="emit('retry')"
       >
+        <span class="ph ph-arrows-clockwise ml-1.5" />
         Try Again
       </button>
       <button
@@ -112,6 +131,7 @@ const barColorClass = computed(() =>
         class="btn flex-1"
         @click="emit('next-activity')"
       >
+        <span class="ph ph-arrow-right ml-1.5" />
         Next Activity
       </button>
       <button
@@ -119,6 +139,7 @@ const barColorClass = computed(() =>
         class="btn flex-1"
         @click="emit('complete-lesson')"
       >
+        <span class="ph ph-check-circle ml-1.5" />
         Complete Lesson
       </button>
     </div>
@@ -126,7 +147,7 @@ const barColorClass = computed(() =>
     <!-- Attempts remaining -->
     <p
       v-if="attemptsRemaining > 0 && !isComplete"
-      class="text-xs text-ink-dim mt-2"
+      class="text-xs text-ink-dim/50 mt-2 text-center"
     >
       {{ attemptsRemaining }} attempt{{ attemptsRemaining > 1 ? 's' : '' }} remaining
     </p>

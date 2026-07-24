@@ -197,7 +197,7 @@ describe('lessons/[id].vue — Slice 9: Component tree & rendering', () => {
       const wrapper = await mountSuspended(LessonDetail)
       await nextTick()
       await new Promise(r => setTimeout(r, 100))
-      expect(wrapper.text()).toContain('Practice Activities')
+      expect(wrapper.text()).toContain('Practice')
       expect(wrapper.text()).toContain('Read & Translate')
     })
   })

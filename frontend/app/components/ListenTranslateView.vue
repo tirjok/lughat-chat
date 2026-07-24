@@ -57,9 +57,9 @@ const simpleEntries = computed<DialogueSceneFlat[]>(() => {
     <div
       v-for="(scene, sceneIdx) in structuredScenes"
       :key="sceneIdx"
-      class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
+      class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4"
     >
-      <p class="text-xs font-sans text-gold/70 mb-2 font-medium">
+      <p class="text-xs font-sans text-gold/60 mb-2 font-medium">
         {{ scene.label }}
       </p>
       <div class="space-y-2">
@@ -87,7 +87,7 @@ const simpleEntries = computed<DialogueSceneFlat[]>(() => {
     <div
       v-for="entry in simpleEntries"
       :key="entry.arabic"
-      class="p-3 rounded-lg bg-studio-800 border border-white/[0.04]"
+      class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4"
     >
       <p
         class="font-arabic text-ink"

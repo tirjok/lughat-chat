@@ -13,6 +13,21 @@ const { lessons: _lessons, loading, error, groupedLessons } = useLessons()
     class="roadmap-sidebar fixed top-0 right-0 h-full bg-studio-900/98 backdrop-blur-sm border-l border-white/[0.04] overflow-y-auto"
     :class="{ open: isOpen }"
   >
+    <!-- Mobile backdrop: semi-transparent overlay to dismiss sidebar -->
+    <Transition
+      enter="transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      enter-from="opacity-0"
+      enter-to="opacity-100"
+      leave="transition-opacity duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      leave-from="opacity-100"
+      leave-to="opacity-0"
+    >
+      <div
+        v-if="isOpen"
+        class="fixed inset-0 z-40 bg-studio-900/80 backdrop-blur-2xl"
+        @click="close()"
+      />
+    </Transition>
     <div class="p-4">
       <div class="mb-4">
         <h2
@@ -56,10 +71,10 @@ const { lessons: _lessons, loading, error, groupedLessons } = useLessons()
               class="block"
             >
               <div
-                class="flex items-center gap-3 p-2 rounded-lg hover:bg-studio-700/40 transition-colors"
+                class="flex items-center gap-3 p-2 rounded-lg hover:bg-studio-700/60 transition-colors"
                 :class="{ 'opacity-40': lesson.status === 'locked' }"
               >
-                <span class="text-xs font-mono text-ink-dim w-6 text-center">{{ lesson.sequence }}</span>
+                <span class="text-xs font-mono text-ink-dim/40 w-6 text-center">{{ lesson.sequence }}</span>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm text-ink truncate">{{ lesson.title }}</p>
                 </div>

@@ -113,7 +113,7 @@ describe('SectionRenderer', () => {
 
     // Assert — section header
     expect(wrapper.find('h3').text()).toBe('Main Text')
-    expect(wrapper.find('p.text-\\[10px\\]').text()).toBe('dialogue')
+    expect(wrapper.text()).toContain('Dialogue Practice')
 
     // Assert — scene label
     expect(wrapper.text()).toContain('Scene 1')

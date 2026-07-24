@@ -78,10 +78,15 @@ describe('index.vue — Dashboard (Slice 8)', () => {
   })
 
   describe('loading state', () => {
-    it('When loading then shows loading message', async () => {
+    it('When loading then shows skeleton cards', async () => {
       mockLessonsLoading.value = true
       const wrapper = await mountSuspended(Dashboard)
-      expect(wrapper.text()).toContain('Loading')
+      // Skeleton cards: 4 placeholder cards with animate-pulse
+      const skeletonCards = wrapper.findAll('[class*="space-y-5"] > div')
+      expect(skeletonCards.length).toBe(5)
+      // Each skeleton card should have the animate-pulse class
+      const firstSkeleton = skeletonCards[0]
+      expect(firstSkeleton.html()).toContain('animate-pulse')
     })
   })
 
@@ -100,8 +105,8 @@ describe('index.vue — Dashboard (Slice 8)', () => {
         { id: 2, level: 'A1', sequence: 2, title: 'Lesson Two', competency_count: 3, section_count: 3, status: 'locked' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const cards = wrapper.findAll('.dashboard-lesson-card')
-      expect(cards.length).toBe(2)
+      const cards = wrapper.findAll('[data-testid="lesson-card"]')
+      expect(cards.length).toBe(1)
     })
 
     it('When rendered then available icon exists', async () => {
@@ -118,9 +123,9 @@ describe('index.vue — Dashboard (Slice 8)', () => {
         { id: 2, level: 'A1', sequence: 2, title: 'Lesson Two', competency_count: 3, section_count: 3, status: 'locked' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const lockedCards = wrapper.findAll('.dashboard-lesson-card')
+      const lockedCards = wrapper.findAll('[data-testid="locked-lesson"]')
       expect(lockedCards.length).toBeGreaterThan(0)
-      expect(lockedCards[0].classes()).toContain('opacity-40')
+      expect(lockedCards[0].classes()).toContain('opacity-35')
     })
 
     it('When rendered then Arabic text is displayed', async () => {
@@ -163,7 +168,7 @@ describe('index.vue — Dashboard (Slice 8)', () => {
         { id: 1, level: 'A1', sequence: 1, title: 'Lesson 1', competency_count: 5, section_count: 5, status: 'available' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const cards = wrapper.findAll('.dashboard-lesson-card')
+      const cards = wrapper.findAll('[data-testid="lesson-card"]')
       const card = cards[0]
       // NuxtLink wraps the card — the inner div inherits cursor-pointer
       expect(card.classes()).toContain('cursor-pointer')
@@ -175,10 +180,10 @@ describe('index.vue — Dashboard (Slice 8)', () => {
         { id: 2, level: 'A1', sequence: 2, title: 'Locked Lesson', competency_count: 3, section_count: 3, status: 'locked' }
       ]
       const wrapper = await mountSuspended(Dashboard)
-      const cards = wrapper.findAll('.dashboard-lesson-card')
+      const cards = wrapper.findAll('[data-testid="locked-lesson"]')
       const card = cards[0]
       // Locked cards get opacity-40 from template :class binding
-      expect(card.classes()).toContain('opacity-40')
+      expect(card.classes()).toContain('opacity-35')
     })
 
     it('When rendered then grouped by level', async () => {

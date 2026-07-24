@@ -21,28 +21,40 @@ const emit = defineEmits<{
 }>()
 
 const modelValue = defineModel<string>({ required: true })
+
+const isEmpty = computed(() => !modelValue.value.trim())
 </script>
 
 <template>
   <div class="space-y-2">
-    <label class="block text-sm font-medium text-ink-dim mb-1">
+    <label class="block text-sm font-medium text-ink-dim/70 mb-1">
       <slot name="label" />
     </label>
     <textarea
       v-model="modelValue"
       :dir="dir"
       :disabled="disabled"
-      class="w-full p-3 rounded-lg border border-white/[0.06] bg-studio-800 text-ink resize-none focus:outline-none focus:ring-1 focus:ring-gold/30"
-      rows="2"
+      class="w-full p-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] text-ink resize-none focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/30 transition-all duration-300 placeholder:text-ink-dim/40"
+      :class="{
+        'opacity-50 cursor-not-allowed': disabled,
+        'border-error/30 focus:ring-error/30 focus:border-error/30': !isSubmitting && !disabled && isEmpty,
+      }"
+      rows="3"
       :placeholder="placeholder"
       @keydown="emit('keydown', $event as KeyboardEvent)"
     />
     <button
-      :disabled="isSubmitting || disabled || !modelValue.trim()"
+      :disabled="isSubmitting || disabled || isEmpty"
       class="btn w-full"
+      :class="{
+        'opacity-50 cursor-not-allowed': disabled,
+      }"
       @click="emit('submit')"
     >
-      <span v-if="isSubmitting">Scoring...</span>
+      <span v-if="isSubmitting">
+        <span class="ph ph-spinner animate-spin-slow ml-1.5" />
+        Scoring...
+      </span>
       <span v-else><slot name="buttonText" /></span>
     </button>
   </div>
