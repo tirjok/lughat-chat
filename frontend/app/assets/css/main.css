@@ -146,6 +146,11 @@ html {
   background: var(--bg-deep);
 }
 
+/* Unified Layout - NavBar offset: content starts below the fixed nav bar */
+:root {
+  --nav-offset: 60px; /* 12px top gap + 48px nav height */
+}
+
 body {
   @apply antialiased;
   margin: 0;

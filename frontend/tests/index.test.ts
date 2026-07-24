@@ -125,7 +125,7 @@ describe('index.vue — Dashboard (Slice 8)', () => {
       const wrapper = await mountSuspended(Dashboard)
       const lockedCards = wrapper.findAll('[data-testid="locked-lesson"]')
       expect(lockedCards.length).toBeGreaterThan(0)
-      expect(lockedCards[0].classes()).toContain('opacity-35')
+      expect(lockedCards[0].classes()).toContain('opacity-40')
     })
 
     it('When rendered then Arabic text is displayed', async () => {
@@ -183,7 +183,7 @@ describe('index.vue — Dashboard (Slice 8)', () => {
       const cards = wrapper.findAll('[data-testid="locked-lesson"]')
       const card = cards[0]
       // Locked cards get opacity-40 from template :class binding
-      expect(card.classes()).toContain('opacity-35')
+      expect(card.classes()).toContain('opacity-40')
     })
 
     it('When rendered then grouped by level', async () => {

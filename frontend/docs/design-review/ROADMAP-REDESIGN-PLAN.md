@@ -60,6 +60,15 @@ No skeleton loaders, no retry button, no illustrated empty state.
 
 ---
 
+## Phases
+
+| Phase | Status |
+|-------|--------|
+| Fix 1: Roadmap page — Hero header + stats | ✅ DONE |
+| Fix 2: Lesson cards — Inner layout | 🔄 IN_PROGRESS |
+| Fix 3: Loading, Error, and Empty States | ⏳ PENDING |
+| Fix 4: Sidebar Hover States and Sequence Visibility | ⏳ PENDING |
+
 ## Implementation Plan
 
 ### Fix 1: Lesson Card Progress Bars and Clickable States

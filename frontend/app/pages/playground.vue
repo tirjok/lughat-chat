@@ -119,42 +119,42 @@ onUnmounted(() => dispose())
     <!-- Floating glass pill nav -->
     <NavBar compact />
 
-    <!-- Desktop: bento grid layout -->
+    <!-- Desktop: bento grid layout — tightened -->
     <div
       data-testid="desktop-panels"
       class="hidden md:flex min-h-[100dvh]"
-      style="padding-top: calc(var(--nav-height, 48px) + 12px)"
+      style="padding-top: var(--nav-offset);"
     >
       <!-- Control Deck — Left bento column (taller, 45% width) -->
       <div
         ref="controlDeckDesktopRef"
         data-panel="control-deck"
-        class="control-deck flex flex-col p-6 md:p-8 overflow-y-auto"
-        style="width: 45%; max-width: 520px; min-width: 320px;"
+        class="control-deck flex flex-col p-5 pt-4 md:p-6 overflow-y-auto"
+        style="width: 45%; max-width: 520px; min-width: 300px;"
       >
         <!-- Eyebrow badge -->
-        <div class="mb-3 fade-up">
+        <div class="mb-2 fade-up">
           <span class="eyebrow-badge">Studio</span>
         </div>
 
-        <!-- Header: Calligraphic headline -->
-        <div class="mb-8 fade-up delay-100">
+        <!-- Header: Calligraphic headline — compact -->
+        <div class="mb-6 fade-up delay-100">
           <h1
-            class="font-arabic text-4xl font-bold text-gold mb-2"
+            class="font-arabic text-3xl font-bold text-gold mb-1.5"
             dir="rtl"
           >
             استوديو نطق
           </h1>
-          <p class="text-ink-dim text-sm">
+          <p class="text-ink-dim text-xs">
             Arabic Text-to-Speech with XTTS-v2
           </p>
         </div>
 
         <!-- Voice Selector — Double-Bezel card -->
-        <div class="mb-6 fade-up delay-150">
-          <div class="bezel mb-3">
-            <div class="bezel-inner p-4">
-              <label class="block text-xs font-medium text-ink-dim/70 mb-2 tracking-wide">
+        <div class="mb-4 fade-up delay-150">
+          <div class="bezel mb-2">
+            <div class="bezel-inner p-3">
+              <label class="block text-[11px] font-medium text-ink-dim/60 mb-1.5 tracking-wide">
                 Voice
               </label>
               <VoiceSelector
@@ -166,12 +166,12 @@ onUnmounted(() => dispose())
         </div>
 
         <!-- Text Input — Double-Bezel card -->
-        <div class="mb-6 fade-up delay-200">
+        <div class="mb-4 fade-up delay-200">
           <div class="bezel">
-            <div class="bezel-inner p-4">
+            <div class="bezel-inner p-3">
               <label
                 for="text-input"
-                class="block text-xs font-medium text-ink-dim/70 mb-2 tracking-wide"
+                class="block text-[11px] font-medium text-ink-dim/60 mb-1.5 tracking-wide"
               >
                 Arabic Text
               </label>
@@ -180,7 +180,7 @@ onUnmounted(() => dispose())
                 v-model="textInput"
                 data-testid="text-input"
                 placeholder="Type or paste Arabic text here..."
-                class="tts-input w-full min-h-[140px] resize-y rounded-xl bg-studio-900 text-ink font-arabic text-sm leading-relaxed p-4 border border-white/[0.04] focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all duration-500"
+                class="tts-input w-full min-h-[120px] resize-y rounded-xl bg-studio-900 text-ink font-arabic text-sm leading-relaxed p-3 border border-white/[0.04] focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all duration-500"
                 dir="rtl"
               />
             </div>
@@ -188,16 +188,16 @@ onUnmounted(() => dispose())
         </div>
 
         <!-- Speed Slider — Double-Bezel card -->
-        <div class="mb-6 fade-up delay-200">
+        <div class="mb-4 fade-up delay-200">
           <div class="bezel">
-            <div class="bezel-inner p-4">
+            <div class="bezel-inner p-3">
               <SpeedSlider />
             </div>
           </div>
         </div>
 
         <!-- Generate Button — Island pill -->
-        <div class="mb-6 fade-up delay-300">
+        <div class="mb-4 fade-up delay-300">
           <GenerateButton
             :is-generating="isGenerating"
             :model-status="health.status"
@@ -208,40 +208,40 @@ onUnmounted(() => dispose())
         </div>
 
         <!-- Shortcut hint -->
-        <div class="text-[11px] text-ink-dim/50 fade-up delay-300">
-          <kbd class="px-1.5 py-0.5 bg-studio-700/80 rounded text-ink-dim/80 border border-white/[0.04]">Ctrl</kbd>
-          <span class="mx-1">+</span>
-          <kbd class="px-1.5 py-0.5 bg-studio-700/80 rounded text-ink-dim/80 border border-white/[0.04]">Enter</kbd>
-          <span class="ml-1">to generate</span>
+        <div class="text-[10px] text-ink-dim/40 fade-up delay-300">
+          <kbd class="px-1 py-0.5 bg-studio-700/80 rounded text-ink-dim/70 border border-white/[0.04]">Ctrl</kbd>
+          <span class="mx-0.5">+</span>
+          <kbd class="px-1 py-0.5 bg-studio-700/80 rounded text-ink-dim/70 border border-white/[0.04]">Enter</kbd>
+          <span class="ml-0.5">to generate</span>
         </div>
       </div>
 
-      <!-- Canvas — Right bento column (flex-1) -->
+      <!-- Canvas — Right bento column (flex-1) — tightened -->
       <div
         ref="canvasHeaderRef"
         data-testid="canvas-panel"
-        class="canvas flex-1 p-6 md:p-8 overflow-y-auto"
+        class="canvas flex-1 p-5 pt-4 md:p-6 overflow-y-auto"
         data-panel="canvas"
         @click.stop="togglePanel"
       >
         <!-- Eyebrow badge -->
-        <div class="mb-3 fade-up">
+        <div class="mb-2 fade-up">
           <span class="eyebrow-badge">Output</span>
         </div>
 
-        <!-- No-audio placeholder -->
+        <!-- No-audio placeholder — improved visual grounding -->
         <div
           v-if="!audioUrlRef"
-          class="flex flex-col items-center justify-center py-20 text-ink-dim/40 fade-up"
+          class="flex flex-col items-center justify-center py-16 text-ink-dim/35 fade-up"
         >
           <span
             aria-hidden="true"
-            class="ph ph-speaker-simple-none text-5xl mb-4 opacity-30"
+            class="ph ph-speaker-simple-none text-4xl mb-3 opacity-25"
           />
-          <p class="text-sm font-medium">
+          <p class="text-xs font-medium text-ink-dim/50">
             Generate speech to see audio output
           </p>
-          <p class="text-xs text-ink-dim/50 mt-1">
+          <p class="text-[10px] text-ink-dim/35 mt-1">
             Your waveform will appear here
           </p>
         </div>
@@ -249,7 +249,7 @@ onUnmounted(() => dispose())
         <!-- Audio Player Panel -->
         <div
           v-if="audioUrlRef"
-          class="mt-6 fade-up"
+          class="mt-4 fade-up"
         >
           <AudioPlayerPanel
             :visible="true"
@@ -269,38 +269,38 @@ onUnmounted(() => dispose())
       </div>
     </div>
 
-    <!-- Mobile: stacked layout -->
+    <!-- Mobile: stacked layout — tightened -->
     <div class="md:hidden min-h-[100dvh] flex flex-col">
-      <!-- Canvas (top) -->
+      <!-- Canvas (top) — compact -->
       <div
         class="canvas flex-1 overflow-y-auto relative"
-        style="height: calc(100dvh - 48px - 44px)"
+        style="height: calc(100dvh - var(--nav-offset));"
         @click.stop="togglePanel"
       >
-        <div class="px-4 pt-2 pb-4">
+        <div class="px-3 pt-1.5 pb-3">
           <!-- Eyebrow badge -->
-          <span class="eyebrow-badge mb-2 inline-block">Output</span>
-          <h2 class="text-lg font-bold text-ink">
+          <span class="eyebrow-badge mb-1.5 inline-block text-[9px]">Output</span>
+          <h2 class="text-base font-bold text-ink">
             Audio
           </h2>
         </div>
 
         <div
           v-if="!audioUrlRef"
-          class="flex flex-col items-center justify-center py-16 text-ink-dim/50 px-4"
+          class="flex flex-col items-center justify-center py-12 text-ink-dim/40 px-3"
         >
           <span
             aria-hidden="true"
-            class="ph ph-speaker-simple-none text-4xl mb-3 opacity-40"
+            class="ph ph-speaker-simple-none text-3xl mb-2 opacity-30"
           />
-          <p class="text-sm">
+          <p class="text-xs">
             Generate speech to see audio output
           </p>
         </div>
 
         <div
           v-if="audioUrlRef"
-          class="mt-4 px-4"
+          class="mt-3 px-3"
         >
           <AudioPlayerPanel
             :visible="true"
@@ -319,36 +319,36 @@ onUnmounted(() => dispose())
         </div>
       </div>
 
-      <!-- Mobile FAB: status indicator -->
-      <div class="fixed bottom-3 right-3 z-40 md:hidden">
+      <!-- Mobile FAB: status indicator — repositioned to not overlap divider -->
+      <div class="fixed bottom-2 right-2 z-40 md:hidden">
         <MobileStatusIndicator />
       </div>
 
-      <!-- Control Deck (bottom, draggable divider) -->
+      <!-- Control Deck (bottom, draggable divider) — compact -->
       <div
         data-testid="control-deck-panel"
-        class="control-deck border-t border-white/[0.04]"
-        :style="{ height: `${canvasRatio * 100}%`, maxHeight: '85vh' }"
+        class="control-deck border-t border-white/[0.06]"
+        :style="{ height: `${canvasRatio * 100}%`, maxHeight: '80vh' }"
         @touchstart="onDragStart"
         @touchmove="onDragMove"
         @touchend="onDragEnd"
         @mousedown="onDragStart"
       >
-        <!-- Drag divider handle -->
+        <!-- Drag divider handle — more visible -->
         <div
           data-testid="drag-divider"
-          class="drag-divider h-1.5 cursor-ns-resize flex items-center justify-center"
+          class="drag-divider h-2 cursor-ns-resize flex items-center justify-center"
         >
-          <div class="w-12 h-1 bg-ink-dim/30 rounded-full" />
+          <div class="w-10 h-1 bg-ink-dim/40 rounded-full" />
         </div>
 
-        <!-- Content -->
-        <div class="p-4 overflow-y-auto">
+        <!-- Content — compact -->
+        <div class="p-3 overflow-y-auto">
           <!-- Voice Selector -->
-          <div class="mb-4">
-            <div class="bezel mb-3">
-              <div class="bezel-inner p-3">
-                <label class="block text-[10px] font-medium text-ink-dim/60 mb-2 tracking-wide">
+          <div class="mb-3">
+            <div class="bezel mb-2">
+              <div class="bezel-inner p-2.5">
+                <label class="block text-[10px] font-medium text-ink-dim/50 mb-1 tracking-wide">
                   Voice
                 </label>
                 <VoiceSelector
@@ -360,12 +360,12 @@ onUnmounted(() => dispose())
           </div>
 
           <!-- Text Input -->
-          <div class="mb-4">
+          <div class="mb-3">
             <div class="bezel">
-              <div class="bezel-inner p-3">
+              <div class="bezel-inner p-2.5">
                 <label
                   for="text-input-mobile"
-                  class="block text-[10px] font-medium text-ink-dim/60 mb-2 tracking-wide"
+                  class="block text-[10px] font-medium text-ink-dim/50 mb-1 tracking-wide"
                 >
                   Arabic Text
                 </label>
@@ -373,7 +373,7 @@ onUnmounted(() => dispose())
                   id="text-input-mobile"
                   v-model="textInput"
                   placeholder="Type or paste Arabic text here..."
-                  class="tts-input w-full min-h-[80px] resize-y rounded-lg bg-studio-900 text-ink text-xs font-arabic p-3 border border-white/[0.04] focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all duration-500"
+                  class="tts-input w-full min-h-[70px] resize-y rounded-lg bg-studio-900 text-ink text-xs font-arabic p-2.5 border border-white/[0.04] focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all duration-500"
                   dir="rtl"
                 />
               </div>
@@ -381,16 +381,16 @@ onUnmounted(() => dispose())
           </div>
 
           <!-- Speed Slider -->
-          <div class="mb-4">
+          <div class="mb-3">
             <div class="bezel">
-              <div class="bezel-inner p-3">
+              <div class="bezel-inner p-2.5">
                 <SpeedSlider />
               </div>
             </div>
           </div>
 
           <!-- Generate Button -->
-          <div class="mb-4">
+          <div class="mb-3">
             <GenerateButton
               :is-generating="isGenerating"
               :model-status="health.status"

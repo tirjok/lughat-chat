@@ -67,9 +67,20 @@ export default defineConfig({
     'eyebrow-badge': 'rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-gold-dim text-gold',
     'pill-btn': 'rounded-full px-6 py-3 font-semibold text-sm tracking-wide bg-gold text-studio-900 hover:bg-gold/90 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]',
     // WCAG AA: 12% white border (was 4%)
-    'bento-card': 'rounded-[1.5rem] bg-studio-800/60 border border-white/[0.12] shadow-soft',
+    'bento-card': 'rounded-[1.5rem] bg-studio-800/60 border border-white/[0.12] shadow-[0_4px_16px_rgba(0,0,0,0.3)]',
     'flex-center': 'flex items-center justify-center',
-    'flex-between': 'flex items-center justify-between'
+    'flex-between': 'flex items-center justify-between',
+    // Section header — Double-Bezel architecture (collapsed state)
+    // WCAG AA: 18% white border meets 3:1 contrast for interactive elements
+    'section-card': 'rounded-[1.5rem] bg-studio-700/50 border border-white/[0.18] hover:border-gold/25 transition-all duration-500 cursor-pointer',
+    'section-expanded': 'rounded-[1.5rem] bg-studio-800/80 border border-gold/15 shadow-[0_4px_20px_rgba(200,164,92,0.12)] px-5 py-4 mt-0.5',
+    // Section number badge — gold spectrum
+    'section-number': 'flex-shrink-0 w-7 h-7 rounded-full bg-gold-dim border border-gold/25 flex items-center justify-center text-[11px] font-bold text-gold',
+    // Lesson content card — Double-Bezel (outer shell + inner core)
+    'lesson-card': 'rounded-[2rem] bg-studio-800/60 border border-white/[0.12] shadow-[0_4px_16px_rgba(0,0,0,0.3)]',
+    'lesson-card-inner': 'rounded-[calc(2rem-0.375rem)] bg-studio-900/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]',
+    // Practice section header — premium gold treatment
+    'practice-header': 'flex items-center gap-3 mb-5'
   },
   rules: [
     ['text-gold-gradient', {

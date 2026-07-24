@@ -46,35 +46,6 @@ function getProgressColor(status: string): string {
   return status === 'completed' ? 'bg-gold-bright' : 'bg-gold'
 }
 
-// Gold-spectrum status badge (Issue 9)
-function getStatusBadge(status: string): string {
-  switch (status) {
-    case 'completed':
-      return 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gold/10 text-gold-bright border border-gold/20'
-    case 'in_progress':
-      return 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gold-dim text-gold border border-gold/20'
-    default:
-      return 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.04] text-ink-dim/50 border border-white/[0.06]'
-  }
-}
-
-function getStatusBadgeIcon(status: string): string {
-  switch (status) {
-    case 'completed': return 'ph ph-check-circle text-[10px]'
-    case 'in_progress': return 'ph ph-arrows-clockwise text-[10px]'
-    default: return 'ph ph-arrow-right text-[10px]'
-  }
-}
-
-function getStatusBadgeText(status: string): string {
-  switch (status) {
-    case 'completed': return 'Completed'
-    case 'in_progress': return 'In Progress'
-    default: return 'Ready to Start'
-  }
-}
-
-// Gold-spectrum level progress bar (Issue 9: no emerald)
 function getLevelProgressColor(progress: number): string {
   return progress >= 100 ? 'bg-gold-bright' : 'bg-gold'
 }
@@ -94,46 +65,44 @@ function getLevelProgressColor(progress: number): string {
 
     <!-- Content layer above background -->
     <div
-      class="relative z-10 max-w-3xl mx-auto px-4 py-8 md:px-6"
+      class="relative z-10 max-w-3xl mx-auto px-4"
       :class="{ 'ml-72': sidebar.isOpen.value && !sidebar.isMobile.value }"
+      style="padding-top: var(--nav-offset);"
     >
-      <!-- Hero Header -->
-      <div class="mb-10 text-center">
-        <div class="inline-flex items-center gap-3 mb-3">
-          <span class="ph ph-student text-gold text-3xl" />
+      <!-- Hero Header — tightened -->
+      <div class="mb-8 text-center">
+        <div class="inline-flex items-center gap-2.5 mb-2">
+          <span class="ph ph-student text-gold text-2xl" />
           <h1
-            class="font-arabic text-4xl font-bold text-gold"
+            class="font-arabic text-3xl font-bold text-gold"
             dir="rtl"
           >
             خريطة التعلم
           </h1>
         </div>
-        <p class="text-[11px] font-sans text-ink-dim/70 tracking-[0.25em] uppercase mb-4">
+        <p class="text-[10px] font-sans text-ink-dim/60 tracking-[0.2em] uppercase">
           Your Journey to Arabic Fluency
         </p>
 
-        <!-- Overall progress hero — gold-spectrum (Issue 9) -->
+        <!-- Overall progress — consolidated inline stats (Issue 9) -->
         <div
           v-if="groupedLessons?.length > 0 && !loading"
-          class="flex items-center justify-center gap-6 text-sm"
+          class="flex items-center justify-center gap-4 text-xs mt-3"
         >
-          <div class="flex items-center gap-2">
-            <span class="ph ph-check-circle text-gold-bright text-base" />
-            <span class="text-ink-dim">{{ (groupedLessons?.reduce((sum, g) => sum + g.lessons.filter(l => l.status === 'completed').length, 0) ?? 0) }}</span>
-            <span class="text-ink-dim/60">completed</span>
-          </div>
-          <span class="text-ink-dim/30">·</span>
-          <div class="flex items-center gap-2">
-            <span class="ph ph-spinner text-gold text-base animate-spin" />
-            <span class="text-ink-dim">{{ (groupedLessons?.reduce((sum, g) => sum + g.lessons.filter(l => l.status === 'in_progress').length, 0) ?? 0) }}</span>
-            <span class="text-ink-dim/60">in progress</span>
-          </div>
-          <span class="text-ink-dim/30">·</span>
-          <div class="flex items-center gap-2">
-            <span class="ph ph-lock-key text-ink-dim/40 text-base" />
-            <span class="text-ink-dim">{{ (groupedLessons?.reduce((sum, g) => sum + g.lessons.filter(l => l.status === 'locked').length, 0) ?? 0) }}</span>
-            <span class="text-ink-dim/60">locked</span>
-          </div>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="ph ph-check-circle text-gold-bright text-sm" />
+            <span class="text-ink-dim font-medium">{{ (groupedLessons?.reduce((sum, g) => sum + g.lessons.filter(l => l.status === 'completed').length, 0) ?? 0) }}</span>
+          </span>
+          <span class="text-ink-dim/25">/</span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="ph ph-spinner text-gold text-sm" />
+            <span class="text-ink-dim font-medium">{{ (groupedLessons?.reduce((sum, g) => sum + g.lessons.filter(l => l.status === 'in_progress').length, 0) ?? 0) }}</span>
+          </span>
+          <span class="text-ink-dim/25">/</span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="ph ph-lock-key text-ink-dim/40 text-sm" />
+            <span class="text-ink-dim font-medium">{{ (groupedLessons?.reduce((sum, g) => sum + g.lessons.filter(l => l.status === 'locked').length, 0) ?? 0) }}</span>
+          </span>
         </div>
       </div>
 
@@ -190,10 +159,10 @@ function getLevelProgressColor(progress: number): string {
           :key="levelGroup.level"
           class="mb-10"
         >
-          <!-- Level section header -->
-          <div class="flex items-center gap-4 mb-5">
+          <!-- Level section header — compact -->
+          <div class="flex items-center gap-3 mb-4">
             <div
-              class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border"
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border"
               :class="getLevelBadge(levelGroup.level)"
             >
               <span
@@ -203,20 +172,18 @@ function getLevelProgressColor(progress: number): string {
               {{ levelGroup.level }}
             </div>
             <span class="flex-1 h-px bg-white/[0.06]" />
-            <div class="flex items-center gap-2 text-xs">
-              <span class="text-ink-dim/60">{{ levelGroup.progress }}% complete</span>
-              <div class="w-16 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                <div
-                  class="h-full rounded-full transition-all duration-700"
-                  :class="getLevelProgressColor(levelGroup.progress)"
-                  :style="{ width: levelGroup.progress + '%' }"
-                />
-              </div>
+            <span class="text-[11px] text-ink-dim/50">{{ levelGroup.progress }}%</span>
+            <div class="w-12 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-700"
+                :class="getLevelProgressColor(levelGroup.progress)"
+                :style="{ width: levelGroup.progress + '%' }"
+              />
             </div>
           </div>
 
-          <!-- Lesson Cards -->
-          <div class="space-y-3">
+          <!-- Lesson Cards — tightened: removed redundant status badge (icon circle suffices) -->
+          <div class="space-y-2.5">
             <template
               v-for="lesson in levelGroup.lessons"
               :key="lesson.id"
@@ -232,42 +199,33 @@ function getLevelProgressColor(progress: number): string {
                 >
                   <!-- Card body — Issue 22: WCAG AA border -->
                   <div
-                    class="relative rounded-2xl border border-white/[0.12] bg-white/[0.03] backdrop-blur-sm p-5 group-hover:border-gold/30 group-hover:bg-white/[0.05] transition-all duration-500 cursor-pointer"
+                    class="relative rounded-2xl border border-white/[0.12] bg-white/[0.03] backdrop-blur-sm p-4 group-hover:border-gold/30 group-hover:bg-white/[0.05] transition-all duration-500 cursor-pointer"
                     tabindex="0"
                     data-testid="lesson-card"
                   >
-                    <div class="flex-between">
-                      <div class="flex items-start gap-4">
-                        <!-- Status icon circle — gold-spectrum (Issue 9) -->
-                        <div
-                          class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                          :class="getStatusCircle(lesson.status)"
-                        >
-                          <span :class="getStatusIcon(lesson.status)" />
-                        </div>
+                    <div class="flex items-center gap-3">
+                      <!-- Status icon circle — gold-spectrum (Issue 9) -->
+                      <div
+                        class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
+                        :class="getStatusCircle(lesson.status)"
+                      >
+                        <span :class="getStatusIcon(lesson.status)" />
+                      </div>
 
-                        <div>
-                          <h3 class="font-sans font-semibold text-ink text-base group-hover:text-gold transition-colors duration-300">
-                            {{ lesson.title }}
-                          </h3>
-                          <div class="flex items-center gap-2 mt-1 text-xs text-ink-dim/60">
-                            <span>{{ lesson.section_count }} sections</span>
-                            <span class="text-ink-dim/30">·</span>
-                            <span>{{ lesson.competency_count }} competencies</span>
-                          </div>
-                          <!-- Status badge — gold-spectrum (Issue 9) -->
-                          <div class="mt-2">
-                            <span :class="getStatusBadge(lesson.status)">
-                              <span :class="getStatusBadgeIcon(lesson.status)" />
-                              {{ getStatusBadgeText(lesson.status) }}
-                            </span>
-                          </div>
+                      <div class="flex-1 min-w-0">
+                        <h3 class="font-sans font-semibold text-ink text-sm group-hover:text-gold transition-colors duration-300 truncate">
+                          {{ lesson.title }}
+                        </h3>
+                        <div class="flex items-center gap-1.5 mt-0.5 text-[11px] text-ink-dim/50">
+                          <span>{{ lesson.section_count }} sections</span>
+                          <span class="text-ink-dim/25">·</span>
+                          <span>{{ lesson.competency_count }} competencies</span>
                         </div>
                       </div>
                     </div>
 
                     <!-- Progress bar — gold-spectrum (Issue 9: no emerald) -->
-                    <div class="mt-4 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div class="mt-3 h-1 rounded-full bg-white/[0.06] overflow-hidden">
                       <div
                         class="h-full rounded-full transition-all duration-700"
                         :class="getProgressColor(lesson.status)"
@@ -277,56 +235,51 @@ function getLevelProgressColor(progress: number): string {
                   </div>
                 </div>
               </NuxtLink>
-
-              <!-- Issue 2: Visible locked lessons (not hidden) -->
+              <!-- Issue 2: Visible locked lessons — dimmed with lock pattern -->
               <div
                 v-else
-                class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-5 opacity-35"
+                class="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 opacity-40"
                 role="status"
                 :aria-label="`Locked: ${lesson.title}. Complete previous lessons to unlock.`"
                 data-testid="locked-lesson"
               >
-                <div class="flex-between">
-                  <div class="flex items-center gap-4">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center">
-                      <span class="ph ph-lock-key text-ink-dim/40 text-lg" />
-                    </div>
-                    <div>
-                      <h3 class="font-sans font-semibold text-ink-dim/60 text-base">
-                        {{ lesson.title }}
-                      </h3>
-                      <div class="flex items-center gap-2 mt-1 text-xs text-ink-dim/40">
-                        <span>{{ lesson.section_count }} sections</span>
-                        <span class="text-ink-dim/25">·</span>
-                        <span>{{ lesson.competency_count }} competencies</span>
-                      </div>
-                      <div class="mt-2">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.03] text-ink-dim/30 border border-white/[0.06]">
-                          <span class="ph ph-lock text-[10px]" />
-                          Locked
-                        </span>
-                      </div>
+                <div class="flex items-center gap-3">
+                  <div class="flex-shrink-0 w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center">
+                    <span class="ph ph-lock-key text-ink-dim/40 text-base" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-sans font-semibold text-ink-dim/50 text-sm truncate">
+                      {{ lesson.title }}
+                    </h3>
+                    <div class="flex items-center gap-1.5 mt-0.5 text-[11px] text-ink-dim/35">
+                      <span>{{ lesson.section_count }} sections</span>
+                      <span class="text-ink-dim/20">·</span>
+                      <span>{{ lesson.competency_count }} competencies</span>
                     </div>
                   </div>
+                  <span class="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.04] text-ink-dim/40 border border-white/[0.06]">
+                    <span class="ph ph-lock text-[10px]" />
+                    Locked
+                  </span>
                 </div>
               </div>
             </template>
           </div>
         </div>
 
-        <!-- Empty state -->
+        <!-- Empty state — compact -->
         <div
           v-if="lessons.length === 0"
-          class="flex flex-col items-center gap-4 py-16"
+          class="flex flex-col items-center gap-3 py-12"
         >
-          <div class="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center">
-            <span class="ph ph-books text-gold text-2xl" />
+          <div class="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center">
+            <span class="ph ph-books text-gold text-xl" />
           </div>
-          <p class="text-ink font-medium">
+          <p class="text-ink text-sm font-medium">
             No lessons available yet
           </p>
-          <p class="text-ink-dim/60 text-sm text-center max-w-xs">
-            Check back when new lessons are unlocked. Your learning journey starts here!
+          <p class="text-ink-dim/50 text-xs text-center max-w-xs">
+            Check back when new lessons are unlocked.
           </p>
         </div>
       </div>

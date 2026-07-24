@@ -227,53 +227,58 @@ onMounted(() => {
             v-if="currentLesson.progress?.status !== 'locked'"
             class="mb-8"
           >
-            <h1 class="font-sans text-2xl font-bold text-ink mb-3">
-              {{ currentLesson.title }}
-            </h1>
+            <!-- Double-Bezel card container -->
+            <div class="lesson-card">
+              <div class="lesson-card-inner p-6 md:p-8">
+                <h1 class="font-sans text-2xl font-bold text-ink mb-3">
+                  {{ currentLesson.title }}
+                </h1>
 
-            <!-- Level badge — gold-spectrum (Issue 9) -->
-            <div class="flex items-center gap-3 mb-4">
-              <div
-                class="px-3 py-1 rounded-full text-xs font-bold border"
-                :class="getLevelBadge(currentLesson.level)"
-              >
-                {{ currentLesson.level }}
-              </div>
-
-              <!-- Gold-spectrum progress bar (Issue 9: no emerald, Issue 8: real progress) -->
-              <div
-                v-if="totalActivities > 0"
-                class="flex items-center gap-2 text-xs text-ink-dim/60"
-              >
-                <span class="ph ph-chart-bar text-gold/50" />
-                <span>{{ completedActivities }}/{{ totalActivities }} activities</span>
-                <span class="text-ink-dim/30">·</span>
-                <span>{{ lessonProgressPercent }}%</span>
-                <div class="w-16 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <!-- Level badge — gold-spectrum (Issue 9: no level-specific colors) -->
+                <div class="flex items-center gap-3 mb-4">
                   <div
-                    class="h-full rounded-full transition-all duration-700"
-                    :class="getProgressColor(lessonProgressPercent)"
-                    :style="{ width: lessonProgressPercent + '%' }"
-                  />
+                    class="px-3 py-1 rounded-full text-xs font-bold border"
+                    :class="getLevelBadge(currentLesson.level)"
+                  >
+                    {{ currentLesson.level }}
+                  </div>
+
+                  <!-- Gold-spectrum progress bar (Issue 9: no emerald, Issue 8: real progress) -->
+                  <div
+                    v-if="totalActivities > 0"
+                    class="flex items-center gap-2 text-xs text-ink-dim/60"
+                  >
+                    <span class="ph ph-chart-bar text-gold/50" />
+                    <span>{{ completedActivities }}/{{ totalActivities }} activities</span>
+                    <span class="text-ink-dim/30">·</span>
+                    <span>{{ lessonProgressPercent }}%</span>
+                    <div class="w-16 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div
+                        class="h-full rounded-full transition-all duration-700"
+                        :class="getProgressColor(lessonProgressPercent)"
+                        :style="{ width: lessonProgressPercent + '%' }"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Competencies — eyebrow badge + card -->
+                <div class="mt-4">
+                  <h3 class="text-xs font-sans font-semibold text-ink-dim/60 tracking-wider uppercase mb-3">
+                    What you'll learn
+                  </h3>
+                  <ul class="space-y-2">
+                    <li
+                      v-for="(comp, index) in currentLesson.competencies"
+                      :key="`comp-${index}`"
+                      class="flex items-start gap-2.5 text-ink text-sm"
+                    >
+                      <span class="ph ph-sparkle text-gold/60 mt-0.5 flex-shrink-0" />
+                      <span>{{ comp }}</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
-            </div>
-
-            <!-- Competencies -->
-            <div class="mt-4">
-              <h3 class="text-xs font-sans font-semibold text-ink-dim/60 tracking-wider uppercase mb-2">
-                What you'll learn
-              </h3>
-              <ul class="space-y-1.5">
-                <li
-                  v-for="(comp, index) in currentLesson.competencies"
-                  :key="`comp-${index}`"
-                  class="flex items-center gap-2 text-ink-dim text-sm"
-                >
-                  <span class="ph ph-sparkle text-gold/40" />
-                  {{ comp }}
-                </li>
-              </ul>
             </div>
           </div>
 
