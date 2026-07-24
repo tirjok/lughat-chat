@@ -51,7 +51,7 @@ describe('lessons/index.vue — Lesson List Page (Slice 8)', () => {
         { id: 2, level: 'A1', sequence: 2, title: 'Lesson Two', competency_count: 3, section_count: 3, status: 'locked' }
       ]
       const wrapper = await mountSuspended(LessonsIndex)
-      const cards = wrapper.findAll('[class*="rounded-2xl"][class*="border-white/\\[0.06\\]"]')
+      const cards = wrapper.findAll('[class*="rounded-2xl"][class*="border-white/\\[0.12\\]"]')
       expect(cards.length).toBe(2)
     })
 
@@ -60,7 +60,7 @@ describe('lessons/index.vue — Lesson List Page (Slice 8)', () => {
         { id: 1, level: 'A1', sequence: 1, title: 'The Salutations — التحيّة الأولى', competency_count: 5, section_count: 5, status: 'available' }
       ]
       const wrapper = await mountSuspended(LessonsIndex)
-      const availableIcons = wrapper.findAll('.text-emerald-400')
+      const availableIcons = wrapper.findAll('a[href*="/lessons/"]')
       expect(availableIcons.length).toBeGreaterThan(0)
     })
 

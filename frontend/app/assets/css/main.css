@@ -126,8 +126,9 @@
   --bg-card: #0F0E0C;
   --bg-elevated: #1A1714;
 
-  /* Semantic */
-  --success: #5CB87A;
+  /* Gold-spectrum scoring (color-blind safe with icons + labels) */
+  --success: #E8C878;
+  --warn: #D4883E;
   --error: #B85C38;
   --error-dim: rgba(184, 92, 56, 0.15);
 
@@ -160,8 +161,9 @@ body {
 }
 
 /* ===================================
-   Ethereal Glass — Mesh Gradient Background
-   Triple-layer radial gradients: gold + amber + warm white orbs.
+   Single Gold Orb — Issue 21 fix
+   Replaced triple-layer mesh gradient with one subtle gold orb.
+   Reduces gradient banding, improves contrast, preserves warm aesthetic.
    GPU-safe (fixed, no scroll repaint).
    =================================== */
 body::before {
@@ -170,10 +172,7 @@ body::before {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 80% 60% at 25% 15%, rgba(200, 164, 92, 0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 75% 70%, rgba(200, 164, 92, 0.025) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 55% 35%, rgba(232, 200, 120, 0.02) 0%, transparent 50%);
+  background: radial-gradient(ellipse 60% 45% at 30% 20%, rgba(200, 164, 92, 0.03) 0%, transparent 65%);
 }
 
 /* ===================================

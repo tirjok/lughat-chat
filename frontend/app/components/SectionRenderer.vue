@@ -16,9 +16,9 @@ interface SectionRendererProps {
   /** Total number of sections in this lesson. */
   sectionCount?: number
   /** Map of activity ID → progress for this lesson. */
-  activityProgress?: Record<string, { score: number; status: string; attempts: number }>
+  activityProgress?: Record<string, { score: number, status: string, attempts: number }>
   /** Array of activities for this lesson (used to determine section→activity mapping). */
-  lessonActivities?: { id: number; type: string }[]
+  lessonActivities?: { id: number, type: string }[]
 }
 
 const props = withDefaults(defineProps<SectionRendererProps>(), {
@@ -88,7 +88,7 @@ const grammarContent = computed<GrammarSectionContent | undefined>(() => {
 
 // ─── Activity Progress for This Section ─────────────────────────────────
 
-const sectionActivity = computed<{ id: number; type: string } | undefined>(() => {
+const sectionActivity = computed<{ id: number, type: string } | undefined>(() => {
   return props.lessonActivities?.[props.sectionIndex]
 })
 
@@ -123,13 +123,13 @@ onBeforeUnmount(() => {
   dispose()
 })
 
-// Section type labels for UI
+// Section type labels for UI (Issue 12: user-facing labels)
 const sectionTypeLabel: Record<string, string> = {
   dialogue: 'Dialogue Practice',
   vocabulary: 'Vocabulary Builder',
   pronouns: 'Pronoun Guide',
   expressions: 'Key Expressions',
-  grammar: 'Grammar Rules',
+  grammar: 'Grammar Rules'
 }
 
 const sectionTypeIcon: Record<string, string> = {
@@ -137,7 +137,7 @@ const sectionTypeIcon: Record<string, string> = {
   vocabulary: 'ph-book-open-text',
   pronouns: 'ph-text-aa',
   expressions: 'ph-chats-circle',
-  grammar: 'ph-code',
+  grammar: 'ph-code'
 }
 
 function getTypeLabel(type: string): string {
@@ -147,6 +147,15 @@ function getTypeLabel(type: string): string {
 function getTypeIcon(type: string): string {
   return sectionTypeIcon[type] || 'ph-file'
 }
+
+// Gold-spectrum section status (Issue 9: no emerald/amber)
+function getSectionStatusIcon(status: string): string {
+  switch (status) {
+    case 'completed': return 'ph ph-check-circle text-gold-bright text-xs'
+    case 'in_progress': return 'ph ph-spinner text-gold text-xs animate-spin'
+    default: return ''
+  }
+}
 </script>
 
 <template>
@@ -154,9 +163,9 @@ function getTypeIcon(type: string): string {
     <!-- Section Header: Clickable accordion trigger -->
     <div class="mb-4">
       <button
+        :id="`section-trigger-${sectionIndex}`"
         :aria-expanded="isOpen"
         :aria-controls="`section-content-${sectionIndex}`"
-        :id="`section-trigger-${sectionIndex}`"
         class="w-full flex items-center gap-3 text-right cursor-pointer group py-3 px-4 transition-all duration-500 rounded-2xl hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-gold/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a1a]"
         @click="toggleSection()"
       >
@@ -181,19 +190,19 @@ function getTypeIcon(type: string): string {
             <span class="text-[10px] font-sans text-ink-dim/50 tracking-wider uppercase">
               {{ getTypeLabel(section.type) }}
             </span>
-            <!-- Status indicator -->
+            <!-- Status indicator — gold-spectrum (Issue 9) -->
             <span
               v-if="sectionHasActivity"
               class="flex items-center gap-1"
             >
               <span
                 v-if="sectionProgress?.status === 'completed'"
-                class="ph ph-check-circle text-emerald-400 text-xs"
+                :class="getSectionStatusIcon(sectionProgress.status)"
                 title="Completed"
               />
               <span
                 v-else-if="sectionProgress?.status === 'in_progress'"
-                class="ph ph-spinner text-amber-400 text-xs animate-spin"
+                :class="getSectionStatusIcon(sectionProgress.status)"
                 title="In Progress"
               />
             </span>
@@ -209,9 +218,15 @@ function getTypeIcon(type: string): string {
       enter-to="opacity-100 max-h-[2000px]"
       leave="transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
       leave-from="opacity-100 max-h-[2000px]"
-      leave-to="opacity-0 max-h-0"
+      leave-to="opacity-0"
     >
-      <div v-if="isOpen" class="overflow-hidden" :id="`section-content-${sectionIndex}`" role="region" :aria-labelledby="`section-trigger-${sectionIndex}`">
+      <div
+        v-if="isOpen"
+        :id="`section-content-${sectionIndex}`"
+        class="overflow-hidden"
+        role="region"
+        :aria-labelledby="`section-trigger-${sectionIndex}`"
+      >
         <!-- Dialogue Section -->
         <template v-if="dialogueContent">
           <div
@@ -226,7 +241,7 @@ function getTypeIcon(type: string): string {
               <div
                 v-for="line in scene.lines"
                 :key="line.speaker"
-                class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4"
+                class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-4"
               >
                 <p class="text-sm">
                   <span class="font-semibold text-ink">{{ line.speaker }}:</span>
@@ -242,8 +257,14 @@ function getTypeIcon(type: string): string {
                   :disabled="isSynthesizing"
                   @click="handleTTS(line.arabic)"
                 >
-                  <span v-if="isSynthesizing" class="ph ph-spinner animate-spin-slow text-sm" />
-                  <span v-else class="ph ph-speaker text-sm" />
+                  <span
+                    v-if="isSynthesizing"
+                    class="ph ph-spinner animate-spin-slow text-sm"
+                  />
+                  <span
+                    v-else
+                    class="ph ph-speaker text-sm"
+                  />
                   <span>{{ isSynthesizing ? 'Loading...' : 'Listen' }}</span>
                 </button>
               </div>
@@ -265,7 +286,7 @@ function getTypeIcon(type: string): string {
                 <div
                   v-for="word in category.words"
                   :key="word.arabic"
-                  class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 flex items-center justify-between"
+                  class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-4 flex items-center justify-between"
                 >
                   <div>
                     <span class="font-arabic text-ink">{{ word.arabic }}</span>
@@ -289,7 +310,7 @@ function getTypeIcon(type: string): string {
             <div
               v-for="entry in pronounsContent.pronouns"
               :key="entry.arabic"
-              class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4"
+              class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-4"
             >
               <div class="flex items-center justify-between">
                 <div>
@@ -313,7 +334,7 @@ function getTypeIcon(type: string): string {
             <div
               v-for="expr in expressionsContent.expressions"
               :key="expr.arabic"
-              class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 flex items-center justify-between"
+              class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-4 flex items-center justify-between"
             >
               <div>
                 <span class="font-arabic text-ink">{{ expr.arabic }}</span>
@@ -335,7 +356,7 @@ function getTypeIcon(type: string): string {
             <div
               v-for="topic in grammarContent.topics"
               :key="topic.name"
-              class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5"
+              class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-5"
             >
               <h4 class="text-sm font-semibold text-gold mb-2">
                 {{ topic.name }}
@@ -347,7 +368,7 @@ function getTypeIcon(type: string): string {
                 <div
                   v-for="ex in topic.examples"
                   :key="ex.arabic"
-                  class="rounded-xl border border-white/[0.04] bg-white/[0.02] p-3"
+                  class="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3"
                 >
                   <span
                     class="font-arabic text-ink"

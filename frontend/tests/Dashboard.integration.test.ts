@@ -99,7 +99,7 @@ describe('Dashboard integration (NavBar + RoadmapSidebar)', () => {
       mockIsOpen.value = true
       mockIsMobile.value = false
       const wrapper = await mountSuspended(Dashboard)
-      const content = wrapper.find('.max-w-4xl')
+      const content = wrapper.find('.max-w-3xl')
       expect(content.classes()).toContain('ml-72')
     })
 
@@ -107,7 +107,7 @@ describe('Dashboard integration (NavBar + RoadmapSidebar)', () => {
       mockIsOpen.value = true
       mockIsMobile.value = true
       const wrapper = await mountSuspended(Dashboard)
-      const content = wrapper.find('.max-w-4xl')
+      const content = wrapper.find('.max-w-3xl')
       expect(content.classes()).not.toContain('ml-72')
     })
   })

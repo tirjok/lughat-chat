@@ -24,9 +24,9 @@ function isActive(path: string): boolean {
       class="nav-pill pointer-events-auto flex items-center justify-between
              rounded-full px-4 md:px-5 h-[48px]
              bg-studio-800/70 backdrop-blur-xl
-             border border-white/[0.06]
+             border border-white/[0.12]
              shadow-ambient
-             transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]
+             transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0.1)]
              md:w-auto w-full max-w-2xl"
       dir="rtl"
       style="--nav-height: 48px"
@@ -116,7 +116,6 @@ function isActive(path: string): boolean {
           to="/playground"
           class="text-xl font-medium text-ink hover:text-gold transition-colors duration-500"
           :class="{ 'text-gold': isActive('/playground') }"
-          @click="menuOpen = false"
         >
           Playground
         </NuxtLink>

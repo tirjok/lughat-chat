@@ -4,7 +4,7 @@ import type { SubmissionResult } from '../composables/useActivitySubmission'
 interface Props {
   /** The submission result (nullable when no result yet). */
   result: SubmissionResult | null
-  /** Maximum number of attempts (for remaining display). */
+  /** Maximum number of attempts (for display). */
   maxAttempts: number
   /** Whether the activity is marked complete. */
   isComplete: boolean
@@ -42,7 +42,7 @@ const hasMoreActivities = computed(() => {
   return props.activityIndex < props.totalActivities - 1
 })
 
-// Score label text
+// Score label text (unchanged)
 const scoreLabel = computed(() => {
   if (score.value >= 0.9) return 'Excellent!'
   if (score.value >= 0.7) return 'Great job!'
@@ -50,37 +50,68 @@ const scoreLabel = computed(() => {
   return 'Keep practicing!'
 })
 
-// Score bar color
+// Gold-spectrum scoring (color-blind safe): bright gold → amber-warn → error
+// Paired with icons + text labels — no color-only distinction (Issue 9)
+const scoreTier = computed(() => {
+  if (score.value >= 0.7) return 'pass'
+  if (score.value >= 0.4) return 'partial'
+  return 'fail'
+})
+
+const scoreIcon = computed(() => {
+  switch (scoreTier.value) {
+    case 'pass': return 'ph-check-circle'
+    case 'partial': return 'ph-minus-circle'
+    default: return 'ph-x-circle'
+  }
+})
+
+const scoreColorClass = computed(() => {
+  switch (scoreTier.value) {
+    case 'pass': return 'text-gold-bright'
+    case 'partial': return 'text-gold'
+    default: return 'text-error'
+  }
+})
+
 const barColorClass = computed(() => {
-  if (score.value >= 0.7) return 'bg-emerald-400'
-  if (score.value >= 0.4) return 'bg-amber-400'
-  return 'bg-red-400'
+  switch (scoreTier.value) {
+    case 'pass': return 'bg-gold-bright'
+    case 'partial': return 'bg-gold'
+    default: return 'bg-error'
+  }
 })
 </script>
 
 <template>
-  <div class="mt-4 p-5 rounded-2xl border border-white/[0.06] bg-white/[0.03]">
+  <div class="mt-4 p-5 rounded-2xl border border-white/[0.12] bg-white/[0.03]">
     <!-- Score Header -->
     <div class="flex-between mb-3">
       <div class="flex items-center gap-2">
         <span class="text-sm font-semibold text-ink">Score</span>
         <span
           v-if="result"
-          class="text-xs font-medium"
-          :class="score >= 0.7 ? 'text-emerald-400' : score >= 0.4 ? 'text-amber-400' : 'text-red-400'"
+          class="flex items-center gap-1 text-xs font-medium"
+          :class="scoreColorClass"
         >
+          <!-- Icon indicator (color-blind safe) -->
+          <span
+            class="ph text-sm"
+            :class="scoreIcon"
+          />
           {{ scoreLabel }}
         </span>
       </div>
+      <!-- Percentage (color-blind safe — paired with icon + text label) -->
       <span
         class="text-2xl font-bold"
-        :class="score >= 0.7 ? 'text-emerald-400' : score >= 0.4 ? 'text-amber-400' : 'text-red-400'"
+        :class="scoreColorClass"
       >
         {{ (score * 100).toFixed(0) }}%
       </span>
     </div>
 
-    <!-- Score Bar -->
+    <!-- Score Bar — gold-spectrum (no red/green) -->
     <div class="h-2 rounded-full bg-white/[0.06] overflow-hidden mb-3">
       <div
         class="h-full rounded-full transition-all duration-700"
@@ -97,14 +128,14 @@ const barColorClass = computed(() => {
       {{ feedback }}
     </p>
 
-    <!-- Correct Answer (max attempts reached) -->
+    <!-- Correct Answer (max attempts reached) — gold-spectrum -->
     <div
       v-if="correctAnswer"
-      class="p-4 rounded-2xl bg-emerald-500/8 border border-emerald-500/25 mb-4"
+      class="p-4 rounded-2xl bg-gold/8 border border-gold/25 mb-4"
     >
       <div class="flex items-center gap-2 mb-1.5">
-        <span class="ph ph-check-circle text-emerald-400 text-sm" />
-        <p class="text-xs text-emerald-400/80 font-semibold">
+        <span class="ph ph-check-circle text-gold-bright text-sm" />
+        <p class="text-xs text-gold font-semibold">
           Correct Answer:
         </p>
       </div>

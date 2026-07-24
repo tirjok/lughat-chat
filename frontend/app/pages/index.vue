@@ -8,43 +8,75 @@ useSeoMeta({
 
 const { lessons, loading, error, groupedLessons, fetchLessons } = useLessons()
 
-/** Level-specific gradient colors for visual hierarchy. */
-const levelGradient: Record<string, string> = {
-  A1: 'from-emerald-500/20 to-teal-500/10',
-  A2: 'from-amber-500/20 to-orange-500/10',
-  B1: 'from-violet-500/20 to-purple-500/10',
+// Gold-spectrum level badge (Issue 9: no level-specific colors)
+function getLevelBadge(_level: string): string {
+  return `bg-gold-dim text-gold border-gold/25`
 }
 
-const levelBadgeBg: Record<string, string> = {
-  A1: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  A2: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
-  B1: 'bg-violet-500/15 text-violet-400 border-violet-500/25',
-}
-const levelIcon: Record<string, string> = {
-  A1: 'ph-seedling',
-  A2: 'ph-fire-flame-simple',
-  B1: 'ph-rocket-launch',
-}
-
-function getLevelBadge(level: string): string {
-  return levelBadgeBg[level] || 'bg-gold-dim text-gold border-gold/25'
-}
-
-function getLevelGradient(level: string): string {
-  return levelGradient[level] || 'from-gold/15 to-transparent'
-}
-
+// Level icon (preserved — meaningful for level identity)
 function getLevelIcon(level: string): string {
-  return levelIcon[level] || 'ph-book-open'
+  const icons: Record<string, string> = {
+    A1: 'ph-seedling',
+    A2: 'ph-fire-flame-simple',
+    B1: 'ph-rocket-launch'
+  }
+  return icons[level] || 'ph-book-open'
 }
 
-/** Derive a 0–100 progress value for a lesson card's progress bar. */
-function getCardProgress(lesson: { status: string }): number {
-  switch (lesson.status) {
-    case 'completed': return 100
-    case 'in_progress': return 45
-    default: return 0
+// Gold-spectrum status icon (Issue 9: no emerald/amber/red)
+function getStatusIcon(status: string): string {
+  switch (status) {
+    case 'completed': return 'ph-check-circle text-gold-bright text-lg'
+    case 'in_progress': return 'ph-spinner text-gold text-lg animate-spin'
+    default: return 'ph-arrow-right text-ink-dim/50 text-lg group-hover:text-gold transition-colors'
   }
+}
+
+// Gold-spectrum status circle (Issue 9)
+function getStatusCircle(status: string): string {
+  switch (status) {
+    case 'completed': return 'bg-gold/15 border border-gold/25'
+    case 'in_progress': return 'bg-gold-dim border border-gold/25'
+    default: return 'bg-white/[0.06] border border-white/[0.08]'
+  }
+}
+
+// Gold-spectrum progress bar (Issue 9: no emerald)
+function getProgressColor(status: string): string {
+  return status === 'completed' ? 'bg-gold-bright' : 'bg-gold'
+}
+
+// Gold-spectrum status badge (Issue 9)
+function getStatusBadge(status: string): string {
+  switch (status) {
+    case 'completed':
+      return 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gold/10 text-gold-bright border border-gold/20'
+    case 'in_progress':
+      return 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gold-dim text-gold border border-gold/20'
+    default:
+      return 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.04] text-ink-dim/50 border border-white/[0.06]'
+  }
+}
+
+function getStatusBadgeIcon(status: string): string {
+  switch (status) {
+    case 'completed': return 'ph ph-check-circle text-[10px]'
+    case 'in_progress': return 'ph ph-arrows-clockwise text-[10px]'
+    default: return 'ph ph-arrow-right text-[10px]'
+  }
+}
+
+function getStatusBadgeText(status: string): string {
+  switch (status) {
+    case 'completed': return 'Completed'
+    case 'in_progress': return 'In Progress'
+    default: return 'Ready to Start'
+  }
+}
+
+// Gold-spectrum level progress bar (Issue 9: no emerald)
+function getLevelProgressColor(progress: number): string {
+  return progress >= 100 ? 'bg-gold-bright' : 'bg-gold'
 }
 </script>
 
@@ -53,12 +85,6 @@ function getCardProgress(lesson: { status: string }): number {
     class="dashboard-page min-h-screen"
     dir="rtl"
   >
-    <!-- Vibrant gradient background -->
-    <div
-      class="fixed inset-0 z-0"
-      style="background: radial-gradient(ellipse 70% 50% at 20% 10%, rgba(139, 92, 246, 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(245, 158, 11, 0.06) 0%, transparent 55%), radial-gradient(ellipse 50% 35% at 50% 50%, rgba(52, 211, 153, 0.04) 0%, transparent 50%), linear-gradient(180deg, #0a0a1a 0%, #0f0e1a 50%, #0a0f14 100%);"
-    />
-
     <NavBar @toggle="sidebar.toggle" />
 
     <RoadmapSidebar
@@ -68,7 +94,7 @@ function getCardProgress(lesson: { status: string }): number {
 
     <!-- Content layer above background -->
     <div
-      class="relative z-10 max-w-4xl mx-auto px-4 py-8 md:px-6"
+      class="relative z-10 max-w-3xl mx-auto px-4 py-8 md:px-6"
       :class="{ 'ml-72': sidebar.isOpen.value && !sidebar.isMobile.value }"
     >
       <!-- Hero Header -->
@@ -86,16 +112,19 @@ function getCardProgress(lesson: { status: string }): number {
           Your Journey to Arabic Fluency
         </p>
 
-        <!-- Overall progress hero -->
-        <div v-if="groupedLessons?.length > 0 && !loading" class="flex items-center justify-center gap-6 text-sm">
+        <!-- Overall progress hero — gold-spectrum (Issue 9) -->
+        <div
+          v-if="groupedLessons?.length > 0 && !loading"
+          class="flex items-center justify-center gap-6 text-sm"
+        >
           <div class="flex items-center gap-2">
-            <span class="ph ph-check-circle text-emerald-400 text-base" />
+            <span class="ph ph-check-circle text-gold-bright text-base" />
             <span class="text-ink-dim">{{ (groupedLessons?.reduce((sum, g) => sum + g.lessons.filter(l => l.status === 'completed').length, 0) ?? 0) }}</span>
             <span class="text-ink-dim/60">completed</span>
           </div>
           <span class="text-ink-dim/30">·</span>
           <div class="flex items-center gap-2">
-            <span class="ph ph-spinner text-amber-400 text-base animate-spin" />
+            <span class="ph ph-spinner text-gold text-base animate-spin" />
             <span class="text-ink-dim">{{ (groupedLessons?.reduce((sum, g) => sum + g.lessons.filter(l => l.status === 'in_progress').length, 0) ?? 0) }}</span>
             <span class="text-ink-dim/60">in progress</span>
           </div>
@@ -108,12 +137,15 @@ function getCardProgress(lesson: { status: string }): number {
         </div>
       </div>
 
-      <!-- Loading State: skeleton cards -->
-      <div v-if="loading" class="space-y-5">
+      <!-- Loading State: skeleton cards — Issue 22: WCAG AA border -->
+      <div
+        v-if="loading"
+        class="space-y-5"
+      >
         <div
           v-for="i in 5"
           :key="i"
-          class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5"
+          class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-5"
         >
           <div class="flex-between">
             <div class="space-y-2">
@@ -123,7 +155,10 @@ function getCardProgress(lesson: { status: string }): number {
             <div class="w-8 h-8 rounded-full bg-white/[0.06] animate-pulse" />
           </div>
           <div class="mt-4 h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
-            <div class="h-full rounded-full bg-white/[0.06] animate-pulse" style="width: 0%" />
+            <div
+              class="h-full rounded-full bg-white/[0.06] animate-pulse"
+              style="width: 0%"
+            />
           </div>
         </div>
       </div>
@@ -161,7 +196,10 @@ function getCardProgress(lesson: { status: string }): number {
               class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border"
               :class="getLevelBadge(levelGroup.level)"
             >
-              <span class="ph" :class="getLevelIcon(levelGroup.level)" />
+              <span
+                class="ph"
+                :class="getLevelIcon(levelGroup.level)"
+              />
               {{ levelGroup.level }}
             </div>
             <span class="flex-1 h-px bg-white/[0.06]" />
@@ -170,7 +208,7 @@ function getCardProgress(lesson: { status: string }): number {
               <div class="w-16 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                 <div
                   class="h-full rounded-full transition-all duration-700"
-                  :class="levelGroup.progress >= 100 ? 'bg-emerald-400' : 'bg-gold'"
+                  :class="getLevelProgressColor(levelGroup.progress)"
                   :style="{ width: levelGroup.progress + '%' }"
                 />
               </div>
@@ -183,7 +221,7 @@ function getCardProgress(lesson: { status: string }): number {
               v-for="lesson in levelGroup.lessons"
               :key="lesson.id"
             >
-              <!-- Non-locked lessons: glass-morphism card with gradient border -->
+              <!-- Non-locked lessons: glass-morphism card with gold-spectrum (Issue 9) -->
               <NuxtLink
                 v-if="lesson.status !== 'locked'"
                 :to="`/lessons/${lesson.id}`"
@@ -192,42 +230,20 @@ function getCardProgress(lesson: { status: string }): number {
                 <div
                   class="relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 focus-visible:ring-2 focus-visible:ring-gold/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a1a]"
                 >
-                  <!-- Gradient glow background -->
+                  <!-- Card body — Issue 22: WCAG AA border -->
                   <div
-                    class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    :class="getLevelGradient(levelGroup.level)"
-                    style="background: radial-gradient(ellipse 80% 100% at 50% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 70%);"
-                  />
-
-                  <!-- Card body -->
-                  <div
-                    class="relative rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm p-5 group-hover:border-white/[0.12] group-hover:bg-white/[0.05] transition-all duration-500 cursor-pointer"
+                    class="relative rounded-2xl border border-white/[0.12] bg-white/[0.03] backdrop-blur-sm p-5 group-hover:border-gold/30 group-hover:bg-white/[0.05] transition-all duration-500 cursor-pointer"
                     tabindex="0"
                     data-testid="lesson-card"
                   >
                     <div class="flex-between">
                       <div class="flex items-start gap-4">
-                        <!-- Status icon circle -->
+                        <!-- Status icon circle — gold-spectrum (Issue 9) -->
                         <div
                           class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                          :class="lesson.status === 'completed'
-                            ? 'bg-emerald-500/15 border border-emerald-500/25'
-                            : lesson.status === 'in_progress'
-                              ? 'bg-amber-500/15 border border-amber-500/25'
-                              : 'bg-white/[0.06] border border-white/[0.08]'"
+                          :class="getStatusCircle(lesson.status)"
                         >
-                          <span
-                            v-if="lesson.status === 'completed'"
-                            class="ph ph-check-circle text-emerald-400 text-lg"
-                          />
-                          <span
-                            v-else-if="lesson.status === 'in_progress'"
-                            class="ph ph-spinner text-amber-400 text-lg animate-spin"
-                          />
-                          <span
-                            v-else
-                            class="ph ph-arrow-right text-ink-dim/50 text-lg group-hover:text-gold transition-colors"
-                          />
+                          <span :class="getStatusIcon(lesson.status)" />
                         </div>
 
                         <div>
@@ -239,57 +255,40 @@ function getCardProgress(lesson: { status: string }): number {
                             <span class="text-ink-dim/30">·</span>
                             <span>{{ lesson.competency_count }} competencies</span>
                           </div>
-                          <!-- Status badge -->
+                          <!-- Status badge — gold-spectrum (Issue 9) -->
                           <div class="mt-2">
-                            <span
-                              v-if="lesson.status === 'completed'"
-                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            >
-                              <span class="ph ph-check-circle text-[10px]" />
-                              Completed
-                            </span>
-                            <span
-                              v-else-if="lesson.status === 'in_progress'"
-                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                            >
-                              <span class="ph ph-arrows-clockwise text-[10px]" />
-                              In Progress
-                            </span>
-                            <span
-                              v-else
-                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.04] text-ink-dim/50 border border-white/[0.06]"
-                            >
-                              <span class="ph ph-arrow-right text-[10px]" />
-                              Ready to Start
+                            <span :class="getStatusBadge(lesson.status)">
+                              <span :class="getStatusBadgeIcon(lesson.status)" />
+                              {{ getStatusBadgeText(lesson.status) }}
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <!-- Progress bar -->
+                    <!-- Progress bar — gold-spectrum (Issue 9: no emerald) -->
                     <div class="mt-4 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                       <div
                         class="h-full rounded-full transition-all duration-700"
-                        :class="lesson.status === 'completed' ? 'bg-emerald-400' : 'bg-gold'"
-                        :style="{ width: getCardProgress(lesson) + '%' }"
+                        :class="getProgressColor(lesson.status)"
+                        :style="{ width: (lesson.status === 'completed' ? 100 : 0) + '%' }"
                       />
                     </div>
                   </div>
                 </div>
               </NuxtLink>
 
-              <!-- Locked lessons: dimmed but visible -->
+              <!-- Issue 2: Visible locked lessons (not hidden) -->
               <div
                 v-else
-                class="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-5 opacity-35"
+                class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-5 opacity-35"
                 role="status"
                 :aria-label="`Locked: ${lesson.title}. Complete previous lessons to unlock.`"
                 data-testid="locked-lesson"
               >
                 <div class="flex-between">
                   <div class="flex items-center gap-4">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-white/[0.04] flex items-center justify-center">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center">
                       <span class="ph ph-lock-key text-ink-dim/40 text-lg" />
                     </div>
                     <div>
@@ -302,7 +301,7 @@ function getCardProgress(lesson: { status: string }): number {
                         <span>{{ lesson.competency_count }} competencies</span>
                       </div>
                       <div class="mt-2">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.03] text-ink-dim/30 border border-white/[0.04]">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.03] text-ink-dim/30 border border-white/[0.06]">
                           <span class="ph ph-lock text-[10px]" />
                           Locked
                         </span>

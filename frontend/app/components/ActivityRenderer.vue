@@ -150,7 +150,7 @@ const activityTypeLabel: Record<string, string> = {
   'translate-to-english': 'Translate to English',
   'translate-to-arabic': 'Translate to Arabic',
   'introduce-characters': 'Introduce Characters',
-  'role-play': 'Role-Play',
+  'role-play': 'Role-Play'
 }
 
 function getActivityLabel(type: string): string {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { LessonSummary } from '~/composables/useLessons'
 
-const { lessons, loading, error } = useLessons()
+const { lessons, loading, error, fetchLessons } = useLessons()
 
 // Group lessons by level and sort by sequence
 const groupedLessons = computed(() => {
@@ -21,14 +21,28 @@ const groupedLessons = computed(() => {
     }))
 })
 
-const levelBadgeBg: Record<string, string> = {
-  A1: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  A2: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
-  B1: 'bg-violet-500/15 text-violet-400 border-violet-500/25',
+// Gold-spectrum level badge (Issue 9: no level-specific colors)
+function getLevelBadge(_level: string): string {
+  return `bg-gold-dim text-gold border-gold/25`
 }
 
-function getLevelBadge(level: string): string {
-  return levelBadgeBg[level] || 'bg-gold-dim text-gold border-gold/25'
+// Gold-spectrum status icon (Issue 9: no emerald/amber/red)
+function getStatusIcon(status: string): string {
+  switch (status) {
+    case 'completed': return 'ph-check-circle text-gold-bright'
+    case 'in_progress': return 'ph-spinner text-gold animate-spin'
+    case 'locked': return 'ph-lock-key text-ink-dim/40'
+    default: return 'ph-arrow-right text-ink-dim/50'
+  }
+}
+
+// Gold-spectrum status circle (Issue 9: no emerald/amber/red)
+function getStatusCircle(status: string): string {
+  switch (status) {
+    case 'completed': return 'bg-gold/15 border border-gold/25'
+    case 'in_progress': return 'bg-gold-dim border border-gold/25'
+    default: return 'bg-white/[0.06] border border-white/[0.08]'
+  }
 }
 </script>
 
@@ -37,13 +51,7 @@ function getLevelBadge(level: string): string {
     class="lessons-page min-h-screen"
     dir="rtl"
   >
-    <!-- Vibrant gradient background -->
-    <div
-      class="fixed inset-0 z-0"
-      style="background: radial-gradient(ellipse 70% 50% at 20% 10%, rgba(139, 92, 246, 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(245, 158, 11, 0.06) 0%, transparent 55%), linear-gradient(180deg, #0a0a1a 0%, #0f0e1a 50%, #0a0f14 100%);"
-    />
-
-    <div class="relative z-10 max-w-4xl mx-auto px-4 py-8 md:px-6">
+    <div class="relative z-10 max-w-3xl mx-auto px-4 py-8 md:px-6">
       <h1 class="text-2xl font-bold text-ink mb-6">
         Learning Roadmap
       </h1>
@@ -56,7 +64,7 @@ function getLevelBadge(level: string): string {
         <div
           v-for="i in 4"
           :key="i"
-          class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5"
+          class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-5"
         >
           <div class="flex-between">
             <div class="space-y-2">
@@ -66,7 +74,10 @@ function getLevelBadge(level: string): string {
             <div class="w-8 h-8 rounded-full bg-white/[0.06] animate-pulse" />
           </div>
           <div class="mt-4 h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
-            <div class="h-full rounded-full bg-white/[0.06] animate-pulse" style="width: 0%" />
+            <div
+              class="h-full rounded-full bg-white/[0.06] animate-pulse"
+              style="width: 0%"
+            />
           </div>
         </div>
       </div>
@@ -115,35 +126,19 @@ function getLevelBadge(level: string): string {
               class="block"
             >
               <div
-                class="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 cursor-pointer hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-500"
-                :class="{ 'opacity-30': lesson.status === 'locked' }"
+                class="rounded-2xl border border-white/[0.12] bg-white/[0.03] p-5 cursor-pointer hover:border-gold/30 hover:bg-white/[0.05] transition-all duration-500"
+                :class="{ 'opacity-35': lesson.status === 'locked' }"
+                :role="lesson.status === 'locked' ? 'status' : undefined"
+                :aria-disabled="lesson.status === 'locked' ? 'true' : undefined"
+                :aria-label="lesson.status === 'locked' ? `Locked: Complete previous lessons to unlock — ${lesson.title}` : undefined"
               >
                 <div class="flex-between">
                   <div class="flex items-center gap-3">
                     <div
                       class="w-9 h-9 rounded-full flex items-center justify-center"
-                      :class="lesson.status === 'completed'
-                        ? 'bg-emerald-500/15 border border-emerald-500/25'
-                        : lesson.status === 'in_progress'
-                          ? 'bg-amber-500/15 border border-amber-500/25'
-                          : 'bg-white/[0.06] border border-white/[0.08]'"
+                      :class="getStatusCircle(lesson.status)"
                     >
-                      <span
-                        v-if="lesson.status === 'completed'"
-                        class="ph ph-check-circle text-emerald-400"
-                      />
-                      <span
-                        v-else-if="lesson.status === 'in_progress'"
-                        class="ph ph-spinner text-amber-400 animate-spin"
-                      />
-                      <span
-                        v-else-if="lesson.status === 'locked'"
-                        class="ph ph-lock-key text-ink-dim/40"
-                      />
-                      <span
-                        v-else
-                        class="ph ph-arrow-right text-ink-dim/50"
-                      />
+                      <span :class="getStatusIcon(lesson.status)" />
                     </div>
                     <div>
                       <h3 class="font-sans font-semibold text-ink text-base">

@@ -10,7 +10,7 @@ const { lessons: _lessons, loading, error, groupedLessons } = useLessons()
 
 <template>
   <aside
-    class="roadmap-sidebar fixed top-0 right-0 h-full bg-studio-900/98 backdrop-blur-sm border-l border-white/[0.04] overflow-y-auto"
+    class="roadmap-sidebar fixed top-0 right-0 h-full bg-studio-900/98 backdrop-blur-sm border-l border-white/[0.12] overflow-y-auto"
     :class="{ open: isOpen }"
   >
     <!-- Mobile backdrop: semi-transparent overlay to dismiss sidebar -->
@@ -38,6 +38,7 @@ const { lessons: _lessons, loading, error, groupedLessons } = useLessons()
         </h2>
         <p class="text-[10px] font-sans text-ink-dim tracking-[0.15em] uppercase">
           Learning Roadmap
+          <span class="text-gold/50 ml-1">· ESC to close</span>
         </p>
       </div>
 
@@ -58,43 +59,46 @@ const { lessons: _lessons, loading, error, groupedLessons } = useLessons()
         <div
           v-for="levelGroup in groupedLessons"
           :key="levelGroup.level"
-          class="mb-6"
+          class="mb-5"
         >
-          <h3 class="text-xs font-sans font-semibold text-gold tracking-wider uppercase mb-3">
-            {{ levelGroup.level }}
-          </h3>
-          <div class="space-y-2">
+          <div class="flex items-center gap-2 mb-3">
+            <div
+              class="px-2 py-0.5 rounded-full text-[10px] font-bold border border-gold/25 bg-gold-dim text-gold"
+            >
+              {{ levelGroup.level }}
+            </div>
+            <span class="flex-1 h-px bg-white/[0.06]" />
+          </div>
+          <div class="space-y-1">
             <NuxtLink
               v-for="lesson in levelGroup.lessons"
               :key="lesson.id"
               :to="`/lessons/${lesson.id}`"
-              class="block"
+              class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all duration-500 hover:bg-gold-dim"
+              :class="{
+                'text-ink-dim/40': lesson.status === 'locked',
+                'text-gold font-medium': lesson.status === 'in_progress',
+                'text-ink-dim': lesson.status === 'available' || lesson.status === 'ready'
+              }"
+              @click="close()"
             >
-              <div
-                class="flex items-center gap-3 p-2 rounded-lg hover:bg-studio-700/60 transition-colors"
-                :class="{ 'opacity-40': lesson.status === 'locked' }"
-              >
-                <span class="text-xs font-mono text-ink-dim/40 w-6 text-center">{{ lesson.sequence }}</span>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm text-ink truncate">{{ lesson.title }}</p>
-                </div>
-                <span
-                  v-if="lesson.status === 'completed'"
-                  class="text-gold"
-                ><span class="ph ph-check-circle" /></span>
-                <span
-                  v-else-if="lesson.status === 'in_progress'"
-                  class="text-gold"
-                ><span class="ph ph-arrow-right" /></span>
-                <span
-                  v-else-if="lesson.status === 'available'"
-                  class="text-ink-dim"
-                ><span class="ph ph-lock-key-open" /></span>
-                <span
-                  v-else
-                  class="text-ink-dim/40"
-                ><span class="ph ph-lock" /></span>
-              </div>
+              <span
+                v-if="lesson.status === 'completed'"
+                class="ph ph-check-circle text-gold-bright text-sm"
+              />
+              <span
+                v-else-if="lesson.status === 'in_progress'"
+                class="ph ph-spinner text-gold text-sm animate-spin"
+              />
+              <span
+                v-else-if="lesson.status === 'locked'"
+                class="ph ph-lock-key text-ink-dim/30 text-sm"
+              />
+              <span
+                v-else
+                class="ph ph-arrow-right text-ink-dim/40 text-sm"
+              />
+              <span class="flex-1 truncate">{{ lesson.title }}</span>
             </NuxtLink>
           </div>
         </div>

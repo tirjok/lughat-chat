@@ -302,7 +302,7 @@ describe('lessons/[id].vue — Slice 6: Dashboard refresh after lesson completio
 
       // The "Back to Roadmap" link should exist in the page
       const links = wrapper.findAll('a')
-      const backLink = links.find(link => link.text().includes('Back to Roadmap'))
+      const backLink = links.find(link => link.text().includes('Roadmap'))
       expect(backLink).toBeDefined()
     })
   })

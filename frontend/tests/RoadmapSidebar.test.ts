@@ -63,7 +63,7 @@ describe('RoadmapSidebar', () => {
         { id: 2, level: 'A1', sequence: 2, title: 'Second Lesson', competency_count: 3, section_count: 3, status: 'locked' }
       ]
       const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
-      const cards = wrapper.findAll('[class*="p-2"]')
+      const cards = wrapper.findAll('a[href*="/lessons/"]')
       expect(cards.length).toBe(2)
     })
 
@@ -84,7 +84,7 @@ describe('RoadmapSidebar', () => {
       ]
       const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
       // Available lesson shows check-circle icon
-      expect(wrapper.html()).toContain('ph-lock-key-open')
+      expect(wrapper.html()).toContain('ph-arrow-right')
     })
 
     it('When lesson is locked then shows locked icon', async () => {
@@ -104,9 +104,9 @@ describe('RoadmapSidebar', () => {
       ]
       const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
       // Locked cards are still NuxtLinks but visually dimmed
-      const cards = wrapper.findAll('[class*="p-2"]')
+      const cards = wrapper.findAll('a[href*="/lessons/"]')
       expect(cards.length).toBe(1)
-      expect(cards[0].classes()).toContain('opacity-40')
+      expect(cards[0].classes()).toContain('text-ink-dim/40')
     })
 
     it('When available lesson card clicked then navigates to /lesson/:id', async () => {
@@ -114,7 +114,7 @@ describe('RoadmapSidebar', () => {
         { id: 1, level: 'A1', sequence: 1, title: 'Lesson 1', competency_count: 5, section_count: 5, status: 'available' }
       ]
       const wrapper = await mountSuspended(RoadmapSidebar, { props: { isOpen: true } })
-      const cards = wrapper.findAll('[class*="p-2"]')
+      const cards = wrapper.findAll('a[href*="/lessons/"]')
       // Available cards are clickable NuxtLinks
       expect(cards.length).toBe(1)
     })

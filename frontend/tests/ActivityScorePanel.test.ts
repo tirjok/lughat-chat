@@ -78,7 +78,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.html()).toMatch(/text-emerald-400/)
+      expect(wrapper.html()).toMatch(/text-gold-bright/)
     })
 
     it('When score is 0.69 (just below threshold) then score bar is red', async () => {
@@ -90,7 +90,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.html()).toMatch(/text-amber-400|text-red-400/)
+      expect(wrapper.html()).toMatch(/text-gold|text-error/)
     })
 
     it('When score < 0.7 then score bar is red', async () => {
@@ -102,7 +102,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.html()).toMatch(/text-amber-400|text-red-400/)
+      expect(wrapper.html()).toMatch(/text-gold|text-error/)
     })
 
     it('When score is 0.0 (all wrong) then score bar is red with 0% width', async () => {
@@ -114,7 +114,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.html()).toMatch(/text-amber-400|text-red-400/)
+      expect(wrapper.html()).toMatch(/text-gold|text-error/)
       expect(wrapper.html()).toMatch(/width: 0%/)
     })
 
@@ -127,7 +127,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.html()).toMatch(/text-emerald-400/)
+      expect(wrapper.html()).toMatch(/text-gold-bright/)
       expect(wrapper.html()).toMatch(/width: 100%/)
     })
   })
@@ -179,7 +179,7 @@ describe('ActivityScorePanel', () => {
   // =====================================================================
 
   describe('score bar — background color class', () => {
-    it('When score >= 0.7 then bar uses bg-green-500 class', async () => {
+    it('When score >= 0.7 then bar uses bg-gold-bright class', async () => {
       const wrapper = await mountSuspended(ActivityScorePanel, {
         props: {
           result: makeResult({ score: 0.75 }),
@@ -188,7 +188,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.html()).toMatch(/bg-emerald-400/)
+      expect(wrapper.html()).toMatch(/bg-gold-bright/)
     })
 
     it('When score < 0.7 then bar uses bg-red-500 class', async () => {
@@ -200,7 +200,7 @@ describe('ActivityScorePanel', () => {
           lessonJustCompleted: false
         }
       })
-      expect(wrapper.html()).toMatch(/bg-amber-400|bg-red-400/)
+      expect(wrapper.html()).toMatch(/bg-gold|bg-error/)
     })
   })
 
@@ -365,7 +365,7 @@ describe('ActivityScorePanel', () => {
       })
       expect(wrapper.text()).toContain('Correct Answer:')
       expect(wrapper.text()).toContain('السلام عليكم')
-      expect(wrapper.html()).toMatch(/bg-emerald-500\/8/)
+      expect(wrapper.html()).toMatch(/bg-gold\/8/)
     })
 
     it('When correct_answer is null then no correct answer box is rendered', async () => {
