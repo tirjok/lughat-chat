@@ -134,7 +134,8 @@ for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
     except OSError:
         pass  # Read-only filesystem — acceptable in test/local environments
 
-# Global TTS model instance and state
+# Global TTS model instance and state (protected by _model_lock for atomicity)
+_model_lock = threading.Lock()
 tts_model = None
 model_load_status = "loading"  # loading | ready | error
 
@@ -159,7 +160,8 @@ async def lifespan(app: FastAPI):
         for attempt in range(MAX_LOAD_RETRIES):
             # Check hard timeout
             if _time.monotonic() - load_start_time >= LOAD_HARD_TIMEOUT:
-                model_load_status = "error"
+                with _model_lock:
+                    model_load_status = "error"
                 print(
                     f"Model loading abandoned: hard timeout ({LOAD_HARD_TIMEOUT}s) exceeded"
                 )
@@ -167,27 +169,32 @@ async def lifespan(app: FastAPI):
 
             try:
                 # Skip loading if already mocked (e.g. in tests)
-                if tts_model is not None:
-                    print("TTS model already loaded — skipping")
-                    return
+                with _model_lock:
+                    if tts_model is not None:
+                        print("TTS model already loaded — skipping")
+                        return
                 if TTS is None:
                     print(
                         "TTS library not available (torch not installed) — skipping model load"
                     )
-                    model_load_status = "error"
-                    tts_model = None
+                    with _model_lock:
+                        model_load_status = "error"
+                        tts_model = None
                     return
                 os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-                tts_model = TTS("tts_models/multilingual/xtts_v2")
-                model_load_status = "ready"
+                loaded_model = TTS("tts_models/multilingual/xtts_v2")
+                with _model_lock:
+                    tts_model = loaded_model
+                    model_load_status = "ready"
                 print("XTTS-v2 model loaded successfully!")
                 return
             except Exception as e:
-                model_load_status = "error"
+                with _model_lock:
+                    model_load_status = "error"
+                    tts_model = None
                 print(
                     f"Error loading TTS model (attempt {attempt + 1}/{MAX_LOAD_RETRIES}): {e}"
                 )
-                tts_model = None
                 if attempt < MAX_LOAD_RETRIES - 1:
                     delay = LOAD_RETRY_DELAYS[attempt]
                     print(f"Retrying in {delay}s...")
@@ -264,15 +271,22 @@ async def health(reload: Optional[str] = Query(None)):
     """
     global tts_model, model_load_status
 
-    if reload == "1" and model_load_status == "error":
-        # Trigger a reload attempt
-        print("Model reload requested via ?reload=1")
-        model_load_status = "loading"
-        tts_model = None
+    if reload == "1":
+        with _model_lock:
+            if model_load_status == "error":
+                model_load_status = "loading"
+                tts_model = None
+            else:
+                return {
+                    "status": model_load_status,
+                    "model_loaded": tts_model is not None
+                    and model_load_status == "ready",
+                }
         # Start a new background thread to reload
         import time as _reload_time
 
         _reload_start = _reload_time.monotonic()
+        print("Model reload requested via ?reload=1")
 
         def reload_model():
             global tts_model, model_load_status
@@ -282,26 +296,31 @@ async def health(reload: Optional[str] = Query(None)):
                     print(
                         "TTS library not available (torch not installed) — skipping model load"
                     )
-                    model_load_status = "error"
+                    with _model_lock:
+                        model_load_status = "error"
                     return
                 os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-                tts_model = TTS("tts_models/multilingual/xtts_v2")
-                model_load_status = "ready"
+                loaded_model = TTS("tts_models/multilingual/xtts_v2")
+                with _model_lock:
+                    tts_model = loaded_model
+                    model_load_status = "ready"
                 print("XTTS-v2 model reloaded successfully!")
             except Exception as e:
-                model_load_status = "error"
+                with _model_lock:
+                    model_load_status = "error"
+                    tts_model = None
                 print(f"Error reloading TTS model: {e}")
-                tts_model = None
 
         reload_thread = threading.Thread(target=reload_model, daemon=True)
         reload_thread.start()
         # Brief pause to let the thread start before responding
         _reload_time.sleep(0.1)
 
-    return {
-        "status": model_load_status,
-        "model_loaded": tts_model is not None and model_load_status == "ready",
-    }
+    with _model_lock:
+        return {
+            "status": model_load_status,
+            "model_loaded": tts_model is not None and model_load_status == "ready",
+        }
 
 
 @app.get("/api/voices")
@@ -313,7 +332,10 @@ async def list_voices():
 @app.post("/api/generate")
 async def generate_speech(request: SynthesisRequest):
     """Generate speech from text and return MP3 audio blob."""
-    if tts_model is None or model_load_status != "ready":
+    with _model_lock:
+        model = tts_model
+        status = model_load_status
+    if model is None or status != "ready":
         raise HTTPException(status_code=503, detail="TTS model not ready")
 
     try:
@@ -361,7 +383,7 @@ async def generate_speech(request: SynthesisRequest):
             except ImportError:
                 pass  # torch not available (e.g. in tests) — skip seeding
 
-            tts_model.tts_to_file(
+            model.tts_to_file(
                 text=request.text,
                 speaker_wav=speaker_wav,
                 language=request.language,
