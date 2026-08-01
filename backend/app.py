@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 import os
 import uuid
-import shutil
 import subprocess
 import threading
 import wave
@@ -393,9 +392,14 @@ async def generate_speech(request: SynthesisRequest):
                     capture_output=True,
                 )
             except subprocess.CalledProcessError as e:
+                # Do NOT fall back to serving WAV as MP3 — browsers' <audio>
+                # elements refuse to play PCM WAV data labeled as audio/mpeg.
+                # Fail the request so the client knows something went wrong.
                 print(f"FFmpeg error: {e.stderr}")
-                # Fallback: just use WAV if MP3 conversion fails
-                shutil.copy2(wav_path, mp3_path)
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to encode audio — FFmpeg conversion error",
+                )
 
             # Clean up intermediate WAV file — it's 5–10× larger than the MP3
             try:
