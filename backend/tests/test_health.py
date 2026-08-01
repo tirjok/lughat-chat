@@ -56,3 +56,42 @@ def test_health_returns_error_when_model_load_failed():
     data = response.json()
     assert data["status"] == "error"
     assert data["model_loaded"] is False
+
+
+def test_health_reload_triggers_reload_when_error():
+    """GET /health?reload=1 triggers a reload attempt when status is 'error'."""
+    import app as main_app
+
+    main_app.tts_model = None
+    main_app.model_load_status = "error"
+
+    from fastapi.testclient import TestClient
+
+    client = TestClient(app)
+
+    response = client.get("/health?reload=1")
+
+    assert response.status_code == 200
+    data = response.json()
+    # After reload request, status should transition to 'loading'
+    assert data["status"] == "loading"
+    assert data["model_loaded"] is False
+
+
+def test_health_reload_ignored_when_not_error():
+    """GET /health?reload=1 is ignored when status is 'loading' (not 'error')."""
+    import app as main_app
+
+    main_app.tts_model = None
+    main_app.model_load_status = "loading"
+
+    from fastapi.testclient import TestClient
+
+    client = TestClient(app)
+
+    response = client.get("/health?reload=1")
+
+    assert response.status_code == 200
+    data = response.json()
+    # Reload is only triggered from 'error' state
+    assert data["status"] == "loading"

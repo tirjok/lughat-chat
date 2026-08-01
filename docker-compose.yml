@@ -27,8 +27,8 @@ services:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s
       timeout: 5s
-      retries: 200
-      start_period: 120s
+      retries: 60
+      start_period: 60s
 
   # Frontend service - Nuxt.js + Nginx (reverse proxy to backend)
   frontend:

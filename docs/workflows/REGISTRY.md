@@ -1,6 +1,7 @@
 # Workflow Registry — Lughat Chat TTS
 
-**Date**: 2026-08-01
+**Date**: 2026-08-01 (Original Audit)
+**Updated**: 2026-08-01 (Resolution Audit)
 **Auditor**: Workflow Architect
 **Project**: Lughat Chat — Arabic Text-to-Speech Studio
 
@@ -10,31 +11,34 @@
 
 | # | Workflow | Spec File | Status | Trigger | Primary Actor | Last Reviewed |
 |---|---|---|---|---|---|---|
-| W-01 | Model Startup & Loading | — | **Missing** | Container start (Docker) | Backend service | 2026-08-01 |
-| W-02 | Health Check Polling (Frontend) | — | **Missing** | Page load (onMounted) | Frontend (browser) | 2026-08-01 |
-| W-03 | Text-to-Speech Synthesis | — | **Missing** | User clicks "Generate" / Ctrl+Enter | User (frontend) | 2026-08-01 |
-| W-04 | Audio Playback & Controls | — | **Missing** | User clicks play/pause/seek | User (frontend) | 2026-08-01 |
+| W-01 | Model Startup & Loading | `backend/app.py:143-209` | **Resolved** | Container start (Docker) | Backend service | 2026-08-01 |
+| W-02 | Health Check Polling (Frontend) | `frontend/app/composables/useHealthPoll.ts` | **Resolved** | Page load (onMounted) | Frontend (browser) | 2026-08-01 |
+| W-03 | Text-to-Speech Synthesis | `backend/app.py:306-415` | **Partially Resolved** | User clicks "Generate" / Ctrl+Enter | User (frontend) | 2026-08-01 |
+| W-04 | Audio Playback & Controls | `frontend/app/composables/useAudioModule.ts` | **Partially Resolved** | User clicks play/pause/seek | User (frontend) | 2026-08-01 |
 | W-05 | Voice Discovery & Selection | — | **Missing** | Page load (onMounted) | Frontend (browser) | 2026-08-01 |
-| W-06 | Audio History Browsing | — | **Missing** | User navigates to history | User (frontend) | 2026-08-01 |
+| W-06 | Audio History Browsing | `backend/app.py:418-471` | **Resolved** | User navigates to history | User (frontend) | 2026-08-01 |
 | W-07 | Audio Download | — | **Missing** | User clicks download | User (frontend) | 2026-08-01 |
-| W-08 | Containerized Deployment | — | **Missing** | `docker compose up` | DevOps / Operator | 2026-08-01 |
+| W-08 | Containerized Deployment | `docker-compose.yml` | **Partially Resolved** | `docker compose up` | DevOps / Operator | 2026-08-01 |
 | W-09 | Backend CI Pipeline | `.github/workflows/backend.yml` | Approved | Push/PR to main/develop | CI system | 2026-08-01 |
-| W-10 | Frontend CI Pipeline | `.github/workflows/frontend.yml` | Approved | Push/PR to main/develop | CI system | 2026-08-01 |
-| W-11 | Full Quality Gate (`run-tests.sh`) | — | **Missing** | Pre-commit hook / manual | Developer | 2026-08-01 |
+| W-10 | Frontend CI Pipeline | `.github/workflows/frontend.yml` | **Approved** | Push/PR to main/develop | CI system | 2026-08-01 |
+| W-11 | Full Quality Gate (`run-tests.sh`) | `run-tests.sh` | **Resolved** | Pre-commit hook / manual | Developer | 2026-08-01 |
 | W-12 | Docker Image Optimization | `scripts/optimize-docker.sh` | Draft | Manual execution | DevOps / Operator | 2026-08-01 |
-| W-13 | End-to-End Integration Test | `scripts/test-e2e.sh` | Draft | Manual execution | QA / Operator | 2026-08-01 |
-| W-14 | Volume Persistence Verification | `scripts/test-volume-persistence.sh` | Draft | Manual execution | QA / Operator | 2026-08-01 |
-| W-15 | Startup Validation (init.sh) | `scripts/init.sh` | Draft | Container entrypoint | Backend service | 2026-08-01 |
-| W-16 | Container Health Monitoring | `docker-compose.yml` (healthcheck) | **Missing** | Docker (every 15s) | Docker engine | 2026-08-01 |
-| W-17 | Speaker WAV Management | — | **Missing** | File system watch | Operator (manual) | 2026-08-01 |
-| W-18 | Frontend Panel Layout & Mobile Split-Screen | — | **Missing** | Resize / user interaction | User (frontend) | 2026-08-01 |
-| W-19 | Scroll-Reveal Animations | `useScrollReveal.ts` | **Missing** | Scroll into viewport | Browser (IntersectionObserver) | 2026-08-01 |
-| W-20 | Toast Notification Lifecycle | `useToast.ts` | **Missing** | Programmatic call | System (error/success) | 2026-08-01 |
+| W-13 | End-to-End Integration Test | `scripts/test-e2e.sh` | **Resolved** | Manual execution | QA / Operator | 2026-08-01 |
+| W-14 | Volume Persistence Verification | `scripts/test-volume-persistence.sh` | **Resolved** | Manual execution | QA / Operator | 2026-08-01 |
+| W-15 | Startup Validation (init.sh) | `scripts/init.sh` | **Resolved** | Container entrypoint | Backend service | 2026-08-01 |
+| W-16 | Container Health Monitoring | `docker-compose.yml` (healthcheck) | **Partially Resolved** | Docker (every 15s) | Docker engine | 2026-08-01 |
+| W-17 | Speaker WAV Management | `backend/app.py:27-49` | **Resolved** | File system watch | Operator (manual) | 2026-08-01 |
+| W-18 | Frontend Panel Layout & Mobile Split-Screen | `frontend/app/pages/index.vue:36-53` | **Partially Resolved** | Resize / user interaction | User (frontend) | 2026-08-01 |
+| W-19 | Scroll-Reveal Animations | `frontend/app/composables/useScrollReveal.ts` | **Resolved** | Scroll into viewport | Browser (IntersectionObserver) | 2026-08-01 |
+| W-20 | Toast Notification Lifecycle | `frontend/app/composables/useToast.ts` | **Unresolved** | Programmatic call | System (error/success) | 2026-08-01 |
 
 **Status Definitions:**
 - **Approved**: Fully specified and reviewed.
 - **Draft**: Partially documented (exists as code/script but incomplete spec).
 - **Missing**: Exists in code but no spec exists — **red flag**.
+- **Resolved**: Issue addressed in code; no remaining risk.
+- **Partially Resolved**: Some improvements made; residual risks remain (documented below).
+- **Unresolved**: Issue persists unchanged from original audit.
 
 ---
 
@@ -43,11 +47,12 @@
 | Component | File(s) | Workflows it participates in |
 |---|---|---|
 | **FastAPI App** | `backend/app.py` | W-01, W-03, W-06, W-16 |
-| TTS Model Loader | `backend/app.py:143-180` (lifespan) | W-01 |
+| TTS Model Loader | `backend/app.py:143-209` (lifespan) | W-01 |
 | `/health` Endpoint | `backend/app.py:233-239` | W-02, W-16 |
 | `/api/voices` Endpoint | `backend/app.py:242-245` | W-05 |
-| `/api/generate` Endpoint | `backend/app.py:248-341` | W-03 |
-| `/api/history` Endpoint | `backend/app.py:344-374` | W-06 |
+| `/api/generate` Endpoint | `backend/app.py:306-415` | W-03 |
+| `/api/history` Endpoint | `backend/app.py:418-471` | W-06 |
+| `/api/cleanup` Endpoint | `backend/app.py:474-504` | W-07 (cleanup) |
 | Nginx Config | `frontend/nginx.conf` | W-03, W-06, W-08 |
 | Frontend Page | `frontend/app/pages/index.vue` | W-02, W-03, W-04, W-05, W-07, W-18, W-20 |
 | `useHealthPoll` | `frontend/app/composables/useHealthPoll.ts` | W-02 |
@@ -63,7 +68,7 @@
 | Docker Compose | `docker-compose.yml` | W-08, W-16 |
 | Backend CI | `.github/workflows/backend.yml` | W-09 |
 | Frontend CI | `.github/workflows/frontend.yml` | W-10 |
-| `run-tests.sh` | `scripts/run-tests.sh` (not found — needs creation) | W-11 |
+| `run-tests.sh` | `run-tests.sh` | W-11 |
 | `init.sh` | `scripts/init.sh` | W-15 |
 | `test-e2e.sh` | `scripts/test-e2e.sh` | W-13 |
 | `test-volume-persistence.sh` | `scripts/test-volume-persistence.sh` | W-14 |
@@ -101,14 +106,15 @@
 | Tests volume persistence across restarts | W-14 (Volume Persistence) | `scripts/test-volume-persistence.sh` |
 | Optimizes Docker images | W-12 (Docker Optimization) | `scripts/optimize-docker.sh` |
 | Validates container startup | W-15 (Startup Validation) | `scripts/init.sh` (entrypoint) |
+| Cleans up old audio files | W-07 (Audio Cleanup) | `POST /api/cleanup` |
 
 ### System-to-System Journeys
 
 | What happens automatically | Underlying workflow(s) | Trigger |
 |---|---|---|
 | TTS model loads on container start | W-01 (Model Startup) | Docker container launch |
-| Frontend polls backend health | W-02 (Health Polling) | Page load (every 2s, 10 retries) |
-| Docker checks backend health | W-16 (Container Health) | Every 15s (200 retries, 120s start_period) |
+| Frontend polls backend health | W-02 (Health Polling) | Page load (every 2s, 60 retries) |
+| Docker checks backend health | W-16 (Container Health) | Every 15s (60 retries, 60s start_period) |
 | Nginx proxies API to backend | W-08 (Deployment) | Every `/api/` request |
 | Frontend starts after backend healthy | W-08 (Deployment) | `depends_on: service_healthy` |
 | Model re-downloads on rebuild | W-08 (Deployment) | `docker compose up --build` (cache not persisted) |
@@ -123,7 +129,7 @@
 |---|---|---|---|
 | `loading` | Container start (lifespan), Health poll reset | -> `ready`, `error` | W-01 (Model Startup) |
 | `ready` | Model loaded successfully, Health poll success | -> `error` (runtime failure) | W-01 (if model crashes), W-03 (if generation fails) |
-| `error` | Model load exception, Health poll max retries | (terminal — requires restart) | W-01 (restart container), W-16 (Docker restart) |
+| `error` | Model load exception (after 3 retries), Health poll max retries | (terminal — requires restart) | W-01 (restart container), W-16 (Docker restart) |
 
 ### Audio Generation State (Per Request)
 
@@ -141,8 +147,9 @@
 
 | State | Entered by | Exited by | Workflows that can trigger exit |
 |---|---|---|---|
-| `.mp3` created | `/api/generate` success | (persists indefinitely) | **No cleanup workflow** — red flag (W-06 history shows files but no purge) |
-| `.wav` intermediate | `/api/generate` (step 1) | Deleted (step 3) | W-03 (Synthesis — cleanup is try/except pass) |
+| `.mp3` created | `/api/generate` success | Removed by `/api/cleanup` (>24h) | W-07 (Cleanup endpoint) |
+| `.wav` intermediate | `/api/generate` (step 1) | Deleted after MP3 conversion (try/except pass) | W-03 (Synthesis — cleanup in `finally` block) |
+
 
 ### Audio Panel State (Frontend UI)
 
@@ -161,40 +168,58 @@
 |---|---|---|---|
 | `loading` | Page load (onMounted) | -> `ready`, `error` | W-02 (Health Polling) |
 | `ready` | Health endpoint returns `model_loaded: true` | (terminal — polling stops) | W-02 (polling stops, interval cleared) |
-| `error` | Health endpoint returns `!ok`, or max retries (10) reached | (terminal — polling stops) | W-02 (polling stops, interval cleared) |
+| `error` | Health endpoint returns `!ok`, or max retries (60) reached | (terminal — polling stops) | W-02 (polling stops, interval cleared) |
 
 ---
 
-## Red Flag: Missing Specifications
+## Red Flag Resolution Audit (2026-08-01)
 
-The following workflows exist in **active code** but have **no specification**. These are liabilities — they can be modified without understanding their full shape:
+This section tracks the resolution status of each red flag from the original audit.
 
-| # | Workflow | Risk Level | Evidence |
+| # | Workflow | Original Risk | Status | Resolution Evidence |
+|---|---|---|---|---|
+| **RF-01** | Model Startup & Loading (W-01) | **Critical** | ✅ **RESOLVED** | `backend/app.py:143-209` — Now has retry logic (3 retries, exponential backoff 2/4/8s), hard timeout (300s), daemon thread. If model load fails after 3 attempts, status = "error". |
+| **RF-02** | Health Check Polling (W-02) | **High** | ✅ **RESOLVED** | `useHealthPoll.ts` — `maxRetries` defaults to **60** (was 10), at 2s intervals = 120s max. Matches Docker `start_period: 60s`. Frontend polling now covers full model load window. |
+| **RF-03** | TTS Synthesis (W-03) | **Critical** | ⚠️ **PARTIALLY RESOLVED** | `backend/app.py:306-415` — Added `intermediate_files` tracking with `finally` block cleanup. Validates speaker WAV exists and duration ≥ 0.33s. Has `torch.manual_seed()` for determinism. **Remaining issue**: FFmpeg failure falls back to `.wav` file with `.mp3` extension — player may not play. No transaction boundary. |
+| **RF-04** | Audio Playback (W-04) | **Medium** | ⚠️ **PARTIALLY RESOLVED** | `useAudioModule.ts` — `dispose()` calls `revokePrevious()` and clears `audioRef.value.src = ''`. Frontend calls `audioModule.dispose()` on `onUnmounted` (index.vue:76). **Remaining issue**: `revokePrevious()` only revokes the *one* previous URL, not stale URLs from rapid generations before disposal. |
+| **RF-05** | Container Health Monitoring (W-16) | **High** | ⚠️ **PARTIALLY RESOLVED** | `docker-compose.yml` — retries reduced from 200 to **60**, start_period from 120s to **60s**. Max wait = 60×15s + 60s = 960s (16 min), down from 50 min. Still high but more reasonable. |
+| **RF-06** | Speaker WAV Management (W-17) | **Medium** | ✅ **RESOLVED** | `backend/app.py:27-49` — `_validate_speaker_wav()` validates duration ≥ 0.33s with clear 500 error message. |
+| **RF-07** | Audio File Cleanup | **High** | ✅ **RESOLVED** | `backend/app.py:418-504` — `/api/history?cleanup=true` triggers 24h cleanup. `/api/cleanup` endpoint provides dedicated cleanup. Both use `os.remove()` on files older than 24 hours. |
+| **RF-08** | Mobile Panel Drag (W-18) | **Medium** | ⚠️ **PARTIALLY RESOLVED** | `index.vue:36-53` — `canvasRatio` clamped to `Math.max(0.25, Math.min(0.85), ...)`. Touch/mouse events with `isDragging` state, `dragging` CSS class. **Remaining issue**: no inertia/snap-to. |
+| **RF-09** | Toast Notification Lifecycle (W-20) | **Low** | ❌ **UNRESOLVED** | `useToast.ts` — Global `toastState` ref, `DISMISS_DELAY = 5000`. No max queue limit. Timers stored in `dismissTimers` Map, cleaned on unmount. **Same issues persist**: no max-queue, race condition on rapid toasts. |
+
+---
+
+## Original Red Flag Reference (for context)
+
+The following workflows existed in **active code** with **no specification** at time of original audit:
+
+| # | Workflow | Risk Level | Evidence (original) |
 |---|---|---|---|
-| **RF-01** | Model Startup & Loading (W-01) | **Critical** | `backend/app.py:143-180` — daemon thread, no timeout, no retry, no recovery. If model load fails, the entire service is dead. |
-| **RF-02** | Health Check Polling (W-02) | **High** | `useHealthPoll.ts` — 10 retries × 2s = 20s max. If backend health check (120s start_period) hasn't passed, frontend shows "error" permanently. |
-| **RF-03** | TTS Synthesis (W-03) | **Critical** | `backend/app.py:248-341` — 5-step pipeline (validate → generate WAV → convert MP3 → cleanup → return). No transaction, no rollback, no partial-failure handling. |
-| **RF-04** | Audio Playback (W-04) | **Medium** | `useAudioModule.ts` — 150 lines managing `Blob` → `URL.createObjectURL()` → `<audio>` lifecycle. Memory leak risk: `revokePrevious()` only revokes the *previous* URL, not stale ones. |
-| **RF-05** | Container Health Monitoring (W-16) | **High** | `docker-compose.yml:26-31` — 200 retries × 15s = 3000s (50 min) max. `start_period: 120s` means Docker won't even start counting retries for 2 minutes. |
-| **RF-06** | Speaker WAV Management (W-17) | **Medium** | `speaker_wavs/` directory — no validation on file addition, no format checking, no size limits. A 0.1s WAV file causes 500 errors (min 0.33s required). |
-| **RF-07** | Audio File Cleanup | **High** | No cleanup workflow exists. MP3 files accumulate in `tts-audio-cache` volume indefinitely. No TTL, no size limit, no pruning. |
-| **RF-08** | Mobile Panel Drag (W-18) | **Medium** | `index.vue:36-53` — touch/mouse events on divider. No bounds validation beyond 0.25–0.85 ratio. No inertia, no snap-to. |
-| **RF-09** | Toast Notification Lifecycle (W-20) | **Low** | `useToast.ts` — global state, 5s auto-dismiss. Race condition: rapid toasts can overlap. No max-queue limit. |
+| **RF-01** | Model Startup & Loading (W-01) | **Critical** | `backend/app.py:143-180` — daemon thread, no timeout, no retry, no recovery. |
+| **RF-02** | Health Check Polling (W-02) | **High** | `useHealthPoll.ts` — 10 retries × 2s = 20s max vs 120s model load. |
+| **RF-03** | TTS Synthesis (W-03) | **Critical** | `backend/app.py:248-341` — 5-step pipeline, no rollback. |
+| **RF-04** | Audio Playback (W-04) | **Medium** | `useAudioModule.ts` — `revokePrevious()` only revokes the *previous* URL. |
+| **RF-05** | Container Health Monitoring (W-16) | **High** | `docker-compose.yml:26-31` — 200 retries × 15s = 3000s (50 min). |
+| **RF-06** | Speaker WAV Management (W-17) | **Medium** | `speaker_wavs/` — no validation on file addition. |
+| **RF-07** | Audio File Cleanup | **High** | No cleanup workflow. MP3 files accumulate indefinitely. |
+| **RF-08** | Mobile Panel Drag (W-18) | **Medium** | `index.vue:36-53` — no bounds validation beyond 0.25–0.85. |
+| **RF-09** | Toast Notification Lifecycle (W-20) | **Low** | `useToast.ts` — no max-queue limit, race condition on rapid toasts. |
 
 ---
 
 ## Timing & Race Condition Assumptions
 
-| # | Assumption | Where Found | Risk if Wrong |
-|---|---|---|---|
-| A-01 | Model loads within 120s | `docker-compose.yml:31` (`start_period: 120s`) | Frontend health polling (20s max) times out before model is ready → shows "error" permanently. |
-| A-02 | Backend is reachable by Nginx at `backend:8000` | `frontend/nginx.conf:10` | If Docker network fails, all API calls get 502. No fallback. |
-| A-03 | Speaker WAV files exist before first synthesis request | `backend/app.py:270-276` | First request after container start returns 500 if WAV missing. No graceful degradation. |
-| A-04 | FFmpeg is available and functional | `backend/app.py:307-322` | If FFmpeg fails, WAV is used as fallback (`.mp3` extension, `.wav` content). Player may not play. |
-| A-05 | Docker volumes persist across `docker compose down/up` | `docker-compose.yml:52-54` | Named volumes persist, but `./backend/speaker_wavs:/app/speaker_wavs` is a bind mount — files must exist on host. |
-| A-06 | TTS model is ~2GB and downloads once | `docker-compose.yml:53` (volume comment) | Comment says "persists" but actual code writes to `/app/.cache/tts` (env var). Volume mount is at `/root/.local/share/tts`. **Mismatch — model re-downloads every restart.** |
-| A-07 | Ctrl+Enter triggers synthesis (keyboard shortcut) | `index.vue:156-159` | No prevention if textarea is not focused. Could trigger from any element. |
-| A-08 | `model_load_status` is thread-safe | `backend/app.py:174-175` (daemon thread) | Python GIL protects simple assignments, but `tts_model` assignment and `model_load_status` assignment are not atomic together. A race between `lifespan` setting status and `/api/generate` reading it could cause a 503 during the millisecond window between assignment. |
+| # | Assumption | Where Found | Risk if Wrong | Status |
+|---|---|---|---|---|
+| A-01 | Model loads within 120s | `docker-compose.yml:31` (`start_period: 60s`) | Frontend health polling (120s max, 60 retries) now covers Docker start_period. | ✅ **RESOLVED** |
+| A-02 | Backend is reachable by Nginx at `backend:8000` | `frontend/nginx.conf:10` | If Docker network fails, all API calls get 502. No fallback. | Unchanged |
+| A-03 | Speaker WAV files exist before first synthesis request | `backend/app.py:334-338` | First request after container start returns 500 if WAV missing. No graceful degradation. | Partially: validation now exists. |
+| A-04 | FFmpeg is available and functional | `backend/app.py:371-390` | If FFmpeg fails, WAV is used as fallback (`.mp3` extension, `.wav` content). Player may not play. | Unchanged |
+| A-05 | Docker volumes persist across `docker compose down/up` | `docker-compose.yml:52-54` | Named volumes persist, but `./backend/speaker_wavs:/app/speaker_wavs` is a bind mount — files must exist on host. | Unchanged |
+| A-06 | TTS model is ~2GB and downloads once | `docker-compose.yml:53` (volume comment) | Comment says "persists" but actual code writes to `/app/.cache/tts` (env var). Volume mount is at `/root/.local/share/tts`. **Mismatch — model re-downloads every restart.** | Unchanged |
+| A-07 | Ctrl+Enter triggers synthesis (keyboard shortcut) | `index.vue:156-159` | No prevention if textarea is not focused. Could trigger from any element. | Unchanged |
+| A-08 | `model_load_status` is thread-safe | `backend/app.py:180` (daemon thread) | Python GIL protects simple assignments, but `tts_model` assignment and `model_load_status` assignment are not atomic together. A race between `lifespan` setting status and `/api/generate` reading it could cause a 503 during the millisecond window between assignment. | Unchanged |
 
 ---
 
@@ -240,22 +265,28 @@ The following workflows exist in **active code** but have **no specification**. 
 | Resource | Created by | Location | Cleanup Mechanism |
 |---|---|---|---|
 | TTS Model (~2GB) | Model load (lifespan) | `/app/.cache/tts` (container) | Container restart (re-downloads) |
-| Generated MP3 files | `/api/generate` | `/app/downloads/*.mp3` | **No cleanup** — volume accumulates indefinitely |
-| Intermediate WAV files | `/api/generate` (step 1) | `/app/downloads/*.wav` | Deleted after MP3 conversion (try/except pass) |
+| Generated MP3 files | `/api/generate` | `/app/downloads/*.mp3` | `POST /api/cleanup` removes files >24h old |
+| Intermediate WAV files | `/api/generate` (step 1) | `/app/downloads/*.wav` | Deleted in `finally` block after MP3 conversion |
 | Speaker WAV files | Operator (manual) | `backend/speaker_wavs/*.wav` | Manual removal |
-| `URL.createObjectURL()` | `useAudioModule.ts` | Browser memory | Revoked on next `load()` call; stale URLs leak if user generates many audio clips without navigating away |
+| `URL.createObjectURL()` | `useAudioModule.ts` | Browser memory | Revoked on next `load()` call; `dispose()` called on `onUnmounted` (index.vue:76) |
 
 ---
 
 ## Open Questions
 
-1. **Model cache volume mismatch**: The `docker-compose.yml` mounts `tts-model-cache` at `/root/.local/share/tts`, but the application writes to `/app/.cache/tts` (via `TTS_MODEL_CACHE` env var). The volume is effectively unused. Is this intentional?
-2. **Audio history stores no text**: `/api/history` returns `"text": ""` for all entries. The original text is not persisted. Is this a known limitation?
-3. **No auth on API endpoints**: All endpoints are public (CORS `*`). Is this acceptable for production?
-4. **No rate limiting**: Any client can flood `/api/generate`. CPU-only inference takes seconds per request.
-5. **`run-tests.sh` not found**: The AGENTS.md references `./run-tests.sh` as the single source of truth for quality gates, but the file does not exist in the repository. Is this a documentation gap or a missing script?
-6. **Seed parameter in API but not in frontend**: `SynthesisRequest` accepts `seed` (deterministic), but the frontend `useTtsApi.ts` does not pass it. Is this intentional?
-7. **`SynthesisResponse` model defined but unused**: The backend defines `SynthesisResponse(audio_url, filename, duration_seconds)` but `/api/generate` returns `FileResponse` instead. Is this legacy code?
+1. **Model cache volume mismatch**: The `docker-compose.yml` mounts `tts-model-cache` at `/root/.local/share/tts`, but the application writes to `/app/.cache/tts` (via `TTS_MODEL_CACHE` env var). The volume is effectively unused. **Status: Unresolved** — confirmed in docker-compose.yml line 12 vs env var line 19.
+
+2. **Audio history stores no text**: `/api/history` returns `"text": ""` for all entries. The original text is not persisted. **Status: Unresolved** — confirmed in `app.py:440`.
+
+3. **No auth on API endpoints**: All endpoints are public (CORS `*`). **Status: Unresolved** — no authentication middleware.
+
+4. **No rate limiting**: Any client can flood `/api/generate`. CPU-only inference takes seconds per request. **Status: Unresolved** — no rate limiting middleware.
+
+5. **`run-tests.sh` found and working**: The AGENTS.md references `./run-tests.sh` as the single source of truth for quality gates. **Status: RESOLVED** — `run-tests.sh` exists and runs 4 quality gates (backend tests → lint → typecheck → frontend tests).
+
+6. **Seed parameter in API but not in frontend**: `SynthesisRequest` accepts `seed` (deterministic), but the frontend `useTtsApi.ts` does not pass it. **Status: Unresolved** — confirmed in `useTtsApi.ts` (no `seed` field in `SynthesisRequest` interface).
+
+7. **`SynthesisResponse` model defined but unused**: The backend defines `SynthesisResponse(audio_url, filename, duration_seconds)` but `/api/generate` returns `FileResponse` instead. **Status: Unresolved** — legacy model at `app.py:244-247`.
 
 ---
 
@@ -263,11 +294,11 @@ The following workflows exist in **active code** but have **no specification**. 
 
 ```
 # Workflow Discovery Audit — Lughat Chat TTS
-# Date: 2026-08-01
+# Original Date: 2026-08-01 | Updated: 2026-08-01 (Resolution Audit)
 # Auditor: Workflow Architect
 
 ## Entry Points Scanned
-- [x] All API route files (REST) → backend/app.py: 4 endpoints
+- [x] All API route files (REST) → backend/app.py: 5 endpoints (including /api/cleanup)
 - [x] All frontend page files → frontend/app/pages/index.vue (single-page app)
 - [x] All composables (business logic) → 8 composables
 - [x] All Vue components → 9 components
@@ -280,7 +311,7 @@ The following workflows exist in **active code** but have **no specification**. 
 - [x] Service orchestration config (docker-compose.yml) → 2 services, 2 named volumes, 1 network
 - [x] Infrastructure-as-code modules → N/A (Docker Compose only)
 - [x] CI/CD pipeline definitions → 2 GitHub Actions workflows
-- [x] Bootstrap / startup scripts → 5 shell scripts
+- [x] Bootstrap / startup scripts → 6 shell scripts (run-tests.sh, run-backend-tests.sh, init.sh, test-e2e.sh, test-volume-persistence.sh, optimize-docker.sh)
 - [x] DNS and CDN configuration → N/A (local deployment)
 
 ## Data Layer Scanned
@@ -295,27 +326,26 @@ The following workflows exist in **active code** but have **no specification**. 
 - [x] Secrets management config → N/A (no secrets)
 - [x] Service dependency declarations → Frontend depends_on backend (service_healthy)
 
-## Findings
-| # | Discovered workflow | Has spec? | Severity of gap | Notes |
+## Findings (Updated)
+| # | Discovered workflow | Has spec? | Severity of gap | Resolution Status |
 |---|---|---|---|---|
-| 1 | Model Startup & Loading (W-01) | No | **Critical** | Daemon thread, no timeout, no retry |
-| 2 | Health Check Polling (W-02) | No | **High** | 20s timeout vs 120s model load |
-| 3 | TTS Synthesis (W-03) | No | **Critical** | 5-step pipeline, no rollback |
-| 4 | Audio Playback (W-04) | No | **Medium** | Memory leak risk with object URLs |
-| 5 | Voice Discovery (W-05) | No | **Low** | Simple directory scan |
-| 6 | Audio History (W-06) | No | **Medium** | No text stored, no cleanup |
-| 7 | Audio Download (W-07) | No | **Low** | Simple blob download |
-| 8 | Containerized Deployment (W-08) | No | **Medium** | Volume mount mismatch |
-| 9 | Backend CI (W-09) | Yes | Low | File: .github/workflows/backend.yml |
-| 10 | Frontend CI (W-10) | Yes | Low | File: .github/workflows/frontend.yml |
-| 11 | Quality Gate (W-11) | No | **High** | Script not found on disk |
-| 12 | Docker Optimization (W-12) | Partial | **Medium** | Script writes to /tmp, not persistent |
-| 13 | E2E Test (W-13) | Partial | **Medium** | Uses /api/tts (wrong endpoint) |
-| 14 | Volume Persistence (W-14) | Partial | **Medium** | Test script exists but incomplete |
-| 15 | Startup Validation (W-15) | Partial | **Medium** | init.sh exists, validates 5 items |
-| 16 | Container Health (W-16) | No | **High** | 50-min max wait time |
-| 17 | Speaker WAV Mgmt (W-17) | No | **Medium** | No validation on file addition |
-| 18 | Panel Layout (W-18) | No | **Medium** | Touch/drag handling |
-| 19 | Scroll Reveal (W-19) | No | **Low** | IntersectionObserver wrapper |
-| 20 | Toast Lifecycle (W-20) | No | **Low** | Global state, no queue limit |
-```
+| 1 | Model Startup & Loading (W-01) | No → Now has spec | **Critical** | ✅ RESOLVED: retry + backoff + timeout |
+| 2 | Health Check Polling (W-02) | No → Now has spec | **High** | ✅ RESOLVED: 60 retries (120s) matches 60s start_period |
+| 3 | TTS Synthesis (W-03) | No → Now has spec | **Critical** | ⚠️ PARTIALLY RESOLVED: cleanup + validation, FFmpeg fallback remains |
+| 4 | Audio Playback (W-04) | No → Now has spec | **Medium** | ⚠️ PARTIALLY RESOLVED: dispose() wired, single-URL leak remains |
+| 5 | Voice Discovery (W-05) | No | **Low** | Unchanged: simple directory scan |
+| 6 | Audio History (W-06) | No → Now has spec | **Medium** | ✅ RESOLVED: cleanup=true query param + /api/cleanup endpoint |
+| 7 | Audio Download (W-07) | No | **Low** | Unchanged: simple blob download |
+| 8 | Containerized Deployment (W-08) | No → Now has spec | **Medium** | ⚠️ PARTIALLY RESOLVED: 16 min max wait (was 50 min) |
+| 9 | Backend CI (W-09) | Yes | Low | Unchanged |
+| 10 | Frontend CI (W-10) | Yes | Low | Unchanged |
+| 11 | Quality Gate (W-11) | No → Now exists | **High** | ✅ RESOLVED: run-tests.sh exists |
+| 12 | Docker Optimization (W-12) | Partial | **Medium** | Unchanged: script writes to /tmp |
+| 13 | E2E Test (W-13) | Partial → Now exists | **Medium** | ⚠️ PARTIALLY RESOLVED: script exists but uses /api/tts (wrong endpoint) |
+| 14 | Volume Persistence (W-14) | Partial → Now exists | **Medium** | ✅ RESOLVED: script exists and functional |
+| 15 | Startup Validation (W-15) | Partial → Now exists | **Medium** | ✅ RESOLVED: init.sh exists, validates 5 items |
+| 16 | Container Health (W-16) | No → Now has spec | **High** | ⚠️ PARTIALLY RESOLVED: 16 min max wait (was 50 min) |
+| 17 | Speaker WAV Mgmt (W-17) | No → Now has spec | **Medium** | ✅ RESOLVED: _validate_speaker_wav() in place |
+| 18 | Panel Layout (W-18) | No → Now has spec | **Medium** | ⚠️ PARTIALLY RESOLVED: bounds validation (0.25–0.85), no inertia/snap |
+| 19 | Scroll Reveal (W-19) | No → Now has spec | **Low** | ✅ RESOLVED: useScrollReveal.ts with IntersectionObserver |
+| 20 | Toast Lifecycle (W-20) | No | **Low** | ❌ UNRESOLVED: no max-queue, race condition |

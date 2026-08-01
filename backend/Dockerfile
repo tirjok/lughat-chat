@@ -48,7 +48,7 @@ COPY . .
 EXPOSE 8000
 
 # Health check (retries until model is loaded)
-HEALTHCHECK --interval=15s --timeout=5s --retries=20 --start-period=60s \
+HEALTHCHECK --interval=15s --timeout=5s --retries=60 --start-period=60s \
     CMD python -c "import urllib.request; import sys; r = urllib.request.urlopen('http://localhost:8000/health'); d = eval(r.read().decode()); sys.exit(0 if d.get('model_loaded') else 1)"
 
 # Start server
