@@ -9,7 +9,7 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
 
   // Start polling immediately
   const baseUrl = options.baseUrl || ''
-  const maxRetries = options.maxRetries ?? 10
+  const maxRetries = options.maxRetries ?? 60
   let intervalId: ReturnType<typeof setInterval> | null = null
   let retryCount = 0
 
@@ -28,10 +28,10 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
       }
 
       const data = await response.json()
-      status.value = data.status || 'ready'
+      status.value = data.status || 'loading'
 
       // Stop polling on terminal state
-      if (status.value === 'ready') {
+      if (status.value === 'ready' || status.value === 'error') {
         retryCount = maxRetries
         if (intervalId !== null) {
           clearInterval(intervalId)

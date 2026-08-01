@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -144,31 +144,58 @@ model_load_status = "loading"  # loading | ready | error
 async def lifespan(app: FastAPI):
     """Load TTS model in background so server starts immediately."""
     global tts_model, model_load_status
+    import time as _time
+
+    load_start_time = _time.monotonic()
+
+    MAX_LOAD_RETRIES = 3
+    LOAD_RETRY_DELAYS = [2.0, 4.0, 8.0]  # exponential backoff
+    LOAD_HARD_TIMEOUT = 300  # 5 minutes hard timeout
 
     def load_model():
-        """Load TTS model in a background thread."""
+        """Load TTS model with retry logic, exponential backoff, and hard timeout."""
         global tts_model, model_load_status
         print("Loading XTTS-v2 model...")
-        try:
-            # Skip loading if already mocked (e.g. in tests)
-            if tts_model is not None:
-                print("TTS model already loaded — skipping")
-                return
-            if TTS is None:
-                print(
-                    "TTS library not available (torch not installed) — skipping model load"
-                )
+
+        for attempt in range(MAX_LOAD_RETRIES):
+            # Check hard timeout
+            if _time.monotonic() - load_start_time >= LOAD_HARD_TIMEOUT:
                 model_load_status = "error"
-                tts_model = None
+                print(
+                    f"Model loading abandoned: hard timeout ({LOAD_HARD_TIMEOUT}s) exceeded"
+                )
                 return
-            os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-            tts_model = TTS("tts_models/multilingual/xtts_v2")
-            model_load_status = "ready"
-            print("XTTS-v2 model loaded successfully!")
-        except Exception as e:
-            model_load_status = "error"
-            print(f"Error loading TTS model: {e}")
-            tts_model = None
+
+            try:
+                # Skip loading if already mocked (e.g. in tests)
+                if tts_model is not None:
+                    print("TTS model already loaded — skipping")
+                    return
+                if TTS is None:
+                    print(
+                        "TTS library not available (torch not installed) — skipping model load"
+                    )
+                    model_load_status = "error"
+                    tts_model = None
+                    return
+                os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
+                tts_model = TTS("tts_models/multilingual/xtts_v2")
+                model_load_status = "ready"
+                print("XTTS-v2 model loaded successfully!")
+                return
+            except Exception as e:
+                model_load_status = "error"
+                print(
+                    f"Error loading TTS model (attempt {attempt + 1}/{MAX_LOAD_RETRIES}): {e}"
+                )
+                tts_model = None
+                if attempt < MAX_LOAD_RETRIES - 1:
+                    delay = LOAD_RETRY_DELAYS[attempt]
+                    print(f"Retrying in {delay}s...")
+                    _time.sleep(delay)
+
+        # All retries exhausted
+        print(f"Model loading failed after {MAX_LOAD_RETRIES} attempts")
 
     # Start model loading in background thread
     load_thread = threading.Thread(target=load_model, daemon=True)
@@ -231,8 +258,47 @@ class HealthResponse(BaseModel):
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health():
-    """Health check endpoint - returns model load status."""
+async def health(reload: Optional[str] = Query(None)):
+    """Health check endpoint - returns model load status.
+
+    Accepts ?reload=1 to trigger a model reload attempt (when status is 'error').
+    """
+    global tts_model, model_load_status
+
+    if reload == "1" and model_load_status == "error":
+        # Trigger a reload attempt
+        print("Model reload requested via ?reload=1")
+        model_load_status = "loading"
+        tts_model = None
+        # Start a new background thread to reload
+        import time as _reload_time
+
+        _reload_start = _reload_time.monotonic()
+
+        def reload_model():
+            global tts_model, model_load_status
+            print("Reloading XTTS-v2 model...")
+            try:
+                if TTS is None:
+                    print(
+                        "TTS library not available (torch not installed) — skipping model load"
+                    )
+                    model_load_status = "error"
+                    return
+                os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
+                tts_model = TTS("tts_models/multilingual/xtts_v2")
+                model_load_status = "ready"
+                print("XTTS-v2 model reloaded successfully!")
+            except Exception as e:
+                model_load_status = "error"
+                print(f"Error reloading TTS model: {e}")
+                tts_model = None
+
+        reload_thread = threading.Thread(target=reload_model, daemon=True)
+        reload_thread.start()
+        # Brief pause to let the thread start before responding
+        _reload_time.sleep(0.1)
+
     return {
         "status": model_load_status,
         "model_loaded": tts_model is not None and model_load_status == "ready",
@@ -263,76 +329,94 @@ async def generate_speech(request: SynthesisRequest):
         wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
         mp3_path = os.path.join(AUDIO_DIR, filename)
 
-        # Generate WAV first (XTTS native format)
-        print(f"Generating speech: {request.text[:50]}...")
+        # Track files created for cleanup on failure (intermediate files only)
+        intermediate_files: list[str] = []
 
-        # Use the voice ID directly as the WAV filename
-        speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
+        try:
+            # Generate WAV first (XTTS native format)
+            print(f"Generating speech: {request.text[:50]}...")
 
-        if not os.path.exists(speaker_wav):
-            raise HTTPException(
-                status_code=500,
-                detail=f"Speaker WAV file not found for voice '{voice}' (expected at '{speaker_wav}'). Add it to speaker_wavs/.",
+            # Use the voice ID directly as the WAV filename
+            speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
+
+            if not os.path.exists(speaker_wav):
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Speaker WAV file not found for voice '{voice}' (expected at '{speaker_wav}'). Add it to speaker_wavs/.",
+                )
+
+            # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
+            _validate_speaker_wav(speaker_wav)
+
+            # Generate audio with speaker reference for voice cloning
+            # Use deterministic seed if provided
+            seed = request.seed if request.seed is not None else 42
+
+            # Set PyTorch random seed for deterministic XTTS generation.
+            # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
+            # seeding must be done at the PyTorch level before inference.
+            try:
+                import torch
+
+                torch.manual_seed(seed)
+            except ImportError:
+                pass  # torch not available (e.g. in tests) — skip seeding
+
+            tts_model.tts_to_file(
+                text=request.text,
+                speaker_wav=speaker_wav,
+                language=request.language,
+                file_path=wav_path,
+                temperature=0.4,  # Low temperature for consistent, deterministic voice output
             )
 
-        # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
-        _validate_speaker_wav(speaker_wav)
+            if not os.path.exists(wav_path):
+                raise HTTPException(status_code=500, detail="Failed to generate audio")
 
-        # Generate audio with speaker reference for voice cloning
-        # Use deterministic seed if provided
-        seed = request.seed if request.seed is not None else 42
+            intermediate_files.append(wav_path)
 
-        # Set PyTorch random seed for deterministic XTTS generation.
-        # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
-        # seeding must be done at the PyTorch level before inference.
-        try:
-            import torch
+            # Convert WAV to MP3 using ffmpeg
+            try:
+                subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        wav_path,
+                        "-filter:a",
+                        f"atempo={request.speed}",
+                        "-b:a",
+                        "192k",
+                        mp3_path,
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
+            except subprocess.CalledProcessError as e:
+                print(f"FFmpeg error: {e.stderr}")
+                # Fallback: just use WAV if MP3 conversion fails
+                shutil.copy2(wav_path, mp3_path)
 
-            torch.manual_seed(seed)
-        except ImportError:
-            pass  # torch not available (e.g. in tests) — skip seeding
+            # Clean up intermediate WAV file — it's 5–10× larger than the MP3
+            try:
+                os.remove(wav_path)
+            except OSError:
+                pass  # Already gone (e.g. race condition) — ignore
 
-        tts_model.tts_to_file(
-            text=request.text,
-            speaker_wav=speaker_wav,
-            language=request.language,
-            file_path=wav_path,
-            temperature=0.4,  # Low temperature for consistent, deterministic voice output
-        )
-
-        if not os.path.exists(wav_path):
-            raise HTTPException(status_code=500, detail="Failed to generate audio")
-
-        # Convert WAV to MP3 using ffmpeg
-        try:
-            subprocess.run(
-                [
-                    "ffmpeg",
-                    "-y",
-                    "-i",
-                    wav_path,
-                    "-filter:a",
-                    f"atempo={request.speed}",
-                    "-b:a",
-                    "192k",
-                    mp3_path,
-                ],
-                check=True,
-                capture_output=True,
+            # Return MP3 file as binary response
+            return FileResponse(
+                path=mp3_path, media_type="audio/mpeg", filename=filename
             )
-        except subprocess.CalledProcessError as e:
-            print(f"FFmpeg error: {e.stderr}")
-            # Fallback: just use WAV if MP3 conversion fails
-            shutil.copy2(wav_path, mp3_path)
 
-        # Clean up intermediate WAV file — it's 5–10× larger than the MP3
-        try:
-            os.remove(wav_path)
-        except OSError:
-            pass  # Already gone (e.g. race condition) — ignore
-
-        # Return MP3 file as binary response
-        return FileResponse(path=mp3_path, media_type="audio/mpeg", filename=filename)
+        finally:
+            # Rollback: clean up any intermediate files that weren't successfully consumed
+            for fpath in intermediate_files:
+                try:
+                    if os.path.exists(fpath):
+                        os.remove(fpath)
+                        print(f"Cleaned up intermediate file: {fpath}")
+                except OSError:
+                    pass  # Best effort cleanup
 
     except HTTPException:
         raise
@@ -342,8 +426,12 @@ async def generate_speech(request: SynthesisRequest):
 
 
 @app.get("/api/history")
-async def get_history():
-    """Get list of previously generated audio files."""
+async def get_history(cleanup: Optional[str] = Query(None)):
+    """Get list of previously generated audio files.
+
+    Accepts ?cleanup=true to trigger cleanup of files older than 24 hours.
+    Cleanup errors are logged but don't affect the response.
+    """
     try:
         items = []
         for filename in sorted(os.listdir(AUDIO_DIR), reverse=True):
@@ -368,7 +456,63 @@ async def get_history():
                     }
                 )
 
+        # Trigger cleanup if requested (non-blocking, errors don't affect response)
+        if cleanup == "true":
+            import time as _hist_time
+
+            now = _hist_time.time()
+            twenty_four_hours = 24 * 60 * 60
+            try:
+                for filename in os.listdir(AUDIO_DIR):
+                    if filename.endswith((".mp3", ".wav")):
+                        filepath = os.path.join(AUDIO_DIR, filename)
+                        try:
+                            stat = os.stat(filepath)
+                            if now - stat.st_mtime > twenty_four_hours:
+                                os.remove(filepath)
+                                print(
+                                    f"Cleanup (history): removed old file: {filename}"
+                                )
+                        except OSError:
+                            pass
+            except Exception as e:
+                print(f"Cleanup (history) error: {e}")
+
         return items
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/cleanup")
+async def cleanup_old_files():
+    """Remove generated audio files older than 24 hours.
+
+    Cleans up both .mp3 (generated) and .wav (orphaned intermediate) files.
+    Errors during cleanup are logged but don't fail the endpoint.
+    """
+    import time as _cleanup_time
+
+    now = _cleanup_time.time()
+    twenty_four_hours = 24 * 60 * 60  # 86400 seconds
+    removed_count = 0
+
+    try:
+        for filename in os.listdir(AUDIO_DIR):
+            if filename.endswith((".mp3", ".wav")):
+                filepath = os.path.join(AUDIO_DIR, filename)
+                try:
+                    stat = os.stat(filepath)
+                    age = now - stat.st_mtime
+                    if age > twenty_four_hours:
+                        os.remove(filepath)
+                        removed_count += 1
+                        print(
+                            f"Cleaned up old file: {filename} (age: {age / 3600:.1f}h)"
+                        )
+                except OSError:
+                    pass  # File was removed by another process — ignore
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+
+    return {"removed_count": removed_count}
