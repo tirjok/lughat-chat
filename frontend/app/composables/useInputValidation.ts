@@ -16,27 +16,15 @@ export function useInputValidation(
   modelStatus: ModelStatus
 ): UseInputValidationResult {
   const trimmed = textInput.trim()
-
-  // Determine validation state
-  let isValid = false
-  let error: string | null = null
-
-  if (trimmed.length === 0) {
-    // Empty text error always takes priority
-    isValid = false
-    error = EMPTY_TEXT_ERROR
-  } else if (modelStatus !== 'ready') {
-    // Non-empty text but model not ready
-    isValid = false
-    error = MODEL_LOADING_ERROR
-  } else {
-    // Both conditions satisfied
-    isValid = true
-    error = null
-  }
+  const hasText = trimmed.length > 0
+  const isReady = modelStatus === 'ready'
 
   return {
-    isValid,
-    error
+    isValid: hasText && isReady,
+    error: hasText
+      ? isReady
+        ? null
+        : MODEL_LOADING_ERROR
+      : EMPTY_TEXT_ERROR
   }
 }

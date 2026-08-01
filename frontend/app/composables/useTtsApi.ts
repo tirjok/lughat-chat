@@ -87,7 +87,7 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
         throw error
       }
       const message = error instanceof Error ? error.message : String(error)
-      throw new Error(`Unable to check health status: ${message}`)
+      throw new Error(`Unable to check health status: ${message}`, { cause: error })
     }
   }
 
