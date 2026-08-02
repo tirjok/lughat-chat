@@ -1,188 +1,45 @@
-# Project Context — Lughat Chat
+# CONTEXT.md — Lughat Chat (Deep Reference)
 
-## Overview
-A **text-to-speech (TTS) web app** for Arabic speech synthesis using Coqui XTTS-v2. Deployed via Docker Compose with Nginx as reverse proxy.
-
-## Architecture
-```
-┌──────────┐     ┌─────────────┐     ┌──────────┐
-│  Browser  │◄──►│   Nginx     │◄──►│ Backend  │
-└──────────┘     │ (port 80)   │     │(port 8000)│
-                  └─────────────┘     └──────────┘
-                                       Coqui XTTS-v2
-```
-
-- **Frontend**: Nuxt 4.4+ + Vue 3.5+ + UnoCSS 66 (runs on port 80 via Nginx)
-- **Backend**: Python FastAPI 0.115.6 + Coqui TTS 0.27.5 (runs on port 8000)
-- **TTS Model**: XTTS-v2 (multilingual, Arabic-focused)
-- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script)
-- **Fonts**: Google Fonts — "Inter" (UI labels) + "Cairo" (Arabic text)
+> On-demand reference. AGENTS.md (rules, commands, conventions) is the
+> contract — read THIS file only when a task needs architecture, API,
+> Docker, debugging, or CI details. Do not duplicate AGENTS.md content here.
 
 ---
 
-## Frontend (`frontend/`)
+## Architecture
 
-### Tech Stack
-- **Framework**: Nuxt 4.4+ (file-based routing, auto-imports)
-- **Language**: TypeScript
-- **Package Manager**: pnpm 10.33.4
-- **Styling**: UnoCSS (with presetIcons, presetTypography, presetWebFonts)
-- **UI Config**: `app.config.ts` — primary: green, neutral: slate
-- **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script)
-- **Fonts**: Google Fonts — "Cairo" (sans-serif)
+```
+┌──────────┐     ┌─────────────┐     ┌──────────┐
+│  Browser │◄───►│   Nginx     │◄───►│ Backend  │
+└──────────┘     │ (port 80)   │     │(port 8000)│
+                 └─────────────┘     └──────────┘
+                                       Coqui XTTS-v2
+```
 
-### Key Files
-| File | Purpose |
-|------|---------|
-| `nuxt.config.ts` | Nuxt config with modules, ESLint, UnoCSS, CSS import |
-| `uno.config.ts` | UnoCSS presets + shortcuts (`btn`, `card`, `flex-center`, etc.) |
-| `app/app.config.ts` | UI theme config (green primary, slate neutral) |
-| `app/assets/css/main.css` | Global BEM styles using UnoCSS `@apply` directives |
+- Frontend: Nuxt 4.4.5 + Vue 3 + UnoCSS 66.7.2 + `@vueuse/core` — served on port 80 via Nginx.
+- Backend: FastAPI 0.115.6 + uvicorn 0.34.0 + Coqui TTS 0.27.5 — port 8000 (container), 9000 (host).
+- TTS model: `tts_models/multilingual/xtts_v2` (multilingual, Arabic-focused).
+- Fonts: Google Fonts — "Inter" (UI) + "Cairo" (Arabic). Theme: green primary, slate neutral (`app/app.config.ts`).
 
-### App Structure (`app/`)
+---
+
+## Frontend Structure (`frontend/app/`)
+
 ```
 app/
 ├── app.config.ts          # UI theme config
 ├── app.vue                # Root component
-├── assets/css/main.css    # Global styles (@apply)
+├── assets/css/main.css    # Global styles via UnoCSS @apply (dark theme, scrollbar, safe-area)
 ├── pages/index.vue        # Full-page TTS Studio (two-panel layout)
-├── components/            # 9 Vue components
-│   ├── AudioPlayerPanel.vue       # Audio playback panel (waveform + controls)
-│   ├── FocusHaloCanvas.vue        # Focus halo effect for textarea
-│   ├── GenerateButton.vue         # Generate speech button with loading states
-│   ├── MobileStatusIndicator.vue  # Compact model status (mobile FAB)
-│   ├── ModelStatusIndicator.vue   # Desktop model status indicator
-│   ├── SpeedSlider.vue            # Speed adjustment slider (0.5×–2.0×)
-│   ├── ToastNotification.vue      # Toast messages (success/error/info)
-│   ├── VoiceSelector.vue          # Voice/dialect selector dropdown
-│   └── WaveformCanvas.vue         # Animated waveform visualization
-└── composables/           # 8 composables (+ test files)
-    ├── useAudioModule.ts     # Audio playback state management
-    ├── useHealthPoll.ts      # Backend health check polling
-    ├── useInputValidation.ts # Text input validation logic
-    ├── usePanelToggle.ts     # Panel toggle state (control-deck ↔ canvas)
-    ├── useScrollReveal.ts    # Scroll-reveal fade-up animations
-    ├── useToast.ts           # Toast notification management
-    ├── useTtsApi.ts          # TTS API calls (synthesize, healthCheck)
-    └── useVoices.ts          # Voice list fetching and management
+├── components/            # 9 Vue components (list dir for current set)
+└── composables/           # 8 composables (list dir for current set)
 ```
 
-### ESLint Config
-- **Config file**: `eslint.config.mjs` (flat config via `@nuxt/eslint`)
-- **Style rules**: commaDangle: `'never'`, braceStyle: `'1tbs'`
+Key config files: `nuxt.config.ts` (modules, ESLint, UnoCSS, Nitro devProxy),
+`uno.config.ts` (presetWind3, presetTypography, presetWebFonts, transformerDirectives, shortcuts, theme).
 
-### Test Setup (Vitest)
-**Two separate vitest configs:**
+### UnoCSS Shortcuts (`uno.config.ts`)
 
-1. **Unit tests**: `vitest.config.ts`
-   - Environment: `jsdom`
-   - Setup file: `tests/setup.ts` (mocks Nuxt auto-imports: `ref`, `computed`, `watch`, `onMounted`)
-   - Excludes: `**/*.component.test.ts`, `tests/ModelStatusIndicator.test.ts`
-
-2. **Component tests**: `vitest.component.config.ts`
-   - Environment: `jsdom`
-   - Setup file: `tests/setup.component.ts` (mocks URL APIs, fetch)
-   - Excludes: `tests/useHealthPoll.test.ts`
-
-**Test commands:**
-```bash
-# Run all tests (unit)
-pnpm test          # → vitest run
-
-# Run component tests only
-npx vitest --config vitest.component.config.ts
-```
-
-**Run all tests (backend + frontend) from project root:**
-```bash
-./run-tests.sh     # Runs pytest (backend) then pnpm test (frontend)
-```
-
-**Test files location:** `frontend/tests/`
-- Naming: `<name>.test.ts`
-- All test files live in `frontend/tests/` (no inline test files in source directories).
-
----
-
-## Backend (`backend/`)
-
-### Tech Stack
-- **Framework**: Python FastAPI 0.115.6
-- **Server**: uvicorn 0.34.0 (standard)
-- **TTS Engine**: Coqui TTS 0.27.5 (with codec support)
-- **Package Manager**: pip (requirements.txt)
-
-### Key Files
-| File | Purpose |
-|------|---------|
-| `app.py` | Main FastAPI app with TTS model loading, synthesis endpoint, health check |
-| `requirements.txt` | Python dependencies (fastapi, uvicorn, pydantic, coqui-tts, ffmpeg-python) |
-| `pytest.ini` | pytest config — testpaths: tests, pythonpath: . |
-
-### API Endpoints
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/health` | GET | Health check + model loading status |
-| `/api/voices` | GET | List available voices/speakers |
-| `/api/generate` | POST | Generate speech from text (returns MP3 binary) |
-| `/api/history` | GET | List previously generated audio files |
-
-### Model Loading
-- Model: `tts_models/multilingual/xtts_v2` (loaded on startup via lifespan)
-- Cache dir: `/app/.cache/tts` (env var `TTS_MODEL_CACHE`)
-- **Note:** The `tts-model-cache` named volume is mounted at `/root/.local/share/tts` in Docker Compose, but the application writes to `/app/.cache/tts`. The model cache volume is **not used for persistence** — the ~2GB TTS model is re-downloaded on each container restart.
-- Status states: `"loading"` → `"ready"` | `"error"`
-- Audio output dir: `/app/downloads` (persisted as `tts-audio-cache`)
-
-### Test Setup (Pytest)
-```bash
-# Run backend tests (inside Docker — no host Python needed)
-./scripts/run-backend-tests.sh
-```
-
-**Run all tests (backend + frontend) from project root:**
-```bash
-./run-tests.sh     # Runs backend tests in Docker, then pnpm test (frontend)
-```
-
-**Test files:** `backend/tests/`
-- `test_generate.py` — synthesis endpoint tests
-- `test_generate_blob.py` — blob response tests
-- `test_health.py` — health check endpoint tests
-- `test_history.py` — audio history endpoint tests
-- `test_voices.py` — voices listing tests
-
----
-
-## Docker Deployment (`docker-compose.yml`)
-
-### Services
-| Service | Image | Ports | Notes |
-|---------|-------|-------|-------|
-| `backend` | Python (custom Dockerfile) | 9000:8000 | Health check: start_period 120s, 200 retries (15s interval) |
-| `frontend` | Nuxt + Nginx (custom Dockerfile) | 9001:80 | Depends on backend being healthy (service_healthy condition) |
-
-### Volumes
-| Volume | Purpose |
-|--------|---------|
-| `tts-model-cache` | Persist TTS model (~2GB, downloaded once) |
-| `tts-audio-cache` | Persist generated audio files |
-
-### Environment Variables (`.env`)
-```
-BACKEND_PORT=9000, BACKEND_HOST=backend
-FRONTEND_PORT=9001, FRONTEND_HOST=localhost
-NGINX_PORT=80, NGINX_HOST=localhost
-API_BASE_URL=http://backend:9000
-TTS_MODEL_CACHE=/app/.cache/tts
-COQUI_TOS_AGREED=1
-MODEL_VOLUME_NAME=arabic-tts-models
-AUDIO_CACHE_VOLUME_NAME=arabic-tts-audio
-```
-
----
-
-## UnoCSS Shortcuts (Reusable Classes)
 | Shortcut | Expands To |
 |----------|------------|
 | `btn` | `px-4 py-2 rounded font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors` |
@@ -190,34 +47,147 @@ AUDIO_CACHE_VOLUME_NAME=arabic-tts-audio
 | `flex-center` | `flex items-center justify-center` |
 | `flex-between` | `flex items-center justify-between` |
 
-## BEM CSS Classes (in main.css)
-All styles use `@apply` with UnoCSS utilities. Key blocks:
-- `.tts-page`, `.tts-card`, `.tts-section` — layout blocks
-- `.tts-input`, `.tts-select`, `.tts-range` — form controls
-- `.tts-btn-generate` — generate button with loading state
-- `.tts-audio`, `.tts-error`, `.tts-footer` — media/error blocks
-- `.tts-spinner`, `.tts-fade-*`, `.tts-slide-up-*` — animations
+Main CSS blocks (`.tts-*`): page/card/section layout, input/select/range controls,
+btn-generate (loading state), audio/error/footer, spinner/fade/slide-up animations.
+
+### Vitest Setup Detail
+
+- `vitest.config.ts`: jsdom, setup `tests/setup.ts` (stubs `ref`, `computed`, `watch`, `onMounted`).
+  Excludes `**/*.component.test.ts`, `tests/ModelStatusIndicator.test.ts`.
+- `vitest.component.config.ts`: jsdom, setup `tests/setup.component.ts` (stubs URL APIs, fetch).
+  Excludes `tests/useHealthPoll.test.ts`.
+- Existing tests: run `ls frontend/tests/` — do not rely on hardcoded lists.
 
 ---
 
+## Backend (`backend/`)
+
+- `app.py` — FastAPI app: model loading via lifespan, synthesis, health, voices, history.
+- `requirements.txt` — runtime deps; `backend/requirements-test.txt` — test deps (used by CI).
+- `pytest.ini` — testpaths: tests, pythonpath: .
+- Speaker references: `backend/speaker_wavs/*.wav` — dynamically discovered (≥ 0.33s each,
+  XTTS-v2 minimum). Current: `KSA Hamed - Male.wav`, `KSA Zariyah - Female.wav`.
+
+### Model Loading
+
+- Loads on startup via lifespan. Status: `loading → ready | error`.
+- Cache dir: `/app/.cache/tts` (`TTS_MODEL_CACHE` env var).
+- KNOWN ISSUE: `tts-model-cache` volume mounts at `/root/.local/share/tts` but the app writes
+  to `/app/.cache/tts` — volume is NOT used; the ~2GB model re-downloads every container restart.
+- Audio output: `/app/downloads` (persisted via `tts-audio-cache`). No cleanup mechanism — files accumulate.
+
 ---
 
-## Known Issues & Debugging Patterns
+## API Reference
 
-### Audio Playback Timing Issue (Fixed 2026-06-05)
-**Symptom**: Audio doesn't play after first "Generate Speech" click, but works on second click.
-**Root cause**: Vue's DOM updates are async. `loadAudio()` sets `audioUrl.value` which triggers a `<Transition>` to mount `<audio ref="audioRef">`, but the element doesn't exist in DOM yet when `play()` is called immediately after. The guard `if (audioRef.value && url)` fails because `audioRef.value` is still `null`.
-**Fix**: Add `await nextTick()` between `loadAudio()` and `play()` in `index.vue`. Also added `{ flush: 'post' }` to the `watch(audioUrl)` in `useAudioModule.ts` as a safety net.
-**Pattern to watch for**: Anytime you call a method that depends on a `ref` bound to an element inside a `<Transition>` or conditional (`v-if`), you need `await nextTick()` first.
+### `POST /api/generate` — Generate Speech
+
+```json
+{
+  "text": "مرحبا بك في لغةات",
+  "language": "ar",      // optional, default "ar" | allowed: "ar" | "en"
+  "voice": "female",     // optional, any string (validated at runtime)
+  "speaker": "female",   // alias for voice; resolved as speaker ?? voice ?? "female"
+  "speed": 1.0,          // optional, 0.5–2.0
+  "pitch": 0.0,          // optional, -4.0–4.0
+  "seed": 42             // optional, deterministic (default 42)
+}
+```
+
+Response: `audio/mpeg` binary via `FileResponse` — NOT JSON. Frontend uses `URL.createObjectURL()`.
+Note: `SynthesisResponse` Pydantic model exists but is unused.
+
+Errors: 400 (empty/too-long text), 503 (model still loading), 500 (missing speaker WAV / generation failure).
+
+### `GET /health`
+
+```json
+{ "status": "ready", "model_loaded": true }   // status: "loading" | "ready" | "error"
+```
+
+### `GET /api/voices`
+
+Array of `{ id, name }` from `.wav` filenames in `speaker_wavs/`.
+
+### `GET /api/history`
+
+Array of generated files with metadata (filename, text, language, voice, speed, pitch, created_at);
+text comes from sidecar `.json` written during synthesis.
 
 ---
 
-## Key Conventions
-1. **Nuxt file-based routing**: pages go in `app/pages/`, auto-imported
-2. **Composables** in `app/composables/` are auto-imported (no explicit imports needed)
-3. **Components** in `app/components/` are auto-imported by name
-4. **Tests mirror source**: all test files live in `frontend/tests/` (no inline test files)
-5. **Dark mode**: all UnoCSS utility classes have `dark:` variants defined in main.css
-6. **RTL support**: Arabic text handled via Cairo font + RTL direction
-7. **Icons**: Phosphor Icons (via `@phosphor-icons/web` CDN script) + Lucide + Simple Icons
-8. **Host ports**: Docker backend on 9000, frontend on 9001. Local dev proxies to localhost:9000.
+## Docker (`docker-compose.yml`)
+
+| Service | Ports | Notes |
+|---------|-------|-------|
+| backend | 9000:8000 | Health check: start_period 120s, 200 retries @ 15s |
+| frontend | 9001:80 | depends_on: backend service_healthy |
+
+Volumes: `tts-model-cache` (ineffective — see Model Loading), `tts-audio-cache` (audio persistence).
+
+Backend container env: `TZ=UTC`, `TTS_MODEL_CACHE=/app/.cache/tts`, `COQUI_TOS_AGREED=1`,
+`LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/x86_64-linux-gnu`. Full env list: see `.env` at project root.
+
+---
+
+## Error Handling Patterns
+
+Frontend: all user-facing errors via `showToast()` (`useToast`); input validation via
+`useInputValidation`; `isGenerating` disables button + spinner; `Ctrl+Enter` triggers generation.
+
+Backend: `HTTPException` with descriptive `detail`; CORS is `*` (dev-only — restrict in production);
+503 while model loads (~120s).
+
+---
+
+## Known Gotchas
+
+1. Model loading ~120s — first requests get 503. `useHealthPoll` polls `/health` every 2s (max 10 retries).
+2. ~2GB model re-downloads per container restart (volume path mismatch above).
+3. CPU-only inference — generation takes several seconds.
+4. Speaker WAVs < 0.33s cause 500 errors.
+5. Generated MP3s accumulate — no cleanup.
+6. Only `ar` and `en` accepted; other languages rejected.
+7. Seed defaults to 42 — outputs are deterministic unless overridden.
+8. Host ports are 9000/9001, not 8000/80. Local dev proxies to localhost:9000.
+
+---
+
+## Debugging History
+
+### Audio playback timing (fixed 2026-06-05)
+
+Symptom: audio plays on second "Generate" click, not first.
+Root cause: `loadAudio()` sets `audioUrl.value`, which mounts `<audio ref>` inside a `<Transition>`
+asynchronously — `audioRef.value` is still `null` when `play()` runs.
+Fix: `await nextTick()` between `loadAudio()` and `play()`; `watch(audioUrl, ..., { flush: 'post' })`
+as safety net.
+Pattern: any `ref` bound inside `<Transition>`/`v-if` needs `await nextTick()` before use.
+
+---
+
+## CI/CD (GitHub Actions)
+
+Both workflows trigger on push/PR to `main`/`develop` for their path, `ubuntu-latest`.
+
+- `backend.yml` (on `backend/**`): checkout → Python 3.12 → ffmpeg →
+  `pip install -r backend/requirements-test.txt` → `pytest --cov=app --cov-report=term-missing -v`.
+- `frontend.yml` (on `frontend/**`): checkout → pnpm 10.33.4 + Node 24 →
+  `pnpm install --frozen-lockfile` → `pnpm lint` → `pnpm typecheck` → `pnpm test -- --coverage`.
+  Working directory: `frontend`.
+
+---
+
+## Local Setup
+
+Prereqs: Node 24, pnpm 10.33.4, Docker + Compose, Git, `pre-commit` (pip). No host Python.
+
+```bash
+# Terminal 1 — backend :8000
+cd backend && uvicorn app:app --reload   # or: docker compose up backend
+
+# Terminal 2 — frontend :3000 (Nitro devProxy → localhost:9000)
+cd frontend && pnpm dev
+```
+
+Pre-commit hooks: call `./run-tests.sh` + `ruff` / `ruff-format` (Python lint/format).
