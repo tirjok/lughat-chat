@@ -356,7 +356,7 @@ uvicorn backend/app:app --reload  # Start backend dev server (port 8000)
 > **Note:** Voices are dynamically discovered from `.wav` files in `backend/speaker_wavs/`. Each file produces `{ id: filename_without_extension, name: filename_without_extension }`.
 
 ### `GET /api/history` — Audio History
-**Response:** Array of previously generated audio files with metadata (filename, text (always empty string), language, voice, speed, pitch, created_at).
+**Response:** Array of previously generated audio files with metadata (filename, text, language, voice, speed, pitch, created_at). Text is populated from a sidecar `.json` file created during synthesis.
 
 ---
 

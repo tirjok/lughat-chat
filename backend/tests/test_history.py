@@ -15,7 +15,7 @@ def test_history_returns_list_of_audio_files():
 
 
 def test_history_entries_contain_expected_fields():
-    """GET /api/history entries contain filename, language, voice, and created_at."""
+    """GET /api/history entries contain filename, text, language, voice, and created_at."""
     from fastapi.testclient import TestClient
 
     client = TestClient(app)
@@ -26,6 +26,7 @@ def test_history_entries_contain_expected_fields():
     if len(data) > 0:
         entry = data[0]
         assert "filename" in entry
+        assert "text" in entry
         assert "language" in entry
         assert "voice" in entry
         assert "created_at" in entry
@@ -133,5 +134,54 @@ def test_history_cleanup_with_cleanup_true_triggers_cleanup(tmp_path):
         # Old file should be removed during cleanup — use os.listdir to check (not mocked os.path.exists)
         files_after = _os.listdir(str(fake_dir))
         assert "en_female_jkl012.mp3" not in files_after
+    finally:
+        main_app.AUDIO_DIR = original_dir
+
+
+def test_history_with_sidecar_returns_text(tmp_path):
+    """GET /api/history reads text from sidecar JSON metadata."""
+    import json as _json
+
+    from fastapi.testclient import TestClient
+
+    fake_dir = tmp_path / "fake_audio_text"
+    fake_dir.mkdir()
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
+
+    try:
+        main_app.AUDIO_DIR = str(fake_dir)
+
+        # Create an MP3 file
+        mp3_file = fake_dir / "ar_female_test123.mp3"
+        mp3_file.touch()
+
+        # Create sidecar JSON with metadata
+        meta_file = fake_dir / "ar_female_test123.mp3.json"
+        _json.dump(
+            {
+                "text": "مرحبا بك في لغات",
+                "language": "ar",
+                "voice": "female",
+                "speed": 1.5,
+                "pitch": 0.5,
+                "created_at": "1234567890",
+            },
+            open(meta_file, "w"),
+        )
+
+        client = TestClient(app)
+        response = client.get("/api/history")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        entry = data[0]
+        assert entry["text"] == "مرحبا بك في لغات"
+        assert entry["language"] == "ar"
+        assert entry["voice"] == "female"
+        assert entry["speed"] == 1.5
+        assert entry["pitch"] == 0.5
     finally:
         main_app.AUDIO_DIR = original_dir

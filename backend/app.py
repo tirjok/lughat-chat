@@ -4,7 +4,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
+import json
 import os
+import time
 import uuid
 import subprocess
 import threading
@@ -429,6 +431,25 @@ async def generate_speech(request: SynthesisRequest):
             except OSError:
                 pass  # Already gone (e.g. race condition) — ignore
 
+            # Write metadata sidecar for history browsing
+            meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
+            try:
+                with open(meta_path, "w") as f:
+                    json.dump(
+                        {
+                            "text": request.text,
+                            "language": request.language,
+                            "voice": voice,
+                            "speed": request.speed,
+                            "pitch": request.pitch,
+                            "seed": seed,
+                            "created_at": str(int(time.time())),
+                        },
+                        f,
+                    )
+            except OSError:
+                pass  # Non-fatal: history will still work with filename parsing
+
             # Return MP3 file as binary response
             return FileResponse(
                 path=mp3_path, media_type="audio/mpeg", filename=filename
@@ -465,7 +486,30 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                 filepath = os.path.join(AUDIO_DIR, filename)
                 stat = os.stat(filepath)
 
-                # Parse metadata from filename if possible
+                # Try to read metadata from sidecar JSON first
+                meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
+                if os.path.exists(meta_path):
+                    try:
+                        with open(meta_path) as f:
+                            meta = json.load(f)
+                        items.append(
+                            {
+                                "filename": filename,
+                                "text": meta.get("text", ""),
+                                "language": meta.get("language", "unknown"),
+                                "voice": meta.get("voice", "default"),
+                                "speed": meta.get("speed", 1.0),
+                                "pitch": meta.get("pitch", 0.0),
+                                "created_at": meta.get(
+                                    "created_at", str(int(stat.st_mtime))
+                                ),
+                            }
+                        )
+                        continue
+                    except (json.JSONDecodeError, OSError):
+                        pass  # Fall through to filename parsing
+
+                # Fallback: parse metadata from filename
                 parts = filename.split("_")
                 language = parts[0] if len(parts) > 0 else "unknown"
                 voice = parts[1] if len(parts) > 1 else "default"
@@ -473,7 +517,7 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                 items.append(
                     {
                         "filename": filename,
-                        "text": "",  # We don't store the original text in this simple version
+                        "text": "",
                         "language": language,
                         "voice": voice,
                         "speed": 1.0,
@@ -484,9 +528,7 @@ async def get_history(cleanup: Optional[str] = Query(None)):
 
         # Trigger cleanup if requested (non-blocking, errors don't affect response)
         if cleanup == "true":
-            import time as _hist_time
-
-            now = _hist_time.time()
+            now = time.time()
             twenty_four_hours = 24 * 60 * 60
             try:
                 for filename in os.listdir(AUDIO_DIR):
@@ -496,6 +538,10 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                             stat = os.stat(filepath)
                             if now - stat.st_mtime > twenty_four_hours:
                                 os.remove(filepath)
+                                # Also remove the sidecar JSON if it exists
+                                meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
+                                if os.path.exists(meta_path):
+                                    os.remove(meta_path)
                                 print(
                                     f"Cleanup (history): removed old file: {filename}"
                                 )
@@ -514,12 +560,11 @@ async def get_history(cleanup: Optional[str] = Query(None)):
 async def cleanup_old_files():
     """Remove generated audio files older than 24 hours.
 
-    Cleans up both .mp3 (generated) and .wav (orphaned intermediate) files.
+    Cleans up both .mp3 (generated) and .wav (orphaned intermediate) files,
+    plus any associated .json metadata sidecars.
     Errors during cleanup are logged but don't fail the endpoint.
     """
-    import time as _cleanup_time
-
-    now = _cleanup_time.time()
+    now = time.time()
     twenty_four_hours = 24 * 60 * 60  # 86400 seconds
     removed_count = 0
 
@@ -533,6 +578,10 @@ async def cleanup_old_files():
                     if age > twenty_four_hours:
                         os.remove(filepath)
                         removed_count += 1
+                        # Also remove the sidecar JSON if it exists
+                        meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
+                        if os.path.exists(meta_path):
+                            os.remove(meta_path)
                         print(
                             f"Cleaned up old file: {filename} (age: {age / 3600:.1f}h)"
                         )
