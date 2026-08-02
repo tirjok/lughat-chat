@@ -139,13 +139,15 @@ for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
 # Global TTS model instance and state (protected by _model_lock for atomicity)
 _model_lock = threading.Lock()
 tts_model = None
-model_load_status = "loading"  # loading | ready | error
+model_load_thread: Optional[threading.Thread] = (
+    None  # Track initial load thread for reload safety
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load TTS model in background so server starts immediately."""
-    global tts_model, model_load_status
+    global tts_model, model_load_status, model_load_thread
     import time as _time
 
     load_start_time = _time.monotonic()
@@ -206,7 +208,9 @@ async def lifespan(app: FastAPI):
         print(f"Model loading failed after {MAX_LOAD_RETRIES} attempts")
 
     # Start model loading in background thread
+    global model_load_thread
     load_thread = threading.Thread(target=load_model, daemon=True)
+    model_load_thread = load_thread
     load_thread.start()
 
     yield
@@ -271,19 +275,24 @@ async def health(reload: Optional[str] = Query(None)):
 
     Accepts ?reload=1 to trigger a model reload attempt (when status is 'error').
     """
-    global tts_model, model_load_status
+    global tts_model, model_load_status, model_load_thread
 
     if reload == "1":
         with _model_lock:
             if model_load_status == "error":
                 model_load_status = "loading"
                 tts_model = None
+                # Thread finished (or never existed) — fall through to spawn a new one.
             else:
-                return {
-                    "status": model_load_status,
-                    "model_loaded": tts_model is not None
-                    and model_load_status == "ready",
-                }
+                # An existing load thread is still running — don't spawn another.
+                # model_load_thread is None when no reload has ever been triggered,
+                # or when the previous thread has finished (status is "ready" or "error").
+                if model_load_thread is not None and model_load_thread.is_alive():
+                    return {
+                        "status": model_load_status,
+                        "model_loaded": tts_model is not None
+                        and model_load_status == "ready",
+                    }
         # Start a new background thread to reload
         import time as _reload_time
 
@@ -313,8 +322,7 @@ async def health(reload: Optional[str] = Query(None)):
                     tts_model = None
                 print(f"Error reloading TTS model: {e}")
 
-        reload_thread = threading.Thread(target=reload_model, daemon=True)
-        reload_thread.start()
+        model_load_thread = threading.Thread(target=reload_model, daemon=True)
         # Brief pause to let the thread start before responding
         _reload_time.sleep(0.1)
 
