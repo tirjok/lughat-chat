@@ -125,7 +125,8 @@ async function handleSynthesize() {
     const audioBlob = await synthesize({
       text: textInput.value,
       speaker: selectedSpeaker.value,
-      speed: speedValue.value
+      speed: speedValue.value,
+      seed: 42
     })
 
     audioModule.load(audioBlob)
