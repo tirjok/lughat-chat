@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1: The Salutations — التحيّة الأولى</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/amiri@latest/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/inter@latest/index.css">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        arabic: ['Amiri', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        primary: {
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
+        },
+        gold: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+        }
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .font-arabic { font-family: 'Amiri', serif; }
+  
+  .arabic-text {
+    line-height: 2.2;
+    letter-spacing: 0.02em;
+  }
+  
+  .line-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .line-card:hover {
+    transform: translateX(-2px);
+  }
+  
+  .line-card.active {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.08), rgba(20, 184, 166, 0.03));
+    border-right: 4px solid #14b8a6;
+  }
+  
+  .line-card.active-ltr {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.08), rgba(20, 184, 166, 0.03));
+    border-left: 4px solid #14b8a6;
+  }
+  
+  .speaker-badge {
+    background: linear-gradient(135deg, #0f766e, #115e59);
+  }
+  
+  .speaker-badge.female {
+    background: linear-gradient(135deg, #be185d, #9d174d);
+  }
+  
+  .wave-animation {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 16px;
+  }
+  
+  .wave-bar {
+    width: 3px;
+    background: #14b8a6;
+    border-radius: 2px;
+    animation: wave 1s ease-in-out infinite;
+  }
+  
+  .wave-bar:nth-child(1) { animation-delay: 0s; height: 40%; }
+  .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 70%; }
+  .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 100%; }
+  .wave-bar:nth-child(4) { animation-delay: 0.3s; height: 60%; }
+  .wave-bar:nth-child(5) { animation-delay: 0.4s; height: 80%; }
+  
+  @keyframes wave {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1); }
+  }
+  
+  .tab-active {
+    background: white;
+    color: #0f766e;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .pronoun-male { background: linear-gradient(135deg, #dbeafe, #eff6ff); border-right: 3px solid #3b82f6; }
+  .pronoun-female { background: linear-gradient(135deg, #fce7f3, #fdf2f8); border-right: 3px solid #ec4899; }
+  .pronoun-dual { background: linear-gradient(135deg, #d1fae5, #ecfdf5); border-right: 3px solid #10b981; }
+  .pronoun-plural-m { background: linear-gradient(135deg, #fef3c7, #fffbeb); border-right: 3px solid #f59e0b; }
+  .pronoun-plural-f { background: linear-gradient(135deg, #ede9fe, #f5f3ff); border-right: 3px solid #8b5cf6; }
+  
+  .progress-fill {
+    transition: width 0.5s ease;
+  }
+  
+  .section-card {
+    animation: fadeIn 0.4s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .play-btn {
+    transition: all 0.2s;
+  }
+  
+  .play-btn:hover {
+    transform: scale(1.1);
+  }
+  
+  .play-btn:active {
+    transform: scale(0.95);
+  }
+  
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  
+  .tooltip {
+    position: relative;
+  }
+  
+  .tooltip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  
+  .tooltip:hover::after {
+    opacity: 1;
+  }
+</style>
+</head>
+<body class="bg-stone-50 min-h-screen">
+
+<!-- Top Navigation Bar -->
+<nav class="bg-white border-b border-stone-200 sticky top-0 z-50 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <span class="font-semibold text-stone-800">Arabic Tutor</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="text-stone-500 hover:text-primary-700 transition tooltip" data-tip="Ask Instructor">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </button>
+        <button class="text-stone-500 hover:text-primary-700 transition tooltip" data-tip="Settings">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-white font-semibold text-sm">S</div>
+      </div>
+    </div>
+  </div>
+  <!-- Progress Bar -->
+  <div class="h-1 bg-stone-100">
+    <div id="progressBar" class="h-full bg-gradient-to-r from-primary-500 to-primary-600 progress-fill" style="width: 0%"></div>
+  </div>
+</nav>
+
+<!-- Breadcrumbs -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+  <nav class="flex items-center gap-2 text-sm text-stone-500">
+    <a href="#" class="hover:text-primary-700 transition">Dashboard</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <a href="#" class="hover:text-primary-700 transition">Level A1</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-stone-800 font-medium">Lesson 1</span>
+  </nav>
+</div>
+
+<!-- Hero Section -->
+<header class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
+  <div class="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
+    <div class="bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 px-8 py-10 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute top-4 right-8 font-arabic text-7xl text-white">السَّلَامُ عَلَيْكُمْ</div>
+        <div class="absolute bottom-4 left-8 font-arabic text-5xl text-white">مَرْحَبًا</div>
+      </div>
+      <div class="relative z-10">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs font-semibold tracking-wide">LEVEL A1</span>
+          <span class="px-3 py-1 bg-gold-400/90 rounded-full text-primary-900 text-xs font-semibold tracking-wide">LESSON 1</span>
+          <span id="statusPill" class="px-3 py-1 bg-green-400/90 rounded-full text-green-900 text-xs font-semibold flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 bg-green-700 rounded-full"></span>
+            Ready
+          </span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">The Salutations</h1>
+        <p class="font-arabic text-2xl text-primary-100 mb-4" dir="rtl">التحيّة الأولى</p>
+        <div class="flex flex-wrap items-center gap-4 text-primary-100 text-sm">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Est. 20 mins
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+            2 Scenes • 10 Lines
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            AI-Generated Audio
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Competency Checklist -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+  <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+    <button id="checklistToggle" class="w-full px-6 py-4 flex items-center justify-between hover:bg-stone-50 transition">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="text-left">
+          <h3 class="font-semibold text-stone-800">Learning Goals</h3>
+          <p class="text-sm text-stone-500"><span id="completedGoals">0</span> of 5 competencies</p>
+        </div>
+      </div>
+      <svg id="checklistArrow" class="w-5 h-5 text-stone-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div id="checklistContent" class="hidden border-t border-stone-100 px-6 py-4">
+      <ul class="space-y-3" id="competencyList"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Section Tabs -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+  <div class="bg-stone-100 rounded-xl p-1.5 flex flex-wrap gap-1">
+    <button class="tab-btn tab-active flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2" data-section="dialogue">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Dialogue
+    </button>
+    <button class="tab-btn flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:text-stone-800 transition flex items-center justify-center gap-2" data-section="vocabulary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      Vocabulary
+    </button>
+    <button class="tab-btn flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:text-stone-800 transition flex items-center justify-center gap-2" data-section="pronouns">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      Pronouns
+    </button>
+    <button class="tab-btn flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:text-stone-800 transition flex items-center justify-center gap-2" data-section="expressions">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+      Expressions
+    </button>
+    <button class="tab-btn flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:text-stone-800 transition flex items-center justify-center gap-2" data-section="grammar">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Grammar
+    </button>
+    <button class="tab-btn flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:text-stone-800 transition flex items-center justify-center gap-2" data-section="activities">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Activities
+    </button>
+  </div>
+</div>
+
+<!-- Main Content Area -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32" id="mainContent">
+  <!-- Content will be rendered here by JS -->
+</main>
+
+<!-- Sticky Audio Player Bar -->
+<div id="audioBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-2xl transform translate-y-full transition-transform duration-300 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+    <div class="flex items-center gap-4">
+      <!-- Play Controls -->
+      <div class="flex items-center gap-2">
+        <button id="prevLineBtn" class="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center transition">
+          <svg class="w-4 h-4 text-stone-600" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+        </button>
+        <button id="playPauseBtn" class="w-11 h-11 rounded-full bg-primary-600 hover:bg-primary-700 flex items-center justify-center transition shadow-md">
+          <svg id="playIcon" class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pauseIcon" class="w-5 h-5 text-white hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+        </button>
+        <button id="nextLineBtn" class="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center transition">
+          <svg class="w-4 h-4 text-stone-600" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+      </div>
+      
+      <!-- Current Line Info -->
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-3">
+          <div id="waveAnim" class="wave-animation hidden">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          </div>
+          <p id="currentLineText" class="font-arabic text-lg text-stone-800 truncate" dir="rtl">—</p>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <div class="flex-1 h-1 bg-stone-200 rounded-full overflow-hidden">
+            <div id="audioProgress" class="h-full bg-primary-500 rounded-full transition-all" style="width: 0%"></div>
+          </div>
+          <span id="audioTime" class="text-xs text-stone-500 font-mono">0:00 / 0:00</span>
+        </div>
+      </div>
+      
+      <!-- Speed & Options -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center bg-stone-100 rounded-lg p-0.5">
+          <button class="speed-btn px-2 py-1 text-xs rounded-md text-stone-600 hover:text-stone-800" data-speed="0.75">0.75x</button>
+          <button class="speed-btn px-2 py-1 text-xs rounded-md bg-white text-primary-700 font-semibold shadow-sm" data-speed="1">1x</button>
+          <button class="speed-btn px-2 py-1 text-xs rounded-md text-stone-600 hover:text-stone-800" data-speed="1.25">1.25x</button>
+        </div>
+        <button id="repeatBtn" class="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center transition tooltip" data-tip="Repeat">
+          <svg class="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+        <button id="closeAudioBar" class="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center transition">
+          <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ LESSON DATA ============
+const lessonData = {
+  "id": 1,
+  "level": "A1",
+  "title": "The Salutations — التحيّة الأولى",
+  "competencies": [
+    "Can read fluently short paragraphs with harakat",
+    "Good understanding of basic salutations",
+    "Ability to use pronouns correctly",
+    "Differentiates between the pronouns used when talking to the different genders",
+    "Grasps the method of forming nominative sentences with pronouns + nouns"
+  ],
+  "sections": {
+    "dialogue": {
+      "title": "Main Text — الحوار",
+      "scenes": [
+        {
+          "label": "Scene 1: Muhammad ↔ Ali (Male-to-Male)",
+          "gender": "male",
+          "lines": [
+            { "speaker": "Muhammad", "arabic": "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ", "english": "Peace be upon you and Allah's mercy", "teacher_note": "This is the standard Islamic greeting. 'السَّلَامُ' means 'The Peace' and 'عَلَيْكُمْ' means 'upon you (plural)' — used even when addressing one person as a sign of respect." },
+            { "speaker": "Ali", "arabic": "وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ", "english": "And upon you be peace and Allah's mercy and blessings", "teacher_note": "The complete response adds 'وَبَرَكَاتُهُ' (and His blessings). This is the most complete and rewarded form of reply." },
+            { "speaker": "Muhammad", "arabic": "كَيْفَ حَالُكَ يَا أَخِي؟", "english": "How are you? (asking a male)", "teacher_note": "Notice the suffix 'ـكَ' (ka) on 'حَالُ' — this is the masculine 'your.' The word 'يَا أَخِي' means 'Oh my brother,' used only in male-to-male address." },
+            { "speaker": "Ali", "arabic": "اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكَ؟", "english": "All praise be to Allah, I am fine, thank you. And how are you?", "teacher_note": "'اَلْحَمْدُ لِلَّهِ' (All praise is for Allah) is the standard way to begin a positive response. 'شُكْرًا' means 'thank you.'" },
+            { "speaker": "Muhammad", "arabic": "اَلْحَمْدُ لِلَّهِ، أَنَا أَيْضًا بِخَيْرٍ. مَرْحَبًا بِكَ فِي مَسْجِدِنَا", "english": "All praise be to Allah, I am fine as well. Welcome to our mosque.", "teacher_note": "'أَيْضًا' means 'also/as well.' 'مَرْحَبًا بِكَ' — notice 'ـكَ' (masculine 'you'). 'مَسْجِدِنَا' = 'our mosque' (مسجد + نا = our)." }
+          ]
+        },
+        {
+          "label": "Scene 2: Khadija ↔ Aisha (Female-to-Female)",
+          "gender": "female",
+          "lines": [
+            { "speaker": "Khadija", "arabic": "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ", "english": "Peace be upon you and Allah's mercy", "teacher_note": "Same greeting as Scene 1 — the greeting itself is gender-neutral." },
+            { "speaker": "Aisha", "arabic": "وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ", "english": "And upon you be peace and Allah's mercy and blessings", "teacher_note": "Same complete response — the reply is also gender-neutral." },
+            { "speaker": "Khadija", "arabic": "كَيْفَ حَالُكِ يَا أُخْتِي؟", "english": "How are you? (asking a female)", "teacher_note": "Compare with Scene 1: 'حَالُكِ' uses the feminine suffix 'ـكِ' (ki) instead of 'ـكَ' (ka). 'يَا أُخْتِي' = 'Oh my sister' — female-to-female address." },
+            { "speaker": "Aisha", "arabic": "اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكِ؟", "english": "All praise be to Allah, I am fine, thank you. And how are you?", "teacher_note": "Same response structure. Again 'حَالُكِ' uses the feminine suffix." },
+            { "speaker": "Khadija", "arabic": "اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ أَيْضًا. مَرْحَبًا بِكِ فِي بَيْتِنَا", "english": "All praise be to Allah, I am fine as well. Welcome to our house.", "teacher_note": "Key difference: 'مَرْحَبًا بِكِ' uses feminine 'ـكِ' (vs. 'بِكَ' in Scene 1). 'بَيْتِنَا' = 'our house' (بيت + نا = our)." }
+          ]
+        }
+      ]
+    },
+    "vocabulary": {
+      "title": "Vocabulary — المفردات",
+      "categories": [
+        { "label": "Salutations", "words": [
+          { "arabic": "تَحِيَّة", "english": "salutation/greeting", "singular": "تَحِيَّة", "plural": "تَحِيَاتٌ" },
+          { "arabic": "سَلَام", "english": "peace", "singular": "سَلَام", "plural": "سُلُومٌ" }
+        ]},
+        { "label": "Nouns", "words": [
+          { "arabic": "دَرْس", "english": "lesson", "singular": "دَرْس", "plural": "دُرُوسٌ" },
+          { "arabic": "أَوَّل", "english": "first", "singular": "أَوَّل", "plural": "أَوَّلُونَ" },
+          { "arabic": "مَسْجِد", "english": "mosque", "singular": "مَسْجِد", "plural": "مَسَاجِد" },
+          { "arabic": "بَيْت", "english": "house", "singular": "بَيْت", "plural": "بُيُوت" }
+        ]},
+        { "label": "Key Words", "words": [
+          { "arabic": "كَيْف", "english": "how" },
+          { "arabic": "فِي", "english": "in" }
+        ]}
+      ]
+    },
+    "pronouns": {
+      "title": "Pronouns — الضمائر المنفصلة",
+      "pronouns": [
+        { "arabic": "أَنَا", "english": "I", "example": "أَنَا أَخٌ / أُخْت", "category": "singular" },
+        { "arabic": "أَنْتَ", "english": "you (male)", "example": "أَنْتَ أَخ", "category": "male" },
+        { "arabic": "أَنْتِ", "english": "you (female)", "example": "أَنْتِ أُخْت", "category": "female" },
+        { "arabic": "نَحْنُ", "english": "we", "example": "نَحْنُ إِخْوَةٌ / أُخَوَات", "category": "plural" },
+        { "arabic": "أَنْتُمَا", "english": "you (dual)", "example": "أَنْتُمَا أَخَوَانِ / أُخْتَانِ", "category": "dual" },
+        { "arabic": "أَنْتُمْ", "english": "you (male plural)", "example": "أَنْتُمْ إِخْوَة", "category": "plural-m" },
+        { "arabic": "أَنْتُنَّ", "english": "you (female plural)", "example": "أَنْتُنَّ أُخَوَات", "category": "plural-f" },
+        { "arabic": "هُوَ", "english": "he", "example": "هُوَ أَخ", "category": "male" },
+        { "arabic": "هِيَ", "english": "she", "example": "هِيَ أُخْت", "category": "female" },
+        { "arabic": "هُمَا", "english": "they (dual)", "example": "هُمَا أَخَوَانِ / أُخْتَانِ", "category": "dual" },
+        { "arabic": "هُمْ", "english": "they (male)", "example": "هُمْ إِخْوَة", "category": "plural-m" },
+        { "arabic": "هُنَّ", "english": "they (female)", "example": "هُنَّ أُخَوَات", "category": "plural-f" }
+      ]
+    },
+    "expressions": {
+      "title": "Essential Expressions — العبارات الأساسية",
+      "expressions": [
+        { "arabic": "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ", "english": "Peace be upon you and Allah's mercy" },
+        { "arabic": "وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ", "english": "And upon you be peace and Allah's mercy and blessings" },
+        { "arabic": "كَيْفَ حَالُكَ؟", "english": "How are you? (male)" },
+        { "arabic": "كَيْفَ حَالُكِ؟", "english": "How are you? (female)" },
+        { "arabic": "يَا أَخِي", "english": "Oh! My brother" },
+        { "arabic": "يَا أُخْتِي", "english": "Oh! My sister" },
+        { "arabic": "اَلْحَمْدُ لِلَّهِ", "english": "All praise be to Allah" },
+        { "arabic": "أَنَا بِخَيْرٍ، شُكْرًا", "english": "I am fine, thank you" },
+        { "arabic": "أَنَا بِخَيْرٍ أَيْضًا", "english": "I am fine as well" },
+        { "arabic": "مَرْحَبًا بِكَ", "english": "Welcome (male)" },
+        { "arabic": "مَرْحَبًا بِكِ", "english": "Welcome (female)" },
+        { "arabic": "مَا اسْمُكَ؟", "english": "What is your name? (male)" },
+        { "arabic": "مَا اسْمُكِ؟", "english": "What is your name? (female)" },
+        { "arabic": "اسْمِي ...", "english": "My name is ..." },
+        { "arabic": "مِنْ أَيْنَ أَنْتَ؟", "english": "Where are you from?" },
+        { "arabic": "إِلَى اللِّقَاء", "english": "Until next time" }
+      ]
+    },
+    "grammar": {
+      "title": "Grammar — القواعد",
+      "topics": [
+        {
+          "name": "Nominative Sentences (الجملة الاسمية)",
+          "description": "A sentence starting with a noun (ism) followed by a predicate (khabar). Common pattern: Pronoun + Noun/Adjective",
+          "examples": [
+            { "arabic": "أَنَا مُسْلِم", "english": "I am a Muslim" },
+            { "arabic": "هُوَ أَخِي", "english": "He is my brother" },
+            { "arabic": "هِيَ أُخْتِي", "english": "She is my sister" },
+            { "arabic": "نَحْنُ مُسْلِمُونَ", "english": "We are Muslims" }
+          ]
+        },
+        {
+          "name": "Gender Agreement in Pronouns",
+          "description": "Arabic pronouns encode gender. The verb/adjective must match the pronoun's gender.",
+          "examples": [
+            { "arabic": "كَيْفَ حَالُكَ؟", "english": "How are you? (to male) — حَالُكَ uses masculine suffix" },
+            { "arabic": "كَيْفَ حَالُكِ؟", "english": "How are you? (to female) — حَالُكِ uses feminine suffix" },
+            { "arabic": "مَرْحَبًا بِكَ", "english": "Welcome (to male)" },
+            { "arabic": "مَرْحَبًا بِكِ", "english": "Welcome (to female)" }
+          ]
+        },
+        {
+          "name": "Number: Singular, Dual, Plural",
+          "description": "Arabic has three numbers: singular (مفرد), dual (ثنائي), and plural (جمع).",
+          "examples": [
+            { "arabic": "أَخ", "english": "brother (singular)" },
+            { "arabic": "أَخَوَانِ / أُخْتَانِ", "english": "two brothers / two sisters (dual)" },
+            { "arabic": "إِخْوَة / أُخَوَات", "english": "brothers (m.pl.) / sisters (f.pl.)" }
+          ]
+        }
+      ]
+    },
+    "activities": [
+      { "id": 1, "type": "listen-translate", "title": "Read the Dialogue & Translate", "description": "Read the Arabic dialogue, then translate it to English.", "order": 1 },
+      { "id": 2, "type": "translate-to-english", "title": "Translate Sentences to English", "description": "Translate the following Arabic sentences into English.", "order": 2 },
+      { "id": 3, "type": "translate-to-arabic", "title": "Translate Sentences to Arabic", "description": "Translate the following English sentences into Arabic with harakat.", "order": 3 },
+      { "id": 4, "type": "introduce-characters", "title": "Introduce the Characters", "description": "Introduce these characters to your teacher using proper Arabic sentences.", "order": 4 },
+      { "id": 5, "type": "role-play", "title": "Role-Play: Introduce Yourself", "description": "Role-play with your teacher and introduce yourself using what you've learned.", "order": 5 }
+    ]
+  }
+};
+
+// ============ STATE ============
+let currentSection = 'dialogue';
+let currentSceneIndex = 0;
+let currentLineIndex = -1;
+let isPlaying = false;
+let playSceneMode = false;
+let playbackSpeed = 1;
+let audioTimer = null;
+let audioProgressValue = 0;
+let checkedGoals = new Set();
+
+// ============ RENDER FUNCTIONS ============
+
+function renderCompetencies() {
+  const list = document.getElementById('competencyList');
+  list.innerHTML = lessonData.competencies.map((c, i) => `
+    <li class="flex items-start gap-3">
+      <button onclick="toggleGoal(${i})" class="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 ${checkedGoals.has(i) ? 'bg-primary-600 border-primary-600' : 'border-stone-300 hover:border-primary-400'} transition flex items-center justify-center">
+        ${checkedGoals.has(i) ? '<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : ''}
+      </button>
+      <span class="text-sm text-stone-700 ${checkedGoals.has(i) ? 'line-through text-stone-400' : ''}">${c}</span>
+    </li>
+  `).join('');
+  document.getElementById('completedGoals').textContent = checkedGoals.size;
+}
+
+function toggleGoal(i) {
+  if (checkedGoals.has(i)) checkedGoals.delete(i);
+  else checkedGoals.add(i);
+  renderCompetencies();
+}
+
+function renderDialogue() {
+  const scene = lessonData.sections.dialogue.scenes[currentSceneIndex];
+  const isMale = scene.gender === 'male';
+  
+  return `
+    <div class="section-card">
+      <!-- Scene Selector -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div class="flex gap-2">
+          ${lessonData.sections.dialogue.scenes.map((s, i) => `
+            <button onclick="switchScene(${i})" class="px-4 py-2 rounded-lg text-sm font-medium transition ${i === currentSceneIndex ? 'bg-primary-600 text-white shadow-md' : 'bg-white text-stone-600 border border-stone-200 hover:border-primary-300'}">
+              Scene ${i + 1}
+            </button>
+          `).join('')}
+        </div>
+        <div class="flex gap-2">
+          <button onclick="playScene()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Play Scene
+          </button>
+          <button class="px-4 py-2 bg-white border border-stone-200 hover:border-primary-300 text-stone-700 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export
+          </button>
+        </div>
+      </div>
+      
+      <!-- Scene Label -->
+      <div class="bg-white rounded-xl border border-stone-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-stone-100 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full ${isMale ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'} flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-semibold text-stone-800">${scene.label}</h3>
+            <p class="text-xs text-stone-500">${scene.lines.length} lines • Click any line to listen</p>
+          </div>
+        </div>
+        
+        <!-- Lines -->
+        <div class="divide-y divide-stone-100">
+          ${scene.lines.map((line, i) => renderDialogueLine(line, i, isMale)).join('')}
+        </div>
+      </div>
+      
+      <!-- Scene Comparison Card -->
+      <div class="mt-6 bg-gradient-to-br from-gold-50 to-amber-50 border border-gold-200 rounded-xl p-6">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gold-400 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-800 mb-2">Key Observation</h4>
+            <p class="text-sm text-stone-700 leading-relaxed">
+              ${isMale 
+                ? 'Compare this scene with Scene 2. Notice how <span class="font-arabic text-primary-700 font-semibold">حَالُكَ</span> (masculine) becomes <span class="font-arabic text-pink-600 font-semibold">حَالُكِ</span> (feminine), and <span class="font-arabic text-primary-700 font-semibold">يَا أَخِي</span> (my brother) becomes <span class="font-arabic text-pink-600 font-semibold">يَا أُخْتِي</span> (my sister). The greeting and response remain identical — only the gendered words change.'
+                : 'Compare this scene with Scene 1. The greeting is identical, but notice the feminine suffix <span class="font-arabic text-pink-600 font-semibold">ـكِ</span> (ki) replacing the masculine <span class="font-arabic text-primary-700 font-semibold">ـكَ</span> (ka) in words like <span class="font-arabic text-pink-600 font-semibold">حَالُكِ</span> and <span class="font-arabic text-pink-600 font-semibold">مَرْحَبًا بِكِ</span>.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDialogueLine(line, index, isMale) {
+  const isActive = currentLineIndex === index;
+  const speakerIsFemale = !isMale || (line.speaker === 'Aisha' || line.speaker === 'Khadija');
+  
+  return `
+    <div class="line-card flex flex-col lg:flex-row gap-0 ${isActive ? 'active' : ''}" id="line-${index}">
+      <!-- Arabic Side (RTL) -->
+      <div class="flex-1 p-5 ${isActive ? 'bg-primary-50/50' : 'hover:bg-stone-50'} transition cursor-pointer border-r-4 ${isActive ? 'border-primary-500' : 'border-transparent'}" onclick="playLine(${index})" dir="rtl">
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <span class="speaker-badge ${speakerIsFemale ? 'female' : ''} text-white text-xs font-semibold px-2.5 py-1 rounded-md inline-flex items-center gap-1.5" dir="ltr">
+            <span class="w-1.5 h-1.5 rounded-full ${speakerIsFemale ? 'bg-pink-300' : 'bg-blue-300'}"></span>
+            ${line.speaker}
+          </span>
+          <button class="play-btn w-8 h-8 rounded-full ${isActive ? 'bg-primary-600 text-white' : 'bg-stone-100 text-stone-500 hover:bg-primary-100 hover:text-primary-700'} flex items-center justify-center transition" onclick="event.stopPropagation(); playLine(${index})">
+            ${isActive && isPlaying ? `
+              <div class="wave-animation">
+                <div class="wave-bar" style="background:white"></div>
+                <div class="wave-bar" style="background:white"></div>
+                <div class="wave-bar" style="background:white"></div>
+              </div>
+            ` : `
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            `}
+          </button>
+        </div>
+        <p class="font-arabic arabic-text text-2xl text-stone-900">${line.arabic}</p>
+      </div>
+      
+      <!-- English + Teacher Note Side (LTR) -->
+      <div class="flex-1 p-5 border-t lg:border-t-0 lg:border-r border-stone-100 ${isActive ? 'bg-primary-50/30' : ''}">
+        <p class="text-stone-800 font-medium mb-3">${line.english}</p>
+        <div class="bg-blue-50 border border-blue-100 rounded-lg p-3">
+          <div class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <div>
+              <p class="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Teacher's Note</p>
+              <p class="text-sm text-stone-700 leading-relaxed">${line.teacher_note}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderVocabulary() {
+  const cats = lessonData.sections.vocabulary.categories;
+  return `
+    <div class="section-card space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-stone-800">${lessonData.sections.vocabulary.title}</h2>
+          <p class="text-sm text-stone-500 mt-1">Click any word to hear its pronunciation</p>
+        </div>
+      </div>
+      
+      ${cats.map(cat => `
+        <div class="bg-white rounded-xl border border-stone-200 overflow-hidden shadow-sm">
+          <div class="px-6 py-3 bg-stone-50 border-b border-stone-100">
+            <h3 class="font-semibold text-stone-800">${cat.label}</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="text-xs text-stone-500 uppercase tracking-wider border-b border-stone-100">
+                  <th class="px-6 py-3 text-right font-semibold">Arabic</th>
+                  <th class="px-6 py-3 text-left font-semibold">English</th>
+                  ${cat.words[0].plural ? '<th class="px-6 py-3 text-right font-semibold">Singular</th><th class="px-6 py-3 text-right font-semibold">Plural</th>' : ''}
+                  <th class="px-6 py-3 text-center font-semibold w-16">Audio</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stone-100">
+                ${cat.words.map(w => `
+                  <tr class="hover:bg-stone-50 transition">
+                    <td class="px-6 py-4 font-arabic text-xl text-stone-900 text-right" dir="rtl">${w.arabic}</td>
+                    <td class="px-6 py-4 text-stone-700">${w.english}</td>
+                    ${w.plural ? `
+                      <td class="px-6 py-4 font-arabic text-lg text-stone-700 text-right" dir="rtl">${w.singular}</td>
+                      <td class="px-6 py-4 font-arabic text-lg text-stone-700 text-right" dir="rtl">${w.plural}</td>
+                    ` : ''}
+                    <td class="px-6 py-4 text-center">
+                      <button class="w-8 h-8 rounded-full bg-primary-50 hover:bg-primary-100 text-primary-700 flex items-center justify-center transition mx-auto">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderPronouns() {
+  const pronouns = lessonData.sections.pronouns.pronouns;
+  const getCategoryClass = (cat) => {
+    const map = { 'male': 'pronoun-male', 'female': 'pronoun-female', 'dual': 'pronoun-dual', 'plural-m': 'pronoun-plural-m', 'plural-f': 'pronoun-plural-f', 'singular': 'bg-stone-50 border-r-3 border-stone-400', 'plural': 'bg-emerald-50 border-r-3 border-emerald-500' };
+    return map[cat] || 'bg-stone-50';
+  };
+  const getCategoryLabel = (cat) => {
+    const map = { 'male': '♂ Masculine', 'female': '♀ Feminine', 'dual': '⚉ Dual', 'plural-m': '♂♂ Masc. Plural', 'plural-f': '♀♀ Fem. Plural', 'singular': '● Singular', 'plural': '⊕ Plural' };
+    return map[cat] || cat;
+  };
+  const getCategoryColor = (cat) => {
+    const map = { 'male': 'text-blue-700', 'female': 'text-pink-700', 'dual': 'text-emerald-700', 'plural-m': 'text-amber-700', 'plural-f': 'text-violet-700', 'singular': 'text-stone-700', 'plural': 'text-emerald-700' };
+    return map[cat] || 'text-stone-700';
+  };
+  
+  return `
+    <div class="section-card">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-stone-800">${lessonData.sections.pronouns.title}</h2>
+        <p class="text-sm text-stone-500 mt-1">Arabic pronouns change by gender and number. Color-coded for clarity.</p>
+      </div>
+      
+      <!-- Legend -->
+      <div class="flex flex-wrap gap-2 mb-6">
+        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">♂ Masculine</span>
+        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-pink-100 text-pink-700">♀ Feminine</span>
+        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">⚉ Dual</span>
+        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">♂♂ Masc. Plural</span>
+        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700">♀♀ Fem. Plural</span>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${pronouns.map(p => `
+          <div class="${getCategoryClass(p.category)} rounded-xl p-4 hover:shadow-md transition cursor-pointer group">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-arabic text-3xl text-stone-900" dir="rtl">${p.arabic}</span>
+              <span class="text-xs font-semibold ${getCategoryColor(p.category)} uppercase tracking-wider">${getCategoryLabel(p.category)}</span>
+            </div>
+            <p class="text-stone-700 font-medium mb-2">${p.english}</p>
+            <div class="pt-2 border-t border-stone-200/50">
+              <p class="text-xs text-stone-500 mb-1">Example:</p>
+              <p class="font-arabic text-lg text-stone-800" dir="rtl">${p.example}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderExpressions() {
+  const expressions = lessonData.sections.expressions.expressions;
+  return `
+    <div class="section-card">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-stone-800">${lessonData.sections.expressions.title}</h2>
+        <p class="text-sm text-stone-500 mt-1">Essential phrases for daily conversation</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${expressions.map((e, i) => `
+          <div class="bg-white rounded-xl border border-stone-200 p-4 hover:shadow-md hover:border-primary-200 transition cursor-pointer group" onclick="playExpression(${i})">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <p class="font-arabic text-xl text-stone-900 flex-1" dir="rtl">${e.arabic}</p>
+              <button class="w-8 h-8 rounded-full bg-stone-100 group-hover:bg-primary-100 text-stone-500 group-hover:text-primary-700 flex items-center justify-center transition flex-shrink-0">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+            </div>
+            <p class="text-sm text-stone-600">${e.english}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderGrammar() {
+  const topics = lessonData.sections.grammar.topics;
+  const icons = [
+    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>',
+    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>'
+  ];
+  const colors = ['primary', 'blue', 'violet'];
+  
+  return `
+    <div class="section-card space-y-6">
+      <div>
+        <h2 class="text-2xl font-bold text-stone-800">${lessonData.sections.grammar.title}</h2>
+        <p class="text-sm text-stone-500 mt-1">Core grammar rules for this lesson</p>
+      </div>
+      
+      ${topics.map((t, i) => `
+        <div class="bg-white rounded-xl border border-stone-200 overflow-hidden shadow-sm">
+          <div class="px-6 py-4 border-b border-stone-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-${colors[i]}-100 text-${colors[i]}-700 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[i]}</svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-stone-800">${t.name}</h3>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-stone-700 mb-4 leading-relaxed">${t.description}</p>
+            <div class="space-y-2">
+              ${t.examples.map(ex => `
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 p-3 bg-stone-50 rounded-lg hover:bg-stone-100 transition">
+                  <p class="font-arabic text-xl text-stone-900 sm:flex-1" dir="rtl">${ex.arabic}</p>
+                  <p class="text-sm text-stone-600 sm:flex-1">${ex.english}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderActivities() {
+  const activities = lessonData.sections.activities;
+  const typeIcons = {
+    'listen-translate': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>',
+    'translate-to-english': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>',
+    'translate-to-arabic': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>',
+    'introduce-characters': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>',
+    'role-play': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>'
+  };
+  const typeLabels = {
+    'listen-translate': 'Listen & Translate',
+    'translate-to-english': 'Translate to English',
+    'translate-to-arabic': 'Translate to Arabic',
+    'introduce-characters': 'Character Introduction',
+    'role-play': 'Role Play'
+  };
+  const typeColors = {
+    'listen-translate': 'bg-purple-100 text-purple-700',
+    'translate-to-english': 'bg-blue-100 text-blue-700',
+    'translate-to-arabic': 'bg-emerald-100 text-emerald-700',
+    'introduce-characters': 'bg-amber-100 text-amber-700',
+    'role-play': 'bg-rose-100 text-rose-700'
+  };
+  
+  return `
+    <div class="section-card">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-stone-800">Activities — الأنشطة</h2>
+        <p class="text-sm text-stone-500 mt-1">Practice what you've learned through interactive exercises</p>
+      </div>
+      
+      <div class="space-y-4">
+        ${activities.map((a, i) => `
+          <div class="bg-white rounded-xl border border-stone-200 p-6 hover:shadow-md hover:border-primary-200 transition cursor-pointer group">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-xl ${typeColors[a.type]} flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">${typeIcons[a.type]}</svg>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Activity ${a.order}</span>
+                  <span class="text-xs px-2 py-0.5 rounded-full ${typeColors[a.type]} font-medium">${typeLabels[a.type]}</span>
+                </div>
+                <h3 class="font-semibold text-stone-800 text-lg mb-1 group-hover:text-primary-700 transition">${a.title}</h3>
+                <p class="text-sm text-stone-600">${a.description}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-stone-400">${a.max_attempts} attempts</span>
+                <svg class="w-5 h-5 text-stone-300 group-hover:text-primary-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============ NAVIGATION ============
+
+function switchSection(section) {
+  currentSection = section;
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('tab-active');
+    btn.classList.add('text-stone-600');
+  });
+  document.querySelector(`[data-section="${section}"]`).classList.add('tab-active');
+  document.querySelector(`[data-section="${section}"]`).classList.remove('text-stone-600');
+  renderMainContent();
+}
+
+function switchScene(index) {
+  currentSceneIndex = index;
+  currentLineIndex = -1;
+  stopPlayback();
+  renderMainContent();
+}
+
+function renderMainContent() {
+  const main = document.getElementById('mainContent');
+  switch(currentSection) {
+    case 'dialogue': main.innerHTML = renderDialogue(); break;
+    case 'vocabulary': main.innerHTML = renderVocabulary(); break;
+    case 'pronouns': main.innerHTML = renderPronouns(); break;
+    case 'expressions': main.innerHTML = renderExpressions(); break;
+    case 'grammar': main.innerHTML = renderGrammar(); break;
+    case 'activities': main.innerHTML = renderActivities(); break;
+  }
+}
+
+// ============ AUDIO PLAYBACK (SIMULATED) ============
+
+function showAudioBar() {
+  document.getElementById('audioBar').classList.remove('translate-y-full');
+}
+
+function hideAudioBar() {
+  document.getElementById('audioBar').classList.add('translate-y-full');
+  stopPlayback();
+}
+
+function playLine(index) {
+  if (currentSection !== 'dialogue') return;
+  currentLineIndex = index;
+  playSceneMode = false;
+  startPlayback();
+  renderMainContent();
+  showAudioBar();
+  updateAudioBar();
+  updateProgress();
+}
+
+function playScene() {
+  playSceneMode = true;
+  currentLineIndex = 0;
+  startPlayback();
+  renderMainContent();
+  showAudioBar();
+  updateAudioBar();
+  updateProgress();
+}
+
+function startPlayback() {
+  isPlaying = true;
+  audioProgressValue = 0;
+  document.getElementById('playIcon').classList.add('hidden');
+  document.getElementById('pauseIcon').classList.remove('hidden');
+  document.getElementById('waveAnim').classList.remove('hidden');
+  
+  clearInterval(audioTimer);
+  const duration = 4000 / playbackSpeed; // Simulated 4 second audio
+  const interval = 50;
+  const increment = (interval / duration) * 100;
+  
+  audioTimer = setInterval(() => {
+    audioProgressValue += increment;
+    document.getElementById('audioProgress').style.width = audioProgressValue + '%';
+    
+    const elapsed = (audioProgressValue / 100) * (duration / 1000);
+    const total = duration / 1000;
+    document.getElementById('audioTime').textContent = `${formatTime(elapsed)} / ${formatTime(total)}`;
+    
+    if (audioProgressValue >= 100) {
+      clearInterval(audioTimer);
+      if (playSceneMode) {
+        const scene = lessonData.sections.dialogue.scenes[currentSceneIndex];
+        if (currentLineIndex < scene.lines.length - 1) {
+          setTimeout(() => {
+            currentLineIndex++;
+            audioProgressValue = 0;
+            renderMainContent();
+            updateAudioBar();
+            startPlayback();
+          }, 800);
+        } else {
+          stopPlayback();
+          playSceneMode = false;
+        }
+      } else {
+        stopPlayback();
+      }
+    }
+  }, interval);
+}
+
+function stopPlayback() {
+  isPlaying = false;
+  clearInterval(audioTimer);
+  document.getElementById('playIcon').classList.remove('hidden');
+  document.getElementById('pauseIcon').classList.add('hidden');
+  document.getElementById('waveAnim').classList.add('hidden');
+}
+
+function togglePlayPause() {
+  if (isPlaying) {
+    stopPlayback();
+    renderMainContent();
+  } else if (currentLineIndex >= 0) {
+    startPlayback();
+    renderMainContent();
+  }
+}
+
+function prevLine() {
+  if (currentLineIndex > 0) {
+    currentLineIndex--;
+    audioProgressValue = 0;
+    renderMainContent();
+    updateAudioBar();
+    if (isPlaying) startPlayback();
+  }
+}
+
+function nextLine() {
+  const scene = lessonData.sections.dialogue.scenes[currentSceneIndex];
+  if (currentLineIndex < scene.lines.length - 1) {
+    currentLineIndex++;
+    audioProgressValue = 0;
+    renderMainContent();
+    updateAudioBar();
+    if (isPlaying) startPlayback();
+  }
+}
+
+function updateAudioBar() {
+  const scene = lessonData.sections.dialogue.scenes[currentSceneIndex];
+  if (currentLineIndex >= 0 && currentLineIndex < scene.lines.length) {
+    document.getElementById('currentLineText').textContent = scene.lines[currentLineIndex].arabic;
+  }
+}
+
+function updateProgress() {
+  const scene = lessonData.sections.dialogue.scenes[currentSceneIndex];
+  const totalLines = lessonData.sections.dialogue.scenes.reduce((sum, s) => sum + s.lines.length, 0);
+  let completedLines = 0;
+  for (let i = 0; i < currentSceneIndex; i++) {
+    completedLines += lessonData.sections.dialogue.scenes[i].lines.length;
+  }
+  completedLines += currentLineIndex + 1;
+  const progress = (completedLines / totalLines) * 100;
+  document.getElementById('progressBar').style.width = progress + '%';
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function playExpression(index) {
+  // Simulated - show a toast or flash
+  const expr = lessonData.sections.expressions.expressions[index];
+  // Could trigger actual audio in real implementation
+}
+
+// ============ EVENT LISTENERS ============
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchSection(btn.dataset.section));
+});
+
+document.getElementById('checklistToggle').addEventListener('click', () => {
+  const content = document.getElementById('checklistContent');
+  const arrow = document.getElementById('checklistArrow');
+  content.classList.toggle('hidden');
+  arrow.classList.toggle('rotate-180');
+});
+
+document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+document.getElementById('prevLineBtn').addEventListener('click', prevLine);
+document.getElementById('nextLineBtn').addEventListener('click', nextLine);
+document.getElementById('closeAudioBar').addEventListener('click', hideAudioBar);
+
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.speed-btn').forEach(b => {
+      b.classList.remove('bg-white', 'text-primary-700', 'font-semibold', 'shadow-sm');
+      b.classList.add('text-stone-600');
+    });
+    btn.classList.add('bg-white', 'text-primary-700', 'font-semibold', 'shadow-sm');
+    btn.classList.remove('text-stone-600');
+    playbackSpeed = parseFloat(btn.dataset.speed);
+  });
+});
+
+document.getElementById('repeatBtn').addEventListener('click', () => {
+  if (currentLineIndex >= 0) {
+    audioProgressValue = 0;
+    startPlayback();
+  }
+});
+
+// ============ INIT ============
+renderCompetencies();
+renderMainContent();
+</script>
+
+</body>
+</html>

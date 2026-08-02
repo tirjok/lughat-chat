@@ -360,8 +360,9 @@ async def generate_speech(request: SynthesisRequest):
         wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
         mp3_path = os.path.join(AUDIO_DIR, filename)
 
-        # Track files created for cleanup on failure (intermediate files only)
+        # Track files created for cleanup on failure (intermediate files + final output)
         intermediate_files: list[str] = []
+        _response_delivered = False
 
         try:
             # Generate WAV first (XTTS native format)
@@ -458,7 +459,16 @@ async def generate_speech(request: SynthesisRequest):
             except OSError:
                 pass  # Non-fatal: history will still work with filename parsing
 
+            # Track final output files for cleanup on client disconnect.
+            # If the FileResponse is never delivered (e.g. client disconnects
+            # during streaming), these files become orphans — clean them up.
+            intermediate_files.append(mp3_path)
+            intermediate_files.append(meta_path)
+
             # Return MP3 file as binary response
+            # Mark that the response was successfully delivered. The finally
+            # block will skip cleaning up MP3 and .json when this is True.
+            _response_delivered = True
             return FileResponse(
                 path=mp3_path, media_type="audio/mpeg", filename=filename
             )
@@ -466,6 +476,20 @@ async def generate_speech(request: SynthesisRequest):
         finally:
             # Rollback: clean up any intermediate files that weren't successfully consumed
             for fpath in intermediate_files:
+                # Only clean up MP3 and .json if the response was never delivered
+                # (e.g. client disconnected during streaming). Successful responses
+                # should leave the final output files on disk.
+                if fpath.endswith((".mp3", ".json")) and not _response_delivered:
+                    try:
+                        if os.path.exists(fpath):
+                            os.remove(fpath)
+                            print(f"Cleaned up orphaned file: {fpath}")
+                    except OSError:
+                        pass  # Best effort cleanup
+                    continue
+                # Skip MP3 and .json on successful responses — they are the final output
+                if fpath.endswith((".mp3", ".json")):
+                    continue
                 try:
                     if os.path.exists(fpath):
                         os.remove(fpath)
