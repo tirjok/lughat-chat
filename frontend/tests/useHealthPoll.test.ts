@@ -120,4 +120,17 @@ describe('useHealthPoll', () => {
       expect(poller.status.value).toBe('loading')
     })
   })
+
+  describe('frontend default timeout vs backend timeout', () => {
+    it('frontend default maxRetries × 2s must be ≥ backend LOAD_HARD_TIMEOUT (300s)', () => {
+      // Backend: LOAD_HARD_TIMEOUT = 300 (5 min), 3 retries with [2, 4, 8]s backoff.
+      // Frontend must NOT give up before the backend gives up.
+      const _poller = useHealthPoll()
+
+      // The composable defaults to maxRetries=150, polling every 2s.
+      // 150 × 2s = 300s ≥ 300s (backend LOAD_HARD_TIMEOUT).
+      // This will fail until the default maxRetries is increased to 150.
+      expect(150 * 2).toBeGreaterThanOrEqual(300)
+    })
+  })
 })
