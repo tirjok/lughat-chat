@@ -1,8 +1,9 @@
 # Project Architecture Blueprint — Lughat Chat
 
-> **Generated:** 2026-08-01
+> **Generated:** 2026-08-02
 > **Project:** Lughat Chat — Arabic Text-to-Speech Web Application
 > **Stack:** Nuxt 4 (Vue 3) + FastAPI + Coqui XTTS-v2 + Docker
+> **Previous blueprint:** 2026-08-01 (see `docs/architecture/Project_Architecture_Blueprint.md` git history)
 
 ---
 
@@ -54,9 +55,9 @@ The architecture is **not** microservices — both services are tightly coupled,
 │  Browser     │◄════════════════►│  FastAPI       │
 │  (Nginx)     │  JSON + MP3      │  (uvicorn)     │
 └─────────────┘                   └──────────────┘
-                                           │
-                                    Coqui XTTS-v2
-                                    (in-memory model)
+                                   │
+                              Coqui XTTS-v2
+                              (in-memory model)
 ```
 
 - **Frontend ↔ Backend boundary**: REST API over HTTP. All API calls go through Nginx proxy in production; Nitro devProxy in development.
@@ -67,7 +68,7 @@ The architecture is **not** microservices — both services are tightly coupled,
 
 - **Monolithic deployment, modular codebase**: Two services in one repo, one `docker-compose.yml`.
 - **Lifespan-based resource management**: The TTS model is loaded in a FastAPI `lifespan` context manager (background thread), yielding server readiness immediately.
-- **Health-polling pattern**: The frontend polls `/health` every 2 seconds during model loading, with a configurable retry limit.
+- **Health-polling pattern**: The frontend polls `/health` every 2 seconds during model loading, with a configurable retry limit (default 60).
 
 ---
 
@@ -133,7 +134,8 @@ The architecture is **not** microservices — both services are tightly coupled,
 │  │  │  │  ├─ /health (GET)                               │  │ │
 │  │  │  │  ├─ /api/voices (GET)                           │  │ │
 │  │  │  │  ├─ /api/generate (POST)                        │  │ │
-│  │  │  │  └─ /api/history (GET)                          │  │ │
+│  │  │  │  ├─ /api/history (GET)                          │  │ │
+│  │  │  │  └─ /api/cleanup (POST)                         │  │ │
 │  │  │  ├─ Coqui TTS (XTTS-v2 model, ~2GB)                │  │ │
 │  │  │  ├─ Static files: /downloads, /speaker_wavs        │  │ │
 │  │  │  └─ CORS middleware (allow_all)                    │  │ │
@@ -207,46 +209,78 @@ User types Arabic text
 ```
 frontend/
 ├── app/                          # Source code (Nuxt srcDir)
-│   ├── app.vue                   # Root component (auto-imported)
+│   ├── app.vue                   # Root component (sets SEO, viewport, favicon)
+│   ├── app.config.ts             # Nuxt UI theme config (primary: green, neutral: slate)
 │   ├── pages/
 │   │   └── index.vue             # Main page (prerendered, full-page studio)
 │   ├── components/               # 9 Vue components (auto-imported)
 │   │   ├── AudioPlayerPanel.vue  # Audio playback: play/pause/seek/download
 │   │   ├── FocusHaloCanvas.vue   # Focus glow effect (textarea focus/blur)
 │   │   ├── GenerateButton.vue    # Generate speech button (loading states)
-│   │   ├── MobileStatusIndicator.vue  # Compact model status (mobile FAB)
+│   │   ├── MobileStatusIndicator.vue  # Compact model status (mobile)
 │   │   ├── ModelStatusIndicator.vue   # Desktop model status indicator
 │   │   ├── SpeedSlider.vue       # Speed adjustment (0.5×–2.0×)
 │   │   ├── ToastNotification.vue # Toast messages (success/error/info)
 │   │   ├── VoiceSelector.vue     # Voice/dialect selector dropdown
 │   │   └── WaveformCanvas.vue    # Animated waveform visualization
 │   └── composables/              # 8 Vue composables (auto-imported)
-│       ├── useAudioModule.ts     # Audio playback state management
-│       ├── useHealthPoll.ts      # Backend health check polling
-│       ├── useInputValidation.ts # Text input validation logic
-│       ├── usePanelToggle.ts     # Panel toggle state (control-deck ↔ canvas)
-│       ├── useScrollReveal.ts    # Scroll-reveal fade-up animations
-│       ├── useToast.ts           # Toast notification management
-│       ├── useTtsApi.ts          # TTS API calls (synthesize, healthCheck)
-│       └── useVoices.ts          # Voice list fetching and management
+│       ├── useAudioModule.ts     # Audio playback state management (182 lines)
+│       ├── useHealthPoll.ts      # Backend health check polling (64 lines)
+│       ├── useInputValidation.ts # Text input validation logic (30 lines)
+│       ├── usePanelToggle.ts     # Panel toggle state (46 lines)
+│       ├── useScrollReveal.ts    # Scroll-reveal fade-up animations (74 lines)
+│       ├── useToast.ts           # Toast notification management (58 lines)
+│       ├── useTtsApi.ts          # TTS API calls (synthesize, healthCheck) (100 lines)
+│       └── useVoices.ts          # Voice list fetching and management (39 lines)
 ├── assets/css/
 │   └── main.css                  # Global styles (@apply with UnoCSS)
 ├── nuxt.config.ts                # Nuxt configuration
 ├── uno.config.ts                 # UnoCSS configuration (presets, theme, shortcuts)
-└── nginx.conf                    # Nginx reverse proxy config (production)
+├── nginx.conf                    # Nginx reverse proxy config (production)
+├── Dockerfile                    # Multi-stage build (Node 20 → Nginx Alpine)
+└── .github/workflows/ci.yml      # Pre-merge CI (lint + typecheck)
 ```
 
 **Internal Structure:**
 
-- **Components:** Pure Vue 3 components using `<script setup lang="ts">` with Composition API. Each component encapsulates its own state, lifecycle management, and scoped styles.
-- **Composables:** Reusable Vue composables (functions returning reactive state). They follow the naming convention `use<Name>.ts` and are auto-imported by Nuxt.
+- **Components:** Pure Vue 3 components using `<script setup lang="ts">` with Composition API. 9 components totaling 1,093 lines.
+- **Composables:** Reusable Vue composables (functions returning reactive state). 8 composables totaling 593 lines.
 - **State Management:** No Vuex/Pinia. State is managed locally within components and composables using Vue's `ref()` and `computed()`.
 
 **Key Design Decisions:**
 
 - **No global state management library** — State is co-located in composables and components. The global `useToast()` composable uses a module-level `ref<ToastEntry[]>` as a shared store.
-- **Nuxt auto-imports** — All components in `app/components/` and composables in `app/composables/` are auto-imported without explicit `import` statements.
+- **Nuxt auto-imports** — All components in `app/components/` and composables in `app/composables/` are auto-imported without explicit `import` statements. The main page (`index.vue`) uses explicit imports for clarity.
 - **Prerendered single page** — `routeRules: { '/': { prerender: true } }` — The entire app is a single prerendered HTML page.
+- **No plugins** — `app/plugins/` directory exists but is empty.
+- **No shared types** — `frontend/shared/types/` directory exists but is empty.
+
+**Component Inventory (9):**
+
+| Component | Lines | Role |
+|-----------|-------|------|
+| `AudioPlayerPanel.vue` | 161 | Audio playback UI: play/pause/seek/download |
+| `FocusHaloCanvas.vue` | 70 | Focus glow effect (textarea focus/blur) |
+| `GenerateButton.vue` | 162 | Synthesis trigger with loading states |
+| `MobileStatusIndicator.vue` | 43 | Compact model status (mobile FAB) |
+| `ModelStatusIndicator.vue` | 43 | Desktop model status pill |
+| `SpeedSlider.vue` | 126 | Speed control (0.5×–2.0×) |
+| `ToastNotification.vue` | 82 | Toast display with auto-dismiss |
+| `VoiceSelector.vue` | 230 | Voice selection dropdown |
+| `WaveformCanvas.vue` | 176 | Waveform visualization |
+
+**Composable Inventory (8):**
+
+| Composable | Lines | Purpose | Exposed API |
+|------------|-------|---------|-------------|
+| `useAudioModule()` | 182 | Audio playback state | `load()`, `play()`, `pause()`, `toggle()`, `seek()`, `download()`, `dispose()`, `audioRef`, state refs |
+| `useHealthPoll()` | 64 | Backend health polling | `status` (ref: loading/ready/error), `modelLoaded` (computed) |
+| `useInputValidation()` | 30 | Text validation | `isValid` (computed), `error` (computed) |
+| `usePanelToggle()` | 46 | Panel toggle state | `activePanel` (ref: "control-deck" | "canvas"), `isMobile`, `togglePanel()` |
+| `useScrollReveal()` | 74 | Scroll-reveal animations | `observe()`, `disconnect()` |
+| `useToast()` | 58 | Toast notifications | `showToast(message, type)`, toast list (ref) |
+| `useTtsApi()` | 100 | TTS API client | `synthesize(request)`, `healthCheck()` |
+| `useVoices()` | 39 | Voice management | `voices` (ref), `loading` (ref), `error` (ref), `loadVoices()` |
 
 ### 4.2 Backend — FastAPI REST API
 
@@ -256,66 +290,102 @@ frontend/
 
 ```
 backend/
-├── app.py                        # Main FastAPI application (single file)
-├── requirements.txt              # Runtime dependencies
-├── requirements-test.txt         # Test dependencies
+├── app.py                        # Main FastAPI application (593 lines)
+├── requirements.txt              # Runtime dependencies (6 packages)
+├── requirements-test.txt         # Test dependencies (8 packages)
 ├── Dockerfile                    # Multi-stage build (Python 3.12 + Coqui TTS)
-├── pytest.ini                    # Pytest configuration
-├── generate_speaker_wavs.py      # Utility script (unused in production)
+├── pytest.ini                    # Pytest configuration (testpaths: tests)
+├── generate_speaker_wavs.py      # Utility script: generates speaker WAV files from TTS
 ├── speaker_wavs/                 # Voice reference audio files (mounted volume)
 │   ├── KSA Hamed - Male.wav
 │   └── KSA Zariyah - Female.wav
 ├── downloads/                    # Generated audio files (persisted volume)
-└── tests/                        # Pytest test suite
-    ├── test_generate.py
-    ├── test_generate_blob.py
-    ├── test_health.py
-    ├── test_history.py
-    └── test_voices.py
+└── tests/                        # Pytest test suite (6 files, 1,082 lines)
+    ├── test_ffmpeg_fallback.py   # FFmpeg fallback behavior
+    ├── test_generate.py          # Speech generation happy/error paths
+    ├── test_generate_blob.py     # Binary response handling
+    ├── test_health.py            # Health endpoint
+    ├── test_history.py           # History listing
+    └── test_voices.py            # Voice discovery
 ```
 
-**Endpoints:**
+**Endpoints (5):**
 
 | Endpoint | Method | Response | Purpose |
 |---|---|---|---|
-| `/health` | GET | `{ status, model_loaded }` | Model load status |
+| `/health` | GET | `{ status, model_loaded }` | Model load status (+ `?reload=1` to force reload) |
 | `/api/voices` | GET | `Voice[]` | Discover voices from filesystem |
 | `/api/generate` | POST | `audio/mpeg` (binary) | Generate speech from text |
-| `/api/history` | GET | `HistoryEntry[]` | List previously generated files |
+| `/api/history` | GET | `HistoryEntry[]` | List previously generated files (+ `?cleanup=true`) |
+| `/api/cleanup` | POST | `{ removed_count }` | Remove files older than 24 hours |
 
-**Internal Structure:**
+**Internal Structure (app.py, 593 lines):**
 
-- **Single-file architecture** (`app.py`): All logic in one file — model loading, API endpoints, request/response models, and static file serving.
+- **Single-file architecture** — All logic in one file: model loading, API endpoints, request/response models, and static file serving.
 - **Pydantic models**: `SynthesisRequest`, `SynthesisResponse` (defined but unused), `HealthResponse`.
 - **Lifespan context manager**: Background thread loads the TTS model on startup; server becomes immediately available.
-- **Global mutable state**: `tts_model` (TTS instance) and `model_load_status` (string: `"loading"|"ready"|"error"`).
+- **Global mutable state**: `tts_model` (TTS instance) and `model_load_status` (string: `"loading"|"ready"|"error"`), protected by `_model_lock` (threading.Lock).
+- **Torch compatibility patches**: Patches `isin_mps_friendly` and `load_library` for CPU-only environments.
+- **Utility functions**: `discover_voices()`, `_validate_speaker_wav()`.
 
-**Key Design Decisions:**
+**Request/Response Models:**
 
-- **In-memory model** — The TTS model is loaded once into a global variable at startup. No model caching or reloading.
-- **Dynamic voice discovery** — Voices are discovered by scanning the `speaker_wavs/` directory for `.wav` files at request time. No database or configuration file.
-- **File-based audio persistence** — Generated MP3 files are written to `/app/downloads/` and listed by the `/api/history` endpoint. Filenames encode metadata (`{lang}_{voice}_{timestamp}.mp3`).
-- **Direct file response** — The `/api/generate` endpoint returns `FileResponse` (binary MP3), not a JSON wrapper. The `SynthesisResponse` model is defined but unused.
+| Model | Fields | Used By |
+|-------|--------|---------|
+| `SynthesisRequest` | `text` (1-3000), `language` (ar\|en), `voice`, `speaker`, `speed` (0.5-2.0), `pitch` (-4.0-4.0), `seed` (optional int) | `/api/generate` |
+| `SynthesisResponse` | `audio_url`, `filename`, `duration_seconds` | **Defined but not used** — endpoint returns raw FileResponse |
+| `HealthResponse` | `status`, `model_loaded` | `/health` |
 
 ### 4.3 Infrastructure — Docker Compose
 
-**Purpose:** Multi-container orchestration with bridge networking and named volumes.
+**Services (2):**
 
-```
-docker-compose.yml
-├── services:
-│   ├── backend (lughat-backend)
-│   │   ├── ports: 9000:8000
-│   │   ├── volumes: tts-model-cache, tts-audio-cache, speaker_wavs/
-│   │   ├── healthcheck: /health endpoint (start_period: 120s, 200 retries)
-│   │   └── networks: lughat-network
-│   └── frontend (lughat-frontend)
-│       ├── ports: 9001:80
-│       ├── depends_on: backend (service_healthy)
-│       └── networks: lughat-network
-├── networks: lughat-network (bridge)
-└── volumes: tts-model-cache, tts-audio-cache
-```
+| Service | Container | Host:Container Port | Dependencies |
+|---------|-----------|---------------------|-------------|
+| `backend` | `lughat-backend` (Python 3.12-slim) | 9000:8000 | None |
+| `frontend` | `lughat-frontend` (nginx:alpine) | 9001:80 | `backend` (service_healthy) |
+
+**Volumes (2):**
+
+| Volume | Mount Point (container) | Size | Persistence |
+|--------|------------------------|------|-------------|
+| `tts-model-cache` | `/app/.cache/tts` (env var) | ~2 GB | **Not used** — env var `TTS_MODEL_CACHE=/app/.cache/tts` points to a path not mounted by the volume (volume actually mounts at `/root/.local/share/tts`) |
+| `tts-audio-cache` | `/app/downloads` | Unbounded | **Used** — persists generated MP3 files |
+
+**Network:** `lughat-network` (bridge driver).
+
+**Dockerfile Details:**
+
+- **Backend** (55 lines): Multi-stage not used — single-stage build from `python:3.12-slim`. Installs ffmpeg, libsndfile1, build tools, CPU-only PyTorch, Coqui TTS, then rebuilds torchcodec from source without CUDA. Health check verifies `/health` returns `model_loaded: true`.
+- **Frontend** (33 lines): Two-stage build. Stage 1: `node:20-alpine` with pnpm 10.33.4, runs `pnpm build`. Stage 2: `nginx:alpine` with custom `nginx.conf`, copies build output.
+
+**Nginx Configuration (62 lines):**
+
+- Routes: `/` → SPA files, `/api/` → `backend:8000`, `/health` → `backend:8000`, `/downloads/` → `backend:8000`, `/nginx-health` → local `200 OK`.
+- Large file support: `proxy_buffering off`, `proxy_request_buffering off`, 1800s timeout for TTS synthesis.
+- SPA fallback: `try_files $uri $uri/ /index.html`.
+- Static asset caching: 30 days with `Cache-Control: public, immutable`.
+
+### 4.4 CI/CD Pipeline
+
+**Workflows (3):**
+
+| Workflow | Trigger | Steps |
+|----------|---------|-------|
+| `backend.yml` | Push/PR to `main`/`develop`, path `backend/**` | Checkout → Python 3.12 → ffmpeg → `pip install -r requirements-test.txt` → `pytest --cov=app` |
+| `frontend.yml` | Push/PR to `main`/`develop`, path `frontend/**` | Checkout → pnpm 10.33.4 + Node 24 → `pnpm install --frozen-lockfile` → `pnpm lint` → `pnpm typecheck` → `pnpm test -- --coverage` |
+| `ci.yml` (frontend root) | Push to any branch | Checkout → pnpm → Node 22 → `pnpm lint` → `pnpm typecheck` (no tests) |
+
+**Quality Gate (`run-tests.sh`):** Runs sequentially, stops at first failure:
+1. Backend tests (`./scripts/run-backend-tests.sh` — Docker + pytest)
+2. Frontend lint (`pnpm lint`)
+3. Frontend typecheck (`pnpm typecheck`)
+4. Frontend tests (`pnpm test`)
+
+**Pre-commit Hooks (`.pre-commit-config.yaml`):**
+- `ruff` (lint + fix)
+- `ruff-format` (format)
+- `./run-tests.sh` (full quality gate, runs on every commit)
 
 ---
 
@@ -324,601 +394,368 @@ docker-compose.yml
 ### Layer Structure
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Presentation Layer (Frontend)                      │
-│  ┌───────────────────────────────────────────────┐  │
-│  │  Vue Components (9)                           │  │
-│  │  Vue Composables (8)                          │  │
-│  │  UnoCSS (atomic CSS)                          │  │
-│  │  Nginx (reverse proxy + static files)         │  │
-│  └───────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
-                        │ HTTP/REST (JSON + binary)
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│  Application/API Layer (Backend)                    │
-│  ┌───────────────────────────────────────────────┐  │
-│  │  FastAPI (routing, validation, CORS)          │  │
-│  │  Pydantic (request/response models)           │  │
-│  │  Business logic (voice resolution, validation)│  │
-│  │  FFmpeg subprocess (WAV → MP3 conversion)     │  │
-│  └───────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
-                        │ Process-local
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│  Infrastructure Layer                               │
-│  ┌───────────────────────────────────────────────┐  │
-│  │  Coqui XTTS-v2 (in-memory ML model)           │  │
-│  │  PyTorch (CPU-only inference)                 │  │
-│  │  Filesystem (speaker_wavs/, downloads/)       │  │
-│  └───────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
+Browser (HTTP)
+    │
+    ▼
+Nginx (Reverse Proxy)
+    │
+    ▼
+FastAPI (API Layer)
+    │
+    ├─ Pydantic Models (validation layer)
+    ├─ Business Logic (TTS generation, file handling)
+    └─ Static File Serving (downloads, speaker_wavs)
 ```
 
 ### Dependency Rules
 
-- **Frontend → Backend**: Unidirectional HTTP calls. The frontend knows nothing about the backend implementation; it only knows the API contract (URLs, request/response shapes).
-- **Backend → Filesystem**: The backend reads `.wav` files from `speaker_wavs/` and writes `.mp3` files to `downloads/`. No external services.
-- **No circular dependencies** — The monorepo has two independent services with a single unidirectional data flow (frontend → backend).
+- **Frontend → Backend**: Only via `/api/*` and `/health` endpoints. No direct filesystem access.
+- **Backend → TTS**: In-process Python API call (`TTS.api.TTS`). No IPC or serialization.
+- **Backend → Filesystem**: Reads `speaker_wavs/` for reference audio, writes `downloads/` for generated audio.
+- **No cross-service dependencies**: Frontend and backend are independent builds; only connected at runtime via the Docker network.
 
-### Frontend Dependency Graph
+### Layer Violations
 
-```
-index.vue (main page)
-├── VoiceSelector (component)
-│   └── useVoices (composable)
-│       └── fetch('/api/voices')
-├── SpeedSlider (component)
-├── GenerateButton (component)
-│   └── handleSynthesize()
-│       └── useTtsApi().synthesize()
-│           └── fetch('/api/generate')
-├── AudioPlayerPanel (component)
-│   └── useAudioModule()
-│       └── HTMLAudioElement
-├── WaveformCanvas (component)
-│   └── Canvas API (requestAnimationFrame)
-├── FocusHaloCanvas (component)
-├── ModelStatusIndicator (component)
-│   └── useHealthPoll()
-│       └── fetch('/health')
-├── MobileStatusIndicator (component)
-│   └── useHealthPoll() (same composable)
-├── ToastNotification (component)
-│   └── useToast()
-│       └── showToast()
-├── useInputValidation()
-├── usePanelToggle()
-└── useScrollReveal()
-```
+- **None detected**. The single-file backend (`app.py`) conflates multiple layers (API, business logic, data access) but this is intentional for a focused TTS service.
 
 ---
 
 ## 6. Data Architecture
 
-### Domain Models
+### Domain Model
 
-**Voice** (frontend `useVoices.ts`):
-```typescript
-interface Voice {
-  id: string
-  name: string
-  dialect: string
-  tag: string
-  icon: string
-  speaker_wav: string
-}
+The application has no persistent database. All "data" is either:
+
+1. **In-memory**: TTS model object (`tts_model` global), toast state (`toastState` module-level ref).
+2. **File-based**: Speaker reference WAV files (`speaker_wavs/`), generated audio (`downloads/`), metadata sidecars (`downloads/*.json`).
+3. **Client-side**: Vue reactive state (`ref`/`computed`) within composables.
+
+### Entity Relationships
+
+```
+Speaker WAV (file)
+    │
+    ├─→ Voice entry (discovered at runtime)
+    │       └─→ VoiceSelector (UI component)
+    │
+    └─→ generate_speech() (uses as speaker reference for voice cloning)
+
+Generated MP3 (file)
+    │
+    ├─→ Metadata sidecar (.json) — text, language, voice, speed, pitch, seed, created_at
+    ├─→ History entry (GET /api/history)
+    └─→ Audio playback (Blob → URL.createObjectURL → <audio>)
 ```
 
-**SynthesisRequest** (frontend `useTtsApi.ts`):
-```typescript
-interface SynthesisRequest {
-  text: string
-  speaker?: string
-  speed?: number
-}
-```
+### Data Access Patterns
 
-**SynthesisRequest** (backend `app.py`, Pydantic):
-```python
-class SynthesisRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=3000)
-    language: str = Field(default="ar", pattern="^(ar|en)$")
-    voice: Optional[str] = Field(default=None)
-    speaker: Optional[str] = Field(default=None)
-    speed: float = Field(default=1.0, ge=0.5, le=2.0)
-    pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
-    seed: Optional[int] = Field(default=None, ge=0)
-```
-
-**HealthResponse** (both frontend and backend):
-```typescript
-interface HealthResponse {
-  status: 'loading' | 'ready' | 'error'
-  model_loaded: boolean
-}
-```
-
-### Data Flow Patterns
-
-| Data | Source | Destination | Format |
-|---|---|---|---|
-| Voice list | Backend `/api/voices` | Frontend `useVoices.voices` | JSON array |
-| Text input | User typing | Backend `/api/generate` | JSON string (≤3000 chars) |
-| Generated audio | Backend `/api/generate` | Frontend `audioUrl` (Blob) | `audio/mpeg` binary |
-| Health status | Backend `/health` | Frontend `useHealthPoll.status` | JSON |
-| Audio history | Backend `/api/history` | Frontend (unused in UI) | JSON array |
+- **Speaker WAVs**: Read-only directory scan at request time (`discover_voices()`).
+- **Generated audio**: Write-once (POST /api/generate), read-many (GET /api/history, direct file serving via `/downloads/`).
+- **Metadata sidecars**: Write alongside generated MP3, read during history listing. Falls back to filename parsing if JSON is missing/corrupt.
 
 ### Caching Strategy
 
-- **Static assets**: Nginx serves JS/CSS/fonts with `Cache-Control: public, immutable; max-age=30d`.
-- **TTS model**: Re-downloaded on every container restart (model cache volume is NOT used for persistence per project notes).
-- **Generated audio**: Accumulates in `tts-audio-cache` volume with no cleanup mechanism.
+- **TTS model**: In-memory, loaded once at startup. No cache invalidation (except `?reload=1` query parameter on `/health`).
+- **Model cache volume**: `tts-model-cache` is defined but **not effectively used** — the app writes to `/app/.cache/tts` (env var), which is not the volume mount point (`/root/.local/share/tts`). Result: ~2GB model re-downloads every container restart.
+- **Frontend static assets**: 30-day cache via Nginx (`expires 30d; Cache-Control: public, immutable`).
+
+### Validation Patterns
+
+- **Backend**: Pydantic `Field()` constraints (`min_length`, `max_length`, `pattern`, `ge`, `le`). Runtime validation of speaker WAV existence and duration (≥ 0.33s).
+- **Frontend**: `useInputValidation()` returns `{ isValid, error }` based on text presence and model readiness.
 
 ---
 
-## 7. Cross-Cutting Concerns
+## 7. Cross-Cutting Concerns Implementation
 
-### 7.1 Error Handling
+### Authentication & Authorization
 
-**Frontend:**
-- All user-facing errors use `showToast()` from `useToast` composable — appears at top-center with auto-dismiss (5 seconds).
-- `useInputValidation` returns `{ isValid, error }` for input validation (empty text, model not ready).
-- API errors are mapped to user-friendly messages (400 → "Invalid text", 503 → "Server unavailable", 500 → "Server error").
+- **None implemented**. The API is open to any caller on the Docker network. CORS allows all origins (`*`).
+- **Security note**: Both Nginx and FastAPI allow `*` for CORS. Should be restricted to the frontend container IP in production.
 
-**Backend:**
-- `HTTPException` raised for all business errors with descriptive `detail` messages.
-- 503 returned if synthesis called before model finishes loading.
-- 500 for missing speaker WAV files, generation failures, or FFmpeg errors.
+### Error Handling & Resilience
 
-### 7.2 Validation
+- **Backend**: `HTTPException` with descriptive `detail` messages. Status codes: 400 (validation), 503 (model loading), 500 (generation failure, missing WAV, short WAV, FFmpeg failure).
+- **Frontend**: All user-facing errors via `showToast()` (module-level function). Input validation via `useInputValidation()`. `isGenerating` disables button + spinner.
+- **Resilience**: TTS model loading has retry logic (3 attempts, exponential backoff: 2s, 4s, 8s) with a 300-second hard timeout. Frontend health polling has configurable max retries (default 60).
+- **FFmpeg fallback**: Explicitly disabled — if FFmpeg conversion fails, the request returns 500 rather than serving raw WAV as MP3 (browsers' `<audio>` elements refuse PCM WAV labeled as `audio/mpeg`).
 
-**Input validation layers:**
-1. **Frontend**: `useInputValidation` checks text length (trimmed) and model readiness.
-2. **Backend**: Pydantic `Field(..., min_length=1, max_length=3000)` enforces text constraints.
-3. **Backend**: `Field(default="ar", pattern="^(ar|en)$")` restricts language to Arabic or English.
-4. **Backend**: `Field(default=1.0, ge=0.5, le=2.0)` clamps speed to valid range.
-5. **Backend**: `_validate_speaker_wav()` checks WAV file duration ≥ 0.33 seconds (XTTS-v2 minimum).
+### Logging & Monitoring
 
-### 7.3 Configuration Management
+- **Backend**: `print()` statements to stderr for model loading, generation, cleanup events. No structured logging or metrics endpoint.
+- **Frontend**: `console.error()` for voice loading failures. No telemetry or error reporting.
+- **Docker**: Health check verifies `/health` returns `model_loaded: true`. 200 retries at 15s intervals with 60s start period (total ~30min before giving up).
 
-| Source | Key | Value |
-|---|---|---|
-| `.env` (project root) | `BACKEND_PORT` | `9000` |
-| `.env` | `FRONTEND_PORT` | `9001` |
-| `.env` | `API_BASE_URL` | `http://backend:8000` |
-| Docker (backend) | `TTS_MODEL_CACHE` | `/app/.cache/tts` |
-| Docker (backend) | `COQUI_TOS_AGREED` | `1` |
-| Docker (backend) | `TZ` | `UTC` |
-| `nuxt.config.ts` | `nitro.devProxy` | `localhost:9000` (dev only) |
-| `uno.config.ts` | `theme.colors.studio` | `#121212`, `#1A1A1A`, `#333333` |
-| `uno.config.ts` | `theme.colors.sunrise` | `#FF512F`, `#DD2476` |
+### Validation
 
-### 7.4 Logging & Monitoring
+- **Input validation**: Pydantic `Field()` constraints on `SynthesisRequest` (text 1-3000 chars, language `ar|en`, speed 0.5-2.0, pitch -4.0-4.0).
+- **Runtime validation**: Speaker WAV existence check, duration check (≥ 0.33s), TTS model readiness check before each generation.
+- **Frontend validation**: `useInputValidation()` returns `{ isValid, error }` based on text presence and model readiness.
 
-- **Backend**: Structured logging via `print()` statements during model loading and synthesis. Configured via `LOG_LEVEL` and `LOG_FORMAT` environment variables (JSON format).
-- **Frontend**: Console errors for failed API calls (`console.error('Failed to load voices:', e)`).
-- **Health monitoring**: Docker health check on backend (`start_period: 120s`, 200 retries at 15s intervals). Nginx exposes `/nginx-health` for container health.
+### Configuration Management
+
+- **Environment variables**: `TZ=UTC`, `TTS_MODEL_CACHE=/app/.cache/tts`, `COQUI_TOS_AGREED=1`, `LD_LIBRARY_PATH`.
+- **Configuration files**: `nuxt.config.ts` (Nuxt modules, routeRules, devProxy, ESLint, UnoCSS), `uno.config.ts` (presets, theme, shortcuts), `app.config.ts` (UI colors).
+- **No feature flags**: The application has no feature flag system.
 
 ---
 
 ## 8. Service Communication Patterns
 
-### Protocol and Format
+### Service Boundaries
 
-- **Transport**: HTTP/1.1 over Docker bridge network (`lughat-network`).
-- **Request format**: JSON bodies for `/api/generate` and `/health`.
-- **Response format**: `audio/mpeg` binary for `/api/generate`; JSON for `/health`, `/api/voices`, `/api/history`.
+- **Frontend container**: Nginx serves SPA static files and proxies API requests. No business logic.
+- **Backend container**: FastAPI handles all business logic (TTS synthesis, file management, voice discovery).
 
-### Communication Patterns
+### Communication Protocols
 
-| Communication | Type | Pattern |
-|---|---|---|
-| Frontend → Backend API | Synchronous REST | `fetch()` → `Blob`/`JSON` |
-| Frontend → Backend health | Polling | `setInterval(checkHealth, 2000)` |
-| Backend → TTS model | Process-local | In-memory object (`tts_model` global) |
-| Backend → Filesystem | File I/O | `os.listdir()`, `subprocess.run()` |
+- **HTTP/REST**: JSON request bodies, binary MP3 responses.
+- **Nginx proxy**: Relative URLs from frontend (`/api/generate`), resolved by Nginx to `backend:8000`.
 
-### Resilience
+### Synchronous vs Asynchronous
 
-- **CORS**: All origins allowed (`allow_origins=["*"]`). In production, should be restricted to the frontend container IP.
-- **Timeout**: Nginx sets `proxy_read_timeout 1800s` (30 minutes) for long TTS synthesis.
-- **Buffering**: `proxy_buffering off` for large audio responses to prevent OOM.
-- **Model loading**: Non-blocking background thread; server starts immediately, model loads asynchronously.
+- **All synchronous**: HTTP request → response cycle. No message queues or event buses.
+- **Background model loading**: The TTS model is loaded in a daemon thread during FastAPI startup, but this is an implementation detail — the API itself is synchronous.
+
+### API Versioning
+
+- **None**. The API is at version 1.0.0 (FastAPI metadata). No version prefix in routes (`/api/generate` not `/api/v1/generate`).
+
+### Resilience in Service Communication
+
+- **Health polling**: Frontend polls `/health` every 2 seconds until model is ready (max 60 retries).
+- **Nginx timeouts**: 1800s (30 minutes) for API and download endpoints, 30s for health proxy.
+- **CORS**: Both Nginx and FastAPI allow all origins (`*`).
 
 ---
 
 ## 9. Technology-Specific Architectural Patterns
 
-### 9.1 Vue 3 / Nuxt 4 Patterns
+### Nuxt 4 / Vue 3 Patterns
 
-- **`<script setup lang="ts">`** — All components use Composition API with `<script setup>` syntax. No Options API.
-- **Nuxt auto-imports** — Components and composables are auto-imported by convention (file location → name).
-- **Composable pattern** — All business logic extracted into `use*` composables for testability and reuse.
-- **Reactive state** — `ref()` for mutable state, `computed()` for derived state. No Vuex/Pinia.
-- **Lifecycle management** — `onMounted()` / `onUnmounted()` for resource management (event listeners, observers, animations).
+- **File-based routing**: Single page (`app/pages/index.vue`). No router configuration needed.
+- **Auto-imports**: Components in `app/components/` and composables in `app/composables/` are auto-imported.
+- **Composition API only**: All components use `<script setup lang="ts">`. No Options API.
+- **Nuxt UI theme**: `app.config.ts` sets primary (`green`) and neutral (`slate`) colors.
+- **Prerendered SPA**: `routeRules: { '/': { prerender: true } }` — single HTML file.
+- **UnoCSS atomic CSS**: Presets (`presetWind3`, `presetTypography`, `presetWebFonts`), transformers (`transformerDirectives`), shortcuts (`btn`, `card`, `flex-center`, `flex-between`), custom rules (`text-gradient`).
+- **State management**: No Pinia/Vuex. State co-located in composables using `ref()`/`computed()`.
+- **No plugins**: `app/plugins/` directory exists but is empty.
+- **No shared types**: `frontend/shared/types/` directory exists but is empty.
 
-### 9.2 FastAPI / Python Patterns
+### FastAPI Patterns
 
-- **Single-file application** — `app.py` contains all logic (routes, models, configuration).
-- **Lifespan context manager** — `@asynccontextmanager` for background resource loading (TTS model).
-- **Pydantic validation** — `BaseModel` with `Field()` constraints for request validation (types, ranges, patterns).
-- **Global mutable state** — `tts_model` and `model_load_status` as module-level globals. Simple but effective for a single-model server.
-- **Lazy imports** — `TTS` library imported in a `try/except` block to allow test environments without torch.
+- **Single-file application** (`app.py`): All logic in one file (593 lines).
+- **Lifespan context manager**: Background thread loads TTS model on startup; server becomes immediately available.
+- **Global mutable state**: `tts_model` and `model_load_status` are module-level globals, protected by `_model_lock` (threading.Lock).
+- **Pydantic validation**: Request models with `Field()` constraints.
+- **Static file serving**: `app.mount()` for `/downloads` and `/speaker_wavs`.
+- **CORS middleware**: `CORSMiddleware` with `allow_origins=["*"]`.
 
-### 9.3 Docker / Nginx Patterns
+### Docker Patterns
 
-- **Multi-stage build** (frontend): `node:20-alpine` (builder) → `nginx:alpine` (production).
-- **Multi-stage build** (backend): `python:3.12-slim` with CPU-only PyTorch + Coqui TTS + torchcodec from source.
-- **Nginx as reverse proxy**: Routes `/api/` and `/health` to backend container. Serves static files directly.
-- **Bridge networking**: Both containers on `lughat-network`; Nginx resolves `backend:8000` via Docker DNS.
-- **Named volumes**: `tts-model-cache` (TTS model ~2GB), `tts-audio-cache` (generated audio).
+- **Two-service compose**: Backend (FastAPI + TTS) + Frontend (Nginx + SPA).
+- **Bridge networking**: `lughat-network` connects both containers.
+- **Named volumes**: `tts-model-cache` (ineffective), `tts-audio-cache` (used).
+- **Health checks**: Backend health check (`/health`) with 200 retries, 15s interval, 60s start period.
+- **Multi-stage frontend build**: Node 20 → Nginx Alpine.
+- **Single-stage backend build**: Python 3.12-slim with CPU-only PyTorch + Coqui TTS + torchcodec rebuilt from source.
 
 ---
 
 ## 10. Implementation Patterns
 
-### 10.1 Component Composition
+### Interface Design Patterns
 
-Components are composed hierarchically within `index.vue`:
+- **Frontend composables**: Named functions (`use<Name>`) returning reactive state objects. Convention: prefix with `use`, export as default function.
+- **Backend Pydantic models**: Class-based request/response models with `Field()` constraints.
 
-```
-index.vue (root)
-├── ToastNotification (global, always mounted)
-├── Mobile split-screen layout (≤767px)
-│   ├── MobileStatusIndicator (header)
-│   ├── Canvas panel (top)
-│   │   └── FocusHaloCanvas
-│   └── Control Deck panel (bottom)
-│       ├── VoiceSelector
-│       └── SpeedSlider
-└── Desktop side-by-side layout (≥768px)
-    ├── Control Deck (left, 25-35% width)
-    │   ├── Header (logo + status)
-    │   ├── VoiceSelector
-    │   ├── SpeedSlider
-    │   └── GenerateButton
-    └── Canvas (right, 65-75% width)
-        ├── FocusHaloCanvas
-        ├── AI Smart Tools Toolbar (placeholder buttons)
-        └── AudioPlayerPanel (slides up)
-            └── WaveformCanvas
-```
+### Service Implementation Patterns
 
-### 10.2 Composable Patterns
+- **Background model loading**: `lifespan()` context manager starts a daemon thread (`threading.Thread(target=load_model, daemon=True)`).
+- **Retry with backoff**: 3 attempts, delays [2s, 4s, 8s], 300s hard timeout.
+- **Thread safety**: `_model_lock` (threading.Lock) protects `tts_model` and `model_load_status` reads/writes.
 
-**Stateful composables** (return reactive state):
-- `useHealthPoll()` — Returns `{ status, modelLoaded }`. Starts polling on `onMounted()`.
-- `useVoices()` — Returns `{ voices, loading, error, loadVoices() }`. Fetches on mount.
-- `useToast()` — Returns `ref<ToastEntry[]>`. Module-level shared state.
+### Data Access Patterns
 
-**Pure function composables** (no side effects):
-- `useInputValidation(textInput, modelStatus)` — Returns `{ isValid, error }`.
-- `useAudioModule(options)` — Returns `{ isPlaying, isPaused, currentTime, duration, error, isLoading, audioUrl, load(), play(), pause(), toggle(), seek(), download(), dispose() }`.
-- `usePanelToggle()` — Returns `{ activePanel, isMobile, togglePanel(), focusFirstInteractiveElement() }`.
-- `useScrollReveal(containerRef, options)` — Returns `{ observe(), disconnect() }`. Uses `IntersectionObserver`.
+- **Directory scanning**: `os.listdir()` + `str.endswith('.wav')` for voice discovery.
+- **Sidecar metadata**: JSON files written alongside generated MP3s. History endpoint reads JSON first, falls back to filename parsing.
+- **Cleanup**: `/api/history?cleanup=true` (inline) and `/api/cleanup` (dedicated endpoint) both remove files older than 24 hours.
 
-### 10.3 Animation Patterns
+### API Implementation Patterns
 
-- **CSS transitions** — Spring easing (`cubic-bezier(0.32, 0.72, 0, 1)`) for all UI transitions.
-- **Keyframe animations** — `spin`, `spin-slow`, `pulse-glow`, `slide-up`, `fade-out`.
-- **Scroll-reveal** — `IntersectionObserver` adds `.animate.visible` classes to `.fade-up` elements.
-- **Canvas animation** — `requestAnimationFrame` loop for waveform visualization (bar-by-bar rendering).
-- **Reduced motion** — `@media (prefers-reduced-motion: reduce)` disables all animations.
+- **POST /api/generate**: Returns `FileResponse` (binary MP3), not JSON. The `SynthesisResponse` model is defined but never used.
+- **GET /api/voices**: Returns array of `{id, name}` from discovered `.wav` files.
+- **GET /health**: Returns `{status, model_loaded}`. Accepts `?reload=1` to force model reload.
+- **GET /api/history**: Returns array of history entries. Accepts `?cleanup=true` for inline cleanup.
+- **POST /api/cleanup**: Dedicated cleanup endpoint.
 
-### 10.4 Design System
+### Domain Model Implementation
 
-**Color palette ("Sunrise Surge"):**
-| Token | Value | Usage |
-|---|---|---|
-| `studio-900` | `#121212` | Background |
-| `studio-800` | `#1A1A1A` | Panels |
-| `studio-700` | `#333333` | Interactive elements |
-| `sunrise-orange` | `#FF512F` | Primary accent (female voices) |
-| `sunrise-magenta` | `#DD2476` | Secondary accent (male voices) |
-
-**Typography:**
-- **Latin UI**: "Plus Jakarta Sans" (self-hosted WOFF2, 300–700 weights)
-- **Arabic body**: "Noto Sans Arabic" (self-hosted WOFF2, 400–700 weights)
-- **Arabic fallback**: "Cairo" (self-hosted WOFF2, 400–700 weights)
-- **Phosphor Icons**: Loaded via CDN (`unpkg.com/@phosphor-icons/web`)
-
-**UnoCSS shortcuts:**
-| Shortcut | Expands To |
-|---|---|
-| `btn` | `px-4 py-2 rounded font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors` |
-| `card` | `rounded-lg border p-4 shadow-sm bg-white dark:bg-gray-800` |
-| `flex-center` | `flex items-center justify-center` |
-| `flex-between` | `flex items-center justify-between` |
+- **No ORM or database**. All "domain" data is file-based (speaker WAVs, generated audio) or in-memory (TTS model, toast state).
 
 ---
 
 ## 11. Testing Architecture
 
-### Test Infrastructure
+### Testing Strategies
 
-| Layer | Framework | Config | Environment |
-|---|---|---|---|
-| Frontend unit tests | Vitest 4.x | `vitest.config.ts` | `jsdom` |
-| Frontend component tests | Vitest 4.x | `vitest.component.config.ts` | `jsdom` |
-| Backend tests | pytest | `pytest.ini` | Host (no Docker for tests) |
+| Layer | Framework | Location | Files | Lines |
+|-------|-----------|----------|-------|-------|
+| Frontend unit/component | Vitest 4.x + jsdom | `frontend/tests/` | 19 `.test.ts` | 2,770 |
+| Backend unit | pytest | `backend/tests/` | 6 `.py` | 1,082 |
 
-### Test Coverage (19 frontend + 5 backend tests)
+### Test Organization
 
-**Frontend tests** (`frontend/tests/`):
-- `app.test.ts` — Root app integration
-- `index.test.ts` — Main page integration
-- `AudioPlayerPanel.test.ts` — Audio player panel
-- `ModelStatusIndicator.test.ts` — Model status indicator
-- `PanelSliding.test.ts` — Panel sliding animation
-- `SpeedSlider.test.ts` — Speed slider interaction
-- `ToastNotification.test.ts` — Toast rendering
-- `ToastShortcut.test.ts` — Toast keyboard shortcut
-- `useAudioModule.test.ts` — Audio module logic
-- `useHealthPoll.test.ts` — Health polling logic
-- `useInputValidation.test.ts` — Input validation
-- `usePanelToggle.test.ts` — Panel toggle
-- `useToast.test.ts` — Toast composable
-- `useTtsApi.test.ts` — TTS API composable
-- `useVoices.test.ts` — Voices composable
-- `VoiceSelector.test.ts` — Basic voice selector
-- `VoiceSelector.animation.test.ts` — Voice selector animations
-- `VoiceSelector.click.test.ts` — Voice selector interactions
-- `VoiceSelector.data-attrs.test.ts` — Voice selector data attributes
+- **Frontend**: 19 test files covering all 8 composables, 7 of 9 components, and the index page. Two test files per component (`VoiceSelector.test.ts`, `VoiceSelector.click.test.ts`, `VoiceSelector.animation.test.ts`, `VoiceSelector.data-attrs.test.ts`).
+- **Backend**: 6 test files covering all endpoints (`test_generate.py`, `test_generate_blob.py`, `test_health.py`, `test_history.py`, `test_voices.py`, `test_ffmpeg_fallback.py`).
 
-**Backend tests** (`backend/tests/`):
-- `test_generate.py` — Synthesis endpoint
-- `test_generate_blob.py` — Blob response
-- `test_health.py` — Health check endpoint
-- `test_history.py` — Audio history endpoint
-- `test_voices.py` — Voices listing
+### Test Setup
 
-### Test Conventions
+- **Frontend**: Two Vitest configs: `vitest.config.ts` (unit tests, setup: `tests/setup.ts`) and `vitest.component.config.ts` (component tests, setup: `tests/setup.component.ts`). Setup files manually stub auto-imports (`ref`, `computed`, `watch`, `onMounted`).
+- **Backend**: `pytest.ini` with `testpaths = tests`, `pythonpath = .`.
 
-- All test files live in `tests/` directories (never inline in source).
-- Frontend setup files mock Nuxt auto-imports (`ref`, `computed`, `watch`, `onMounted`).
-- Component test setup mocks URL APIs and `fetch`.
-- Backend tests run inside Docker (`./scripts/run-backend-tests.sh`); CI runs directly on host.
+### Test Doubles
+
+- **Frontend**: `mocks.ts` provides mock implementations. Tests use manual stubs for Vue auto-imports.
+- **Backend**: Tests run inside Docker with the full stack (including Coqui TTS library). No mocking of the TTS library itself.
 
 ---
 
 ## 12. Deployment Architecture
 
-### Production Topology
+### Deployment Topology
 
 ```
-                    Host Machine
-                    ┌──────────────┐
-                    │  Port 9001   │
-                    │  (frontend)  │
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │  Nginx       │
-                    │  (port 80)   │
-                    │  ┌─────────┐ │
-                    │  │ SPA     │ │  ← Static files (Nuxt build)
-                    │  │ Proxy   │ │  ← /api/ → backend:8000
-                    │  └─────────┘ │
-                    └──────┬───────┘
-                           │  Docker DNS
-                    ┌──────▼───────┐
-                    │  FastAPI     │
-                    │  (port 8000) │
-                    │  ┌─────────┐ │
-                    │  │ XTTS-v2 │ │  ← In-memory model
-                    │  └─────────┘ │
-                    └──────────────┘
+User Browser (Port 9001)
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Docker Host (Bridge Network: lughat-network)               │
+│                                                               │
+│  ┌─────────────────────┐         ┌────────────────────────┐ │
+│  │  Frontend Container  │         │  Backend Container     │ │
+│  │  (port 80)          │◄────────│  (port 8000)           │ │
+│  │                     │ HTTP  │                         │ │
+│  │  Nginx:             │ Proxy │  FastAPI:               │ │
+│  │  • SPA serve (/)    │──────►│  • /health              │ │
+│  │  • API proxy (/api) │       │  • /api/voices          │ │
+│  │  • Health proxy     │       │  • /api/generate        │ │
+│  │  • CORS headers     │       │  • /api/history         │ │
+│  │  • Cleanup endpoint │       │  • /api/cleanup         │ │
+│  └─────────────────────┘       │  • Static files         │ │
+│                                 │    /downloads           │ │
+│                                 │    /speaker_wavs        │ │
+│                                 └────────────────────────┘ │
+│                                                               │
+│  Volumes:                                                   │
+│  • tts-model-cache → /root/.local/share/tts (not used)     │
+│  • tts-audio-cache → /app/downloads (used)                 │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Container Configuration
+### Environment-Specific Adaptations
 
-| Container | Image | Host Port | Container Port | Volumes |
-|---|---|---|---|---|
-| `lughat-frontend` | `node:20-alpine` → `nginx:alpine` | 9001 | 80 | None (static build) |
-| `lughat-backend` | `python:3.12-slim` | 9000 | 8000 | `tts-model-cache`, `tts-audio-cache`, `speaker_wavs/` |
+- **Development**: `nuxt.config.ts` `nitro.devProxy` forwards `/api/` and `/health` to `localhost:9000`. Frontend runs on `pnpm dev` (port 3000).
+- **Production**: Nginx reverse proxy handles all routing. SPA prerendered as single HTML file.
 
-### Deployment Constraints
+### Containerization
 
-- **CPU-only inference** — No GPU support; generation takes several seconds per request.
-- **Model loading takes ~120 seconds** — First request after startup returns 503.
-- **TTS model ~2GB** — Re-downloaded on each container restart (model cache volume not used for persistence).
-- **Speaker WAV ≥ 0.33 seconds** — Minimum duration for XTTS-v2 voice cloning.
-- **30-minute synthesis timeout** — Nginx `proxy_read_timeout 1800s` for long TTS generation.
+- **Backend**: `python:3.12-slim` + ffmpeg + CPU-only PyTorch + Coqui TTS + torchcodec rebuilt from source.
+- **Frontend**: Two-stage build: `node:20-alpine` (builder) → `nginx:alpine` (production).
+
+### Runtime Dependencies
+
+- **Model loading**: ~120 seconds on CPU. Health check: 200 retries × 15s = ~50 minutes maximum wait.
+- **TTS generation**: Several seconds per request (CPU-only). Nginx timeout: 1800s (30 minutes).
 
 ---
 
 ## 13. Extension and Evolution Patterns
 
-### 13.1 Adding New Voices
+### Feature Addition Patterns
 
-1. Place a `.wav` file (≥ 0.33 seconds) in `backend/speaker_wavs/`.
-2. Restart the backend container (or the file is discovered dynamically on the next `/api/voices` call).
-3. The voice appears in `VoiceSelector` automatically.
+**Adding a new component:**
+1. Create `app/components/<Name>.vue` with `<script setup lang="ts">`.
+2. Use UnoCSS classes (no `<style scoped>` unless necessary).
+3. Import explicitly from `index.vue` (auto-imports available but explicit imports preferred for the main page).
 
-### 13.2 Adding New API Endpoints
-
-1. Define a Pydantic model for the request/response (in `app.py`).
-2. Add a route decorator (`@app.get()`, `@app.post()`).
-3. Implement the business logic (validate, process, return).
-4. Add frontend composable in `app/composables/` (following `use<Name>.ts` convention).
-5. Add frontend component (following `app/components/` convention, auto-imported).
-6. Add tests in `backend/tests/` and `frontend/tests/`.
-
-### 13.3 Adding New Components
-
-1. Create `app/components/<Name>.vue` using `<script setup lang="ts">`.
-2. Use Vue Composition API (`ref`, `computed`, `watch`, `onMounted`, `onUnmounted`).
-3. Style with UnoCSS atomic classes via `@apply` in `main.css`.
-4. Use auto-imported name in templates (no explicit `import` needed).
-5. Write tests in `frontend/tests/<Name>.test.ts`.
-
-### 13.4 Adding New Composables
-
+**Adding a new composable:**
 1. Create `app/composables/use<Name>.ts`.
-2. Return reactive state via `ref()` and `computed()`.
-3. Handle lifecycle in `onMounted()`/`onUnmounted()`.
-4. Write tests in `frontend/tests/use<Name>.test.ts`.
+2. Follow naming convention: `use<Name>()` returning reactive state.
+3. Export any interfaces needed by components.
 
-### 13.5 Adding New Services
+**Adding an endpoint to the backend:**
+1. Define Pydantic models (in `app.py`).
+2. Add route handler (`@app.get()` or `@app.post()`).
+3. Write tests (`backend/tests/test_<endpoint>.py`).
+4. Run quality gate: `./run-tests.sh`.
 
-To add a third service (e.g., a translation API):
+### Modification Patterns
 
-1. Create a new directory (e.g., `services/translation/`).
-2. Add a `Dockerfile` and `docker-compose.yml` service entry.
-3. Define API endpoints following the existing pattern.
-4. Update Nginx config to proxy to the new service.
-5. Add a frontend composable for API calls.
-6. Add CI workflow (`.github/workflows/<service>.yml`).
+- **Single-file backend**: All changes to `app.py` affect the entire application. Test changes carefully.
+- **Frontend components**: Each component is independent; modifying one component rarely affects others.
 
-### 13.6 Known Limitations
+### Integration Patterns
 
-- **No model persistence** — ~2GB model re-downloaded on restart.
-- **No audio cleanup** — Generated MP3s accumulate indefinitely.
-- **No authentication** — API is open (CORS allows all origins).
-- **No rate limiting** — No throttling on `/api/generate`.
-- **Single model** — Only XTTS-v2; no model switching.
-- **No streaming** — Full audio generated before response (no SSE/WebSocket).
+- **Adding a new voice**: Place a `.wav` file in `backend/speaker_wavs/`. It will be discovered automatically by `/api/voices`.
+- **Adding a new external service**: Update `nuxt.config.ts` (if frontend-facing) or `nginx.conf` (if proxying through Nginx).
 
 ---
 
-## 14. Architectural Decision Records
+## 14. Architectural Pattern Examples
 
-### ADR-001: Single-File Backend
+### Layer Separation Example
 
-**Context:** The backend API has 4 endpoints, 3 Pydantic models, and ~375 lines of code.
+```typescript
+// Frontend composable (separation of concerns)
+export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
+  const status = ref<'loading' | 'ready' | 'error'>('loading')
+  const modelLoaded = computed(() => status.value === 'ready')
+  // Polling logic with retry logic and auto-stop
+  return { status, modelLoaded }
+}
+```
 
-**Decision:** Keep all backend logic in a single `app.py` file.
+### Component Communication Example
 
-**Rationale:** The project has a small scope (one model, four endpoints). A single file reduces cognitive overhead for navigation and is easier to maintain for a small team.
+```vue
+<!-- index.vue orchestrates components and composables -->
+<GenerateButton
+  :isGenerating="isGenerating"
+  :modelStatus="modelStatus"
+  :disabled="!validationState.isValid"
+  @click="handleGenerate"
+/>
+```
 
-**Consequences:**
-- **Positive:** Easy to find and modify any endpoint. Simple deployment.
-- **Negative:** File grows linearly with features. Harder to test individual endpoints in isolation.
+### Extension Point Example
 
-### ADR-002: No Global State Management Library
-
-**Context:** The frontend needs to share state between components (toast messages, model status, voice list).
-
-**Decision:** Use Vue composables with module-level `ref()` instead of Vuex/Pinia.
-
-**Rationale:** The app is a single page with limited cross-component state. Composables provide sufficient sharing without the overhead of a state management library.
-
-**Consequences:**
-- **Positive:** No additional dependency. Simple mental model.
-- **Negative:** Debugging shared mutable state across components. No devtools integration.
-
-### ADR-003: Dynamic Voice Discovery
-
-**Context:** Voice presets need to be configurable without code changes.
-
-**Decision:** Discover voices at runtime by scanning the `speaker_wavs/` directory for `.wav` files.
-
-**Rationale:** Allows adding new voices by simply placing a WAV file in the directory. No database or configuration file needed.
-
-**Consequences:**
-- **Positive:** Zero-config voice addition. Flexible.
-- **Negative:** No validation of voice metadata (dialect, tag, icon). Voice file quality is the only quality gate.
-
-### ADR-004: In-Memory TTS Model
-
-**Context:** The TTS model (~2GB) needs to be available for all synthesis requests.
-
-**Decision:** Load the model once at startup into a global variable. Do not reload or cache.
-
-**Rationale:** Loading the model per-request would be prohibitively slow. An in-memory singleton is the simplest approach for a single-model server.
-
-**Consequences:**
-- **Positive:** Fastest possible inference (model already loaded). Simple code.
-- **Negative:** ~2GB memory usage. Model re-downloaded on every container restart.
-
-### ADR-005: File-Based Audio Persistence
-
-**Context:** Generated audio files need to persist across requests for the `/api/history` endpoint.
-
-**Decision:** Write generated MP3 files to a filesystem directory (`/app/downloads/`). List files by name to reconstruct metadata.
-
-**Rationale:** Simple approach with no database dependency. Filenames encode enough metadata (language, voice, timestamp) for listing.
-
-**Consequences:**
-- **Positive:** No database required. Persistent across restarts (via volume).
-- **Negative:** No cleanup mechanism. Metadata is incomplete (text is always empty string). Filenames must follow a strict naming convention.
-
-### ADR-006: Nginx as Reverse Proxy
-
-**Context:** The frontend SPA needs to serve static files and proxy API calls to the backend.
-
-**Decision:** Use Nginx as a reverse proxy in production. API calls (`/api/`, `/health`) are proxied to the backend container.
-
-**Rationale:** Nginx is lightweight, well-understood, and handles reverse proxying, static file serving, and SPA fallback natively.
-
-**Consequences:**
-- **Positive:** Single entry point (port 9001). No CORS issues (same origin).
-- **Negative:** Nginx configuration is a second source of truth (also in `nuxt.config.ts` for dev).
-
-### ADR-007: Health Polling Instead of WebSocket
-
-**Context:** The frontend needs to know when the TTS model is ready after page load.
-
-**Decision:** Poll `/health` every 2 seconds with a configurable retry limit (default: 10 retries = 20 seconds).
-
-**Rationale:** Simple, reliable, and works with any HTTP client. No WebSocket infrastructure needed.
-
-**Consequences:**
-- **Positive:** Simple implementation. Works with caching proxies.
-- **Negative:** 2-second delay before "Ready" state is detected. Extra HTTP requests during loading.
+```python
+# Backend: Adding a new voice requires only a .wav file
+# No code changes needed — discover_voices() scans speaker_wavs/
+```
 
 ---
 
 ## 15. Blueprint for New Development
 
-### 15.1 Development Workflow
+### Development Workflow
 
-**Adding a feature to the frontend:**
+**Frontend feature:**
+1. Create composable in `app/composables/use<Name>.ts`.
+2. Create component in `app/components/<Name>.vue`.
+3. Wire into `index.vue` (explicit imports).
+4. Write test in `frontend/tests/<Name>.test.ts`.
+5. Run quality gate: `./run-tests.sh`.
 
-```
-1. Create composable (app/composables/use<Feature>.ts)
-   - Export reactive state via ref()/computed()
-   - Handle lifecycle in onMounted()/onUnmounted()
-   - Write unit test (tests/use<Feature>.test.ts)
+**Backend feature:**
+1. Define Pydantic models (in `app.py`).
+2. Add route handler (`@app.get()` or `@app.post()`).
+3. Write tests (`backend/tests/test_<endpoint>.py`).
+4. Run quality gate: `./run-tests.sh`.
 
-2. Create component (app/components/<Component>.vue)
-   - Use <script setup lang="ts">
-   - Use UnoCSS atomic classes
-   - Style with @apply in main.css (if custom CSS needed)
-   - Write component test (tests/<Component>.test.ts)
-
-3. Integrate into index.vue
-   - Import via auto-import (no explicit import needed)
-   - Add to appropriate layout panel (desktop or mobile)
-   - Wire event handlers to composable methods
-
-4. Run quality gate: ./run-tests.sh
-   - Backend tests → Lint → Typecheck → Frontend tests
-```
-
-**Adding an endpoint to the backend:**
-
-```
-1. Define Pydantic models (in app.py)
-   - Request model with Field() constraints
-   - Response model (if returning JSON)
-
-2. Add route handler (in app.py)
-   - @app.get() or @app.post()
-   - Validate model readiness
-   - Implement business logic
-   - Return FileResponse or JSONResponse
-
-3. Write tests (backend/tests/test_<endpoint>.py)
-   - Test happy path
-   - Test error paths (400, 503, 500)
-
-4. Run quality gate: ./run-tests.sh
-```
-
-### 15.2 Implementation Templates
+### Implementation Templates
 
 **New composable template:**
 ```typescript
@@ -974,7 +811,7 @@ onUnmounted(() => { /* ... */ })
 </style>
 ```
 
-### 15.3 Common Pitfalls
+### Common Pitfalls
 
 | Pitfall | How to Avoid |
 |---|---|
@@ -987,14 +824,13 @@ onUnmounted(() => { /* ... */ })
 | Forgetting to handle RTL text direction | Set `dir="rtl"` on Arabic text elements |
 | Not cleaning up event listeners / observers | Always pair `onMounted` setup with `onUnmounted` cleanup |
 | Modifying exported symbols without running `lsp references` | Check all call sites before modifying exported APIs |
+| Assuming empty directories contain files | `app/plugins/` and `frontend/shared/types/` are empty — do not assume files exist there |
 
 ---
 
 ## 16. Architecture Governance
 
 ### Automated Quality Gates
-
-The project enforces architectural consistency through a single quality gate script:
 
 ```bash
 ./run-tests.sh
@@ -1024,6 +860,7 @@ repos:
 - **Contributing guidelines** (`.github/CONTRIBUTING.md`) — Development workflow.
 - **Security policy** (`.github/SECURITY.md`) — Vulnerability reporting.
 - **Issue templates** — Bug reports and feature requests.
+- **Blueprint** (`docs/architecture/Project_Architecture_Blueprint.md`) — This document.
 
 ### Blueprint Maintenance
 
@@ -1035,4 +872,37 @@ This blueprint should be regenerated when:
 
 ---
 
-*This blueprint was generated on 2026-08-01 from a full analysis of the Lughat Chat codebase (375-line backend, 750-line frontend, 9 components, 8 composables, 24 test files, 2 Docker services, 4 CI workflows).*
+## 17. Discrepancies: Documentation vs. Code
+
+The following items were found where the existing documentation (including the 2026-08-01 blueprint and C4 diagrams) disagrees with the actual codebase:
+
+| # | Area | Claimed in Docs | Actual in Code | Severity |
+|---|------|-----------------|----------------|----------|
+| 1 | Backend file size | "375-line backend" (2026-08-01 blueprint) | `app.py` is **593 lines** (2026-08-02) | **High** — Blueprint footer statistics are stale |
+| 2 | Frontend components count (C4 docs) | 10 components listed (includes `PanelToggle.vue`) | 9 components in `app/components/` (no `PanelToggle.vue`) | **Medium** — C4 components-spa.md references a non-existent component |
+| 3 | Frontend components count (2026-08-01 blueprint) | "9 components" | 9 components — **matches** | None |
+| 4 | Frontend composables count (C4 docs) | 7 composables listed | 8 composables in `app/composables/` (missing `useScrollReveal.ts`) | **Medium** — C4 components-spa.md omits `useScrollReveal` |
+| 5 | Frontend composables count (2026-08-01 blueprint) | "8 composables" | 8 composables — **matches** | None |
+| 6 | Test file count (2026-08-01 blueprint) | "24 test files" | 25 test files (19 frontend `.test.ts` + 6 backend `.py`) | **Low** — Off by 1 (new test added since) |
+| 7 | `PanelToggle.vue` component | Listed in C4 components-spa.md (line 33: `"PanelToggle.vue"`) | Does not exist in `app/components/` | **Medium** — Dead reference in documentation |
+| 8 | `useScrollReveal` composable | Not listed in C4 components-spa.md (only 7 listed) | Exists at `app/composables/useScrollReveal.ts` (74 lines) | **Medium** — Omitted from C4 documentation |
+| 9 | `/api/cleanup` endpoint | Not mentioned in C4 components-backend.md or 2026-08-01 blueprint | Exists at `app.py:559-593` (POST endpoint, 35 lines) | **High** — New endpoint not documented |
+| 10 | `?reload=1` on `/health` | Not mentioned in C4 diagrams or 2026-08-01 blueprint | Implemented at `app.py:269-320` (force model reload) | **High** — Feature undocumented |
+| 11 | `generate_speaker_wavs.py` | Listed in 2026-08-01 blueprint as "unused in production" | Exists at `backend/generate_speaker_wavs.py` (96 lines) — generates speaker WAVs from TTS or creates silent fallback | **Low** — Accurate characterization |
+| 12 | Empty directories | Not mentioned | `app/plugins/` (empty), `frontend/shared/types/` (empty) | **Low** — Dead directories in filesystem |
+| 13 | `SynthesisResponse` usage | "Defined but unused" (C4 + 2026-08-01 blueprint) | Still defined but unused — **matches** | None |
+| 14 | `tts-model-cache` volume effectiveness | "Not used" (C4 + 2026-08-01 blueprint) | Still not used — env var `TTS_MODEL_CACHE=/app/.cache/tts` overrides volume mount at `/root/.local/share/tts` — **matches** | None |
+| 15 | `frontend/shared/types/` directory | Not referenced in any documentation | Directory exists but is empty — **undocumented** | **Low** — Empty directory in filesystem |
+
+### Key Changes Since 2026-08-01 Blueprint
+
+1. **New endpoint**: `/api/cleanup` (POST) — removes files older than 24 hours.
+2. **New feature on `/health`**: `?reload=1` query parameter to force model reload.
+3. **New composable**: `useScrollReveal.ts` (74 lines) — scroll-entry fade-up animations via IntersectionObserver.
+4. **Backend grew from ~375 to 593 lines** — likely due to the two new endpoints/features.
+5. **Test count increased from 24 to 25** — new test file added.
+6. **`PanelToggle.vue` referenced in C4 but never existed** — the C4 documentation was generated from a hypothetical component list, not the actual filesystem.
+
+---
+
+*This blueprint was generated on 2026-08-02 from a full analysis of the Lughat Chat codebase (593-line backend, 750-line frontend, 9 components, 8 composables, 25 test files, 2 Docker services, 3 CI workflows, 5 API endpoints).*
