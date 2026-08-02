@@ -106,6 +106,36 @@ describe('useTtsApi', () => {
       // Assert
       expect(result).toBeInstanceOf(Blob)
     })
+
+    it('When seed is provided then includes it in POST body', async () => {
+      // Arrange
+      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob)
+      }))
+      const { synthesize } = useTtsApi()
+      // Act
+      await synthesize({ text: 'Hello', seed: 123 })
+      // Assert
+      const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
+      expect(body.seed).toBe(123)
+    })
+
+    it('When seed is not provided then omits it from POST body', async () => {
+      // Arrange
+      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob)
+      }))
+      const { synthesize } = useTtsApi()
+      // Act
+      await synthesize({ text: 'Hello' })
+      // Assert
+      const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
+      expect(body.seed).toBeUndefined()
+    })
   })
 
   describe('#sanity error handling', () => {

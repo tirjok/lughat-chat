@@ -39,6 +39,28 @@ describe('useAudioModule', () => {
       // Assert
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('http://mock.url/blob')
     })
+
+    it('When loading multiple blobs rapidly then revokes all previous object URLs', async () => {
+      // Arrange
+      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
+      let urlCounter = 0
+      const coSpy = vi.spyOn(global.URL, 'createObjectURL').mockImplementation(() => {
+        return `http://mock.url/blob-${++urlCounter}`
+      })
+      const roSpy = vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(() => {})
+      const module = useAudioModule()
+      module.load(mockBlob)
+      module.load(mockBlob)
+      module.load(mockBlob)
+      // Act
+      const mockBlob4 = new Blob(['dummy4'], { type: 'audio/mpeg' })
+      module.load(mockBlob4)
+      // Assert: revoke was called once per prior load (3 loads, 3 revokes)
+      expect(roSpy).toHaveBeenCalledTimes(3)
+      // Cleanup: restore mocks even if assertion fails
+      coSpy.mockRestore()
+      roSpy.mockRestore()
+    })
   })
 
   describe('#sanity play', () => {
@@ -260,6 +282,29 @@ describe('useAudioModule', () => {
       module.dispose()
       // Assert
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('http://mock.url/blob')
+    })
+
+    it('When disposed after download then revokes the download URL not yet cleaned by timeout', async () => {
+      // Arrange
+      const mockBlob = new Blob(['arabic-speech'], { type: 'audio/mpeg' })
+      let urlCounter = 0
+      const coSpy = vi.spyOn(global.URL, 'createObjectURL').mockImplementation(() => {
+        return `blob:http://localhost/${++urlCounter}`
+      })
+      const roSpy = vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(() => {})
+      const module = useAudioModule()
+      module.load(mockBlob)
+      const mainUrl = `blob:http://localhost/${urlCounter}`
+      // Act: download creates a second URL; dispose before timeout fires
+      module.download('recording.mp3')
+      const downloadUrl = `blob:http://localhost/${urlCounter}`
+      module.dispose()
+      // Assert: both URLs were revoked (main + download, before timeout fires)
+      expect(roSpy).toHaveBeenCalledWith(mainUrl)
+      expect(roSpy).toHaveBeenCalledWith(downloadUrl)
+      // Cleanup
+      coSpy.mockRestore()
+      roSpy.mockRestore()
     })
 
     it('When audio is loaded then clears audioRef src', async () => {

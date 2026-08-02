@@ -4,9 +4,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
+import json
 import os
+import time
 import uuid
-import shutil
 import subprocess
 import threading
 import wave
@@ -135,7 +136,8 @@ for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
     except OSError:
         pass  # Read-only filesystem — acceptable in test/local environments
 
-# Global TTS model instance and state
+# Global TTS model instance and state (protected by _model_lock for atomicity)
+_model_lock = threading.Lock()
 tts_model = None
 model_load_status = "loading"  # loading | ready | error
 
@@ -160,7 +162,8 @@ async def lifespan(app: FastAPI):
         for attempt in range(MAX_LOAD_RETRIES):
             # Check hard timeout
             if _time.monotonic() - load_start_time >= LOAD_HARD_TIMEOUT:
-                model_load_status = "error"
+                with _model_lock:
+                    model_load_status = "error"
                 print(
                     f"Model loading abandoned: hard timeout ({LOAD_HARD_TIMEOUT}s) exceeded"
                 )
@@ -168,27 +171,32 @@ async def lifespan(app: FastAPI):
 
             try:
                 # Skip loading if already mocked (e.g. in tests)
-                if tts_model is not None:
-                    print("TTS model already loaded — skipping")
-                    return
+                with _model_lock:
+                    if tts_model is not None:
+                        print("TTS model already loaded — skipping")
+                        return
                 if TTS is None:
                     print(
                         "TTS library not available (torch not installed) — skipping model load"
                     )
-                    model_load_status = "error"
-                    tts_model = None
+                    with _model_lock:
+                        model_load_status = "error"
+                        tts_model = None
                     return
                 os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-                tts_model = TTS("tts_models/multilingual/xtts_v2")
-                model_load_status = "ready"
+                loaded_model = TTS("tts_models/multilingual/xtts_v2")
+                with _model_lock:
+                    tts_model = loaded_model
+                    model_load_status = "ready"
                 print("XTTS-v2 model loaded successfully!")
                 return
             except Exception as e:
-                model_load_status = "error"
+                with _model_lock:
+                    model_load_status = "error"
+                    tts_model = None
                 print(
                     f"Error loading TTS model (attempt {attempt + 1}/{MAX_LOAD_RETRIES}): {e}"
                 )
-                tts_model = None
                 if attempt < MAX_LOAD_RETRIES - 1:
                     delay = LOAD_RETRY_DELAYS[attempt]
                     print(f"Retrying in {delay}s...")
@@ -265,15 +273,22 @@ async def health(reload: Optional[str] = Query(None)):
     """
     global tts_model, model_load_status
 
-    if reload == "1" and model_load_status == "error":
-        # Trigger a reload attempt
-        print("Model reload requested via ?reload=1")
-        model_load_status = "loading"
-        tts_model = None
+    if reload == "1":
+        with _model_lock:
+            if model_load_status == "error":
+                model_load_status = "loading"
+                tts_model = None
+            else:
+                return {
+                    "status": model_load_status,
+                    "model_loaded": tts_model is not None
+                    and model_load_status == "ready",
+                }
         # Start a new background thread to reload
         import time as _reload_time
 
         _reload_start = _reload_time.monotonic()
+        print("Model reload requested via ?reload=1")
 
         def reload_model():
             global tts_model, model_load_status
@@ -283,26 +298,31 @@ async def health(reload: Optional[str] = Query(None)):
                     print(
                         "TTS library not available (torch not installed) — skipping model load"
                     )
-                    model_load_status = "error"
+                    with _model_lock:
+                        model_load_status = "error"
                     return
                 os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-                tts_model = TTS("tts_models/multilingual/xtts_v2")
-                model_load_status = "ready"
+                loaded_model = TTS("tts_models/multilingual/xtts_v2")
+                with _model_lock:
+                    tts_model = loaded_model
+                    model_load_status = "ready"
                 print("XTTS-v2 model reloaded successfully!")
             except Exception as e:
-                model_load_status = "error"
+                with _model_lock:
+                    model_load_status = "error"
+                    tts_model = None
                 print(f"Error reloading TTS model: {e}")
-                tts_model = None
 
         reload_thread = threading.Thread(target=reload_model, daemon=True)
         reload_thread.start()
         # Brief pause to let the thread start before responding
         _reload_time.sleep(0.1)
 
-    return {
-        "status": model_load_status,
-        "model_loaded": tts_model is not None and model_load_status == "ready",
-    }
+    with _model_lock:
+        return {
+            "status": model_load_status,
+            "model_loaded": tts_model is not None and model_load_status == "ready",
+        }
 
 
 @app.get("/api/voices")
@@ -314,7 +334,10 @@ async def list_voices():
 @app.post("/api/generate")
 async def generate_speech(request: SynthesisRequest):
     """Generate speech from text and return MP3 audio blob."""
-    if tts_model is None or model_load_status != "ready":
+    with _model_lock:
+        model = tts_model
+        status = model_load_status
+    if model is None or status != "ready":
         raise HTTPException(status_code=503, detail="TTS model not ready")
 
     try:
@@ -362,7 +385,7 @@ async def generate_speech(request: SynthesisRequest):
             except ImportError:
                 pass  # torch not available (e.g. in tests) — skip seeding
 
-            tts_model.tts_to_file(
+            model.tts_to_file(
                 text=request.text,
                 speaker_wav=speaker_wav,
                 language=request.language,
@@ -393,15 +416,39 @@ async def generate_speech(request: SynthesisRequest):
                     capture_output=True,
                 )
             except subprocess.CalledProcessError as e:
+                # Do NOT fall back to serving WAV as MP3 — browsers' <audio>
+                # elements refuse to play PCM WAV data labeled as audio/mpeg.
+                # Fail the request so the client knows something went wrong.
                 print(f"FFmpeg error: {e.stderr}")
-                # Fallback: just use WAV if MP3 conversion fails
-                shutil.copy2(wav_path, mp3_path)
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to encode audio — FFmpeg conversion error",
+                )
 
             # Clean up intermediate WAV file — it's 5–10× larger than the MP3
             try:
                 os.remove(wav_path)
             except OSError:
                 pass  # Already gone (e.g. race condition) — ignore
+
+            # Write metadata sidecar for history browsing
+            meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
+            try:
+                with open(meta_path, "w") as f:
+                    json.dump(
+                        {
+                            "text": request.text,
+                            "language": request.language,
+                            "voice": voice,
+                            "speed": request.speed,
+                            "pitch": request.pitch,
+                            "seed": seed,
+                            "created_at": str(int(time.time())),
+                        },
+                        f,
+                    )
+            except OSError:
+                pass  # Non-fatal: history will still work with filename parsing
 
             # Return MP3 file as binary response
             return FileResponse(
@@ -439,7 +486,30 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                 filepath = os.path.join(AUDIO_DIR, filename)
                 stat = os.stat(filepath)
 
-                # Parse metadata from filename if possible
+                # Try to read metadata from sidecar JSON first
+                meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
+                if os.path.exists(meta_path):
+                    try:
+                        with open(meta_path) as f:
+                            meta = json.load(f)
+                        items.append(
+                            {
+                                "filename": filename,
+                                "text": meta.get("text", ""),
+                                "language": meta.get("language", "unknown"),
+                                "voice": meta.get("voice", "default"),
+                                "speed": meta.get("speed", 1.0),
+                                "pitch": meta.get("pitch", 0.0),
+                                "created_at": meta.get(
+                                    "created_at", str(int(stat.st_mtime))
+                                ),
+                            }
+                        )
+                        continue
+                    except (json.JSONDecodeError, OSError):
+                        pass  # Fall through to filename parsing
+
+                # Fallback: parse metadata from filename
                 parts = filename.split("_")
                 language = parts[0] if len(parts) > 0 else "unknown"
                 voice = parts[1] if len(parts) > 1 else "default"
@@ -447,7 +517,7 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                 items.append(
                     {
                         "filename": filename,
-                        "text": "",  # We don't store the original text in this simple version
+                        "text": "",
                         "language": language,
                         "voice": voice,
                         "speed": 1.0,
@@ -458,9 +528,7 @@ async def get_history(cleanup: Optional[str] = Query(None)):
 
         # Trigger cleanup if requested (non-blocking, errors don't affect response)
         if cleanup == "true":
-            import time as _hist_time
-
-            now = _hist_time.time()
+            now = time.time()
             twenty_four_hours = 24 * 60 * 60
             try:
                 for filename in os.listdir(AUDIO_DIR):
@@ -470,6 +538,10 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                             stat = os.stat(filepath)
                             if now - stat.st_mtime > twenty_four_hours:
                                 os.remove(filepath)
+                                # Also remove the sidecar JSON if it exists
+                                meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
+                                if os.path.exists(meta_path):
+                                    os.remove(meta_path)
                                 print(
                                     f"Cleanup (history): removed old file: {filename}"
                                 )
@@ -488,12 +560,11 @@ async def get_history(cleanup: Optional[str] = Query(None)):
 async def cleanup_old_files():
     """Remove generated audio files older than 24 hours.
 
-    Cleans up both .mp3 (generated) and .wav (orphaned intermediate) files.
+    Cleans up both .mp3 (generated) and .wav (orphaned intermediate) files,
+    plus any associated .json metadata sidecars.
     Errors during cleanup are logged but don't fail the endpoint.
     """
-    import time as _cleanup_time
-
-    now = _cleanup_time.time()
+    now = time.time()
     twenty_four_hours = 24 * 60 * 60  # 86400 seconds
     removed_count = 0
 
@@ -507,6 +578,10 @@ async def cleanup_old_files():
                     if age > twenty_four_hours:
                         os.remove(filepath)
                         removed_count += 1
+                        # Also remove the sidecar JSON if it exists
+                        meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
+                        if os.path.exists(meta_path):
+                            os.remove(meta_path)
                         print(
                             f"Cleaned up old file: {filename} (age: {age / 3600:.1f}h)"
                         )

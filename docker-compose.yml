@@ -9,7 +9,7 @@ services:
       - "9000:8000"  # Host port 9000 → container port 8000
     volumes:
       # Persist model cache across restarts (avoids re-downloading)
-      - tts-model-cache:/root/.local/share/tts
+      - tts-model-cache:/app/.cache/tts
       # Persist generated audio files
       - tts-audio-cache:/app/downloads
       # Mount speaker_wavs so new .wav files are visible without rebuild

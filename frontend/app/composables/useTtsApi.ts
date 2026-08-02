@@ -4,6 +4,7 @@ export interface SynthesisRequest {
   text: string
   speaker?: string
   speed?: number
+  seed?: number
 }
 
 export interface SynthesisResponse {
@@ -38,6 +39,7 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
           text: request.text,
           speaker: request.speaker,
           speed: request.speed || 1.0,
+          seed: request.seed,
           language: 'ar'
         })
       })
