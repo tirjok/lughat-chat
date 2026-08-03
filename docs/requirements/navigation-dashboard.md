@@ -11,7 +11,7 @@
 LughatChat evolves from a **single-page TTS Studio** into a **multi-page Language Learning Platform**. The existing TTS Studio becomes one tool inside a larger ecosystem with:
 
 - **Dashboard** (`/dashboard`) — course overview, progress tracking
-- **Lesson Pages** (`/level/{level}/{lesson_id}`) — structured learning content with TTS integration
+- **Dashboard sub-routes** (`/dashboard/level/{level}` and `/dashboard/level/{level}/{lesson}`) — structured learning content with TTS integration
 - **TTS Studio** (`/`) — stays at root, unchanged functionality, adapted layout
 
 ---
@@ -23,7 +23,7 @@ LughatChat evolves from a **single-page TTS Studio** into a **multi-page Languag
 | D1 | App identity: "Language Learning Platform" (not "TTS app") | User direction — TTS becomes a tool inside the platform |
 | D2 | TTS Studio stays at `/` | Existing user journeys preserved, dashboard is secondary |
 | D3 | Dashboard at `/dashboard` | New Nuxt page file |
-| D4 | Lesson pages at `/level/{level}/{lesson_id}` (e.g., `/level/a1/1`) | Dynamic Nuxt route |
+| D4 | Lesson pages at `/dashboard/level/{level}` and `/dashboard/level/{level}/{lesson}` (e.g., `/dashboard/level/a1/1`) | Dynamic Nuxt route |
 | D5 | Shared layout with navbar in `app.vue` | Consistent navigation across all pages |
 | D6 | Full theme rebrand (dark → light, green → teal/gold) | Prototype direction |
 | D7 | Page title pattern: `LughatChat - [page-name]` | Nuxt 4 standard (`useHead`/`useSeoMeta` per-page merging) |
@@ -44,7 +44,7 @@ LughatChat evolves from a **single-page TTS Studio** into a **multi-page Languag
 3. **TTS Studio Layout Adaptation** — panels shrink, mobile handled
 4. **Full Theme Rebrand** — colors, fonts, background, shadows
 5. **Dashboard Page** (`/dashboard`) — basic shell (content deferred)
-6. **Lesson Page Shell** (`/level/[level]/[lesson_id]`) — basic shell (content deferred)
+6. **Lesson Page Shell** (`/dashboard/level/[level]/[lesson].vue`) — basic shell (content deferred)
 7. **Per-Page SEO Titles** — `useHead`/`useSeoMeta` per page
 
 ### 3.2 Deferred (Future Phases)
@@ -81,7 +81,7 @@ LughatChat evolves from a **single-page TTS Studio** into a **multi-page Languag
 |---|---|---|
 | Home | `/` | TTS Studio (default landing) |
 | Dashboard | `/dashboard` | Dashboard |
-| Lessons | `/dashboard` | My Courses (or `/dashboard` sub-route) |
+| Lessons | `/dashboard/level/{level}` | My Courses (dashboard sub-route) |
 
 #### 4.1.4 Active State
 
@@ -265,7 +265,8 @@ Nuxt 4 merges root + page-level titles with ` - ` separator.
 |---|---|---|
 | TTS Studio | `/` | `TTS Studio` |
 | Dashboard | `/dashboard` | `Dashboard` |
-| Lesson | `/level/{level}/{lesson_id}` | `{lesson title}` (e.g., `The Salutations`) |
+| Dashboard by Level | `/dashboard/level/{level}` | `Dashboard — Level {level}` |
+| Lesson | `/dashboard/level/{level}/{lesson}` | `{lesson title}` (e.g., `The Salutations`) |
 
 ### R-7: Orphan File Cleanup on Navigation
 
@@ -301,8 +302,8 @@ Nuxt 4 merges root + page-level titles with ` - ` separator.
 
 ### R-9: Lesson Page Shell
 
-**Route:** `/level/{level}/{lesson_id}`
-**File:** `app/pages/level/[level]/[lesson_id].vue` (dynamic route)
+**Route:** `/dashboard/level/{level}/{lesson}`
+**File:** `app/pages/dashboard/level/[level]/[lesson].vue` (dynamic route)
 
 **Content (deferred, but shell required):**
 - Breadcrumbs: Dashboard → Level {level} → Lesson {id}
@@ -389,7 +390,7 @@ Components that reference removed theme tokens (`studio-*`, `sunrise-*`):
 | `app/components/GlobalNavbar.vue` | Shared navigation bar (top bar + progress) |
 | `app/components/StickyAudioBar.vue` | Sticky bottom audio player (from prototype) |
 | `app/pages/dashboard.vue` | Dashboard page shell |
-| `app/pages/level/[level]/[lesson_id].vue` | Lesson page shell (dynamic route) |
+| `app/pages/dashboard/level/[level]/[lesson].vue` | Lesson page shell (dynamic route) |
 
 ### Modified Files
 
@@ -421,7 +422,7 @@ Components that reference removed theme tokens (`studio-*`, `sunrise-*`):
 
 ## 6. Acceptance Criteria
 
-- [ ] Navbar renders consistently across `/`, `/dashboard`, `/level/{level}/{lesson_id}`
+- [ ] Navbar renders consistently across `/`, `/dashboard`, `/dashboard/level/{level}`, `/dashboard/level/{level}/{lesson}`
 - [ ] TTS Studio at `/` functions identically (synthesis, playback, voice selection, mobile divider)
 - [ ] Panels shrink to `calc(100vh - 60px)` on desktop
 - [ ] Mobile navbar collapses appropriately (< 768px) with touch targets ≥ 44px
@@ -430,7 +431,7 @@ Components that reference removed theme tokens (`studio-*`, `sunrise-*`):
 - [ ] Per-page titles render: "LughatChat - TTS Studio", "LughatChat - Dashboard", etc.
 - [ ] Orphan cleanup confirmation dialog appears when navigating away from active synthesis
 - [ ] Dashboard page accessible at `/dashboard` (shell with placeholder content)
-- [ ] Lesson page accessible at `/level/a1/1` (shell with placeholder content)
+- [ ] Lesson page accessible at `/dashboard/level/a1/1` (shell with placeholder content)
 - [ ] Dark mode preserved for all pages (`.dark:` variants)
 - [ ] `./run-tests.sh` passes (backend tests, lint, typecheck, frontend tests)
 - [ ] Zero existing tests modified, weakened, or deleted
