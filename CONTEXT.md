@@ -14,12 +14,32 @@
 └──────────┘     │ (port 80)   │     │(port 8000)│
                  └─────────────┘     └──────────┘
                                        Coqui XTTS-v2
+                                       SQLite (lessons + progress)
 ```
 
 - Frontend: Nuxt 4.4.5 + Vue 3 + UnoCSS 66.7.2 + `@vueuse/core` — served on port 80 via Nginx.
 - Backend: FastAPI 0.115.6 + uvicorn 0.34.0 + Coqui TTS 0.27.5 — port 8000 (container), 9000 (host).
 - TTS model: `tts_models/multilingual/xtts_v2` (multilingual, Arabic-focused).
-- Fonts: Google Fonts — "Inter" (UI) + "Cairo" (Arabic). Theme: green primary, slate neutral (`app/app.config.ts`).
+- Fonts: Google Fonts — "Inter" (UI) + "Cairo" (Arabic). Theme: under full rebrand (OQ-3).
+- App identity: Language Learning Platform (was "Arabic TTS web app"). TTS is a tool within the platform.
+- SQLite: lesson data + progress tracking for single anonymous user. Schema TBD (OQ-8).
+
+---
+
+## Glossary
+
+| Term | Definition |
+|------|-----------|
+| Language Learning Platform | The app's identity — Arabic learning with integrated TTS. Supersedes the previous "Arabic TTS web app" identity. |
+| TTS Studio | The original two-panel page (`/`): free-form text input + audio generation/playback. Moved from root concept to one page among many. |
+| Dashboard | The learning content catalog (`/dashboard`): displays CEFR levels (A1, A2, B1, B2...) with lesson lists, progress, and completion status. |
+| Lesson Page | Dynamic route (`/level/{level}/{lesson_id}`): displays lesson content (dialogues, vocabulary, grammar, activities) from JSON files. |
+| Shared Layout | `app.vue` acts as a layout shell with a shared navbar. All pages include the navbar. |
+| Single Anonymous User | No authentication. Progress is tracked per-device via backend SQLite. |
+| Lesson Content | JSON files containing structured Arabic learning material: sections (dialogue, vocabulary, grammar) and activities (listen-translate, role-play, etc.). Stored location TBD (OQ-5). |
+| Lesson Progress | Per-lesson completion state (`completed: true/false`, `progress: 0-100`). Stored in backend SQLite. |
+| Theme | Under full rebrand (D6). Current: green primary, slate neutral. New color TBD (OQ-3). |
+| Page Title | Pattern: `LughatChat - [page-name]` (e.g., "LughatChat - Playground", "LughatChat - Dashboard"). Mechanism TBD (OQ-4). |
 
 ---
 
@@ -28,9 +48,12 @@
 ```
 app/
 ├── app.config.ts          # UI theme config
-├── app.vue                # Root component
+├── app.vue                # Layout shell (shared navbar + NuxtPage)
 ├── assets/css/main.css    # Global styles via UnoCSS @apply (dark theme, scrollbar, safe-area)
-├── pages/index.vue        # Full-page TTS Studio (two-panel layout)
+├── pages/
+│   ├── index.vue          # TTS Studio (/) — two-panel layout
+│   ├── dashboard.vue      # Dashboard (/dashboard) — learning catalog
+│   └── level/[level]/[lesson_id].vue  # Lesson page (/level/a1/1)
 ├── components/            # 9 Vue components (list dir for current set)
 └── composables/           # 8 composables (list dir for current set)
 ```
@@ -67,6 +90,9 @@ btn-generate (loading state), audio/error/footer, spinner/fade/slide-up animatio
 - `pytest.ini` — testpaths: tests, pythonpath: .
 - Speaker references: `backend/speaker_wavs/*.wav` — dynamically discovered (≥ 0.33s each,
   XTTS-v2 minimum). Current: `KSA Hamed - Male.wav`, `KSA Zariyah - Female.wav`.
+- SQLite database: lesson data + progress tracking. Schema TBD (OQ-8).
+  New API endpoints required: `GET /api/levels`, `GET /api/lessons`, `GET /api/lessons/{id}`,
+  `POST /api/progress` (OQ-9).
 
 ### Model Loading
 
@@ -150,6 +176,9 @@ Backend: `HTTPException` with descriptive `detail`; CORS is `*` (dev-only — re
 6. Only `ar` and `en` accepted; other languages rejected.
 7. Seed defaults to 42 — outputs are deterministic unless overridden.
 8. Host ports are 9000/9001, not 8000/80. Local dev proxies to localhost:9000.
+9. Navigating away from TTS Studio during synthesis triggers `onUnmounted` — `useHealthPoll` stops,
+   `useAudioModule` disposes. In-flight synthesis request behavior TBD (OQ-1).
+10. Shared layout navbar eats viewport space. TTS Studio currently uses `100vh` — layout adaptation TBD (OQ-2).
 
 ---
 
