@@ -72,17 +72,6 @@ The backend's single `_model_lock` doesn't care about concurrent health checks, 
 - **ADR-001**: Reality Checker RC-2 — "4 instances (index.vue, ModelStatusIndicator, MobileStatusIndicator, GlobalNavbar)" — High severity
 - **WORKFLOW-global-navbar-navigation.md** Step 11: "share state via composable singleton or provide `baseUrl` option to skip re-polling"
 
-## Implementation Notes
-
-The spec does not mandate a specific singleton pattern. Preferred approach:
-
-1. **Module-level singleton** (simplest, recommended): Use a module-scoped variable inside `useHealthPoll.ts`. Nuxt's module system guarantees exactly one instantiation per module load. The composable just reads/writes this variable.
-
-2. **Reference-counted** (if explicit cleanup is desired): Track call count; start interval on first call, stop on last unmount. More code, same behavior.
-
-3. **NOT recommended**: WeakRef pool, custom injection tokens, or plugin-based approaches — these add complexity without functional benefit for this use case.
-
-**Key invariant:** Exactly ONE `setInterval` fires, regardless of how many components call `useHealthPoll()`.
 ---
 
 ## Files
