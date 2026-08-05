@@ -53,6 +53,18 @@ The spec lists 4 failure modes:
 - Run `grep -rn "studio-\|sunrise-" frontend/app/` — **zero matches** expected (excluding comments that document the migration)
 - If any matches found: **abort**, fix the remaining references, re-audit
 - The grep audit must be run **after** the migration is complete — it is the pass/fail gate
+  **Exempted comments (must reference `ISSUE-014` by number):**
+- `// TODO: migrated from studio-900 (see ISSUE-014)` — one-time migration note, max one per file
+- `<!-- Migrated: sunrise-orange → primary-500 (ISSUE-014) -->` — one-time migration note, max one per file
+- `/* studio-800 was replaced with stone-800 (ISSUE-014) */` — one-time migration note, max one per file
+- All exempted comments MUST be removed in a follow-up cleanup (tracked as a sub-task)
+- Non-exempted matches: **abort**, fix, re-audit
+
+**Grep pass command (filter out exempted comments):**
+```bash
+grep -rn "studio-\|sunrise-" frontend/app/ | grep -v "ISSUE-014" | grep -v "TODO: migrated from" | grep -v "Migrated:" | grep -v "was replaced"
+```
+If the filtered output is empty, the audit passes.
 
 ### AC-2: All new tokens generate correct CSS
 - `bg-primary-500` generates `#14b8a6` (teal)
