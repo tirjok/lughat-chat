@@ -7,12 +7,16 @@ repos:
         args: [--fix, --show-fixes]
       - id: ruff-format
 
-  # ── Full check (lint + typecheck + tests) ───────────
+  # ── Full check (backend tests via Docker only) ─────────
+  # Frontend lint/typecheck/tests require host node/pnpm.
+  # This project is Docker-first — no host Node.js.
+  # Frontend quality checks run via `./run-tests.sh` manually
+  # or in CI, not in pre-commit hooks.
   - repo: local
     hooks:
-      - id: full-check
-        name: full pre-commit check
-        entry: bash ./run-tests.sh
+      - id: backend-tests
+        name: backend tests (Docker)
+        entry: bash ./scripts/run-backend-tests.sh
         language: system
         pass_filenames: false
         always_run: true

@@ -24,13 +24,13 @@ The multi-page platform needs a shared layout wrapper that includes the `GlobalN
 - `app.vue` wraps `<NuxtPage />` inside a layout that includes `<GlobalNavbar />`:
   ```vue
   <template>
-    <div class="min-h-screen bg-stone-50 dark:bg-stone-900">
+    <div class="min-h-screen">
       <GlobalNavbar />
       <NuxtPage />
     </div>
   </template>
   ```
-- Uses UnoCSS utility classes for background (`bg-stone-50` light / `bg-stone-900` dark)
+  **Note:** Background colors are handled by `main.css` (see ISSUE-015). This wrapper sets `min-h-screen` only — it does not set background classes to avoid redundancy with the global CSS layer.
 - `GlobalNavbar` renders above `<NuxtPage />` (not inside it)
 
 ### AC-2: SEO title inheritance
