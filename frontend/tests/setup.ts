@@ -57,7 +57,9 @@ const mountedCallbacks: (() => void)[] = []
 Object.assign(globalThis, {
   onMounted: vi.fn((cb: () => void) => mountedCallbacks.push(cb)),
   ref: vi.fn((init: unknown) => ({ value: init })),
-  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } }))
+  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } })),
+  useRoute: vi.fn(() => ({ path: '/', fullPath: '/', params: {}, query: {}, hash: '', name: undefined, matched: [], meta: {}, redirectedFrom: undefined })),
+  useNuxtApp: vi.fn(() => ({ route: { path: '/', fullPath: '/', params: {}, query: {}, hash: '', name: undefined, matched: [], meta: {}, redirectedFrom: undefined } }))
 })
 
 // ─── Re-export mock factories for component tests ───────────────────
