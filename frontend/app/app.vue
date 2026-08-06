@@ -8,17 +8,14 @@ useHead({
   ]
 })
 
-const title = 'Lughat Chat - Premium Audio Studio'
-const description = 'Arabic Text-to-Speech Studio - Professional TTS with XTTS-v2'
-
 useSeoMeta({
-  title,
-  description
+  title: 'LughatChat'
 })
 </script>
 
 <template>
-  <div>
+  <div class="min-h-screen bg-stone-50 dark:bg-stone-900">
+    <GlobalNavbar />
     <NuxtPage />
   </div>
 </template>

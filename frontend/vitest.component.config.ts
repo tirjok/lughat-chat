@@ -7,6 +7,6 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.component.ts'],
-    exclude: ['node_modules/**', 'tests/useHealthPoll.test.ts']
+    include: ['tests/**/*.test.{ts,tsx}']
   }
 })

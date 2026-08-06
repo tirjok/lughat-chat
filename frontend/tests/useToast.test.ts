@@ -1,6 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useToast, showToast } from '../app/composables/useToast'
 
+// Suppress Vue warning: onMounted called outside component context.
+// These unit tests call useToast() directly without mount(), which triggers
+// Vue's lifecycle injection warning. This is expected — the tests verify
+// observable behavior (toast state), not lifecycle correctness.
+const originalWarn = console.warn
+beforeEach(() => {
+  console.warn = (msg: string) => {
+    if (msg.includes('onMounted') || msg.includes('Lifecycle injection')) return
+    originalWarn(msg)
+  }
+})
+afterEach(() => {
+  console.warn = originalWarn
+})
+
 describe('useToast', () => {
   beforeEach(() => {
     vi.useFakeTimers()

@@ -19,10 +19,17 @@ echo ""
 echo "▶ Running frontend typecheck..."
 pnpm typecheck "$@"
 
-# ── Frontend tests (vitest via pnpm) ───────────────────
+# ── Frontend unit tests (composables) ──────────────────
 echo ""
 echo "▶ Running frontend tests..."
 pnpm test "$@"
+cd ..
+
+# ── Frontend component tests ───────────────────────────
+echo ""
+echo "▶ Running frontend component tests..."
+cd frontend
+npx vitest run --config vitest.component.config.ts "$@"
 cd ..
 
 echo ""

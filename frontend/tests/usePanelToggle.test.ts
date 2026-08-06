@@ -10,7 +10,7 @@ describe('usePanelToggle composable', () => {
   })
 
   afterEach(() => {
-    Object.defineProperty(window, 'innerWidth', { value: originalInnerWidth })
+    Object.defineProperty(window, 'innerWidth', { value: originalInnerWidth, writable: true })
   })
 
   it('returns activePanel as control-deck by default', () => {

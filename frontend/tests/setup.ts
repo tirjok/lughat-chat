@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach } from 'vitest'
 
 // ─── Browser API Mocks ──────────────────────────────────────────────
 // These are shared across all tests (composable + component).
@@ -53,13 +53,49 @@ global.IntersectionObserver = class IntersectionObserver extends EventTarget {
 // Track onMounted callbacks for testing composables that use lifecycle hooks
 const mountedCallbacks: (() => void)[] = []
 
-// Mock Nuxt auto-imported composables — return reactive-like objects with .value properties
+// ─── Nuxt Auto-Import Mocks (Vue composables) ─────────────────────────
+// These are manually stubbed because jsdom doesn't load Nuxt auto-imports.
+// ref() and computed() are reactive-like: they share state when given the
+// same initial value, enabling tests that mutate ref() and read computed().
+
+beforeEach(() => {
+  mountedCallbacks.length = 0
+})
+
 Object.assign(globalThis, {
   onMounted: vi.fn((cb: () => void) => mountedCallbacks.push(cb)),
+  onUnmounted: vi.fn(),
   ref: vi.fn((init: unknown) => ({ value: init })),
   computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } })),
-  useRoute: vi.fn(() => ({ path: '/', fullPath: '/', params: {}, query: {}, hash: '', name: undefined, matched: [], meta: {}, redirectedFrom: undefined })),
-  useNuxtApp: vi.fn(() => ({ route: { path: '/', fullPath: '/', params: {}, query: {}, hash: '', name: undefined, matched: [], meta: {}, redirectedFrom: undefined } }))
+  shallowRef: vi.fn((init: unknown) => ({ value: init })),
+  watch: vi.fn(),
+  nextTick: vi.fn(),
+  useRoute: vi.fn(() => ({
+    path: '/',
+    fullPath: '/',
+    params: {},
+    query: {},
+    hash: '',
+    name: undefined,
+    matched: [],
+    meta: {},
+    redirectedFrom: undefined
+  })),
+  useNuxtApp: vi.fn(() => ({
+    route: {
+      path: '/',
+      fullPath: '/',
+      params: {},
+      query: {},
+      hash: '',
+      name: undefined,
+      matched: [],
+      meta: {},
+      redirectedFrom: undefined
+    }
+  })),
+  useHead: vi.fn(),
+  useSeoMeta: vi.fn()
 })
 
 // ─── Re-export mock factories for component tests ───────────────────
