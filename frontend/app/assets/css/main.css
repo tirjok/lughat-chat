@@ -197,6 +197,15 @@ textarea {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+/* Hide scrollbar for horizontal toolbars but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* ===================================
    Animations (fixed dark theme)
    =================================== */
