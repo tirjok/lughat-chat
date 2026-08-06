@@ -172,14 +172,15 @@ function handleClosePlayer() {
 
 <template>
   <div
-    class="flex flex-col md:flex-row h-[100dvh] w-full overflow-hidden text-studio-text antialiased bg-studio-900"
+    class="flex flex-col md:flex-row h-[calc(100vh-60px)] w-full overflow-hidden text-studio-text antialiased bg-studio-900"
+    data-test-id="main-wrapper"
     style="background-color: #121212;"
     dir="ltr"
     @keydown="handleKeyDown"
   >
     <!-- Toast Notification Container (prototype positioning) -->
-    <!-- Mobile: positioned below the floating header pill (~56px height + 10px margin = ~66px) -->
-    <div class="fixed top-[66px] md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none">
+    <!-- Mobile: positioned below the floating header pill (~64px navbar + ~10px margin = ~74px) -->
+    <div class="fixed top-[74px] md:top-4 left-4 right-4 md:left-auto md:w-80 z-50 flex flex-col gap-2 pointer-events-none">
       <ToastNotification />
     </div>
 
@@ -193,7 +194,9 @@ function handleClosePlayer() {
     </div>
 
     <!-- Mobile: Split-screen (hidden on desktop) -->
-    <div class="flex md:hidden flex-col h-dvh w-full overflow-hidden">
+    <div class="flex md:hidden flex-col h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full overflow-hidden"
+      data-test-id="mobile-split-screen"
+    >
       <!-- Mobile Top Bar (logo + status) — Floating Glass Pill (safe-area aware) -->
       <header
         class="flex justify-between items-center px-3 py-2.5 bg-studio-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-[max(0.75rem,env(safe-area-inset-left),env(safe-area-inset-right))] mt-[max(0.625rem,env(safe-area-inset-top))] shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
@@ -425,7 +428,7 @@ function handleClosePlayer() {
 
     <!-- Desktop: Side-by-side (hidden on mobile) -->
     <div
-      class="hidden md:flex flex-row h-dvh w-full"
+      class="hidden md:flex flex-row h-full w-full"
       style="background-color: #121212;"
     >
       <!-- LEFT PANEL: The Control Deck (35% md, 30% lg, 25% xl) — Fade-up -->
