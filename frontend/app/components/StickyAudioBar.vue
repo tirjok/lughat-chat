@@ -116,6 +116,7 @@ defineExpose({
   handleKeydown
 })
 </script>
+
 <template>
   <!--
     StickyAudioBar: Fixed bottom bar that slides up when active.
@@ -129,7 +130,10 @@ defineExpose({
     :class="active ? 'translate-y-0' : 'translate-y-full'"
   >
     <!-- Left Controls: prev / play-pause -->
-    <div data-testid="controls-left" class="flex items-center gap-2 shrink-0">
+    <div
+      data-testid="controls-left"
+      class="flex items-center gap-2 shrink-0"
+    >
       <!-- Previous track -->
       <button
         data-testid="prev-button"
@@ -182,7 +186,10 @@ defineExpose({
     </div>
 
     <!-- Center: Arabic text + wave animation + progress bar + time -->
-    <div data-testid="controls-center" class="flex-1 flex items-center gap-3 min-w-0">
+    <div
+      data-testid="controls-center"
+      class="flex-1 flex items-center gap-3 min-w-0"
+    >
       <!-- Arabic text (RTL) -->
       <div
         data-testid="arabic-text"
@@ -244,7 +251,10 @@ defineExpose({
     </div>
 
     <!-- Right Controls: speed / repeat / close -->
-    <div data-testid="controls-right" class="flex items-center gap-2 shrink-0">
+    <div
+      data-testid="controls-right"
+      class="flex items-center gap-2 shrink-0"
+    >
       <!-- Speed toggle -->
       <button
         data-testid="speed-toggle"
