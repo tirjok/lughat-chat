@@ -59,22 +59,41 @@ export const createMockUseAudioModule = () => {
   }
 }
 
+// ─── Audio Player Mock Factory (legacy alias for createMockUseAudioModule) ─
+// This is re-exported by setup.ts and setup.component.ts for backward compatibility.
+export const createMockUseAudioPlayer = createMockUseAudioModule
 // ─── TTS API Mock Factory ────────────────────────────────────────────
-export const createMockUseTtsApi = () => ({
-  synthesize: vi.fn().mockResolvedValue(new Blob([], { type: 'audio/mpeg' })),
-  healthCheck: vi.fn().mockResolvedValue({ status: 'ready' as const, model_loaded: true })
-})
+// Returns mock methods matching useTtsApi's real interface.
+// Use createMockUseTtsApi({ fail: true }) to test error paths.
+export const createMockUseTtsApi = (options?: { fail?: boolean }) => {
+  const synthesize = vi.fn().mockResolvedValue(new Blob([], { type: 'audio/mpeg' }))
+  const healthCheck = vi.fn().mockResolvedValue({ status: 'ready' as const, model_loaded: true })
+
+  if (options?.fail) {
+    synthesize.mockRejectedValue(new Error('TTS synthesis failed'))
+    healthCheck.mockRejectedValue(new Error('Health check failed'))
+  }
+
+  return { synthesize, healthCheck }
+}
 
 // ─── Health Poll Mock Factory ────────────────────────────────────────
-export const createMockUseHealthPoll = () => ({
-  status: ref('loading' as const),
-  modelLoaded: computed(() => true)
-})
+// Returns reactive refs matching useHealthPoll's real interface.
+// modelLoaded derives from status (status === 'ready' → true).
+// Use createMockUseHealthPoll({ status: 'error' }) to test error paths.
+export const createMockUseHealthPoll = (options?: { status?: 'loading' | 'ready' | 'error' }) => {
+  const status = ref((options?.status ?? 'loading') as 'loading' | 'ready' | 'error')
+  const modelLoaded = computed(() => status.value === 'ready')
+
+  return { status, modelLoaded }
+}
 
 // ─── Input Validation Mock Factory ───────────────────────────────────
-export const createMockUseInputValidation = () => ({
-  isValid: ref(true),
-  error: ref(null as string | null),
+// Returns reactive refs matching useInputValidation's real interface.
+// Use createMockUseInputValidation({ isValid: false }) to test error paths.
+export const createMockUseInputValidation = (options?: { isValid?: boolean, errorMessage?: string }) => ({
+  isValid: ref(options?.isValid ?? true),
+  error: ref((options?.errorMessage ?? null) as string | null),
   handleKeyDown: vi.fn()
 })
 
