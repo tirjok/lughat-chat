@@ -219,7 +219,14 @@ CONTEXT:
 - Dependencies: ISSUE-005 (Level index page exists).
 - Files: `frontend/app/pages/dashboard/level/[level]/[lesson].vue` (new), `frontend/tests/LessonPage.test.ts` (new).
 
-LIMITS: See TDD LIMITS above.
+LIMITS: TDD LIMITS (for prompts 1-3, 5-10, 13, 15a, 15b):
+
+One vertical slice: complete red-green-refactor for ONE acceptance criterion before touching the next.
+Only files within the issue's scope. No drive-by refactors.
+No new dependencies.
+NEVER modify or delete an existing test to make it pass — fix the implementation, or stop and explain why the test is wrong.
+Nuxt tests: auto-imports are stubbed in frontend/tests/setup.ts — read it before mocking. No @nuxt/test-utils / mountSuspended patterns; they are not installed.
+Where documents conflict with each other or with the current code: STOP and report the conflict — do not resolve it silently.
 
 EXAMPLE: Match the structure of `frontend/tests/LevelIndex.test.ts` (from Prompt 6) and `frontend/tests/index.test.ts` (page component patterns).
 
