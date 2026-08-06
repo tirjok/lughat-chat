@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 
-import Dashboard from '../app/pages/dashboard.vue'
+import Dashboard from '../../app/pages/dashboard.vue'
 
 // ─── Route Mocking ──────────────────────────────────────────────────────
 // GlobalNavbar accesses route via useNuxtApp — stub it so the navbar

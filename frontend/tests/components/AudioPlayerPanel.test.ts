@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import AudioPlayerPanel from '../app/components/AudioPlayerPanel.vue'
+import AudioPlayerPanel from '../../app/components/AudioPlayerPanel.vue'
 
 const stubComponents = {
   WaveformCanvas: defineComponent({ template: '<canvas class="waveform-canvas" />' })

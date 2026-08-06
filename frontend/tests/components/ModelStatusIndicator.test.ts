@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, computed } from 'vue'
 
-import ModelStatusIndicator from '../app/components/ModelStatusIndicator.vue'
-import { useHealthPoll } from '../app/composables/useHealthPoll'
+import ModelStatusIndicator from '../../app/components/ModelStatusIndicator.vue'
+import { useHealthPoll } from '../../app/composables/useHealthPoll'
 
 // Mock the composable before importing the component
-vi.mock('../app/composables/useHealthPoll', () => ({
+vi.mock('../../app/composables/useHealthPoll', () => ({
   useHealthPoll: vi.fn()
 }))
 

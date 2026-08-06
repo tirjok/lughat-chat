@@ -1,19 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import { ref } from 'vue'
-import Index from '../app/pages/index.vue'
-import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation } from './mocks'
+import Index from '../../app/pages/index.vue'
+import MobileSplitScreen from '../../app/components/MobileSplitScreen.vue'
+import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation } from '~~/tests/mocks'
 
 // Composables required for Index.vue to render without errors.
-vi.mock('../app/composables/useAudioModule', () => ({
+vi.mock('../../app/composables/useAudioModule', () => ({
   useAudioModule: vi.fn(() => createMockUseAudioModule())
 }))
 
-vi.mock('../app/composables/useTtsApi', () => ({
+vi.mock('../../app/composables/useTtsApi', () => ({
   useTtsApi: vi.fn(() => createMockUseTtsApi())
 }))
 
-vi.mock('../app/composables/useVoices', () => ({
+vi.mock('../../app/composables/useVoices', () => ({
   useVoices: vi.fn(() => ({
     voices: ref([
       { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
@@ -23,26 +24,26 @@ vi.mock('../app/composables/useVoices', () => ({
   }))
 }))
 
-vi.mock('../app/composables/useHealthPoll', () => ({
+vi.mock('../../app/composables/useHealthPoll', () => ({
   useHealthPoll: () => createMockUseHealthPoll()
 }))
 
-vi.mock('../app/composables/useInputValidation', () => ({
+vi.mock('../../app/composables/useInputValidation', () => ({
   useInputValidation: () => createMockUseInputValidation()
 }))
 
-vi.mock('../app/composables/usePanelToggle', () => ({
+vi.mock('../../app/composables/usePanelToggle', () => ({
   usePanelToggle: () => ({ activePanel: ref('desktop') })
 }))
 
-vi.mock('../app/composables/useScrollReveal', () => ({
+vi.mock('../../app/composables/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
     revealOnScroll: vi.fn(),
     isRevealed: ref(true)
   }))
 }))
 
-vi.mock('../app/composables/useToast', () => ({
+vi.mock('../../app/composables/useToast', () => ({
   showToast: vi.fn()
 }))
 
@@ -86,7 +87,24 @@ describe('ISSUE-003 — Navbar height adaptation', () => {
       // Arrange — mobile viewport
       Object.defineProperty(window, 'innerWidth', { value: 375, writable: true })
 
-      const wrapper = shallowMount(Index)
+      const wrapper = shallowMount(MobileSplitScreen, {
+        props: {
+          textInput: '',
+          selectedSpeaker: '',
+          speedValue: 1,
+          isGenerating: false,
+          playerVisible: false,
+          audioUrl: null,
+          isPlaying: false,
+          isPaused: false,
+          currentTime: 0,
+          duration: 0,
+          modelStatus: 'loading',
+          isValid: true,
+          speakerVoices: [],
+          selectedVoiceName: ''
+        }
+      })
 
       // Act
       const mobileContainer = wrapper.find('[data-test-id="mobile-split-screen"]')
@@ -101,7 +119,24 @@ describe('ISSUE-003 — Navbar height adaptation', () => {
       // Arrange
       Object.defineProperty(window, 'innerWidth', { value: 375, writable: true })
 
-      const wrapper = shallowMount(Index)
+      const wrapper = shallowMount(MobileSplitScreen, {
+        props: {
+          textInput: '',
+          selectedSpeaker: '',
+          speedValue: 1,
+          isGenerating: false,
+          playerVisible: false,
+          audioUrl: null,
+          isPlaying: false,
+          isPaused: false,
+          currentTime: 0,
+          duration: 0,
+          modelStatus: 'loading',
+          isValid: true,
+          speakerVoices: [],
+          selectedVoiceName: ''
+        }
+      })
 
       // Act
       const mobileContainer = wrapper.find('[data-test-id="mobile-split-screen"]')

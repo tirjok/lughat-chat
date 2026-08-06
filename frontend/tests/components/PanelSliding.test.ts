@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import { ref } from 'vue'
-import Index from '../app/pages/index.vue'
-import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation } from './mocks'
+import Index from '../../app/pages/index.vue'
+import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation } from '~~/tests/mocks'
 
 // Mock composables so Index.vue can access them without Nuxt auto-imports.
-vi.mock('../app/composables/useAudioModule', () => ({
+vi.mock('../../app/composables/useAudioModule', () => ({
   useAudioModule: vi.fn(() => createMockUseAudioModule())
 }))
 
-vi.mock('../app/composables/useTtsApi', () => ({
+vi.mock('../../app/composables/useTtsApi', () => ({
   useTtsApi: vi.fn(() => createMockUseTtsApi())
 }))
 
-vi.mock('../app/composables/useVoices', () => ({
+vi.mock('../../app/composables/useVoices', () => ({
   useVoices: vi.fn(() => ({
     voices: ref([
       { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
@@ -23,26 +23,26 @@ vi.mock('../app/composables/useVoices', () => ({
   }))
 }))
 
-vi.mock('../app/composables/useHealthPoll', () => ({
+vi.mock('../../app/composables/useHealthPoll', () => ({
   useHealthPoll: () => createMockUseHealthPoll()
 }))
 
-vi.mock('../app/composables/useInputValidation', () => ({
+vi.mock('../../app/composables/useInputValidation', () => ({
   useInputValidation: () => createMockUseInputValidation()
 }))
 
-vi.mock('../app/composables/usePanelToggle', () => ({
+vi.mock('../../app/composables/usePanelToggle', () => ({
   usePanelToggle: () => ({ activePanel: ref('desktop') })
 }))
 
-vi.mock('../app/composables/useScrollReveal', () => ({
+vi.mock('../../app/composables/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
     revealOnScroll: vi.fn(),
     isRevealed: ref(true)
   }))
 }))
 
-vi.mock('../app/composables/useToast', () => ({
+vi.mock('../../app/composables/useToast', () => ({
   showToast: vi.fn()
 }))
 

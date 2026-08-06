@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { mount } from '@vue/test-utils'
-import type { Voice } from '../app/composables/useVoices'
-import VoiceSelector from '../app/components/VoiceSelector.vue'
+import type { Voice } from '../../app/composables/useVoices'
+import VoiceSelector from '../../app/components/VoiceSelector.vue'
 
 // Mock showToast so the component doesn't call the real composable.
-vi.mock('../app/composables/useToast', () => ({
+vi.mock('../../app/composables/useToast', () => ({
   showToast: vi.fn()
 }))
 
-vi.mock('../app/composables/useVoices', () => ({
+vi.mock('../../app/composables/useVoices', () => ({
   useVoices: () => ({
     voices: ref([
       { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },

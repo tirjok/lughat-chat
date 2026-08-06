@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import GlobalNavbar from '../app/components/GlobalNavbar.vue'
+import GlobalNavbar from '../../app/components/GlobalNavbar.vue'
 
 // Mock useNuxtApp so the navbar can access route info.
 const mockRoute = {

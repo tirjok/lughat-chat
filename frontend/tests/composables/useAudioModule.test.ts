@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useAudioModule } from '../app/composables/useAudioModule'
+import { useAudioModule } from '../../app/composables/useAudioModule'
 
 describe('useAudioModule', () => {
   beforeEach(() => {

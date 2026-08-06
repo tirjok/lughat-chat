@@ -3,7 +3,7 @@ import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
 
-import LessonPage from '../app/pages/dashboard/level/[level]/[lesson].vue'
+import LessonPage from '../../app/pages/dashboard/level/[level]/[lesson].vue'
 
 // Mutable route state so tests can switch between valid and missing-level scenarios.
 const routeState: { params: Record<string, string>; path: string } = {
