@@ -2,10 +2,12 @@ import { vi, beforeEach } from 'vitest'
 
 // ─── Browser API Mocks ──────────────────────────────────────────────
 // These are shared across all tests (composable + component).
-
-global.window.devicePixelRatio = 1
+// When running in the Nuxt test environment (@nuxt/test-utils/module),
+// Nuxt auto-imports (ref, computed, useRoute, etc.) are provided natively.
+// We only need to mock browser APIs that don't exist in jsdom.
 
 global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob') as unknown as typeof global.URL.createObjectURL
+
 global.URL.revokeObjectURL = vi.fn()
 
 // matchMedia mock for useScrollReveal (prefers-reduced-motion check)
@@ -50,52 +52,8 @@ global.IntersectionObserver = class IntersectionObserver extends EventTarget {
   }
 } as unknown as typeof IntersectionObserver
 
-// Track onMounted callbacks for testing composables that use lifecycle hooks
-const mountedCallbacks: (() => void)[] = []
-
-// ─── Nuxt Auto-Import Mocks (Vue composables) ─────────────────────────
-// These are manually stubbed because jsdom doesn't load Nuxt auto-imports.
-// ref() and computed() are reactive-like: they share state when given the
-// same initial value, enabling tests that mutate ref() and read computed().
-
 beforeEach(() => {
-  mountedCallbacks.length = 0
-})
-
-Object.assign(globalThis, {
-  onMounted: vi.fn((cb: () => void) => mountedCallbacks.push(cb)),
-  onUnmounted: vi.fn(),
-  ref: vi.fn((init: unknown) => ({ value: init })),
-  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } })),
-  shallowRef: vi.fn((init: unknown) => ({ value: init })),
-  watch: vi.fn(),
-  nextTick: vi.fn(),
-  useRoute: vi.fn(() => ({
-    path: '/',
-    fullPath: '/',
-    params: {},
-    query: {},
-    hash: '',
-    name: undefined,
-    matched: [],
-    meta: {},
-    redirectedFrom: undefined
-  })),
-  useNuxtApp: vi.fn(() => ({
-    route: {
-      path: '/',
-      fullPath: '/',
-      params: {},
-      query: {},
-      hash: '',
-      name: undefined,
-      matched: [],
-      meta: {},
-      redirectedFrom: undefined
-    }
-  })),
-  useHead: vi.fn(),
-  useSeoMeta: vi.fn()
+  mockElements.length = 0
 })
 
 // ─── Re-export mock factories for component tests ───────────────────
@@ -106,6 +64,3 @@ export {
   createMockUseInputValidation,
   createMockUseToast
 } from './mocks'
-
-// Export for tests to trigger mount callbacks
-export { mountedCallbacks }

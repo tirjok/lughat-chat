@@ -13,7 +13,6 @@ console.warn = (msg: string) => {
 
 // ─── Browser API Mocks ──────────────────────────────────────────────
 // Shared across all component tests.
-
 global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob')
 global.URL.revokeObjectURL = vi.fn()
 global.fetch = vi.fn()
@@ -39,6 +38,15 @@ if (typeof (globalThis as unknown as Record<string, unknown>).IntersectionObserv
     }
   } as unknown as typeof IntersectionObserver
 }
+
+// ─── Nuxt Runtime Stub ──────────────────────────────────────────────
+// When using the Nuxt test environment, useNuxtApp is provided natively.
+// This stub is a fallback for tests that don't use mountSuspended.
+;(globalThis as Record<string, unknown>).useNuxtApp = () => ({
+  ssrContext: {},
+  payload: { state: {} },
+  runWithContext: (fn: () => void) => fn()
+})
 
 // ─── Viewport / Responsive Mocks ──────────────────────────────────────
 // Used by responsive UI tests to simulate different viewport sizes.
@@ -77,45 +85,6 @@ beforeEach(() => {
       dispatchEvent: vi.fn()
     }
   })
-})
-
-// ─── Nuxt Auto-Import Mocks (Vue composables) ─────────────────────────
-// These are manually stubbed because jsdom doesn't load Nuxt auto-imports.
-// ref() and computed() are reactive-like: they share state when given the
-// same initial value, enabling tests that mutate ref() and read computed().
-
-Object.assign(globalThis, {
-  onMounted: vi.fn(() => {}),
-  onUnmounted: vi.fn(() => {}),
-  ref: vi.fn((init: unknown) => ({ value: init })),
-  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } })),
-  shallowRef: vi.fn((init: unknown) => ({ value: init })),
-  watch: vi.fn(),
-  nextTick: vi.fn(),
-  useRoute: vi.fn(() => ({
-    path: '/',
-    fullPath: '/',
-    params: {},
-    query: {},
-    hash: '',
-    name: undefined,
-    matched: [],
-    meta: {},
-    redirectedFrom: undefined
-  })),
-  useNuxtApp: vi.fn(() => ({
-    route: {
-      path: '/',
-      fullPath: '/',
-      params: {},
-      query: {},
-      hash: '',
-      name: undefined,
-      matched: [],
-      meta: {},
-      redirectedFrom: undefined
-    }
-  }))
 })
 
 // ─── Breakpoint Simulation Helper ─────────────────────────────────────

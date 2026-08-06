@@ -1,11 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useVoices } from '../app/composables/useVoices'
-import { mountedCallbacks } from './setup'
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+
+const testMountedCallbacks: (() => void)[] = []
+
+mockNuxtImport('onMounted', (original) => {
+  return (cb: () => void) => {
+    testMountedCallbacks.push(cb)
+    // If onMounted is available (real component mount), call it directly.
+    // Otherwise, tests trigger callbacks manually.
+    try {
+      original(cb)
+    } catch {
+      // onMounted not available in unit test context
+    }
+  }
+})
 
 describe('useVoices', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mountedCallbacks.length = 0
+    testMountedCallbacks.length = 0
   })
 
   describe('initial state', () => {
@@ -31,10 +46,11 @@ describe('useVoices', () => {
       const { voices } = useVoices()
 
       // Trigger onMounted to start fetching
-      for (const cb of mountedCallbacks) {
+      for (const cb of testMountedCallbacks) {
         cb()
       }
 
+      // Wait for the fetch to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(voices.value).toEqual(mockVoices)
@@ -49,10 +65,11 @@ describe('useVoices', () => {
       const { voices } = useVoices()
 
       // Trigger onMounted
-      for (const cb of mountedCallbacks) {
+      for (const cb of testMountedCallbacks) {
         cb()
       }
 
+      // Wait for the fetch to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(voices.value).toEqual([])
@@ -67,10 +84,11 @@ describe('useVoices', () => {
       const { voices } = useVoices()
 
       // Trigger onMounted
-      for (const cb of mountedCallbacks) {
+      for (const cb of testMountedCallbacks) {
         cb()
       }
 
+      // Wait for the fetch to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(voices.value).toEqual([])

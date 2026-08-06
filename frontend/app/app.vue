@@ -14,7 +14,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-50 dark:bg-stone-900">
+  <div class="min-h-screen">
     <GlobalNavbar />
     <NuxtPage />
   </div>

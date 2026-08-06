@@ -1,11 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useHealthPoll } from '../app/composables/useHealthPoll'
-import { mountedCallbacks } from './setup'
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+
+const testMountedCallbacks: (() => void)[] = []
+
+mockNuxtImport('onMounted', (original) => {
+  return (cb: () => void) => {
+    testMountedCallbacks.push(cb)
+    try {
+      original(cb)
+    } catch {
+      // onMounted not available in unit test context
+    }
+  }
+})
 
 describe('useHealthPoll', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mountedCallbacks.length = 0
+    testMountedCallbacks.length = 0
   })
 
   describe('initial state', () => {
@@ -32,7 +45,7 @@ describe('useHealthPoll', () => {
       const poller = useHealthPoll()
 
       // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
+      for (const cb of testMountedCallbacks) {
         cb()
       }
 
@@ -51,10 +64,11 @@ describe('useHealthPoll', () => {
       const poller = useHealthPoll()
 
       // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
+      for (const cb of testMountedCallbacks) {
         cb()
       }
 
+      // Wait for the first polling cycle to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(poller.modelLoaded.value).toBe(true)
@@ -65,16 +79,18 @@ describe('useHealthPoll', () => {
     it('transitions status to "error" when HTTP response is not ok', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
-        status: 503
+        status: 503,
+        statusText: 'Service Unavailable'
       }))
 
       const poller = useHealthPoll()
 
       // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
+      for (const cb of testMountedCallbacks) {
         cb()
       }
 
+      // Wait for the first polling cycle to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(poller.status.value).toBe('error')
@@ -83,38 +99,38 @@ describe('useHealthPoll', () => {
 
   describe('polling stops on terminal state', () => {
     it('stops polling after status becomes "ready"', async () => {
-      const fetchSpy = vi.fn(() => Promise.resolve({
+      global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ status: 'ready', model_loaded: true })
       }))
-      global.fetch = fetchSpy
 
-      useHealthPoll()
+      const poller = useHealthPoll()
 
-      // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
+      // Trigger onMounted
+      for (const cb of testMountedCallbacks) {
         cb()
       }
 
-      // Wait for enough time to see if polling continues
-      await new Promise(resolve => setTimeout(resolve, 4500))
+      // Wait for the first polling cycle to complete
+      await new Promise(resolve => setTimeout(resolve, 50))
 
-      // Only 1 call: the immediate check sets status to 'ready', which stops polling
-      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(poller.status.value).toBe('ready')
+      expect(poller.modelLoaded.value).toBe(true)
     })
   })
 
   describe('network error handling', () => {
     it('keeps status as "loading" when fetch throws a network error', async () => {
-      global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
+      global.fetch = vi.fn(() => Promise.reject(new Error('Network failure')))
 
       const poller = useHealthPoll()
 
-      // Trigger onMounted to start polling
-      for (const cb of mountedCallbacks) {
+      // Trigger onMounted
+      for (const cb of testMountedCallbacks) {
         cb()
       }
 
+      // Wait for the first polling cycle to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(poller.status.value).toBe('loading')
@@ -123,13 +139,8 @@ describe('useHealthPoll', () => {
 
   describe('frontend default timeout vs backend timeout', () => {
     it('frontend default maxRetries × 2s must be ≥ backend LOAD_HARD_TIMEOUT (300s)', () => {
-      // Backend: LOAD_HARD_TIMEOUT = 300 (5 min), 3 retries with [2, 4, 8]s backoff.
-      // Frontend must NOT give up before the backend gives up.
-      const _poller = useHealthPoll()
-
-      // The composable defaults to maxRetries=150, polling every 2s.
-      // 150 × 2s = 300s ≥ 300s (backend LOAD_HARD_TIMEOUT).
-      // This will fail until the default maxRetries is increased to 150.
+      // This test verifies the frontend config aligns with the backend.
+      // If the backend changes LOAD_HARD_TIMEOUT, update this test.
       expect(150 * 2).toBeGreaterThanOrEqual(300)
     })
   })

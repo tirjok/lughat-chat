@@ -59,6 +59,12 @@ export default defineNuxtConfig({
     }
   },
 
+  // Nuxt test utilities configuration
+  testUtils: {
+    startOnBoot: true,
+    logToConsole: true
+  },
+
   // UnoCSS configuration
   unocss: {
     // Options will be read from uno.config.ts

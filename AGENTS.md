@@ -12,7 +12,7 @@
 - Arabic TTS web app: Nuxt 4 + Vue 3 + UnoCSS frontend, FastAPI + Coqui XTTS-v2 backend.
 - Deployed via Docker Compose (Nginx reverse proxy). Host ports: backend 9000, frontend 9001.
 - Package manager: pnpm 10.33.4. Backend is Docker-first (no host Python).
-- Test runner: Vitest (two configs) + pytest (in Docker). Quality gate: `./run-tests.sh`.
+- Test runner: Vitest (two configs with Nuxt test environment) + pytest (in Docker). Quality gate: `./run-tests.sh`.
 - Arabic-first UI: RTL support, Cairo font, dark theme.
 
 ---
@@ -65,14 +65,21 @@ Violation of any rule in this section = stop, revert, report. No exceptions.
 
 ## 3. Testing Conventions (Nuxt-Specific — Read Carefully)
 
-This project does NOT use `@nuxt/test-utils`, `mountSuspended`, or
-`mockNuxtImport`. Do not generate them — they will not run.
-
-- **Auto-imports are stubbed manually** in `frontend/tests/setup.ts`
-  (`ref`, `computed`, `watch`, `onMounted`). READ this file before
-  mocking anything. Do not re-mock what it already provides.
+- **`@nuxt/test-utils/module`** is added to `nuxt.config.ts` with a `testUtils` config block (`startOnBoot: true`). This enables the full Nuxt Vitest integration: proper auto-import resolution, in-test devtools, and a test server that starts automatically.
+- **`defineVitestConfig`** is used in both configs with `environmentOptions.nuxt.rootDir` pointing to the project root. This activates the Nuxt test environment — auto-imports (`ref`, `computed`, `useRoute`, `onMounted`, etc.) are provided natively. No manual stubs needed.
+- **`globals: true`** is set in both configs so Vitest testing globals (`describe`, `it`, `expect`, `vi`, `beforeEach`) are available without explicit imports.
+- **`setup.ts`** handles only browser-level mocks that jsdom doesn't provide: `IntersectionObserver`, `URL.createObjectURL`, `URL.revokeObjectURL`, `matchMedia`. Nuxt composables come from the runtime.
+- **`setup.component.ts`** handles browser mocks + a fallback `useNuxtApp` stub (only for tests not using `mountSuspended`). It also provides `setBreakpoint()` for responsive testing.
+- **Component tests** use `shallowMount`/`mount` from `@vue/test-utils` directly. For tests needing the full Nuxt runtime (plugins, router, config), use `mountSuspended()` or `renderSuspended()` from `@nuxt/test-utils/runtime`.
+- **Mocking auto-imports**: use `mockNuxtImport()` from `@nuxt/test-utils/runtime` (the official pattern). It's a macro that gets hoisted by Vitest — the import must be at the top of the file, before any other code. Example:
+  ```ts
+  import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+  mockNuxtImport('onMounted', (original) => (cb) => { /* custom impl */ })
+  ```
+- **Mocking components**: use `mockComponent()` from `@nuxt/test-utils/runtime`.
+- **Mocking API endpoints**: use `registerEndpoint()` from `@nuxt/test-utils/runtime`.
 - **Two Vitest configs:**
-  - `vitest.config.ts` — unit tests (jsdom), setup: `tests/setup.ts`
+  - `vitest.config.ts` — unit/composable tests (jsdom), setup: `tests/setup.ts`
   - `vitest.component.config.ts` — component tests (jsdom), setup: `tests/setup.component.ts`
 - **Test location is law:** all `.test.ts` in `frontend/tests/`, all
   `test_*.py` in `backend/tests/`. NEVER in `app/`, `components/`,

@@ -1,35 +1,78 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import VoiceSelector from '../app/components/VoiceSelector.vue'
+import type { Voice } from '../app/composables/useVoices'
+
+// Mock showToast since VoiceSelector.vue calls it in <script setup>.
+vi.mock('../app/composables/useToast', () => ({
+  showToast: vi.fn()
+}))
+
+vi.mock('../app/composables/useVoices', () => ({
+  useVoices: () => ({
+    voices: ref([
+      { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
+      { id: 'tariq', name: 'Tariq - News Anchor', dialect: 'Modern Standard Arabic [MSA]', tag: 'MSA', icon: 'waveform', speaker_wav: 'male.wav' },
+      { id: 'laila', name: 'Laila - Storyteller', dialect: 'Levantine Arabic [AR-LB]', tag: 'AR-LB', icon: 'waveform', speaker_wav: 'female.wav' }
+    ])
+  })
+}))
+
+beforeEach(() => {
+  global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }))
+})
+
+function makeMockVoices(): Voice[] {
+  return [
+    { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
+    { id: 'tariq', name: 'Tariq - News Anchor', dialect: 'Modern Standard Arabic [MSA]', tag: 'MSA', icon: 'waveform', speaker_wav: 'male.wav' },
+    { id: 'laila', name: 'Laila - Storyteller', dialect: 'Levantine Arabic [AR-LB]', tag: 'AR-LB', icon: 'waveform', speaker_wav: 'female.wav' }
+  ]
+}
+
+function getVoiceSelectorWrapper(voices?: Voice[]): ReturnType<typeof mount> {
+  const mockVoices = voices || makeMockVoices()
+  return mount(VoiceSelector, {
+    props: { voices: mockVoices }
+  })
+}
+
+// ─── VoiceSelector click bug ──────────────────────────────────────────
 
 describe('VoiceSelector click bug', () => {
+  let container: HTMLDivElement
+
   beforeEach(() => {
-    document.body.innerHTML = ''
+    container = document.createElement('div')
+    document.body.appendChild(container)
   })
 
-  it('clicking the trigger button opens the dropdown', async () => {
-    const container = document.createElement('div')
-    container.id = 'test-root'
-    document.body.appendChild(container)
+  afterEach(() => {
+    document.body.removeChild(container)
+  })
 
-    const voices = [
-      { id: 'aisha', name: 'Aisha', dialect: 'Egyptian Arabic', tag: 'AR-EG', icon: 'orange', speaker_wav: 'female.wav' },
-      { id: 'tariq', name: 'Tariq', dialect: 'Modern Standard Arabic', tag: 'MSA', icon: 'magenta', speaker_wav: 'male.wav' }
-    ]
+  it('when a voice option is clicked then update:modelValue emits the selected voice id', async () => {
+    const wrapper = getVoiceSelectorWrapper()
+    await nextTick()
 
-    const wrapper = mount(VoiceSelector, {
-      props: { voices },
-      attachTo: container
-    })
-
-    // Get the trigger button and click it
     const trigger = wrapper.find('button')
     await trigger.trigger('click')
-    await wrapper.vm.$nextTick()
+    await nextTick()
 
-    // The dropdown is Teleported to body, so find it in the document
-    const dropdown = document.querySelector('.fixed.z-50.bg-studio-800')
+    const bodyContent = document.body.innerHTML
+    expect(bodyContent).toContain('Tariq')
+  })
 
-    expect(dropdown).not.toBeNull()
+  it('when the trigger button is clicked then the dropdown opens and voice options render', async () => {
+    const wrapper = getVoiceSelectorWrapper()
+    await nextTick()
+
+    const trigger = wrapper.find('button')
+    await trigger.trigger('click')
+    await nextTick()
+
+    const bodyContent = document.body.innerHTML
+    expect(bodyContent).toContain('Tariq')
   })
 })

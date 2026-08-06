@@ -118,7 +118,7 @@ html {
 }
 
 body {
-  @apply antialiased;
+  @apply antialiased bg-stone-50 dark:bg-stone-900;
   margin: 0;
   padding: 0;
   /* Safe area insets for notched phones (iPhone notch, Android nav bar) */
