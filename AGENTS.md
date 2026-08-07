@@ -202,8 +202,33 @@ docker compose up --build -d
 8. Main page = two-panel layout (Control Deck | Waveform Canvas); mobile stacks with draggable divider.
 9. Voices are discovered dynamically from `backend/speaker_wavs/` — never hardcode the voice list.
 10. Backend model loading takes ~120s; `/health` returns `loading → ready | error`. Respect 503s.
+---
+
+## 5b. Nuxt Development Rules
+
+- This project uses **Nuxt 4** (v4.x). Never generate Nuxt 2 or Nuxt 3 patterns.
+- Before writing any Nuxt code, use the `nuxt` MCP tools
+  (`get_documentation_page`, `list_documentation_pages`) to verify the
+  current v4 API. Do not rely on training-data knowledge of Nuxt APIs.
+- Authoritative sources, in priority order:
+  1. Nuxt MCP server (official docs, live)
+  2. https://nuxt.com/llms.txt and https://nuxt.com/llms-full.txt
+  3. https://github.com/nuxt/nuxt (examples/ and docs/ folders)
+  4. https://github.com/nuxt/nuxt.com (production reference app)
+- v4 directory structure: `app/`, `shared/`, `public/`.
+  This project has **no `server/` directory** — API calls are proxied
+  through Nginx in production. Do not create server routes unless explicitly asked.
+- Data fetching:
+  - **Server-side** (composables, server hooks): use `useFetch` / `useAsyncData`.
+  - **Client-side** (browser `fetch()`): acceptable when the request is
+    proxied through Nginx (as this project does). Do not use raw `$fetch`
+    from `#unjs/ofetch` in component setup.
+- Config: use `useRuntimeConfig()`, never `process.env` in app code.
+- If unsure whether an API changed in v4, call the MCP `migration_help`
+  prompt or fetch the upgrade guide before coding.
 
 ---
+
 
 ## 6. Agent Operating Procedure
 0. Before tasks involving the API, Docker deployment, or debugging:
