@@ -15,14 +15,17 @@ export default defineConfig({
       arabic: ['"Noto Sans Arabic"', 'Cairo', 'sans-serif']
     },
     colors: {
-      studio: {
+      stone: {
         900: '#121212',
         800: '#1A1A1A',
         700: '#333333'
       },
-      sunrise: {
-        orange: '#FF512F',
-        magenta: '#DD2476'
+      primary: {
+        500: '#14b8a6',
+        600: '#0f766e'
+      },
+      gold: {
+        500: '#f59e0b'
       }
     },
     // Match Tailwind CSS v3 (sample design) shadow values exactly

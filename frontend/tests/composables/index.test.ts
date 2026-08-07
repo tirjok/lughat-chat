@@ -75,8 +75,8 @@ vi.mock('../../app/composables/useVoices', () => ({
 
 vi.mock('../../app/composables/useInputValidation', () => ({
   useInputValidation: () => ({
-    isValid: ref(true),
-    error: ref(null)
+    isValid: true,
+    error: null
   })
 }))
 

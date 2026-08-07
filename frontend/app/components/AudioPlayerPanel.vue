@@ -29,6 +29,7 @@ function formatTime(seconds: number): string {
 }
 
 // Whether the panel is in the "shown" state (for animation purposes)
+// TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
 const panelShown = computed(() => props.visible)
 </script>
 
@@ -39,20 +40,20 @@ const panelShown = computed(() => props.visible)
     Spring slide-in animation.
   -->
   <div
-    class="fixed bottom-0 left-0 right-0 md:left-[35%] lg:left-[30%] xl:left-[25%] bg-studio-800 border-t md:border-l ring-white/[0.06] p-1.5 flex flex-col z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
+    class="fixed bottom-0 left-0 right-0 md:left-[35%] lg:left-[30%] xl:left-[25%] bg-stone-800 border-t md:border-l ring-white/[0.06] p-1.5 flex flex-col z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
     :class="panelShown ? 'visible-slide' : 'hidden-slide'"
     style="transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);"
   >
     <!-- Inner Core: distinct background + inner highlight + smaller radius -->
     <div
-      class="rounded-[calc(1.125rem-0.375rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex flex-col gap-3 md:gap-4 overflow-hidden"
+      class="rounded-[calc(1.125rem-0.375rem)] bg-stone-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex flex-col gap-3 md:gap-4 overflow-hidden"
     >
       <!-- Player Header -->
       <div class="flex justify-between items-center mb-1 md:mb-2 gap-2">
         <div class="flex items-center gap-3 min-w-0">
           <!-- Gradient audio icon -->
           <div
-            class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
+            class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-primary-500 to-gold-500 flex items-center justify-center shadow-[0_4px_16px_rgba(20,184,166,0.25)] shrink-0"
           >
             <span
               aria-hidden="true"
@@ -75,7 +76,7 @@ const panelShown = computed(() => props.visible)
             title="Download MP3"
             @click="emit('download')"
           >
-            <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+            <span class="rounded-full bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
               <span
                 aria-hidden="true"
                 class="ph ph-download-simple text-lg"
@@ -87,7 +88,7 @@ const panelShown = computed(() => props.visible)
             title="Close Player"
             @click="emit('close')"
           >
-            <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+            <span class="rounded-full bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
               <span
                 aria-hidden="true"
                 class="ph ph-x text-lg"
@@ -101,13 +102,13 @@ const panelShown = computed(() => props.visible)
       <!-- Outer Shell -->
       <div class="w-full rounded-[1.125rem] ring-1 ring-white/[0.06] p-1.5 flex items-center gap-2 md:gap-4 bg-white/[0.02]">
         <!-- Inner Core -->
-        <div class="w-full rounded-[calc(1.125rem-0.375rem)] bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-2 md:p-4 flex items-center gap-2 md:gap-4">
+        <div class="w-full rounded-[calc(1.125rem-0.375rem)] bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-2 md:p-4 flex items-center gap-2 md:gap-4">
           <!-- Play/Pause button: Double-Bezel + Magnetic -->
           <!-- Outer Shell: spring hover -->
           <span class="magnetic-hover rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex-shrink-0">
             <!-- Inner Core: scale on hover, press on active -->
             <button
-              class="group rounded-full bg-sunrise-magenta text-white flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.96] hover:scale-[1.04] w-10 h-10 md:w-12 md:h-12"
+              class="group rounded-full bg-gold-500 text-white flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.96] hover:scale-[1.04] w-10 h-10 md:w-12 md:h-12"
               @click="emit('toggle')"
             >
               <span

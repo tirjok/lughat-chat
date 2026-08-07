@@ -6,6 +6,7 @@ interface Props {
 }
 
 defineProps<Props>()
+// TODO: migrated from sunrise-orange/magenta (see ISSUE-014)
 
 const emit = defineEmits<{
   click: []
@@ -25,7 +26,7 @@ const emit = defineEmits<{
     >
       <span
         aria-hidden="true"
-        class="ph-fill ph-play-circle text-xl text-sunrise-magenta group-hover:text-sunrise-orange transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"
+        class="ph-fill ph-play-circle text-xl text-gold-500 group-hover:text-primary-500 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"
       />
       <span class="font-bold text-white tracking-wide text-sm md:text-base">
         Generate Speech
@@ -35,7 +36,7 @@ const emit = defineEmits<{
         class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105 group-hover:translate-x-[1px] group-hover:-translate-y-[1px] shrink-0"
         aria-hidden="true"
       >
-        <span class="ph-fill ph-arrow-up-right text-xs text-gray-400 group-hover:text-sunrise-orange transition-colors duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]" />
+        <span class="ph-fill ph-arrow-up-right text-xs text-gray-400 group-hover:text-primary-500 transition-colors duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]" />
       </span>
     </div>
 
@@ -45,7 +46,7 @@ const emit = defineEmits<{
       class="btn-content loading-state"
     >
       <div class="loader" />
-      <span class="font-medium text-sunrise-orange animate-pulse text-sm md:text-base">
+      <span class="font-medium text-primary-500 animate-pulse text-sm md:text-base">
         Processing Model...
       </span>
       <!-- Trailing icon circle (disabled state) -->
@@ -84,7 +85,7 @@ const emit = defineEmits<{
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.1),
     0 0 0 0.5px rgba(255, 255, 255, 0.12),
-    0 8px 24px rgba(221, 36, 118, 0.1);
+    0 8px 24px rgba(245, 158, 11, 0.1);
   transform: translateY(-1px);
 }
 
@@ -125,8 +126,8 @@ const emit = defineEmits<{
     from 0deg,
     transparent 0%,
     transparent 70%,
-    #DD2476 85%,
-    #FF512F 100%
+    #f59e0b 85%,
+    #14b8a6 100%
   );
   animation: spin 4s linear infinite;
   z-index: -1;
@@ -148,8 +149,8 @@ const emit = defineEmits<{
 }
 
 .loader {
-  border: 3px solid rgba(255, 81, 47, 0.3);
-  border-top: 3px solid #FF512F;
+  border: 3px solid rgba(245, 158, 11, 0.3);
+  border-top: 3px solid #f59e0b;
   border-radius: 50%;
   width: 24px;
   height: 24px;

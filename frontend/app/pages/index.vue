@@ -3,6 +3,7 @@
 // Owns all state and business logic; delegates UI to child components.
 // Two-panel layout: Mobile (split-screen) | Desktop (side-by-side).
 
+// TODO: migrated from studio-900/sunrise-orange (see ISSUE-014)
 import { computed, nextTick, onUnmounted, shallowRef } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { usePanelToggle } from '../composables/usePanelToggle'
@@ -203,9 +204,8 @@ const desktopPanelProps = computed(() => ({
 
 <template>
   <div
-    class="flex flex-col md:flex-row h-[calc(100vh-60px)] w-full overflow-hidden text-studio-text antialiased bg-studio-900"
+    class="flex flex-col md:flex-row h-[calc(100vh-60px)] w-full overflow-hidden text-stone-text antialiased bg-stone-900"
     data-test-id="main-wrapper"
-    style="background-color: #121212;"
     dir="ltr"
     @keydown="handleKeyDown"
   >

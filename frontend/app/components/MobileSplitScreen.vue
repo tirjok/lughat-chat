@@ -3,6 +3,7 @@
 // Contains: mobile canvas (top) + drag divider + control deck (bottom) + inline audio player.
 
 import { computed } from 'vue'
+// TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
 import { useDragResize } from '../composables/useDragResize'
 import { formatTime } from '../utils/formatTime'
 import MobileStatusIndicator from './MobileStatusIndicator.vue'
@@ -59,15 +60,15 @@ const formatDuration = computed(() => formatTime(props.duration))
   >
     <!-- Mobile Top Bar (logo + status) — Floating Glass Pill (safe-area aware) -->
     <header
-      class="flex justify-between items-center px-3 py-2.5 bg-studio-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-[max(0.75rem,env(safe-area-inset-left),env(safe-area-inset-right))] mt-[max(0.625rem,env(safe-area-inset-top))] shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
+      class="flex justify-between items-center px-3 py-2.5 bg-stone-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-[max(0.75rem,env(safe-area-inset-left),env(safe-area-inset-right))] mt-[max(0.625rem,env(safe-area-inset-top))] shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
     >
       <div class="flex items-center gap-2">
         <span
           aria-hidden="true"
-          class="ph-fill ph-waves text-sunrise-orange text-xl"
+          class="ph-fill ph-waves text-primary-500 text-xl"
         />
         <h1 class="text-lg font-bold text-white tracking-tight">
-          Lughat<span class="text-sunrise-magenta">Chat</span>
+          Lughat<span class="text-gold-500">Chat</span>
         </h1>
       </div>
       <MobileStatusIndicator />
@@ -78,7 +79,7 @@ const formatDuration = computed(() => formatTime(props.duration))
       role="region"
       aria-labelledby="canvas-heading"
       data-panel="canvas"
-      class="w-full bg-studio-900 relative flex flex-col overflow-hidden"
+      class="w-full bg-stone-900 relative flex flex-col overflow-hidden"
       :style="{ height: `${canvasRatio * 100}%` }"
     >
       <!-- Focus Halo (radial gradient glow behind textarea) -->
@@ -107,7 +108,7 @@ const formatDuration = computed(() => formatTime(props.duration))
             <!-- Clear text button: Double-Bezel -->
             <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
               <button
-                class="rounded-full bg-studio-700 text-gray-500 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
+                class="rounded-full bg-stone-700 text-gray-500 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
                 @click="emit('clearText')"
               >
                 <span
@@ -126,7 +127,7 @@ const formatDuration = computed(() => formatTime(props.duration))
           :value="textInput"
           dir="rtl"
           class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg leading-loose text-gray-100 placeholder-gray-600 scroll-smooth z-10"
-          style="caret-color: #FF512F;"
+          style="caret-color: #14b8a6;"
           placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           @input="emit('update:textInput', ($event.target as HTMLTextAreaElement).value)"
         />
@@ -153,7 +154,7 @@ const formatDuration = computed(() => formatTime(props.duration))
       role="region"
       aria-labelledby="control-deck-heading"
       data-panel="control-deck"
-      class="flex-1 w-full bg-studio-800 flex flex-col overflow-hidden border-t border-white/[0.06]"
+      class="flex-1 w-full bg-stone-800 flex flex-col overflow-hidden border-t border-white/[0.06]"
       :style="{ height: `${(1 - canvasRatio) * 100}%` }"
     >
       <!-- Controls Container — compact -->
@@ -175,7 +176,7 @@ const formatDuration = computed(() => formatTime(props.duration))
       </div>
 
       <!-- Generate Button -->
-      <div class="p-3 border-t border-white/[0.06] bg-studio-800 shrink-0">
+      <div class="p-3 border-t border-white/[0.06] bg-stone-800 shrink-0">
         <GenerateButton
           :is-generating="isGenerating"
           :model-status="modelStatus"
@@ -187,17 +188,17 @@ const formatDuration = computed(() => formatTime(props.duration))
       <!-- Mobile: Generated Audio Card: Double-Bezel -->
       <div
         v-if="playerVisible && audioUrl"
-        class="border-t border-white/[0.06] bg-studio-800 shrink-0"
+        class="border-t border-white/[0.06] bg-stone-800 shrink-0"
       >
         <!-- Outer Shell -->
         <div class="p-2.5 rounded-[1.125rem] ring-1 ring-white/[0.06] bg-white/[0.02]">
           <!-- Inner Core -->
-          <div class="rounded-[calc(1.125rem-0.25rem)] bg-studio-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex flex-col gap-3">
+          <div class="rounded-[calc(1.125rem-0.25rem)] bg-stone-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex flex-col gap-3">
             <!-- Header: Gradient music icon + title + action buttons -->
             <div class="flex items-center gap-3">
               <!-- Gradient music icon -->
               <div
-                class="w-9 h-9 rounded-full bg-gradient-to-br from-sunrise-orange to-sunrise-magenta flex items-center justify-center shadow-[0_4px_16px_rgba(255,81,47,0.25)] shrink-0"
+                class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-gold-500 flex items-center justify-center shadow-[0_4px_16px_rgba(20,184,166,0.25)] shrink-0"
               >
                 <span
                   aria-hidden="true"
@@ -220,7 +221,7 @@ const formatDuration = computed(() => formatTime(props.duration))
                   title="Download MP3"
                   @click="emit('download')"
                 >
-                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                  <span class="rounded-full bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
                     <span
                       aria-hidden="true"
                       class="ph ph-download-simple text-lg"
@@ -232,7 +233,7 @@ const formatDuration = computed(() => formatTime(props.duration))
                   title="Close Player"
                   @click="emit('closePlayer')"
                 >
-                  <span class="rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                  <span class="rounded-full bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
                     <span
                       aria-hidden="true"
                       class="ph ph-x text-lg"
@@ -246,13 +247,13 @@ const formatDuration = computed(() => formatTime(props.duration))
             <!-- Outer Shell -->
             <div class="rounded-[0.875rem] ring-1 ring-white/[0.06] p-1 bg-white/[0.02] flex items-center gap-2">
               <!-- Inner Core -->
-              <div class="rounded-[calc(0.875rem-0.25rem)] bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center gap-2 p-2">
+              <div class="rounded-[calc(0.875rem-0.25rem)] bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center gap-2 p-2">
                 <!-- Play/Pause button: Double-Bezel -->
                 <!-- Outer Shell -->
                 <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex-shrink-0">
                   <!-- Inner Core -->
                   <button
-                    class="group rounded-full bg-sunrise-magenta text-white flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(221,36,118,0.3)] active:scale-[0.98] hover:scale-[1.02] w-9 h-9"
+                    class="group rounded-full bg-gold-500 text-white flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.98] hover:scale-[1.02] w-9 h-9"
                     @click="emit('toggle')"
                   >
                     <span
