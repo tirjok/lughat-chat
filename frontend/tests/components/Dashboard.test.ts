@@ -5,11 +5,6 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
 import Dashboard from '../../app/pages/dashboard.vue'
 
-// Mock useSeoMeta so dashboard.vue's setup() doesn't throw NUXT_E1001.
-// This is a per-test-file mock — it does NOT bleed into other test files
-// because each test file has its own module scope.
-mockNuxtImport('useSeoMeta', () => vi.fn())
-
 // ─── Route Mocking ──────────────────────────────────────────────────────
 // GlobalNavbar accesses route via useNuxtApp — stub it so the navbar
 // can highlight the correct nav link when mounted inside Dashboard.

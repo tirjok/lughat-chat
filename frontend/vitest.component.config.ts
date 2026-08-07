@@ -15,7 +15,6 @@ export default defineVitestConfig({
   },
   resolve: {
     alias: {
-      '@nuxtjs/seo': fileURLToPath(new URL('tests/mocks/nuxtjs-seo.ts', import.meta.url)),
       'nuxt/dist/app/composables/router': fileURLToPath(new URL('tests/mocks/nuxt-router.ts', import.meta.url)),
       'nuxt/dist/app/nuxt': fileURLToPath(new URL('tests/mocks/nuxt-app.ts', import.meta.url))
     }

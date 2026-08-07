@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue'
-import { useSeoMeta } from '@nuxtjs/seo'
 
 // Route access — deferred inside computed getters to avoid
 // NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).
@@ -21,10 +20,6 @@ const currentLevel = computed(() => levelParam.value || 'A1')
 const levelRoute = computed(() => `/dashboard/level/${currentLevel.value.toLowerCase()}`)
 const currentLesson = computed(() => lessonParam.value || '1')
 
-// SEO
-useSeoMeta({
-  title: `Lesson ${currentLesson.value} — Level ${currentLevel.value}`
-})
 
 // Breadcrumb trail: Dashboard → Level {level} → Lesson {id}
 const breadcrumbs = computed(() => [
