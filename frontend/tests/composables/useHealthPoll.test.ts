@@ -212,12 +212,16 @@ describe('useHealthPoll', () => {
       const originalSetInterval = globalThis.setInterval as (fn: () => void, ms: number) => number
       ;(globalThis as Record<string, unknown>).setInterval = spySetInterval as (typeof globalThis)['setInterval']
 
-      const poller1 = useHealthPoll()
-      for (const cb of testMountedCallbacks) { cb() }
+      const _poller1 = useHealthPoll()
+      for (const cb of testMountedCallbacks) {
+        cb()
+      }
       expect(spySetInterval).toHaveBeenCalledTimes(1)
 
-      const poller2 = useHealthPoll()
-      for (const cb of testMountedCallbacks) { cb() }
+      const _poller2 = useHealthPoll()
+      for (const cb of testMountedCallbacks) {
+        cb()
+      }
       // mountCount increments but started=true, so no second interval
       expect(spySetInterval).toHaveBeenCalledTimes(1)
 
@@ -233,12 +237,16 @@ describe('useHealthPoll', () => {
       const originalSetInterval = globalThis.setInterval as (fn: () => void, ms: number) => number
       ;(globalThis as Record<string, unknown>).setInterval = spySetInterval as (typeof globalThis)['setInterval']
 
-      const poller = useHealthPoll()
-      for (const cb of testMountedCallbacks) { cb() }
+      const _poller = useHealthPoll()
+      for (const cb of testMountedCallbacks) {
+        cb()
+      }
       expect(spySetInterval).toHaveBeenCalledTimes(1)
 
       // Unmount the single caller — should clear the interval
-      for (const cb of testUnmountedCallbacks) { cb() }
+      for (const cb of testUnmountedCallbacks) {
+        cb()
+      }
       expect(spyClearInterval).toHaveBeenCalledTimes(1)
       expect(spyClearInterval).toHaveBeenCalledWith(42)
 
@@ -247,12 +255,16 @@ describe('useHealthPoll', () => {
     })
 
     it('status remains accessible after all callers unmount', () => {
-      const poller = useHealthPoll()
-      for (const cb of testMountedCallbacks) { cb() }
-      for (const cb of testUnmountedCallbacks) { cb() }
+      const _poller = useHealthPoll()
+      for (const cb of testMountedCallbacks) {
+        cb()
+      }
+      for (const cb of testUnmountedCallbacks) {
+        cb()
+      }
 
-      expect(poller.status.value).toBe('loading')
-      expect(poller.modelLoaded.value).toBe(false)
+      expect(_poller.status.value).toBe('loading')
+      expect(_poller.modelLoaded.value).toBe(false)
     })
   })
 
@@ -261,7 +273,9 @@ describe('useHealthPoll', () => {
       global.fetch = vi.fn(() => Promise.reject(new Error('Network failure')))
 
       const poller = useHealthPoll({ maxRetries: 5 })
-      for (const cb of testMountedCallbacks) { cb() }
+      for (const cb of testMountedCallbacks) {
+        cb()
+      }
 
       // Wait for 5 retry cycles (5 × 2s interval + buffer)
       await new Promise(resolve => setTimeout(resolve, 11000))
@@ -287,7 +301,9 @@ describe('useHealthPoll', () => {
 
       // Simulate: TTS Studio page mounts (first caller)
       const studio = useHealthPoll()
-      for (const cb of testMountedCallbacks) { cb() }
+      for (const cb of testMountedCallbacks) {
+        cb()
+      }
 
       // Wait for first health check
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -296,7 +312,12 @@ describe('useHealthPoll', () => {
       // Simulate: Dashboard page mounts (second caller)
       // The singleton should NOT restart polling
       const dashboard = useHealthPoll()
-      for (const cb of testMountedCallbacks) { cb() }
+      for (const cb of testMountedCallbacks) {
+        cb()
+      }
+      for (const cb of testUnmountedCallbacks) {
+        cb()
+      }
 
       // Wait a bit — no new health checks should fire
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -306,21 +327,32 @@ describe('useHealthPoll', () => {
       expect(dashboard.modelLoaded.value).toBe(true)
 
       // Simulate: Dashboard unmounts (second caller leaves)
-      for (const cb of testUnmountedCallbacks) { cb() }
+      for (const cb of testUnmountedCallbacks) {
+        cb()
+      }
 
       // Simulate: Lesson page mounts (third caller)
       const lesson = useHealthPoll()
-      for (const cb of testMountedCallbacks) { cb() }
+      for (const cb of testMountedCallbacks) {
+        cb()
+      }
+      for (const cb of testUnmountedCallbacks) {
+        cb()
+      }
 
       // Polling should still be running (mountCount > 0)
       // Status should still be 'ready' (no restart needed)
       expect(lesson.status.value).toBe('ready')
 
       // Simulate: Lesson unmounts (third caller leaves)
-      for (const cb of testUnmountedCallbacks) { cb() }
+      for (const cb of testUnmountedCallbacks) {
+        cb()
+      }
 
       // Simulate: TTS Studio unmounts (first caller leaves, mountCount = 0)
-      for (const cb of testUnmountedCallbacks) { cb() }
+      for (const cb of testUnmountedCallbacks) {
+        cb()
+      }
 
       // After all callers unmount, status is accessible
       expect(studio.status.value).toBe('ready')
