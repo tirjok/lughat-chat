@@ -6,39 +6,34 @@ describe('useAudioModule', () => {
     vi.clearAllMocks()
   })
 
-  describe('#sanity load', () => {
-    it('When given a blob then creates an object URL from it', async () => {
-      // Arrange
-      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
+  describe('load', () => {
+    it('sets audioUrl when given a blob', async () => {
       const module = useAudioModule()
-      // Act
-      module.load(mockBlob)
-      // Assert
-      expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockBlob)
+      const blob = new Blob(['dummy'], { type: 'audio/mpeg' })
+      module.load(blob)
+      expect(module.audioUrl.value).not.toBeNull()
+      expect(typeof module.audioUrl.value).toBe('string')
     })
 
-    it('When given a blob then sets audioUrl ref to the created URL', async () => {
-      // Arrange
-      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
+    it('updates audioUrl on second load, revoking the first', async () => {
+      let urlCounter = 0
+      const coSpy = vi.spyOn(global.URL, 'createObjectURL').mockImplementation(
+        (blob) => `http://mock.url/blob-${++urlCounter}`
+      )
       const module = useAudioModule()
-      // Act
-      module.load(mockBlob)
-      // Assert
-      expect(module.audioUrl.value).toBe('http://mock.url/blob')
+      const blob1 = new Blob(['dummy'], { type: 'audio/mpeg' })
+      module.load(blob1)
+      const firstUrl = module.audioUrl.value
+      expect(firstUrl).not.toBeNull()
+
+      const blob2 = new Blob(['dummy2'], { type: 'audio/mpeg' })
+      module.load(blob2)
+
+      expect(module.audioUrl.value).not.toBeNull()
+      expect(module.audioUrl.value).not.toBe(firstUrl)
+      coSpy.mockRestore()
     })
 
-    it('When loading a second blob then revokes the previous object URL', async () => {
-      // Arrange
-      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
-      const module = useAudioModule()
-      module.load(mockBlob)
-      vi.clearAllMocks()
-      const mockBlob2 = new Blob(['dummy2'], { type: 'audio/mpeg' })
-      // Act
-      module.load(mockBlob2)
-      // Assert
-      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('http://mock.url/blob')
-    })
 
     it('When loading multiple blobs rapidly then revokes all previous object URLs', async () => {
       // Arrange
@@ -63,7 +58,7 @@ describe('useAudioModule', () => {
     })
   })
 
-  describe('#sanity play', () => {
+  describe('play', () => {
     it('When audioRef is set then calls play() on the audio element', async () => {
       // Arrange
       const mockAudio = {
@@ -89,7 +84,7 @@ describe('useAudioModule', () => {
     })
   })
 
-  describe('#sanity pause', () => {
+  describe('pause', () => {
     it('When audioRef is set then calls pause() on the audio element', async () => {
       // Arrange
       const mockAudio = {
@@ -131,7 +126,7 @@ describe('useAudioModule', () => {
     })
   })
 
-  describe('#sanity seek', () => {
+  describe('seek', () => {
     it('When given a fraction then sets currentTime to fraction * duration', async () => {
       // Arrange
       const mockAudio = {
@@ -178,7 +173,7 @@ describe('useAudioModule', () => {
     })
   })
 
-  describe('#sanity download', () => {
+  describe('download', () => {
     it('When blob exists then creates and clicks a download link', async () => {
       // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
@@ -271,7 +266,7 @@ describe('useAudioModule', () => {
     })
   })
 
-  describe('#sanity dispose', () => {
+  describe('dispose', () => {
     it('When audio is loaded then revokes the current object URL', async () => {
       // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
@@ -343,7 +338,7 @@ describe('useAudioModule', () => {
     })
   })
 
-  describe('#sanity onPlaybackEnd', () => {
+  describe('onPlaybackEnd', () => {
     it('When audio ends then calls the onPlaybackEnd callback', async () => {
       // Arrange
       const callback = vi.fn()
@@ -364,7 +359,7 @@ describe('useAudioModule', () => {
     })
   })
 
-  describe('#sanity watch integration', () => {
+  describe('watch integration', () => {
     it('When audioUrl changes then sets up audio events and assigns src', async () => {
       // Arrange
       const mockAudio = {

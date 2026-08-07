@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import Index from '../../app/pages/index.vue'
 import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation } from '~~/tests/mocks'
@@ -43,6 +43,7 @@ vi.mock('../../app/composables/useScrollReveal', () => ({
 }))
 
 vi.mock('../../app/composables/useToast', () => ({
+  useToast: () => [],
   showToast: vi.fn()
 }))
 
@@ -59,7 +60,7 @@ describe('Mobile split-screen', () => {
   describe('panel layout', () => {
     it('When rendered then both control-deck and canvas panels exist with data attributes', () => {
       // Arrange
-      const wrapper = shallowMount(Index)
+      const wrapper = mount(Index)
       // Act
       const controlDeck = wrapper.find('[data-panel="control-deck"]')
       const canvas = wrapper.find('[data-panel="canvas"]')
@@ -69,13 +70,13 @@ describe('Mobile split-screen', () => {
     })
 
     it('When rendered then mobile split-screen renders with canvas ratio', () => {
-      const wrapper = shallowMount(Index)
+      const wrapper = mount(Index)
       const canvasPanel = wrapper.find('[data-panel="canvas"]')
       expect(canvasPanel.exists()).toBe(true)
     })
 
     it('When rendered then drag divider renders', () => {
-      const wrapper = shallowMount(Index)
+      const wrapper = mount(Index)
       const dragDivider = wrapper.find('div[style*="height: 16px"]')
       expect(dragDivider.exists()).toBe(true)
     })

@@ -3,22 +3,32 @@ export interface UseHealthPollOptions {
   maxRetries?: number
 }
 
-export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
-  const status = ref<'loading' | 'ready' | 'error'>('loading')
-  const modelLoaded = computed(() => status.value === 'ready')
+// ─── Module-level singleton state ────────────────────────────────────
+// Shared across ALL callers — one status, one interval, one lifecycle.
+const sharedStatus = ref<'loading' | 'ready' | 'error'>('loading')
+const sharedModelLoaded = computed(() => sharedStatus.value === 'ready')
 
-  // Start polling immediately
+let intervalId: ReturnType<typeof setInterval> | null = null
+let retryCount = 0
+let started = false
+let mountCount = 0
+
+// Single return object — every caller gets this exact reference.
+const singletonInstance = {
+  get status() { return sharedStatus },
+  get modelLoaded() { return sharedModelLoaded }
+}
+
+export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
   const baseUrl = options.baseUrl || ''
   const maxRetries = options.maxRetries ?? 150
-  let intervalId: ReturnType<typeof setInterval> | null = null
-  let retryCount = 0
 
   async function checkHealth() {
     try {
       const response = await fetch(`${baseUrl}/health`)
 
       if (!response.ok) {
-        status.value = 'error'
+        sharedStatus.value = 'error'
         retryCount = maxRetries
         if (intervalId !== null) {
           clearInterval(intervalId)
@@ -28,10 +38,10 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
       }
 
       const data = await response.json()
-      status.value = data.status || 'loading'
+      sharedStatus.value = data.status || 'loading'
 
       // Stop polling on terminal state
-      if (status.value === 'ready' || status.value === 'error') {
+      if (sharedStatus.value === 'ready' || sharedStatus.value === 'error') {
         retryCount = maxRetries
         if (intervalId !== null) {
           clearInterval(intervalId)
@@ -41,7 +51,7 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
     } catch {
       retryCount++
       if (retryCount >= maxRetries) {
-        status.value = 'error'
+        sharedStatus.value = 'error'
         if (intervalId !== null) {
           clearInterval(intervalId)
           intervalId = null
@@ -50,15 +60,44 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
     }
   }
 
-  onMounted(() => {
+  function startPolling() {
+    if (started) return
+    started = true
+
     intervalId = setInterval(checkHealth, 2000)
 
     // Fire first check immediately
     void checkHealth()
+  }
+
+  onMounted(() => {
+    mountCount++
+    if (mountCount === 1) {
+      startPolling()
+    }
   })
 
-  return {
-    status,
-    modelLoaded
+  onUnmounted(() => {
+    mountCount--
+    if (mountCount === 0 && intervalId !== null) {
+      clearInterval(intervalId)
+      intervalId = null
+    }
+  })
+
+  return singletonInstance
+}
+
+// ─── Test helper: reset singleton state ───────────────────────────────
+// Exposed so tests can isolate between test cases.
+// NOT used in production.
+export const resetHealthPoll = () => {
+  sharedStatus.value = 'loading'
+  retryCount = 0
+  started = false
+  mountCount = 0
+  if (intervalId !== null) {
+    clearInterval(intervalId)
+    intervalId = null
   }
 }

@@ -6,7 +6,7 @@ import { setBreakpoint } from '~~/tests/mocks'
 
 // ─── Mock vue-router ────────────────────────────────────────────
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: {}, path: '/' }),
+  useRoute: () => ({ params: {}, path: '/', record: { components: {} } }),
   useRouter: () => ({ push: vi.fn() }),
   onBeforeRouteLeave: vi.fn()
 }))
@@ -75,8 +75,8 @@ vi.mock('../../app/composables/useVoices', () => ({
 
 vi.mock('../../app/composables/useInputValidation', () => ({
   useInputValidation: () => ({
-    isValid: true,
-    error: null
+    isValid: ref(true),
+    error: ref(null)
   })
 }))
 

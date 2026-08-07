@@ -7,8 +7,6 @@ import ToastNotification from '../../app/components/ToastNotification.vue'
 import { useToast, showToast } from '../../app/composables/useToast'
 
 // Mock useToast and showToast so tests don't depend on Nuxt auto-imports.
-vi.mock('../../app/composables/useToast', () => ({
-// We replicate this interface here.
 vi.mock('../../app/composables/useToast', () => {
   const entries: { id: number, message: string, type: 'success' | 'error' | 'info' }[] = []
   let nextId = 0

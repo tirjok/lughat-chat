@@ -90,13 +90,88 @@ Violation of any rule in this section = stop, revert, report. No exceptions.
   (elements inside `<Transition>`/`v-if` don't exist immediately — see
   CONTEXT.md debugging history).
 
+## 3b. AI Slop Anti-Patterns (from SlopCodeBench 2026)
+
+Research from [SlopCodeBench](https://www.scbench.ai) (arXiv:2603.24755) identifies
+two trajectory-level signals that distinguish human-written code from LLM-generated
+"slop": **verbosity** (redundant/duplicated code) and **structural erosion**
+(complexity concentrated in fewer, more-complex functions). Below are the concrete
+anti-patterns found in this codebase, ranked by severity.
+
+### Critical: Tautological Mocks
+
+A tautological mock is when you mock a dependency and then assert that the mock's
+return value was produced. **You are testing the mock, not the code.**
+
+
+**Before (tautological — asserts on mock return value):**
+
+```ts
+// setup.ts already mocks createObjectURL to return 'http://mock.url/blob'
+expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockBlob)
+// Tests: "does the composable call the mocked function?" — not "does it work?"
+```
+
+**After (asserts observable behavior):**
+
+```ts
+const module = useAudioModule()
+const blob = new Blob(['dummy'], { type: 'audio/mpeg' })
+module.load(blob)
+expect(module.audioUrl.value).not.toBeNull()
+expect(typeof module.audioUrl.value).toBe('string')
+```
+
+**Before (tautological — mock returns exactly what the test asserts):**
+
+```ts
+vi.mock('../../app/composables/useHealthPoll', () => ({
+  useHealthPoll: vi.fn()
+}))
+vi.mocked(useHealthPoll).mockReturnValue({
+  status: ref('loading'),
+  modelLoaded: computed(() => false)
+})
+// The mock returns exactly what the test puts in.
+// The test asserts the component reads what the mock provides.
+```
+
+**After (use factory from `tests/mocks.ts`):**
+
+```ts
+import { createMockUseHealthPoll } from '../mocks'
+vi.mock('../../app/composables/useHealthPoll', () => ({
+  useHealthPoll: createMockUseHealthPoll
+}))
+// For parameterized states:
+vi.mock('../../app/composables/useHealthPoll', () => ({
+  useHealthPoll: () => createMockUseHealthPoll({ status: 'error' })
+}))
+```
+
+**Key principle:** The test provides the input; the assertion checks the
+composable's observable behavior (state changes, DOM updates, events).
+
+### Medium: Duplicated Fixture Data
+
+Defining the same data in multiple places (e.g., a mock in `vi.mock()` AND a
+`makeMockVoices()` function) is a maintenance burden with zero behavioral benefit.
+Extract to a shared constant.
+
+### Low: Naming Noise
+
+Prefixes like `#sanity` in test names add output noise without semantic value.
+Use descriptive names that stand alone: "creates an object URL from the blob"
+not "#sanity load: creates an object URL from the blob".
+
+### Low: Missing Module Isolation
+
+The official Nuxt example uses `vi.resetModules()` in setup files. Without it,
+module-level state (singletons, intervals, counters) leaks between tests.
+Either use `vi.resetModules()` or provide an explicit reset function (like
+`resetHealthPoll()`) called in every `beforeEach`.
+
 ---
-
-## 4. Commands (Single Source of Truth)
-
-```bash
-# Quality gate — run before EVERY commit/push (also called by pre-commit hooks)
-./run-tests.sh        # backend pytest (Docker) → lint → typecheck → frontend tests
 
 # Frontend (from frontend/)
 pnpm dev              # dev server :3000 (proxies to localhost:9000)
@@ -157,6 +232,7 @@ Check every box. If any fails, you are NOT done — do not claim completion.
 - [ ] No new dependencies without recorded approval
 - [ ] No unrelated files touched (check your diff)
 - [ ] Commit message is conventional and atomic
+- [ ] No tautological mocks (mock returns exactly what the test asserts — see §3b)
 
 ---
 

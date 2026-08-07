@@ -1,4 +1,23 @@
 import { vi, beforeEach } from 'vitest'
+import { type App as VueApp, createApp } from 'vue'
+
+// ─── Vue Lifecycle Warning Suppression ──────────────────────────────
+// Unit tests call composables that use onMounted/onUnmounted without
+// a real component instance. Create a hidden app to absorb these
+// calls so Vue doesn't emit "lifecycle injection APIs can only be
+// used during execution of setup()" warnings.
+let __testApp: VueApp | null = null
+
+beforeEach(() => {
+  try {
+    __testApp?.unmount()
+  }
+  catch { /* jsdom may not support unmount */ }
+  __testApp = null
+  __testApp = createApp({}).mount(
+    Object.assign(document.createElement('div'), { id: '__test-lifecycle-suppressor' })
+  )
+})
 
 // ─── Browser API Mocks ──────────────────────────────────────────────
 // These are shared across all tests (composable + component).

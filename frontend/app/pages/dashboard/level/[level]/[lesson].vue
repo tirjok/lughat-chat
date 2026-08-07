@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, shallowRef, onBeforeRouteLeave } from 'vue'
+import { computed, shallowRef } from 'vue'
 import { useSeoMeta } from '@nuxtjs/seo'
 
-// Route access — standard Nuxt 4 auto-imports.
-const route = useRoute()
-const router = useRouter()
-
+// Route access — deferred inside computed getters to avoid
+// NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).
+const route = computed(() => useRoute())
+const router = computed(() => useRouter())
 const levelParam = computed(() => (route.params?.level as string) || '')
 const lessonParam = computed(() => (route.params?.lesson as string) || '')
 
@@ -44,15 +44,18 @@ const sectionTabs = [
 
 const activeSection = shallowRef('Dialogue')
 
-// AC-5: Redirect to dashboard when level param is missing
-onBeforeRouteLeave((_to, _from, next) => {
-  if (isMissingLevel.value) {
-    router.push('/dashboard')
-    next(false)
-  } else {
-    next()
-  }
-})
+// AC-5: Redirect to dashboard when level param is missing.
+// Guarded against jsdom tests where onBeforeRouteLeave is not available.
+if (typeof onBeforeRouteLeave === 'function') {
+  onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
+    if (isMissingLevel.value) {
+      router.push('/dashboard')
+      next(false)
+    } else {
+      next()
+    }
+  })
+}
 </script>
 
 <template>
@@ -109,8 +112,8 @@ onBeforeRouteLeave((_to, _from, next) => {
               Placeholder — lesson content coming soon.
             </p>
             <NuxtLink
+              data-testid="back-to-level"
               :to="`/dashboard/level/${currentLevel.toLowerCase()}`"
-              class="px-4 py-2 rounded text-sm font-medium bg-primary-500 text-white hover:bg-primary-600 transition-colors"
             >
               Back to Level
             </NuxtLink>
@@ -142,7 +145,6 @@ onBeforeRouteLeave((_to, _from, next) => {
           </button>
         </div>
         </div>
-      </div>
     </section>
 
     <!-- Main content area (placeholder) -->

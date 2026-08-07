@@ -68,7 +68,7 @@ describe('dashboard/level/[level]/index.vue', () => {
 
     it('LevelIndex source | when rendered | includes a back-to-dashboard link', () => {
       // Arrange
-      const filePath = resolve(__dirname, '../app/pages/dashboard/level/[level]/index.vue')
+      const filePath = resolve(__dirname, '../../app/pages/dashboard/level/[level]/index.vue')
       const content = readFileSync(filePath, 'utf-8')
 
       // Act & Assert
@@ -80,7 +80,7 @@ describe('dashboard/level/[level]/index.vue', () => {
   describe('Restricted imports', () => {
     it('LevelIndex source | when scanned | does not import audio or voice composables', () => {
       // Arrange
-      const filePath = resolve(__dirname, '../app/pages/dashboard/level/[level]/index.vue')
+      const filePath = resolve(__dirname, '../../app/pages/dashboard/level/[level]/index.vue')
       const content = readFileSync(filePath, 'utf-8')
 
       // Act & Assert
