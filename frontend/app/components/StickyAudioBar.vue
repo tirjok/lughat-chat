@@ -33,26 +33,26 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const speeds = [0.75, 1.0, 1.25] as const
-type Speed = (typeof speeds)[number]
+type Speed = 0.75 | 1.0 | 1.25
+const speeds: Speed[] = [0.75, 1.0, 1.25]
 
-const currentSpeedIndex = computed(() => {
+const currentSpeedIndex = computed<0 | 1 | 2>(() => {
   const idx = speeds.indexOf(props.speedValue as Speed)
-  return idx >= 0 ? idx : 1
+  return (idx >= 0 ? idx : 1) as 0 | 1 | 2
 })
 
-const currentSpeed = computed<Speed>(() => speeds[currentSpeedIndex.value])
+const currentSpeed = computed<Speed>(() => speeds[currentSpeedIndex.value] as Speed)
 
 const speedNext = () => {
   const nextIdx = (currentSpeedIndex.value + 1) % speeds.length
-  emit('speedChange', speeds[nextIdx])
+  emit('speedChange', speeds[nextIdx] as Speed)
 }
 
 const repeatNext = () => {
-  const order: Array<'off' | 'one' | 'all'> = ['off', 'one', 'all']
+  const order = ['off', 'one', 'all'] as const
   const currentIdx = order.indexOf(props.repeatMode)
   const nextIdx = (currentIdx + 1) % order.length
-  emit('repeatChange', order[nextIdx])
+  emit('repeatChange', order[nextIdx as 0 | 1 | 2])
 }
 
 const formatTime = (seconds: number): string => {
@@ -152,7 +152,7 @@ defineExpose({
       <button
         data-testid="play-pause-button"
         data-icon="play"
-        aria-label="Play"
+        :aria-label="isPlaying ? 'Pause' : 'Play'"
         class="primary-600 rounded-full w-11 h-11 flex items-center justify-center text-white shadow-[0_0_16px_rgba(221,36,118,0.3)] hover:scale-[1.04] active:scale-[0.96] transition-all duration-300"
         @click="emit('toggle')"
       >

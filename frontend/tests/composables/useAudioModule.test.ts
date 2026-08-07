@@ -18,7 +18,7 @@ describe('useAudioModule', () => {
     it('updates audioUrl on second load, revoking the first', async () => {
       let urlCounter = 0
       const coSpy = vi.spyOn(global.URL, 'createObjectURL').mockImplementation(
-        (blob) => `http://mock.url/blob-${++urlCounter}`
+        _blob => `http://mock.url/blob-${++urlCounter}`
       )
       const module = useAudioModule()
       const blob1 = new Blob(['dummy'], { type: 'audio/mpeg' })
@@ -33,7 +33,6 @@ describe('useAudioModule', () => {
       expect(module.audioUrl.value).not.toBe(firstUrl)
       coSpy.mockRestore()
     })
-
 
     it('When loading multiple blobs rapidly then revokes all previous object URLs', async () => {
       // Arrange

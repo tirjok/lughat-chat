@@ -10,7 +10,7 @@ import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
 import SpeedSlider from './SpeedSlider.vue'
 import GenerateButton from './GenerateButton.vue'
-import AudioPlayerPanel from './AudioPlayerPanel.vue'
+import StickyAudioBar from './StickyAudioBar.vue'
 import type { Voice } from '../composables/useVoices'
 
 // TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
@@ -283,19 +283,17 @@ const isOverLimit = computed(() => charCount.value > 3000)
         </div>
       </div>
 
-      <!-- Audio Player Panel (slides up from bottom) -->
-      <AudioPlayerPanel
-        :visible="playerVisible && !!audioUrl"
+      <!-- Sticky Audio Bar (slides up from bottom) -->
+      <StickyAudioBar
+        :active="playerVisible && !!audioUrl"
+        :text-content="textInput"
         :is-playing="isPlaying"
         :is-paused="isPaused"
         :current-time="currentTime"
         :duration="duration"
-        :audio-url="audioUrl"
-        :selected-voice-name="selectedVoiceName"
         :speed-value="speedValue"
         @close="emit('closePlayer')"
         @toggle="emit('toggle')"
-        @download="emit('download')"
         @seek="(ratio) => emit('seek', ratio)"
       />
 

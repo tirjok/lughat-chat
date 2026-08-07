@@ -2,6 +2,10 @@ import { fileURLToPath } from 'node:url'
 import { defineVitestConfig } from '@nuxt/test-utils/config'
 
 export default defineVitestConfig({
+  testUtils: {
+    startOnBoot: true,
+    logToConsole: false
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.component.ts'],

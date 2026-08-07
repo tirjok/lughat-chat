@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-
 import Dashboard from '../../app/pages/dashboard.vue'
 
 // ─── Route Mocking ──────────────────────────────────────────────────────
@@ -25,7 +22,7 @@ function getWrapper(path: string) {
     global: {
       plugins: [
         {
-          install(app: any) {
+          install(app: Record<string, unknown>) {
             app.config.globalProperties.$router = {}
             Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
               value: vi.fn(() => ({
@@ -40,7 +37,7 @@ function getWrapper(path: string) {
           }
         }
       ],
-      components: {
+      stubs: {
         NuxtLink: {
           props: ['to'],
           template: '<a :href="to"><slot /></a>'

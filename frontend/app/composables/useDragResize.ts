@@ -30,7 +30,7 @@ export function useDragResize(options: UseDragResizeOptions = {}) {
 
   function getClientY(e: TouchEvent | MouseEvent): number {
     if ('touches' in e) {
-      return e.touches[0].clientY
+      return e.touches[0]!.clientY
     }
     return e.clientY
   }

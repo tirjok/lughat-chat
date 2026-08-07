@@ -11,8 +11,7 @@ let __testApp: VueApp | null = null
 beforeEach(() => {
   try {
     __testApp?.unmount()
-  }
-  catch { /* jsdom may not support unmount */ }
+  } catch { /* jsdom may not support unmount */ }
   __testApp = null
   __testApp = createApp({}).mount(
     Object.assign(document.createElement('div'), { id: '__test-lifecycle-suppressor' })

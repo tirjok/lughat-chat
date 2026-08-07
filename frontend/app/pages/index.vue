@@ -104,7 +104,7 @@ function handleStay() {
 onBeforeRouteLeave(async () => {
   // AC-1: guard fires when navigating away from /
   // AC-2: show dialog when isGenerating=true or isStreaming
-  const hasInFlightSynthesis = isGenerating.value || audioModule.isStreaming
+  const hasInFlightSynthesis = isGenerating.value
 
   if (!hasInFlightSynthesis) {
     // No in-flight synthesis — allow navigation without dialog

@@ -3,23 +3,38 @@ import { computed, shallowRef } from 'vue'
 
 // Route access — deferred inside computed getters to avoid
 // NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).
-const route = computed(() => useRoute())
-const router = computed(() => useRouter())
-const levelParam = computed(() => (route.params?.level as string) || '')
-const lessonParam = computed(() => (route.params?.lesson as string) || '')
-
+function safeRoute() {
+  /* eslint-disable @stylistic/brace-style */
+  try {
+    return useRoute()
+  }
+  catch {
+    return {} as unknown as ReturnType<typeof useRoute>
+  }
+}
+function safeRouter() {
+  try {
+    return useRouter()
+  }
+  catch {
+    return {} as unknown as ReturnType<typeof useRouter>
+  }
+}
+const route = computed(() => safeRoute())
+const router = computed(() => safeRouter())
+const levelParam = computed(() => (route.value.params?.level as string) || '')
+const lessonParam = computed(() => (route.value.params?.lesson as string) || '')
 // AC-5: Redirect when /dashboard/level/ has no level param
 const isMissingLevel = computed(() => {
   return (
-    route.path.startsWith('/dashboard/level/') &&
-    !levelParam.value
+    route.value.path.startsWith('/dashboard/level/')
+    && !levelParam.value
   )
 })
 
 const currentLevel = computed(() => levelParam.value || 'A1')
 const levelRoute = computed(() => `/dashboard/level/${currentLevel.value.toLowerCase()}`)
 const currentLesson = computed(() => lessonParam.value || '1')
-
 
 // Breadcrumb trail: Dashboard → Level {level} → Lesson {id}
 const breadcrumbs = computed(() => [
@@ -44,7 +59,7 @@ const activeSection = shallowRef('Dialogue')
 if (typeof onBeforeRouteLeave === 'function') {
   onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
     if (isMissingLevel.value) {
-      router.push('/dashboard')
+      router.value.push('/dashboard')
       next(false)
     } else {
       next()
@@ -93,7 +108,10 @@ if (typeof onBeforeRouteLeave === 'function') {
     </nav>
 
     <!-- Hero section -->
-    <header class="px-4 md:px-6 pb-6" data-testid="lesson-hero">
+    <header
+      class="px-4 md:px-6 pb-6"
+      data-testid="lesson-hero"
+    >
       <div class="max-w-6xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -118,19 +136,25 @@ if (typeof onBeforeRouteLeave === 'function') {
     </header>
 
     <!-- Section tabs -->
-    <section class="px-4 md:px-6 pb-4" data-testid="section-tabs">
+    <section
+      class="px-4 md:px-6 pb-4"
+      data-testid="section-tabs"
+    >
       <div class="max-w-6xl mx-auto">
-        <div class="flex flex-wrap gap-2 border-b border-stone-200 dark:border-stone-700" role="tablist">
+        <div
+          class="flex flex-wrap gap-2 border-b border-stone-200 dark:border-stone-700"
+          role="tablist"
+        >
           <button
             v-for="tab in sectionTabs"
-            :key="tab"
             :id="`tab-${tab}`"
+            :key="tab"
             role="tab"
-            :aria-selected="activeSection.value === tab"
+            :aria-selected="activeSection === tab"
             :aria-controls="`panel-${tab}`"
             :class="[
               'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-              activeSection.value === tab
+              activeSection === tab
                 ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                 : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
             ]"
@@ -139,7 +163,7 @@ if (typeof onBeforeRouteLeave === 'function') {
             {{ tab }}
           </button>
         </div>
-        </div>
+      </div>
     </section>
 
     <!-- Main content area (placeholder) -->
@@ -147,7 +171,7 @@ if (typeof onBeforeRouteLeave === 'function') {
       <div class="max-w-6xl mx-auto">
         <div class="card">
           <p class="text-stone-500 dark:text-stone-400">
-            Content for "{{ activeSection.value }}" section coming soon.
+            Content for "{{ activeSection }}" section coming soon.
           </p>
         </div>
       </div>

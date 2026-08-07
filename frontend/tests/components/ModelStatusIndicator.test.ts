@@ -10,7 +10,7 @@ import ModelStatusIndicator from '../../app/components/ModelStatusIndicator.vue'
 // mounting the component. This avoids the hoisting pitfall where
 // vi.mock() calls inside it() blocks would overwrite each other.
 
-let mockStatus: Ref<'loading' | 'ready' | 'error'> = ref('loading' as const)
+const mockStatus: Ref<'loading' | 'ready' | 'error'> = ref('loading' as const)
 
 vi.mock('../../app/composables/useHealthPoll', () => ({
   useHealthPoll: () => ({

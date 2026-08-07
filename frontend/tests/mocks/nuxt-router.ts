@@ -1,6 +1,6 @@
 import type { RouteLocationNormalizedLoaded, NavigationGuardNext } from 'vue-router'
 
-const routeState: { params: Record<string, string>; path: string } = {
+const routeState: { params: Record<string, string>, path: string } = {
   params: { level: 'a1', lesson: '1' },
   path: '/dashboard/level/a1/1'
 }

@@ -58,7 +58,16 @@ if (typeof (globalThis as unknown as Record<string, unknown>).IntersectionObserv
   }
 })
 // onBeforeRouteLeave is a Nuxt auto-import (not from 'vue'). No-op in tests.
-;(globalThis as Record<string, unknown>).onBeforeRouteLeave = (_fn: () => void) => { /* no-op */ }
+;(globalThis as Record<string, unknown>).useRoute = () => ({
+  params: { level: 'a1', lesson: '1' },
+  path: '/dashboard/level/a1/1',
+  fullPath: '/dashboard/level/a1/1',
+  query: {},
+  hash: '',
+  name: 'lesson' as string | undefined,
+  matched: [],
+  meta: {}
+})
 
 // ─── Viewport / Responsive Mocks ──────────────────────────────────────
 // Used by responsive UI tests to simulate different viewport sizes.

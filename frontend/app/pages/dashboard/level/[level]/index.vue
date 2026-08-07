@@ -8,8 +8,12 @@
       <div class="max-w-6xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-stone-800 dark:text-stone-100" data-testid="level-heading">Level A1
-</h1>
+            <h1
+              class="text-2xl md:text-3xl font-bold text-stone-800 dark:text-stone-100"
+              data-testid="level-heading"
+            >
+              Level A1
+            </h1>
             <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
               Lesson content coming soon.
             </p>

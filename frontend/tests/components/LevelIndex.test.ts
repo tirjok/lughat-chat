@@ -36,7 +36,7 @@ describe('dashboard/level/[level]/index.vue', () => {
 
       // Assert
       const heading = wrapper.find('[data-testid="level-heading"]')
-      expect(heading.exists()).to.be.true
+      expect(heading.exists()).toBe(true)
       expect(heading.text()).to.contain('Level')
     })
 
@@ -49,7 +49,7 @@ describe('dashboard/level/[level]/index.vue', () => {
 
       // Assert
       const list = wrapper.find('[data-testid="lesson-list"]')
-      expect(list.exists()).to.be.true
+      expect(list.exists()).toBe(true)
     })
   })
 
@@ -63,7 +63,7 @@ describe('dashboard/level/[level]/index.vue', () => {
 
       // Assert
       const header = wrapper.find('header')
-      expect(header.exists()).to.be.true
+      expect(header.exists()).toBe(true)
     })
 
     it('LevelIndex source | when rendered | includes a back-to-dashboard link', () => {

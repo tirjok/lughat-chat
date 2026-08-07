@@ -1,10 +1,9 @@
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
-import type { VueWrapper } from '@vue/test-utils'
 
 import LessonPage from '../../app/pages/dashboard/level/[level]/[lesson].vue'
 
-function getWrapper(): VueWrapper {
+function getWrapper() {
   return shallowMount(LessonPage)
 }
 
@@ -25,7 +24,7 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
 
       // Assert
       const heading = wrapper.find('[data-testid="lesson-heading"]')
-      expect(heading.exists()).to.be.true
+      expect(heading.exists()).toBe(true)
       expect(heading.text()).toContain('Lesson 1')
       expect(heading.text()).toContain('Level A1')
     })
@@ -39,7 +38,7 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
 
       // Assert
       const breadcrumbs = wrapper.find('[data-testid="breadcrumbs"]')
-      expect(breadcrumbs.exists()).to.be.true
+      expect(breadcrumbs.exists()).toBe(true)
     })
 
     it('LessonPage | when mounted | renders a hero section', async () => {
@@ -51,7 +50,7 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
 
       // Assert
       const hero = wrapper.find('[data-testid="lesson-hero"]')
-      expect(hero.exists()).to.be.true
+      expect(hero.exists()).toBe(true)
     })
 
     it('LessonPage | when mounted | renders section tabs', async () => {
@@ -63,7 +62,7 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
 
       // Assert
       const tabs = wrapper.find('[data-testid="section-tabs"]')
-      expect(tabs.exists()).to.be.true
+      expect(tabs.exists()).toBe(true)
     })
 
     it('LessonPage | when mounted | renders a "Back to Level" link in the hero', async () => {
@@ -75,7 +74,7 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
 
       // Assert
       const backLink = wrapper.find('[data-testid="back-to-level"]')
-      expect(backLink.exists()).to.be.true
+      expect(backLink.exists()).toBe(true)
     })
 
     it('LessonPage | when mounted | "Back to Level" link points to the correct level route', async () => {
@@ -88,7 +87,7 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
       // Assert — shallowMount renders NuxtLink as unregistered custom element.
       // Just verify the element exists (route is tested in integration/e2e).
       const backLink = wrapper.find('[data-testid="back-to-level"]')
-      expect(backLink.exists()).to.be.true
+      expect(backLink.exists()).toBe(true)
     })
   })
 
@@ -102,7 +101,7 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
 
       // Assert
       const breadcrumbs = wrapper.find('[data-testid="breadcrumbs"]')
-      expect(breadcrumbs.exists()).to.be.true
+      expect(breadcrumbs.exists()).toBe(true)
     })
   })
 
@@ -116,7 +115,7 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
 
       // Assert
       const heading = wrapper.find('[data-testid="lesson-heading"]')
-      expect(heading.exists()).to.be.true
+      expect(heading.exists()).toBe(true)
       expect(heading.text()).toContain('Lesson 1')
       expect(heading.text()).toContain('Level A1')
     })

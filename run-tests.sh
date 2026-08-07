@@ -29,7 +29,7 @@ cd ..
 echo ""
 echo "▶ Running frontend component tests..."
 cd frontend
-npx vitest run --config vitest.component.config.ts "$@"
+pnpm vitest run --config vitest.component.config.ts "$@"
 cd ..
 
 echo ""
