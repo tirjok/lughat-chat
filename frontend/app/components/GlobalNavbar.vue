@@ -60,7 +60,7 @@ const isMobile = computed(() => {
           class="ph-fill ph-waves text-primary-500 text-xl"
         />
         <span class="text-lg font-bold text-stone-800 dark:text-stone-200 tracking-tight">
-          Lughat<span class="text-primary-500">Chat</span>
+          Lughat<span class="text-gold-500">Chat</span>
         </span>
       </NuxtLink>
 
@@ -72,21 +72,21 @@ const isMobile = computed(() => {
         <NuxtLink
           to="/"
           class="px-3 py-1.5 rounded text-sm font-medium transition-colors"
-          :class="isActive('/') ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'"
+          :class="isActive('/') ? 'text-primary-600 bg-primary-50' : 'text-stone-600 hover:text-stone-800'"
         >
           Home
         </NuxtLink>
         <NuxtLink
           to="/dashboard"
           class="px-3 py-1.5 rounded text-sm font-medium transition-colors"
-          :class="isActive('/dashboard') ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'"
+          :class="isActive('/dashboard') ? 'text-primary-600 bg-primary-50' : 'text-stone-600 hover:text-stone-800'"
         >
           Dashboard
         </NuxtLink>
         <NuxtLink
           to="/dashboard"
           class="px-3 py-1.5 rounded text-sm font-medium transition-colors"
-          :class="isLessonRoute ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'"
+          :class="isLessonRoute ? 'text-primary-600 bg-primary-50' : 'text-stone-600 hover:text-stone-800'"
         >
           My Courses
         </NuxtLink>
@@ -115,9 +115,11 @@ const isMobile = computed(() => {
           <span class="hidden lg:inline ml-1">Settings</span>
         </button>
         <div
-          class="w-8 h-8 rounded-full bg-stone-300 dark:bg-stone-600 flex items-center justify-center"
+          class="w-8 h-8 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-white font-semibold text-sm"
           aria-hidden="true"
-        />
+        >
+          S
+        </div>
       </div>
 
       <!-- Mobile: compact bar (h-16 for WCAG 44px touch targets) -->
@@ -135,7 +137,7 @@ const isMobile = computed(() => {
             class="ph-fill ph-waves text-primary-500 text-xl"
           />
           <span class="text-base font-bold text-stone-800 dark:text-stone-200">
-            Lughat<span class="text-primary-500">Chat</span>
+            Lughat<span class="text-gold-500">Chat</span>
           </span>
         </NuxtLink>
 
@@ -149,13 +151,13 @@ const isMobile = computed(() => {
           <NuxtLink
             to="/dashboard"
             class="w-11 h-11 flex items-center justify-center rounded-lg transition-colors"
-            :class="isActive('/dashboard') ? 'text-primary-600 dark:text-primary-400' : 'text-stone-500 dark:text-stone-400'"
+            :class="isActive('/dashboard') ? 'text-primary-600' : 'text-stone-500'"
             aria-label="Dashboard"
           />
           <NuxtLink
             to="/dashboard"
             class="w-11 h-11 flex items-center justify-center rounded-lg transition-colors"
-            :class="isLessonRoute ? 'text-primary-600 dark:text-primary-400' : 'text-stone-500 dark:text-stone-400'"
+            :class="isLessonRoute ? 'text-primary-600' : 'text-stone-500'"
             aria-label="My Courses"
           />
         </div>
