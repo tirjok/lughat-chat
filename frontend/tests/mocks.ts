@@ -27,7 +27,7 @@ export function setBreakpoint(width: number): void {
 // Returns reactive refs + mock methods matching useAudioModule's real interface.
 // Use this in vi.mock() callbacks for component tests that depend on useAudioModule.
 
-export const createMockUseAudioModule = () => {
+export const createMockUseAudioModule = (options?: { isGenerating?: boolean }) => {
   const audioRef: Ref<HTMLAudioElement | null> = ref(null)
   const audioUrl: Ref<string | null> = ref(null)
   const duration: Ref<number> = ref(0)
@@ -38,6 +38,7 @@ export const createMockUseAudioModule = () => {
   const error: Ref<string | null> = ref(null)
   const formattedCurrentTime: Ref<string> = ref('0:00')
   const formattedDuration: Ref<string> = ref('0:00')
+  const isGenerating = ref(options?.isGenerating ?? false)
 
   return {
     audioRef,
@@ -50,12 +51,14 @@ export const createMockUseAudioModule = () => {
     error,
     formattedCurrentTime,
     formattedDuration,
+    isGenerating,
     load: vi.fn(),
     play: vi.fn().mockResolvedValue(undefined),
     pause: vi.fn(),
     seek: vi.fn(),
     download: vi.fn(),
-    toggle: vi.fn().mockResolvedValue(undefined)
+    toggle: vi.fn().mockResolvedValue(undefined),
+    dispose: vi.fn()
   }
 }
 

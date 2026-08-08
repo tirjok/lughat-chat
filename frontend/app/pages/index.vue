@@ -15,7 +15,7 @@ import { useInputValidation } from '../composables/useInputValidation'
 import { showToast } from '../composables/useToast'
 import MobileSplitScreen from '../components/MobileSplitScreen.vue'
 import DesktopPanels from '../components/DesktopPanels.vue'
-import CleanupDialog from '../components/CleanupDialog.vue'
+import { useCleanupNavigation } from '../composables/useCleanupNavigation'
 
 const { activePanel } = usePanelToggle()
 
@@ -72,34 +72,8 @@ const panelAnnouncement = computed(() => {
 })
 
 // ── In-flight synthesis cleanup guard (R-7) ──
-const isDialogVisible = shallowRef(false)
-
-async function handleCleanupAndLeave() {
-  // AC-4: Dispose audio module
-  audioModule.dispose()
-
-  // AC-4: POST /api/cleanup
-  try {
-    const response = await fetch('/api/cleanup', { method: 'POST' })
-    if (response.ok) {
-      showToast('Generated files cleaned up successfully', 'success')
-    } else if (response.status === 503) {
-      showToast('Backend unavailable — orphan files will be cleaned by scheduled job.', 'error')
-    } else {
-      showToast(`Cleanup failed (${response.status}) — files will be cleaned by 24h TTL.`, 'error')
-    }
-  } catch {
-    showToast('Cleanup failed — files will be cleaned by 24h TTL.', 'error')
-  } finally {
-    isDialogVisible.value = false
-  }
-}
-
-function handleStay() {
-  // AC-5: Cancel navigation, synthesis continues
-  isDialogVisible.value = false
-  showToast('Navigation cancelled — synthesis continues.', 'info')
-}
+const cleanup = useCleanupNavigation(audioModule)
+// ─── Cleanup navigation logic (extracted for testability) ───────────────
 
 onBeforeRouteLeave(async () => {
   // AC-1: guard fires when navigating away from /
@@ -112,7 +86,7 @@ onBeforeRouteLeave(async () => {
   }
 
   // AC-2: Show dialog when isGenerating=true or isStreaming
-  isDialogVisible.value = true
+  cleanup.dialogVisible.value = true
 
   // Block navigation until user responds
   return false
@@ -256,9 +230,9 @@ const desktopPanelProps = computed(() => ({
 
     <!-- ── In-flight synthesis cleanup dialog ── -->
     <CleanupDialog
-      :visible="isDialogVisible"
-      @cleanup="handleCleanupAndLeave"
-      @stay="handleStay"
+      :visible="cleanup.dialogVisible.value"
+      @cleanup="cleanup.handleCleanupAndLeave"
+      @stay="cleanup.handleStay"
     />
   </div>
 </template>
