@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useHealthPoll } from '../composables/useHealthPoll'
+// TODO: migrated from studio-900 (see ISSUE-014)
 
 const { status, modelLoaded } = useHealthPoll()
 </script>
@@ -12,7 +13,7 @@ const { status, modelLoaded } = useHealthPoll()
   >
     <!-- Inner Core -->
     <div
-      class="flex items-center gap-1.5 rounded-full bg-studio-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] px-2.5 py-1"
+      class="flex items-center gap-1.5 rounded-full bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] px-2.5 py-1"
     >
       <!-- Loading state: pulsing orange dot -->
       <span

@@ -1,11 +1,31 @@
-import { vi } from 'vitest'
+import { vi, beforeEach } from 'vitest'
+import { type App as VueApp, createApp } from 'vue'
+
+// ─── Vue Lifecycle Warning Suppression ──────────────────────────────
+// Unit tests call composables that use onMounted/onUnmounted without
+// a real component instance. Create a hidden app to absorb these
+// calls so Vue doesn't emit "lifecycle injection APIs can only be
+// used during execution of setup()" warnings.
+let __testApp: VueApp | null = null
+
+beforeEach(() => {
+  try {
+    __testApp?.unmount()
+  } catch { /* jsdom may not support unmount */ }
+  __testApp = null
+  __testApp = createApp({}).mount(
+    Object.assign(document.createElement('div'), { id: '__test-lifecycle-suppressor' })
+  )
+})
 
 // ─── Browser API Mocks ──────────────────────────────────────────────
 // These are shared across all tests (composable + component).
-
-global.window.devicePixelRatio = 1
+// When running in the Nuxt test environment (@nuxt/test-utils/module),
+// Nuxt auto-imports (ref, computed, useRoute, etc.) are provided natively.
+// We only need to mock browser APIs that don't exist in jsdom.
 
 global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob') as unknown as typeof global.URL.createObjectURL
+
 global.URL.revokeObjectURL = vi.fn()
 
 // matchMedia mock for useScrollReveal (prefers-reduced-motion check)
@@ -50,14 +70,8 @@ global.IntersectionObserver = class IntersectionObserver extends EventTarget {
   }
 } as unknown as typeof IntersectionObserver
 
-// Track onMounted callbacks for testing composables that use lifecycle hooks
-const mountedCallbacks: (() => void)[] = []
-
-// Mock Nuxt auto-imported composables — return reactive-like objects with .value properties
-Object.assign(globalThis, {
-  onMounted: vi.fn((cb: () => void) => mountedCallbacks.push(cb)),
-  ref: vi.fn((init: unknown) => ({ value: init })),
-  computed: vi.fn((fn: () => unknown) => ({ get value() { return fn() } }))
+beforeEach(() => {
+  mockElements.length = 0
 })
 
 // ─── Re-export mock factories for component tests ───────────────────
@@ -68,6 +82,3 @@ export {
   createMockUseInputValidation,
   createMockUseToast
 } from './mocks'
-
-// Export for tests to trigger mount callbacks
-export { mountedCallbacks }

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
+// TODO: migrated from sunrise-orange/magenta (see ISSUE-014)
 
 const haloRef = ref<HTMLDivElement | null>(null)
-
 let textareaEl: HTMLTextAreaElement | null = null
 
 function handleFocus() {
@@ -57,7 +57,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 100px;
-  background: radial-gradient(ellipse at center, rgba(255, 81, 47, 0.15) 0%, rgba(221, 36, 118, 0.05) 50%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(20, 184, 166, 0.15) 0%, rgba(245, 158, 11, 0.05) 50%, transparent 70%);
   opacity: 0;
   transition: opacity 700ms var(--ease-spring);
   pointer-events: none;

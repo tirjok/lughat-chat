@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useToast } from '../composables/useToast'
 import type { ToastType } from '../composables/useToast'
+// TODO: migrated from studio-800/studio-700 (see ISSUE-014)
 
 const toasts = useToast()
 
@@ -16,7 +17,7 @@ function toastBgClass(type: ToastType): string {
   switch (type) {
     case 'error': return 'bg-red-500/10 ring-1 ring-red-500/30'
     case 'info': return 'bg-blue-500/10 ring-1 ring-blue-500/30'
-    default: return 'bg-studio-800 ring-1 ring-white/[0.06]'
+    default: return 'bg-stone-800 ring-1 ring-white/[0.06]'
   }
 }
 </script>
@@ -48,7 +49,7 @@ function toastBgClass(type: ToastType): string {
           <!-- Close button: Double-Bezel -->
           <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
             <button
-              class="rounded-full bg-studio-700 text-gray-500 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
+              class="rounded-full bg-stone-700 text-gray-500 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
               aria-label="Close notification"
               @click="toasts.splice(toasts.indexOf(toast), 1)"
             >

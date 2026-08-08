@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
-
   modules: [
     '@nuxt/eslint',
+    '@nuxt/test-utils/module',
     '@nuxt/image',
     '@unocss/nuxt'
   ],
@@ -30,7 +30,9 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
+    '/dashboard': { prerender: false },
+    '/dashboard/level/**': { prerender: false }
   },
 
   compatibilityDate: '2025-01-15',
@@ -57,6 +59,12 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
+  },
+
+  // Nuxt test utilities configuration
+  testUtils: {
+    startOnBoot: true,
+    logToConsole: true
   },
 
   // UnoCSS configuration

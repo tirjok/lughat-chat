@@ -1,15 +1,16 @@
-import { defineConfig } from 'vitest/config'
-import vue from '@vitejs/plugin-vue'
+import { fileURLToPath } from 'node:url'
+import { defineVitestConfig } from '@nuxt/test-utils/config'
 
-export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {}
-  },
+export default defineVitestConfig({
   test: {
     environment: 'jsdom',
-    globals: true,
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/**/*.test.{ts,tsx}']
+    include: ['tests/composables/**/*.test.ts'],
+    environmentOptions: {
+      nuxt: {
+        rootDir: fileURLToPath(new URL('.', import.meta.url))
+      }
+    },
+    globals: true
   }
 })

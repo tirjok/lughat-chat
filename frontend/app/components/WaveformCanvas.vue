@@ -8,6 +8,7 @@ const props = defineProps<{
   duration: number
 }>()
 
+// TODO: migrated from sunrise-orange/magenta gradient (see ISSUE-014)
 const emit = defineEmits<{ (e: 'seek', ratio: number): void }>()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -75,9 +76,9 @@ function drawWaveform() {
     const y = centerY - (height / 2)
 
     const ratio = bar.currentHeight
-    const r = Math.round(221 + (255 - 221) * ratio)
-    const g = Math.round(36 + (81 - 36) * ratio)
-    const b = Math.round(118 + (47 - 118) * ratio)
+    const r = Math.round(20 + (245 - 20) * ratio)
+    const g = Math.round(184 + (158 - 184) * ratio)
+    const b = Math.round(166 + (11 - 166) * ratio)
 
     // Color bars differently based on whether they've been played
     if (barProgress <= progress) {

@@ -75,10 +75,8 @@ btn-generate (loading state), audio/error/footer, spinner/fade/slide-up animatio
 
 ### Vitest Setup Detail
 
-- `vitest.config.ts`: jsdom, setup `tests/setup.ts` (stubs `ref`, `computed`, `watch`, `onMounted`).
-  Excludes `**/*.component.test.ts`, `tests/ModelStatusIndicator.test.ts`.
-- `vitest.component.config.ts`: jsdom, setup `tests/setup.component.ts` (stubs URL APIs, fetch).
-  Excludes `tests/useHealthPoll.test.ts`.
+- `vitest.config.ts`: uses `@nuxt/test-utils/config` (`defineVitestConfig`) with `environmentOptions.nuxt.rootDir`, jsdom, setup `tests/setup.ts` (browser-level mocks only — IntersectionObserver, URL, matchMedia). Nuxt auto-imports (ref, computed, useRoute, onMounted, etc.) are provided by the Nuxt test environment. `nuxt.config.ts` includes a `testUtils` config block (`startOnBoot: true, logToConsole: true`).
+- `vitest.component.config.ts`: uses `@nuxt/test-utils/config` (`defineVitestConfig`) with `environmentOptions.nuxt.rootDir`, jsdom, setup `tests/setup.component.ts` (browser-level mocks + viewport mocks + `setBreakpoint()` helper).
 - Existing tests: run `ls frontend/tests/` — do not rely on hardcoded lists.
 
 ---

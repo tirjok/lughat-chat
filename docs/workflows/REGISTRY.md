@@ -57,6 +57,7 @@ These are liabilities: they will be modified without understanding their full sh
 | 24 | Keyboard Shortcut: Ctrl/Cmd+Enter | — | **Missing** | Key press | Frontend (index.vue) | — |
 | 25 | Mobile Divider Dragging | — | **Missing** | Touch/mouse drag | Frontend (index.vue) | — |
 | 26 | Nginx Large-File Streaming | — | **Missing** | `/api/*`, `/downloads/*` requests | Nginx | — |
+| 27 | Multi-Page SPA Routing | `WORKFLOW-multi-page-spa-routing.md` | **Draft** | User clicks nav link / types URL / browser back-forward | Frontend (Nuxt Router + GlobalNavbar) | 2026-08-03 |
 
 ---
 
