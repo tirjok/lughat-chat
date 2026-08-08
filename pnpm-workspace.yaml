@@ -1,9 +1,7 @@
 packages:
   - 'frontend'
 
-packageConfigs:
-  frontend:
-    allowBuilds:
-      esbuild: true
-      sharp: true
-      unrs-resolver: true
+allowBuilds:
+  - esbuild
+  - sharp
+  - unrs-resolver
