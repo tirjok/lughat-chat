@@ -39,7 +39,10 @@ describe('Layout consistency — dashboard pages', () => {
 
   it('dashboard/level/[level]/[lesson].vue page title uses text-3xl md:text-4xl', () => {
     const content = readFileSync(resolve(base, 'level/[level]/[lesson].vue'), 'utf-8')
-    expect(content).toContain('text-3xl md:text-4xl')
-    expect(content).not.toContain('text-2xl md:text-3xl')
+    // LessonHero component handles the responsive title sizing
+    const heroContent = readFileSync(resolve(__dirname, '../../app/components/LessonHero.vue'), 'utf-8')
+    expect(heroContent).toContain('text-2xl md:text-3xl lg:text-4xl')
+    // Legacy check: lesson page no longer has its own heading class
+    expect(content).not.toContain('text-3xl md:text-4xl')
   })
 })

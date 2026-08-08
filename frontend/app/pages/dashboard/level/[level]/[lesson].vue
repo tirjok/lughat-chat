@@ -107,34 +107,18 @@ if (typeof onBeforeRouteLeave === 'function') {
       </div>
     </nav>
 
-    <!-- Hero section -->
-    <header
-      class="px-4 md:px-6 pb-6"
-      data-testid="lesson-hero"
-    >
-      <div class="max-w-7xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1
-              class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100"
-              data-testid="lesson-heading"
-            >
-              Lesson {{ currentLesson }} — Level {{ currentLevel }}
-            </h1>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
-              Placeholder — lesson content coming soon.
-            </p>
-            <NuxtLink
-              data-testid="back-to-level"
-              :to="`/dashboard/level/${currentLevel.toLowerCase()}`"
-            >
-              Back to Level
-            </NuxtLink>
-          </div>
-        </div>
-      </div>
-    </header>
 
+    <!-- Hero section -->
+    <div class="px-4 md:px-6 pb-6" data-testid="lesson-hero">
+      <div class="max-w-7xl mx-auto">
+        <LessonHero
+          :level="currentLevel"
+          :lesson-number="currentLesson"
+          title="Lesson {{ currentLesson }}"
+          :is-ready="true"
+        />
+      </div>
+    </div>
     <!-- Section tabs -->
     <section
       class="px-4 md:px-6 pb-4"
