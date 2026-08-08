@@ -142,7 +142,7 @@ if (typeof onBeforeRouteLeave === 'function') {
     >
       <div class="max-w-7xl mx-auto">
         <div
-          class="flex flex-wrap gap-2 border-b border-stone-200 dark:border-stone-700"
+          class="bg-stone-100 dark:bg-stone-800 rounded-xl p-1.5 flex flex-wrap gap-1"
           role="tablist"
         >
           <button
@@ -153,10 +153,10 @@ if (typeof onBeforeRouteLeave === 'function') {
             :aria-selected="activeSection === tab"
             :aria-controls="`panel-${tab}`"
             :class="[
-              'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+              'flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2',
               activeSection === tab
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
+                ? 'bg-white dark:bg-stone-700 text-primary-700 dark:text-primary-400 shadow-sm'
+                : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
             ]"
             @click="activeSection = tab"
           >

@@ -65,6 +65,101 @@ describe('dashboard/level/[level]/[lesson].vue', () => {
       expect(tabs.exists()).toBe(true)
     })
 
+    it('LessonPage | when mounted | tab container uses pill-style classes (bg-stone-100 rounded-xl p-1.5)', async () => {
+      // Arrange
+      const wrapper = getWrapper()
+
+      // Act
+      await nextTick()
+
+      // Assert — the inner div (role="tablist") should have pill container classes
+      const tabList = wrapper.find('[role="tablist"]')
+      expect(tabList.exists()).toBe(true)
+      const classes = tabList.element.className
+      expect(classes).toContain('bg-stone-100')
+      expect(classes).toContain('rounded-xl')
+      expect(classes).toContain('p-1.5')
+    })
+
+    it('LessonPage | when mounted | active tab (Dialogue) has pill active styles (bg-white text-primary-700)', async () => {
+      // Arrange
+      const wrapper = getWrapper()
+
+      // Act
+      await nextTick()
+
+      // Assert — Dialogue is the default activeSection (shallowRef('Dialogue'))
+      const activeTab = wrapper.find('#tab-Dialogue')
+      expect(activeTab.exists()).toBe(true)
+      const classes = activeTab.element.className
+      expect(classes).toContain('bg-white')
+      expect(classes).toContain('text-primary-700')
+      expect(classes).toContain('shadow-sm')
+    })
+
+    it('LessonPage | when mounted | inactive tabs have text-stone-600 hover:text-stone-800', async () => {
+      // Arrange
+      const wrapper = getWrapper()
+
+      // Act
+      await nextTick()
+
+      // Assert — Vocabulary is NOT the active section
+      const inactiveTab = wrapper.find('#tab-Vocabulary')
+      expect(inactiveTab.exists()).toBe(true)
+      const classes = inactiveTab.element.className
+      expect(classes).toContain('text-stone-600')
+      expect(classes).toContain('hover:text-stone-800')
+      // Active styles must NOT be present on inactive tabs
+      expect(classes).not.toContain('bg-white')
+    })
+
+    it('LessonPage | when a tab is clicked | updates activeSection and changes active/inactive styles', async () => {
+      // Arrange
+      const wrapper = getWrapper()
+      await nextTick()
+
+      // Act — click the Vocabulary tab
+      const vocabTab = wrapper.find('#tab-Vocabulary')
+      await vocabTab.trigger('click')
+      await nextTick()
+
+      // Assert — Vocabulary should now be active
+      const vocabClasses = vocabTab.element.className
+      expect(vocabClasses).toContain('bg-white')
+      expect(vocabClasses).toContain('text-primary-700')
+      expect(vocabClasses).toContain('shadow-sm')
+
+      // Dialogue should now be inactive
+      const dialogueTab = wrapper.find('#tab-Dialogue')
+      const dialogueClasses = dialogueTab.element.className
+      expect(dialogueClasses).toContain('text-stone-600')
+      expect(dialogueClasses).toContain('hover:text-stone-800')
+      expect(dialogueClasses).not.toContain('bg-white')
+    })
+
+    it('LessonPage | when mounted | tabs have ARIA attributes (role=tab, aria-selected, aria-controls)', async () => {
+      // Arrange
+      const wrapper = getWrapper()
+
+      // Act
+      await nextTick()
+
+      // Assert
+      const tabs = wrapper.findAll('[role="tab"]')
+      expect(tabs.length).toBeGreaterThan(0)
+
+      // Active tab: aria-selected=true, aria-controls="panel-Dialogue"
+      const activeTab = wrapper.find('#tab-Dialogue')
+      expect(activeTab.attributes('aria-selected')).toBe('true')
+      expect(activeTab.attributes('aria-controls')).toBe('panel-Dialogue')
+
+      // Inactive tab: aria-selected=false
+      const inactiveTab = wrapper.find('#tab-Vocabulary')
+      expect(inactiveTab.attributes('aria-selected')).toBe('false')
+      expect(inactiveTab.attributes('aria-controls')).toBe('panel-Vocabulary')
+    })
+
     it('LessonPage | when mounted | renders a "Back to Level" link in the hero', async () => {
       // Arrange
       const wrapper = getWrapper()
