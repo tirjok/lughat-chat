@@ -4,7 +4,7 @@ import { shallowMount } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-import LevelIndex from '../../app/pages/dashboard/level/[level]/index.vue'
+import LevelIndex from '~/pages/dashboard/level/[level]/index.vue'
 
 function getWrapper() {
   return shallowMount(LevelIndex, {

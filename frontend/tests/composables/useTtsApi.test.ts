@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useTtsApi } from '../../app/composables/useTtsApi'
+import { useTtsApi } from '~/composables/useTtsApi'
 
 describe('useTtsApi', () => {
   beforeEach(() => {

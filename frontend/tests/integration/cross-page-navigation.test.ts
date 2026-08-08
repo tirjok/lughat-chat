@@ -18,10 +18,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { shallowMount, mount } from '@vue/test-utils'
-import Dashboard from '../../app/pages/dashboard.vue'
-import LessonPage from '../../app/pages/dashboard/level/[level]/[lesson].vue'
-import Index from '../../app/pages/index.vue'
-import GlobalNavbar from '../../app/components/GlobalNavbar.vue'
+import Dashboard from '~/pages/dashboard.vue'
+import LessonPage from '~/pages/dashboard/level/[level]/[lesson].vue'
+import Index from '~/pages/index.vue'
+import GlobalNavbar from '~/components/GlobalNavbar.vue'
 import {
   createMockUseAudioModule,
   createMockUseTtsApi,
@@ -29,30 +29,30 @@ import {
   createMockUseVoices,
   setBreakpoint
 } from '~~/tests/mocks'
-import { useCleanupNavigation, resetCleanupNavigation } from '../../app/composables/useCleanupNavigation'
+import { useCleanupNavigation, resetCleanupNavigation } from '~/composables/useCleanupNavigation'
 // ─── Top-level Mocks (must be at module level due to hoisting) ──────────
 
-vi.mock('../../app/composables/useAudioModule', () => ({
+vi.mock('~/composables/useAudioModule', () => ({
   useAudioModule: vi.fn(() => createMockUseAudioModule())
 }))
 
-vi.mock('../../app/composables/useTtsApi', () => ({
+vi.mock('~/composables/useTtsApi', () => ({
   useTtsApi: vi.fn(() => createMockUseTtsApi())
 }))
 
-vi.mock('../../app/composables/useVoices', () => ({
+vi.mock('~/composables/useVoices', () => ({
   useVoices: vi.fn(() => createMockUseVoices())
 }))
 
-vi.mock('../../app/composables/useHealthPoll', async () => {
-  const actual = await vi.importActual('../../app/composables/useHealthPoll')
+vi.mock('~/composables/useHealthPoll', async () => {
+  const actual = await vi.importActual('~/composables/useHealthPoll')
   return {
     useHealthPoll: () => createMockUseHealthPoll(),
     resetHealthPoll: actual.resetHealthPoll
   }
 })
 
-vi.mock('../../app/composables/useInputValidation', () => {
+vi.mock('~/composables/useInputValidation', () => {
   const EMPTY_TEXT_ERROR = 'Please enter text to convert to speech'
   const MODEL_LOADING_ERROR = 'Model is loading, please wait...'
   return {
@@ -68,11 +68,11 @@ vi.mock('../../app/composables/useInputValidation', () => {
   }
 })
 
-vi.mock('../../app/composables/usePanelToggle', () => ({
+vi.mock('~/composables/usePanelToggle', () => ({
   usePanelToggle: () => ({ activePanel: ref('desktop') })
 }))
 
-vi.mock('../../app/composables/useScrollReveal', () => ({
+vi.mock('~/composables/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
     observe: vi.fn(),
     disconnect: vi.fn(),
@@ -81,7 +81,7 @@ vi.mock('../../app/composables/useScrollReveal', () => ({
   }))
 }))
 
-vi.mock('../../app/composables/useToast', () => ({
+vi.mock('~/composables/useToast', () => ({
   useToast: () => [],
   showToast: vi.fn()
 }))

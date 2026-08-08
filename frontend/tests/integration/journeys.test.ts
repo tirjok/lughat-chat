@@ -18,28 +18,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { mount } from '@vue/test-utils'
-import Index from '../../app/pages/index.vue'
+import Index from '~/pages/index.vue'
 import {
   createMockUseAudioModule,
   createMockUseTtsApi,
   createMockUseHealthPoll,
   setBreakpoint
 } from '~~/tests/mocks'
-import { useInputValidation } from '../../app/composables/useInputValidation'
-import { useDragResize } from '../../app/composables/useDragResize'
-import { useScrollReveal } from '../../app/composables/useScrollReveal'
+import { useInputValidation } from '~/composables/useInputValidation'
+import { useDragResize } from '~/composables/useDragResize'
+import { useScrollReveal } from '~/composables/useScrollReveal'
 
 // ─── Mock composables (same pattern as PanelSliding.test.ts) ────────────
 
-vi.mock('../../app/composables/useAudioModule', () => ({
+vi.mock('~/composables/useAudioModule', () => ({
   useAudioModule: vi.fn(() => createMockUseAudioModule())
 }))
 
-vi.mock('../../app/composables/useTtsApi', () => ({
+vi.mock('~/composables/useTtsApi', () => ({
   useTtsApi: vi.fn(() => createMockUseTtsApi())
 }))
 
-vi.mock('../../app/composables/useVoices', () => ({
+vi.mock('~/composables/useVoices', () => ({
   useVoices: vi.fn(() => ({
     voices: ref([
       { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
@@ -49,11 +49,11 @@ vi.mock('../../app/composables/useVoices', () => ({
   }))
 }))
 
-vi.mock('../../app/composables/useHealthPoll', () => ({
+vi.mock('~/composables/useHealthPoll', () => ({
   useHealthPoll: () => createMockUseHealthPoll()
 }))
 
-vi.mock('../../app/composables/useInputValidation', () => {
+vi.mock('~/composables/useInputValidation', () => {
   const EMPTY_TEXT_ERROR = 'Please enter text to convert to speech'
   const MODEL_LOADING_ERROR = 'Model is loading, please wait...'
   return {
@@ -69,11 +69,11 @@ vi.mock('../../app/composables/useInputValidation', () => {
   }
 })
 
-vi.mock('../../app/composables/usePanelToggle', () => ({
+vi.mock('~/composables/usePanelToggle', () => ({
   usePanelToggle: () => ({ activePanel: ref('desktop') })
 }))
 
-vi.mock('../../app/composables/useScrollReveal', () => ({
+vi.mock('~/composables/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
     observe: vi.fn(),
     disconnect: vi.fn(),
@@ -82,7 +82,7 @@ vi.mock('../../app/composables/useScrollReveal', () => ({
   }))
 }))
 
-vi.mock('../../app/composables/useToast', () => ({
+vi.mock('~/composables/useToast', () => ({
   useToast: () => [],
   showToast: vi.fn()
 }))
@@ -327,7 +327,7 @@ describe('Journey 4: Voice change + re-generate', () => {
 
     expect(mobileProps.speakerVoices).toBeDefined()
     expect(desktopProps.speakerVoices).toBeDefined()
-    expect((mobileProps.speakerVoices as import('../../app/composables/useVoices').Voice[]).length).toBe(3)
+    expect((mobileProps.speakerVoices as import('~/composables/useVoices').Voice[]).length).toBe(3)
   })
 })
 

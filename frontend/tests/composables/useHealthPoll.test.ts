@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useHealthPoll, resetHealthPoll } from '../../app/composables/useHealthPoll'
+import { useHealthPoll, resetHealthPoll } from '~/composables/useHealthPoll'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
 const testMountedCallbacks: (() => void)[] = []

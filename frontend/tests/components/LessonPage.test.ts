@@ -1,7 +1,7 @@
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 
-import LessonPage from '../../app/pages/dashboard/level/[level]/[lesson].vue'
+import LessonPage from '~/pages/dashboard/level/[level]/[lesson].vue'
 
 function getWrapper() {
   return shallowMount(LessonPage)

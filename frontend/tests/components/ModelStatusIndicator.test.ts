@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, computed, type Ref } from 'vue'
 
-import ModelStatusIndicator from '../../app/components/ModelStatusIndicator.vue'
+import ModelStatusIndicator from '~/components/ModelStatusIndicator.vue'
 
 // ─── Module-level mock factory ──────────────────────────────────────
 // vi.mock() is hoisted to the module scope. We define a single mock
@@ -12,7 +12,7 @@ import ModelStatusIndicator from '../../app/components/ModelStatusIndicator.vue'
 
 const mockStatus: Ref<'loading' | 'ready' | 'error'> = ref('loading' as const)
 
-vi.mock('../../app/composables/useHealthPoll', () => ({
+vi.mock('~/composables/useHealthPoll', () => ({
   useHealthPoll: () => ({
     status: mockStatus,
     modelLoaded: computed(() => mockStatus.value === 'ready')

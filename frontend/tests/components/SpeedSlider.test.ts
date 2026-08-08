@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
-import SpeedSlider from '../../app/components/SpeedSlider.vue'
+import SpeedSlider from '~/components/SpeedSlider.vue'
 import { setBreakpoint } from '~~/tests/mocks'
 
 describe('SpeedSlider', () => {
