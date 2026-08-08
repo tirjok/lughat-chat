@@ -76,7 +76,7 @@ if (typeof onBeforeRouteLeave === 'function') {
       aria-label="Breadcrumb"
       data-testid="breadcrumbs"
     >
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <ol class="flex items-center gap-2 text-sm">
           <li
             v-for="(crumb, idx) in breadcrumbs"
@@ -112,11 +112,11 @@ if (typeof onBeforeRouteLeave === 'function') {
       class="px-4 md:px-6 pb-6"
       data-testid="lesson-hero"
     >
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1
-              class="text-2xl md:text-3xl font-bold text-stone-800 dark:text-stone-100"
+              class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100"
               data-testid="lesson-heading"
             >
               Lesson {{ currentLesson }} — Level {{ currentLevel }}
@@ -140,7 +140,7 @@ if (typeof onBeforeRouteLeave === 'function') {
       class="px-4 md:px-6 pb-4"
       data-testid="section-tabs"
     >
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div
           class="flex flex-wrap gap-2 border-b border-stone-200 dark:border-stone-700"
           role="tablist"
@@ -168,7 +168,7 @@ if (typeof onBeforeRouteLeave === 'function') {
 
     <!-- Main content area (placeholder) -->
     <main class="px-4 md:px-6 pb-8">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="card">
           <p class="text-stone-500 dark:text-stone-400">
             Content for "{{ activeSection }}" section coming soon.

@@ -5,11 +5,11 @@
   <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
     <!-- Page header -->
     <header class="px-4 md:px-6 pt-6 pb-4">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1
-              class="text-2xl md:text-3xl font-bold text-stone-800 dark:text-stone-100"
+              class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100"
               data-testid="level-heading"
             >
               Level A1
@@ -31,7 +31,7 @@
 
     <!-- Content area -->
     <main class="px-4 md:px-6 pb-8">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <!-- Lesson content list (placeholder) -->
         <ul
           class="space-y-3"

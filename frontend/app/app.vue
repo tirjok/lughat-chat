@@ -21,7 +21,7 @@ const showNavbar = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
     <GlobalNavbar v-if="showNavbar" />
     <NuxtPage />
   </div>
