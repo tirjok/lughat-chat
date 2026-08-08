@@ -55,7 +55,7 @@ export const createMockUseAudioModule = () => {
     pause: vi.fn(),
     seek: vi.fn(),
     download: vi.fn(),
-    dispose: vi.fn()
+    toggle: vi.fn().mockResolvedValue(undefined)
   }
 }
 
