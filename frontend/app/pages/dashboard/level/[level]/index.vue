@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const route = useRoute()
+const currentLevel = (route.params.level as string) || 'A1'
 </script>
 
 <template>
@@ -28,6 +30,25 @@
         </div>
       </div>
     </header>
+
+    <!-- Breadcrumbs -->
+    <nav class="px-4 md:px-6 pt-2 pb-1" aria-label="Breadcrumb" data-testid="breadcrumbs">
+      <div class="max-w-7xl mx-auto">
+        <ol class="flex items-center gap-2 text-sm text-stone-500">
+          <li class="flex items-center gap-2">
+            <NuxtLink to="/" class="text-primary-600 hover:text-primary-700 transition">Home</NuxtLink>
+            <svg class="w-4 h-4 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <NuxtLink to="/dashboard" class="text-primary-600 hover:text-primary-700 transition">Dashboard</NuxtLink>
+            <svg class="w-4 h-4 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="text-stone-800 dark:text-stone-200 font-medium">Level {{ currentLevel }}</span>
+          </li>
+        </ol>
+      </div>
+    </nav>
 
     <!-- Content area -->
     <main class="px-4 md:px-6 pb-8">

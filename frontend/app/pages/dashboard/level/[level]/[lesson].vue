@@ -86,22 +86,30 @@ if (typeof onBeforeRouteLeave === 'function') {
             <NuxtLink
               v-if="crumb.to"
               :to="crumb.to"
-              class="text-primary-600 dark:text-primary-400 hover:underline"
+              class="text-primary-600 dark:text-primary-400 hover:text-primary-700 transition"
             >
               {{ crumb.label }}
             </NuxtLink>
             <span
               v-else
-              class="text-stone-500 dark:text-stone-400"
+              class="text-stone-800 dark:text-stone-200 font-medium"
             >
               {{ crumb.label }}
             </span>
-            <span
+            <svg
               v-if="idx < breadcrumbs.length - 1"
-              class="text-stone-400"
+              class="w-4 h-4 text-stone-400 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              ›
-            </span>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
           </li>
         </ol>
       </div>
