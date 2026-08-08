@@ -190,4 +190,56 @@ describe('ModelStatusIndicator', () => {
       expect(textSpan.exists()).toBe(true)
     })
   })
+
+  describe('light mode', () => {
+    it('renders with light-mode outer shell classes when light=true', () => {
+      const wrapper = mount(ModelStatusIndicator, { props: { light: true } })
+      const outer = wrapper.find('div.ring-1')
+      expect(outer.classes()).toContain('bg-stone-100')
+      expect(outer.classes()).toContain('ring-stone-200')
+    })
+
+    it('renders with dark-mode outer shell classes when light=false (default)', () => {
+      const wrapper = mount(ModelStatusIndicator)
+      const outer = wrapper.find('div.ring-1')
+      expect(outer.classes()).toContain('bg-white/[0.02]')
+      expect(outer.classes()).toContain('ring-white/[0.06]')
+    })
+
+    it('renders with light-mode inner core classes when light=true', () => {
+      const wrapper = mount(ModelStatusIndicator, { props: { light: true } })
+      const inner = wrapper.find('div.rounded-full.bg-white')
+      expect(inner.classes()).toContain('border-stone-200')
+    })
+
+    it('renders with dark-mode inner core classes when light=false (default)', () => {
+      const wrapper = mount(ModelStatusIndicator)
+      const inner = wrapper.find('div.rounded-full.bg-stone-900')
+      expect(inner.classes()).toContain('shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]')
+    })
+
+    it('renders with light-mode text color when light=true', () => {
+      const wrapper = mount(ModelStatusIndicator, { props: { light: true } })
+      const textSpan = wrapper.find('span.text-xs.font-medium')
+      expect(textSpan.classes()).toContain('text-stone-700')
+    })
+
+    it('renders with dark-mode text color when light=false (default)', () => {
+      const wrapper = mount(ModelStatusIndicator)
+      const textSpan = wrapper.find('span.text-xs.font-medium')
+      expect(textSpan.classes()).toContain('text-gray-300')
+    })
+
+    it('omits glow shadows on status dots when light=true', () => {
+      const wrapper = mount(ModelStatusIndicator, { props: { light: true } })
+      const html = wrapper.html()
+      expect(html).not.toContain('shadow-[0_0_8px_')
+    })
+
+    it('includes glow shadows on status dots when light=false (default)', () => {
+      const wrapper = mount(ModelStatusIndicator)
+      const html = wrapper.html()
+      expect(html).toContain('shadow-[0_0_8px_')
+    })
+  })
 })

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { shallowMount } from '@vue/test-utils'
+import { shallowMount, mount } from '@vue/test-utils'
 import Dashboard from '~/pages/dashboard.vue'
+import ModelStatusIndicator from '~/components/ModelStatusIndicator.vue'
 
 // ─── Route Mocking ──────────────────────────────────────────────────────
 // GlobalNavbar accesses route via useNuxtApp — stub it so the navbar
@@ -108,6 +109,16 @@ describe('dashboard.vue', () => {
       const wrapper = getWrapper('/dashboard')
       const statusArea = wrapper.find('[aria-label="Model Status"]')
       expect(statusArea.exists()).toBe(true)
+    })
+  })
+
+  describe('AC-5: Light-mode status indicator', async () => {
+    it('ModelStatusIndicator renders with light-mode classes when light=true', () => {
+      const wrapper = mount(ModelStatusIndicator, { props: { light: true } })
+      const outer = wrapper.find('div.ring-1')
+      expect(outer.exists()).toBe(true)
+      expect(outer.classes()).toContain('bg-stone-100')
+      expect(outer.classes()).toContain('ring-stone-200')
     })
   })
 })

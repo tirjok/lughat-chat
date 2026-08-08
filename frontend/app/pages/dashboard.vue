@@ -35,7 +35,7 @@
           class="mb-6"
           aria-label="Model Status"
         >
-          <ModelStatusIndicator />
+          <ModelStatusIndicator :light="true" />
         </div>
 
         <!-- Card grid: course/level cards -->
