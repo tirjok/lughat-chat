@@ -102,3 +102,19 @@ export const createMockUseToast = () => ({
   message: ref(''),
   visible: ref(false)
 })
+
+// ─── Voices Mock Factory ─────────────────────────────────────────────
+// Returns reactive refs matching useVoices's real interface.
+// Use createMockUseVoices() for tests that need voice data,
+// or createMockUseVoices({ error: 'msg' }) to test failure paths.
+export const createMockUseVoices = (
+  options?: {
+    voices?: Array<{ id: string, name: string, dialect: string, tag: string, icon: string, speaker_wav: string }>
+    error?: string
+  }
+) => ({
+  voices: ref(options?.voices ?? []),
+  loading: ref(false),
+  error: ref((options?.error ?? null) as string | null),
+  loadVoices: vi.fn().mockResolvedValue(options?.voices ?? [])
+})

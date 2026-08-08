@@ -20,7 +20,3 @@ export function useLink() {
 export function onBeforeRouteLeave(_guard: NavigationGuardNext) {
   // no-op
 }
-
-export function useLink() {
-  return {}
-}
