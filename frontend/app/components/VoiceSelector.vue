@@ -37,10 +37,6 @@ function getVoiceColorClass(): string {
   return 'text-primary-500'
 }
 
-function getShadowColor(): string {
-  return 'rgba(20,184,166,0.5)'
-}
-
 function toggleDropdown() {
   isOpen.value = !isOpen.value
 }
@@ -114,9 +110,7 @@ onUnmounted(() => {
       >
         <span
           aria-hidden="true"
-          class="ph-fill ph-waves text-xl"
-          :class="getVoiceColorClass()"
-          :style="`filter: drop-shadow(0 0 6px ${getShadowColor()});`"
+          class="ph-fill ph-waves text-lg text-primary-500"
         />
         <div class="flex flex-col items-start">
           <span class="text-sm font-bold text-stone-800 dark:text-white tracking-wide">

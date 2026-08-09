@@ -28,7 +28,7 @@ const emit = defineEmits<{
         aria-hidden="true"
         class="ph-fill ph-play-circle text-xl text-gold-500 group-hover:text-primary-500 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"
       />
-      <span class="font-bold text-stone-800 dark:text-white tracking-wide text-sm md:text-base">
+      <span class="font-bold text-stone-800 dark:text-white tracking-wide text-sm md:text-base group-hover:text-white">
         Generate Speech
       </span>
       <!-- Trailing icon circle (button-in-button) -->
@@ -94,8 +94,9 @@ const emit = defineEmits<{
 }
 
 .generate-btn:disabled {
-  opacity: 0.4;
+  background: #d6d3d1;
   cursor: not-allowed;
+  filter: none;
 }
 
 /* Inner Core */
@@ -109,9 +110,18 @@ const emit = defineEmits<{
   transition: background 700ms var(--ease-spring);
   pointer-events: none;
 }
+.generate-btn:disabled::before {
+  background: #d6d3d1;
+}
+.dark .generate-btn:disabled {
+  background: #44403c;
+}
+.dark .generate-btn:disabled::before {
+  background: #44403c;
+}
 
 .generate-btn:hover::before {
-  background: #1f1f1f;
+  background: #232323;
 }
 
 /* Spinning conic-gradient accent (behind everything) */

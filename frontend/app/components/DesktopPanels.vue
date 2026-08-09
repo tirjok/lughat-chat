@@ -86,7 +86,7 @@ const isOverLimit = computed(() => charCount.value > 3000)
 
       <!-- Desktop Header (hidden on mobile) -->
       <header
-        class="hidden md:flex p-6 border-b border-stone-200 dark:border-stone-700 justify-between items-center bg-gradient-to-b from-stone-100/50 to-transparent dark:from-[#1f1f1f] to-transparent shrink-0"
+        class="hidden md:flex px-6 py-4 border-b border-stone-200 dark:border-stone-700 justify-between items-center bg-gradient-to-b from-stone-100/50 to-transparent dark:from-[#1f1f1f] to-transparent shrink-0"
       >
         <div>
           <h1 class="text-2xl font-bold text-stone-800 dark:text-white tracking-tight flex items-center gap-2">
@@ -106,8 +106,8 @@ const isOverLimit = computed(() => charCount.value > 3000)
       </header>
 
       <!-- Controls Container — unified, compact -->
-      <div class="flex-1 p-5 overflow-y-auto flex flex-col">
-        <div class="flex flex-col gap-5 fade-up delay-200">
+      <div class="flex-1 p-3 overflow-y-auto flex flex-col">
+        <div class="flex flex-col gap-4 fade-up delay-200">
           <VoiceSelector
             :model-value="selectedSpeaker"
             :voices="speakerVoices"
@@ -121,7 +121,7 @@ const isOverLimit = computed(() => charCount.value > 3000)
       </div>
 
       <!-- Generate Button — full-width anchor -->
-      <div class="p-5 border-t border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 shrink-0">
+      <div class="p-3 border-t border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 shrink-0">
         <GenerateButton
           :is-generating="isGenerating"
           :model-status="modelStatus"
