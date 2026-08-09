@@ -119,10 +119,12 @@ if (typeof onBeforeRouteLeave === 'function') {
     <!-- Hero section -->
     <div class="px-4 md:px-6 pb-6" data-testid="lesson-hero">
       <div class="max-w-7xl mx-auto">
+        <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-stone-800 dark:text-stone-100 mb-2">
+          Lesson {{ currentLesson }}
+        </h1>
         <LessonHero
           :level="currentLevel"
           :lesson-number="currentLesson"
-          title="Lesson {{ currentLesson }}"
           :is-ready="true"
         />
       </div>

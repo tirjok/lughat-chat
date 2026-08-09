@@ -27,7 +27,7 @@
       </div>
     </header>
     <!-- Breadcrumbs -->
-    <nav class="px-4 md:px-6 pt-2 pb-1" aria-label="Breadcrumb" data-testid="breadcrumbs">
+    <nav class="px-4 md:px-6 pt-4 pb-2" aria-label="Breadcrumb" data-testid="breadcrumbs">
       <div class="max-w-7xl mx-auto">
         <ol class="flex items-center gap-2 text-sm text-stone-500">
           <li class="flex items-center gap-2">

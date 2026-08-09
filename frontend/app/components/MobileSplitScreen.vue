@@ -60,14 +60,14 @@ const formatDuration = computed(() => formatTime(props.duration))
   >
     <!-- Mobile Top Bar (logo + status) — Floating Glass Pill (safe-area aware) -->
     <header
-      class="flex justify-between items-center px-3 py-2.5 bg-stone-800/90 backdrop-blur-xl ring-1 ring-white/[0.06] rounded-full mx-[max(0.75rem,env(safe-area-inset-left),env(safe-area-inset-right))] mt-[max(0.625rem,env(safe-area-inset-top))] shrink-0 z-40 shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
+      class="flex justify-between items-center px-3 py-2.5 bg-stone-200/90 dark:bg-stone-800/90 backdrop-blur-xl ring-1 ring-stone-300 dark:ring-white/[0.06] rounded-full mx-[max(0.75rem,env(safe-area-inset-left),env(safe-area-inset-right))] mt-[max(0.625rem,env(safe-area-inset-top))] shrink-0 z-40 shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
     >
       <div class="flex items-center gap-2">
         <span
           aria-hidden="true"
           class="ph-fill ph-waves text-primary-500 text-xl"
         />
-        <h1 class="text-lg font-bold text-white tracking-tight">
+        <h1 class="text-lg font-bold text-stone-800 dark:text-white tracking-tight">
           Lughat<span class="text-gold-500">Chat</span>
         </h1>
       </div>
@@ -79,7 +79,7 @@ const formatDuration = computed(() => formatTime(props.duration))
       role="region"
       aria-labelledby="canvas-heading"
       data-panel="canvas"
-      class="w-full bg-stone-900 relative flex flex-col overflow-hidden"
+      class="w-full bg-stone-100 dark:bg-stone-900 relative flex flex-col overflow-hidden"
       :style="{ height: `${canvasRatio * 100}%` }"
     >
       <!-- Focus Halo (radial gradient glow behind textarea) -->
@@ -91,24 +91,24 @@ const formatDuration = computed(() => formatTime(props.duration))
       >
         <!-- Mobile: Title + Char Count (full width row) -->
         <div class="flex justify-between items-center w-full">
-          <h2 class="text-gray-400 font-medium text-xs flex items-center gap-1.5">
+          <h2 class="text-stone-500 dark:text-gray-400 font-medium text-xs flex items-center gap-1.5">
             <span
               aria-hidden="true"
               class="ph ph-keyboard"
             />
             <span class="inline">Editor Canvas</span>
           </h2>
-          <div class="flex items-center gap-2 text-xs text-gray-500">
+          <div class="flex items-center gap-2 text-xs text-stone-500 dark:text-gray-500">
             <span
               class="font-mono"
-              :class="{ 'text-red-400': isOverLimit, 'text-amber-400': isNearLimit, 'text-gray-500': !isNearLimit && !isOverLimit }"
+              :class="{ 'text-red-500 dark:text-red-400': isOverLimit, 'text-amber-600 dark:text-amber-400': isNearLimit, 'text-stone-500 dark:text-gray-500': !isNearLimit && !isOverLimit }"
             >
               {{ charCount }} / 3000
             </span>
             <!-- Clear text button: Double-Bezel -->
-            <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02]">
+            <span class="rounded-full ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
               <button
-                class="rounded-full bg-stone-700 text-gray-500 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
+                class="rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
                 @click="emit('clearText')"
               >
                 <span
@@ -126,7 +126,7 @@ const formatDuration = computed(() => formatTime(props.duration))
         <textarea
           :value="textInput"
           dir="rtl"
-          class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg leading-loose text-gray-100 placeholder-gray-600 scroll-smooth z-10"
+          class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg leading-loose text-stone-800 dark:text-gray-100 placeholder-stone-500 dark:placeholder-gray-600 scroll-smooth z-10"
           style="caret-color: #14b8a6;"
           placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           @input="emit('update:textInput', ($event.target as HTMLTextAreaElement).value)"
@@ -146,7 +146,7 @@ const formatDuration = computed(() => formatTime(props.duration))
       @mouseup="onDragEnd"
       @mouseleave="onDragEnd"
     >
-      <div class="w-full h-px bg-white/[0.06]" />
+      <div class="w-full h-px bg-stone-300 dark:bg-white/[0.06]" />
     </div>
 
     <!-- Mobile: Control Deck (bottom half) -->
@@ -154,7 +154,7 @@ const formatDuration = computed(() => formatTime(props.duration))
       role="region"
       aria-labelledby="control-deck-heading"
       data-panel="control-deck"
-      class="flex-1 w-full bg-stone-800 flex flex-col overflow-hidden border-t border-white/[0.06]"
+      class="flex-1 w-full bg-stone-50 dark:bg-stone-800 flex flex-col overflow-hidden border-t border-stone-200 dark:border-stone-700"
       :style="{ height: `${(1 - canvasRatio) * 100}%` }"
     >
       <!-- Controls Container — compact -->
@@ -176,7 +176,7 @@ const formatDuration = computed(() => formatTime(props.duration))
       </div>
 
       <!-- Generate Button -->
-      <div class="p-3 border-t border-white/[0.06] bg-stone-800 shrink-0">
+      <div class="p-3 border-t border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 shrink-0">
         <GenerateButton
           :is-generating="isGenerating"
           :model-status="modelStatus"
@@ -188,17 +188,17 @@ const formatDuration = computed(() => formatTime(props.duration))
       <!-- Mobile: Generated Audio Card: Double-Bezel -->
       <div
         v-if="playerVisible && audioUrl"
-        class="border-t border-white/[0.06] bg-stone-800 shrink-0"
+        class="border-t border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 shrink-0"
       >
         <!-- Outer Shell -->
-        <div class="p-2.5 rounded-[1.125rem] ring-1 ring-white/[0.06] bg-white/[0.02]">
+        <div class="p-2.5 rounded-[1.125rem] ring-1 ring-stone-300 dark:ring-white/[0.06] bg-stone-100 dark:bg-white/[0.02]">
           <!-- Inner Core -->
-          <div class="rounded-[calc(1.125rem-0.25rem)] bg-stone-800 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex flex-col gap-3">
+          <div class="rounded-[calc(1.125rem-0.25rem)] bg-white dark:bg-stone-800 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] p-3 flex flex-col gap-3">
             <!-- Header: Gradient music icon + title + action buttons -->
             <div class="flex items-center gap-3">
               <!-- Gradient music icon -->
               <div
-                class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-gold-500 flex items-center justify-center shadow-[0_4px_16px_rgba(20,184,166,0.25)] shrink-0"
+                class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-gold-500 flex items-center justify-center shadow-[0_4px_16px_rgba(20,184,166,0.25)] dark:shadow-[0_4px_16px_rgba(20,184,166,0.25)] shrink-0"
               >
                 <span
                   aria-hidden="true"
@@ -207,21 +207,21 @@ const formatDuration = computed(() => formatTime(props.duration))
               </div>
               <!-- Title + subtitle -->
               <div class="overflow-hidden min-w-0 flex-1">
-                <h3 class="text-white font-semibold text-xs truncate">
+                <h3 class="text-stone-800 dark:text-white font-semibold text-xs truncate">
                   Generated Audio
                 </h3>
-                <p class="text-[10px] text-gray-400 truncate">
+                <p class="text-[10px] text-stone-500 dark:text-gray-400 truncate">
                   {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
                 </p>
               </div>
               <!-- Action buttons: Double-Bezel + Magnetic -->
               <div class="flex items-center gap-2 shrink-0">
                 <button
-                  class="magnetic-hover w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center text-gray-400 hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+                  class="magnetic-hover w-8 h-8 rounded-full ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02] flex items-center justify-center text-stone-600 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
                   title="Download MP3"
                   @click="emit('download')"
                 >
-                  <span class="rounded-full bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                  <span class="rounded-full bg-stone-200 dark:bg-stone-900 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
                     <span
                       aria-hidden="true"
                       class="ph ph-download-simple text-lg"
@@ -229,11 +229,11 @@ const formatDuration = computed(() => formatTime(props.duration))
                   </span>
                 </button>
                 <button
-                  class="magnetic-hover w-8 h-8 rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex items-center justify-center text-gray-400 hover:text-red-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+                  class="magnetic-hover w-8 h-8 rounded-full ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02] flex items-center justify-center text-stone-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
                   title="Close Player"
                   @click="emit('closePlayer')"
                 >
-                  <span class="rounded-full bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
+                  <span class="rounded-full bg-stone-200 dark:bg-stone-900 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center justify-center w-full h-full">
                     <span
                       aria-hidden="true"
                       class="ph ph-x text-lg"
@@ -245,12 +245,12 @@ const formatDuration = computed(() => formatTime(props.duration))
 
             <!-- Waveform + Play: Double-Bezel -->
             <!-- Outer Shell -->
-            <div class="rounded-[0.875rem] ring-1 ring-white/[0.06] p-1 bg-white/[0.02] flex items-center gap-2">
+            <div class="rounded-[0.875rem] ring-1 ring-stone-300 dark:ring-white/[0.06] p-1 bg-stone-100 dark:bg-white/[0.02] flex items-center gap-2">
               <!-- Inner Core -->
-              <div class="rounded-[calc(0.875rem-0.25rem)] bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center gap-2 p-2">
+              <div class="rounded-[calc(0.875rem-0.25rem)] bg-stone-200 dark:bg-stone-900 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center gap-2 p-2">
                 <!-- Play/Pause button: Double-Bezel -->
                 <!-- Outer Shell -->
-                <span class="rounded-full ring-1 ring-white/[0.06] p-0.5 bg-white/[0.02] flex-shrink-0">
+                <span class="rounded-full ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02] flex-shrink-0">
                   <!-- Inner Core -->
                   <button
                     class="group rounded-full bg-gold-500 text-white flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.98] hover:scale-[1.02] w-9 h-9"
@@ -281,7 +281,7 @@ const formatDuration = computed(() => formatTime(props.duration))
                 </div>
 
                 <!-- Duration -->
-                <span class="text-[10px] font-mono text-gray-400 flex-shrink-0 w-8 text-right">
+                <span class="text-[10px] font-mono text-stone-500 dark:text-gray-400 flex-shrink-0 w-8 text-right">
                   {{ formatDuration }}
                 </span>
               </div>

@@ -15,7 +15,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
-// TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
 
 const isOpen = ref(false)
 const dropdownRef = ref<HTMLDivElement | null>(null)
@@ -34,20 +33,12 @@ const displayVoice = computed(() => {
   return selectedVoice.value
 })
 
-function getVoiceColorClass(voice: Voice): string {
-  const id = voice.id.toLowerCase()
-  if (id === 'aisha' || id === 'female') {
-    return 'text-primary-500'
-  }
-  if (id === 'tariq' || id === 'male') {
-    return 'text-gold-500'
-  }
+function getVoiceColorClass(): string {
   return 'text-primary-500'
 }
 
-function getShadowColor(voice: Voice): string {
-  const cls = getVoiceColorClass(voice)
-  return cls.includes('orange') ? 'rgba(20,184,166,0.5)' : 'rgba(245,158,11,0.5)'
+function getShadowColor(): string {
+  return 'rgba(20,184,166,0.5)'
 }
 
 function toggleDropdown() {
@@ -96,7 +87,7 @@ onUnmounted(() => {
   <div ref="dropdownRef">
     <!-- Label -->
     <label
-      class="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-2"
+      class="text-sm font-semibold text-stone-700 dark:text-gray-300 flex items-center gap-2 mb-2"
     >
       <span
         aria-hidden="true"
@@ -108,7 +99,7 @@ onUnmounted(() => {
     <!-- Dropdown Trigger -->
     <button
       ref="triggerRef"
-      class="w-full bg-stone-900 ring-1 ring-white/[0.06] hover:ring-primary-500/30 rounded-[0.875rem] p-3 flex items-center justify-between focus:outline-none relative overflow-hidden group transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      class="w-full bg-white dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-white/[0.06] hover:ring-primary-500/30 rounded-[0.875rem] p-3 flex items-center justify-between focus:outline-none relative overflow-hidden group transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
       @click="toggleDropdown"
     >
       <div
@@ -124,14 +115,14 @@ onUnmounted(() => {
         <span
           aria-hidden="true"
           class="ph-fill ph-waves text-xl"
-          :class="getVoiceColorClass(displayVoice)"
-          :style="`filter: drop-shadow(0 0 6px ${getShadowColor(displayVoice)});`"
+          :class="getVoiceColorClass()"
+          :style="`filter: drop-shadow(0 0 6px ${getShadowColor()});`"
         />
         <div class="flex flex-col items-start">
-          <span class="text-sm font-bold text-white tracking-wide">
+          <span class="text-sm font-bold text-stone-800 dark:text-white tracking-wide">
             {{ displayVoice.name }}
           </span>
-          <span class="text-xs text-gray-400 font-medium">
+          <span class="text-xs text-stone-500 dark:text-gray-400 font-medium">
             {{ displayVoice.dialect }}
           </span>
         </div>
@@ -139,17 +130,17 @@ onUnmounted(() => {
 
       <span
         v-else
-        class="text-sm text-gray-500 relative z-10"
+        class="text-sm text-stone-500 dark:text-gray-500 relative z-10"
       >
         Select a voice
       </span>
 
       <!-- Trailing chevron -->
       <span
-        class="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-white/5 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105 shrink-0"
+        class="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-stone-100 dark:group-hover:bg-white/5 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105 shrink-0"
       >
         <span
-          class="ph ph-caret-down text-gray-400"
+          class="ph ph-caret-down text-stone-500 dark:text-gray-400"
           :class="{ 'rotate-180': isOpen }"
         />
       </span>
@@ -160,61 +151,55 @@ onUnmounted(() => {
       <div
         v-if="isOpen"
         ref="menuRef"
-        class="fixed z-50 bg-stone-800 ring-1 ring-white/[0.06] rounded-[1.125rem] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top opacity-100 scale-100 pointer-events-auto"
+        class="fixed z-50 bg-white dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-white/[0.06] rounded-[1.125rem] shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top opacity-100 scale-100 pointer-events-auto"
         :style="menuPositionStyle"
       >
         <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
           <button
             v-for="(voice, index) in voices"
             :key="voice.id"
-            class="voice-option w-full text-left rounded-[0.875rem] ring-1 ring-white/[0.06] p-3 flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group fade-up"
+            class="voice-option w-full text-left rounded-[0.875rem] ring-1 ring-stone-200 dark:ring-white/[0.06] p-3 flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group fade-up"
             :data-voice="voice.id"
             :data-name="voice.name"
             :data-tag="voice.tag"
-            :data-color="getVoiceColorClass(voice)"
+            :data-color="getVoiceColorClass()"
             :class="[
               voice.id === modelValue
-                ? 'bg-[#1a2a2a]'
-                : 'bg-stone-700/40 hover:bg-stone-700/70'
+                ? 'bg-primary-50 dark:bg-[#1a2a2a]'
+                : 'bg-stone-100/60 dark:bg-stone-700/40 hover:bg-stone-200/80 dark:hover:bg-stone-700/70'
             ]"
             :style="{ transitionDelay: `${index * 50}ms` }"
             @click="selectVoice(voice)"
           >
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-full bg-stone-900 ring-1 ring-white/[0.06] flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]"
+                class="w-10 h-10 rounded-full bg-stone-200 dark:bg-stone-900 ring-1 ring-stone-300 dark:ring-white/[0.06] flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
                 :class="[
                   voice.id === modelValue
                     ? 'ring-primary-500'
-                    : 'group-hover:ring-primary-500',
-                  { 'group-hover:ring-gold-500': getVoiceColorClass(voice).includes('magenta') }
+                    : 'group-hover:ring-primary-500'
                 ]"
               >
                 <span
                   aria-hidden="true"
-                  class="ph-fill ph-waves text-gray-500 transition-colors text-lg"
+                  class="ph-fill ph-waves text-stone-500 dark:text-gray-500 transition-colors text-lg"
                   :class="[
                     voice.id === modelValue
                       ? 'text-primary-500'
-                      : 'group-hover:text-primary-500',
-                    { 'group-hover:text-gold-500': getVoiceColorClass(voice).includes('magenta') }
+                      : 'group-hover:text-primary-500'
                   ]"
                   :style="voice.id === modelValue ? `filter: drop-shadow(0 0 6px rgba(20,184,166,0.5));` : ''"
                 />
               </div>
               <div class="flex flex-col">
-                <span class="text-sm font-bold text-white">{{ voice.name }}</span>
-                <span class="text-xs text-gray-500 font-medium">{{ voice.dialect }}</span>
+                <span class="text-sm font-bold text-stone-800 dark:text-white">{{ voice.name }}</span>
+                <span class="text-xs text-stone-500 dark:text-gray-500 font-medium">{{ voice.dialect }}</span>
               </div>
             </div>
 
             <!-- Preview play button (visible on hover) -->
             <span
-              class="w-8 h-8 rounded-full bg-stone-900 ring-1 ring-white/[0.06] flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-110 text-gray-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]"
-              :class="{
-                'hover:text-primary-500 hover:ring-primary-500': getVoiceColorClass(voice).includes('orange'),
-                'hover:text-gold-500 hover:ring-gold-500': getVoiceColorClass(voice).includes('magenta')
-              }"
+              class="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-900 ring-1 ring-stone-300 dark:ring-white/[0.06] flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-110 text-stone-500 dark:text-gray-500 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] hover:text-primary-500 hover:ring-primary-500"
               title="Preview Voice"
               @click.stop="previewVoice(voice)"
             >

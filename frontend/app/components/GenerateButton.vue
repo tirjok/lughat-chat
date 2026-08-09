@@ -28,7 +28,7 @@ const emit = defineEmits<{
         aria-hidden="true"
         class="ph-fill ph-play-circle text-xl text-gold-500 group-hover:text-primary-500 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"
       />
-      <span class="font-bold text-white tracking-wide text-sm md:text-base">
+      <span class="font-bold text-stone-800 dark:text-white tracking-wide text-sm md:text-base">
         Generate Speech
       </span>
       <!-- Trailing icon circle (button-in-button) -->
@@ -36,7 +36,7 @@ const emit = defineEmits<{
         class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105 group-hover:translate-x-[1px] group-hover:-translate-y-[1px] shrink-0"
         aria-hidden="true"
       >
-        <span class="ph-fill ph-arrow-up-right text-xs text-gray-400 group-hover:text-primary-500 transition-colors duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]" />
+        <span class="ph-fill ph-arrow-up-right text-xs text-stone-500 dark:text-gray-400 group-hover:text-primary-500 transition-colors duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]" />
       </span>
     </div>
 
@@ -54,7 +54,7 @@ const emit = defineEmits<{
         class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center shrink-0"
         aria-hidden="true"
       >
-        <span class="ph-fill ph-arrows-clockwise text-xs text-gray-500" />
+        <span class="ph-fill ph-arrows-clockwise text-xs text-stone-500 dark:text-gray-500" />
       </span>
     </div>
   </button>

@@ -146,18 +146,19 @@ const isMobile = computed(() => {
           <NuxtLink
             to="/"
             class="w-11 h-11 flex items-center justify-center rounded-lg transition-colors"
+            :class="isActive('/') ? 'text-primary-600 bg-primary-50' : 'text-stone-500'"
             aria-label="Home"
           />
           <NuxtLink
             to="/dashboard"
             class="w-11 h-11 flex items-center justify-center rounded-lg transition-colors"
-            :class="isActive('/dashboard') ? 'text-primary-600' : 'text-stone-500'"
+            :class="isActive('/dashboard') ? 'text-primary-600 bg-primary-50' : 'text-stone-500'"
             aria-label="Dashboard"
           />
           <NuxtLink
             to="/dashboard"
             class="w-11 h-11 flex items-center justify-center rounded-lg transition-colors"
-            :class="isLessonRoute ? 'text-primary-600' : 'text-stone-500'"
+            :class="isLessonRoute ? 'text-primary-600 bg-primary-50' : 'text-stone-500'"
             aria-label="My Courses"
           />
         </div>

@@ -37,12 +37,14 @@ describe('Layout consistency — dashboard pages', () => {
     expect(content).not.toContain('max-w-6xl')
   })
 
-  it('dashboard/level/[level]/[lesson].vue page title uses text-3xl md:text-4xl', () => {
+  it('dashboard/level/[level]/[lesson].vue page has its own <h1> and LessonHero has no title', () => {
     const content = readFileSync(resolve(base, 'level/[level]/[lesson].vue'), 'utf-8')
-    // LessonHero component handles the responsive title sizing
+    // Lesson page now provides its own <h1> — LessonHero no longer renders title
+    expect(content).toContain('text-2xl md:text-3xl lg:text-4xl')
+    expect(content).toContain('<h1')
+    // LessonHero no longer has an <h2> title section
     const heroContent = readFileSync(resolve(__dirname, '../../app/components/LessonHero.vue'), 'utf-8')
-    expect(heroContent).toContain('text-2xl md:text-3xl lg:text-4xl')
-    // Legacy check: lesson page no longer has its own heading class
-    expect(content).not.toContain('text-3xl md:text-4xl')
+    expect(heroContent).not.toContain('<h1')
+    expect(heroContent).not.toContain('<h2')
   })
 })

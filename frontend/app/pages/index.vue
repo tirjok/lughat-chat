@@ -178,7 +178,7 @@ const desktopPanelProps = computed(() => ({
 
 <template>
   <div
-    class="flex flex-col md:flex-row h-[calc(100vh-60px)] w-full overflow-hidden text-stone-text antialiased bg-stone-900"
+    class="flex flex-col md:flex-row h-[calc(100vh-60px)] w-full overflow-hidden text-stone-text antialiased bg-stone-50 dark:bg-stone-950"
     data-test-id="main-wrapper"
     dir="ltr"
     @keydown="handleKeyDown"

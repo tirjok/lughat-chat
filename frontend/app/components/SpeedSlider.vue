@@ -17,8 +17,6 @@ const clampedValue = computed(() =>
   Math.max(0.5, Math.min(2.0, props.modelValue))
 )
 
-// TODO: migrated from sunrise-orange/magenta (see ISSUE-014)
-
 const sliderRef = ref<HTMLInputElement | null>(null)
 
 // Update gradient fill on the native range input (prototype style)
@@ -29,7 +27,7 @@ function updateSliderFill() {
   const max = parseFloat(el.max)
   const val = clampedValue.value
   const percentage = ((val - min) / (max - min)) * 100
-  el.style.background = `linear-gradient(to right, #f59e0b, #14b8a6 ${percentage}%, #2A2A2A ${percentage}%, #2A2A2A 100%)`
+  el.style.background = `linear-gradient(to right, #14b8a6 ${percentage}%, var(--slider-track, #d6d3d1) ${percentage}%, var(--slider-track, #d6d3d1) 100%)`
 }
 
 watch(clampedValue, updateSliderFill, { immediate: true })
@@ -81,8 +79,8 @@ input[type='range']::-webkit-slider-thumb {
   height: 16px;
   width: 16px;
   border-radius: 50%;
-  background: #f59e0b;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+  background: #14b8a6;
+  box-shadow: 0 0 10px rgba(20, 184, 166, 0.8);
   transition: transform 0.1s;
 }
 
@@ -94,7 +92,7 @@ input[type='range']::-webkit-slider-runnable-track {
   width: 100%;
   height: 4px;
   cursor: pointer;
-  background: #2A2A2A;
+  background: #d6d3d1;
   border-radius: 2px;
 }
 
@@ -109,15 +107,19 @@ input[type='range']::-moz-range-thumb {
   height: 16px;
   width: 16px;
   border-radius: 50%;
-  background: #f59e0b;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+  background: #14b8a6;
+  box-shadow: 0 0 10px rgba(20, 184, 166, 0.8);
 }
 
 input[type='range']::-moz-range-track {
   width: 100%;
   height: 4px;
   cursor: pointer;
-  background: #2A2A2A;
+  background: #d6d3d1;
   border-radius: 2px;
+}
+.dark input[type='range']::-webkit-slider-runnable-track,
+.dark input[type='range']::-moz-range-track {
+  background: #2A2A2A;
 }
 </style>

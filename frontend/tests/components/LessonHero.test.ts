@@ -141,30 +141,31 @@ describe('LessonHero | status pills', () => {
 // ─── Title Rendering ────────────────────────────────────────────────────
 
 describe('LessonHero | title rendering', () => {
-  it('renders h1 with title text', async () => {
-    const wrapper = getWrapper({ title: 'Greetings and Introductions' })
+  it('renders h2 with no title (page provides its own <h1>)', async () => {
+    const wrapper = getWrapper({})
     await nextTick()
 
-    const heading = wrapper.find('h1')
-    expect(heading.exists()).toBe(true)
-    expect(heading.text()).toBe('Greetings and Introductions')
+    const heading = wrapper.find('h2')
+    expect(heading.exists()).toBe(false)
   })
 
-  it('renders arabic title paragraph when arabicTitle is provided', async () => {
+  it('renders arabic title text in decorative overlay when arabicTitle is provided', async () => {
     const wrapper = getWrapper({ arabicTitle: 'التَّحِيَاتُ' })
     await nextTick()
 
-    const arabicPara = wrapper.find('p[dir="rtl"]')
-    expect(arabicPara.exists()).toBe(true)
-    expect(arabicPara.text()).toBe('التَّحِيَاتُ')
+    // arabicTitle is now in the decorative overlay (div with font-arabic), not a standalone <p>
+    const overlayDiv = wrapper.find('.font-arabic.absolute.top-4')
+    expect(overlayDiv.exists()).toBe(true)
+    expect(overlayDiv.text()).toContain('التَّحِيَاتُ')
   })
 
-  it('does not render arabic title paragraph when arabicTitle is empty', async () => {
+  it('renders default Arabic text in decorative overlay when arabicTitle is empty', async () => {
     const wrapper = getWrapper({ arabicTitle: '' })
     await nextTick()
 
-    const arabicPara = wrapper.find('p[dir="rtl"]')
-    expect(arabicPara.exists()).toBe(false)
+    const overlayDiv = wrapper.find('.font-arabic.absolute.top-4')
+    expect(overlayDiv.exists()).toBe(true)
+    expect(overlayDiv.text()).toContain('السَّلَامُ عَلَيْكُمْ')
   })
 })
 

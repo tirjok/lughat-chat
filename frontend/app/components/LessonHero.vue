@@ -2,7 +2,6 @@
 interface Props {
   level: string
   lessonNumber: string | number
-  title: string
   arabicTitle?: string
   estimatedTime?: string
   scenes?: string
@@ -50,15 +49,6 @@ const props = withDefaults(defineProps<Props>(), {
             Ready
           </span>
         </div>
-
-        <!-- Title -->
-        <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
-          {{ title }}
-        </h1>
-        <p v-if="arabicTitle" class="font-arabic text-xl md:text-2xl text-primary-100 mb-4" dir="rtl">
-          {{ arabicTitle }}
-        </p>
-
         <!-- Metadata row -->
         <div v-if="estimatedTime || scenes || audioType" class="flex flex-wrap items-center gap-3 md:gap-4 text-primary-100 text-sm">
           <span v-if="estimatedTime" class="flex items-center gap-1.5">
