@@ -135,6 +135,9 @@ beforeEach(() => {
 function mountGlobalNavbar(path: string) {
   const nuxtApp = buildNuxtApp(path)
   return shallowMount(GlobalNavbar, {
+    props: {
+      currentPath: path
+    },
     global: {
       plugins: [
         {

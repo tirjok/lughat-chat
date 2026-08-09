@@ -2,17 +2,17 @@ import { describe, it, expect, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import GlobalNavbar from '~/components/GlobalNavbar.vue'
-import { createMockUseNuxtApp } from '../mocks'
 
 // ─── Test Helpers ────────────────────────────────────────────────────────
 // Mounts GlobalNavbar with a controllable route via a fresh mock per test.
 // Each test gets its own mock instance → module isolation.
 
 function mountNavbar(path: string) {
-  const mockUseNuxtApp = createMockUseNuxtApp(path)
-  // Override the global stub so the component reads our route.
-  ;(globalThis as Record<string, unknown>).useNuxtApp = mockUseNuxtApp
+  // Pass the path as a prop to simulate the reactive route from app.vue.
   return shallowMount(GlobalNavbar, {
+    props: {
+      currentPath: path
+    },
     stubs: {
       NuxtLink: {
         props: ['to'],
@@ -126,6 +126,17 @@ describe('GlobalNavbar', () => {
       expect(classes).toContain('text-primary-600')
     })
 
+    it('When on /dashboard/level/a1/5 then the Dashboard nav link (not just My Courses) is highlighted', () => {
+      // Arrange
+      const wrapper = mountNavbar('/dashboard/level/a1/5')
+      // Act
+      const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
+      const firstStub = dashboardStubs[0]
+      // Assert — the nav (Dashboard) link, not just the My Courses link, highlights
+      const classes = firstStub.classes().join(' ')
+      expect(classes).toContain('text-primary-600')
+    })
+
     it('When on /dashboard then Home link stub is NOT highlighted', () => {
       // Arrange
       const wrapper = mountNavbar('/dashboard')
@@ -146,6 +157,23 @@ describe('GlobalNavbar', () => {
         const classes = stub.classes().join(' ')
         expect(classes).not.toContain('text-primary-600')
       })
+    })
+
+    it('When currentPath prop changes from / to /dashboard then nav links update their active state', async () => {
+      // Arrange — simulate Vue Router navigation by updating the prop.
+      const wrapper = mountNavbar('/')
+      // Act — change path to /dashboard (simulates client-side navigation).
+      await wrapper.setProps({ currentPath: '/dashboard' })
+      await nextTick()
+      // Assert — Home should no longer be highlighted.
+      const homeStub = wrapper.find('nuxt-link-stub[to="/"]')
+      const homeClasses = homeStub.classes().join(' ')
+      expect(homeClasses).not.toContain('text-primary-600')
+      // Assert — Dashboard should now be highlighted.
+      const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
+      const firstStub = dashboardStubs[0]
+      const dashClasses = firstStub.classes().join(' ')
+      expect(dashClasses).toContain('text-primary-600')
     })
   })
 
@@ -199,28 +227,37 @@ describe('GlobalNavbar', () => {
   // ─── Mobile Layout ──────────────────────────────────────────────────────
 
   describe('mobile layout', () => {
-    it('When viewport < 768px then mobile nav section renders with aria-labels', async () => {
+    it('When viewport < 768px then mobile nav renders a hamburger menu button with navigation links', async () => {
       // Arrange
       vi.stubGlobal('innerWidth', 375)
       const wrapper = mountNavbar('/')
       // Act
       await nextTick()
-      const mobileLinks = wrapper.findAll('[aria-label]')
+      // The mobile section has a hamburger toggle button and nav links with icon+text
+      const hamburgerBtn = wrapper.find('button[aria-label="Navigation menu"]')
       // Assert
-      const labels = mobileLinks.map(el => el.attributes('aria-label'))
-      expect(labels).toContain('Home')
-      expect(labels).toContain('Dashboard')
+      expect(hamburgerBtn.exists()).toBe(true)
+      // Nav links render as NuxtLink stubs with correct 'to' attributes
+      const linkStubs = wrapper.findAll('nuxt-link-stub')
+      const toValues = linkStubs.map(s => s.attributes('to'))
+      expect(toValues).toContain('/')
+      expect(toValues).toContain('/dashboard')
+      // The mobile menu section exists (hidden on desktop via md:hidden)
+      const mobileSection = wrapper.find('div.md\\:hidden')
+      expect(mobileSection.exists()).toBe(true)
       vi.unstubAllGlobals()
     })
 
-    it('When viewport < 768px then mobile action dropdown exists', () => {
+    it('When viewport < 768px then mobile action buttons (Ask Instructor, Settings) exist', () => {
       // Arrange
       vi.stubGlobal('innerWidth', 375)
       const wrapper = mountNavbar('/')
       // Act
-      const dropdownBtn = wrapper.find('button[aria-label="More actions"]')
+      const instructorBtn = wrapper.find('button[aria-label="Ask Instructor"]')
+      const settingsBtn = wrapper.find('button[aria-label="Settings"]')
       // Assert
-      expect(dropdownBtn.exists()).toBe(true)
+      expect(instructorBtn.exists()).toBe(true)
+      expect(settingsBtn.exists()).toBe(true)
       vi.unstubAllGlobals()
     })
 
