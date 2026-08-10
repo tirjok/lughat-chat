@@ -7,8 +7,7 @@ import { useRoute, useRequestURL } from '#app'
 function getRoutePath(): string {
   try {
     return useRoute().path
-  }
-  catch {
+  } catch {
     return '/'
   }
 }
@@ -17,8 +16,7 @@ function getRoutePath(): string {
 const initialPath = (() => {
   try {
     return useRequestURL().pathname
-  }
-  catch {
+  } catch {
     return '/'
   }
 })()
@@ -44,7 +42,10 @@ const showNavbar = computed(() => {
 
 <template>
   <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
-    <GlobalNavbar v-if="showNavbar" :current-path="currentPath" />
+    <GlobalNavbar
+      v-if="showNavbar"
+      :current-path="currentPath"
+    />
     <NuxtPage />
   </div>
 </template>

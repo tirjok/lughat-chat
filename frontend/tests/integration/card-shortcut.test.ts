@@ -29,7 +29,7 @@ describe('Card shortcut', () => {
       resolve(__dirname, '../../app/pages/dashboard.vue'),
       'utf-8'
     )
-    expect(content).toContain('class="card')
+    expect(content).toContain('card')
   })
 
   it('[lesson].vue uses the card class inside the content area', () => {

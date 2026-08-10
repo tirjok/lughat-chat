@@ -285,7 +285,6 @@ index.vue (TTS Studio — root page)
 ├── ToastNotification
 │
 ├── MobileSplitScreen (mobile, v-if)
-│   ├── MobileStatusIndicator
 │   ├── FocusHaloCanvas
 │   ├── VoiceSelector
 │   ├── SpeedSlider
@@ -293,8 +292,6 @@ index.vue (TTS Studio — root page)
 │   └── WaveformCanvas
 │
 ├── DesktopPanels (desktop, v-if)
-│   ├── ModelStatusIndicator
-│   ├── MobileStatusIndicator
 │   ├── FocusHaloCanvas
 │   ├── VoiceSelector
 │   ├── SpeedSlider

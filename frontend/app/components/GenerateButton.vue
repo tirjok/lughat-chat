@@ -1,11 +1,12 @@
 <script setup lang="ts">
-interface Props {
+const props = defineProps<{
   isGenerating: boolean
   modelStatus: 'loading' | 'ready' | 'error'
   disabled: boolean
-}
+}>()
 
-defineProps<Props>()
+const disabledAttr = computed(() => (props.disabled ? 'true' : undefined))
+
 // TODO: migrated from sunrise-orange/magenta (see ISSUE-014)
 
 const emit = defineEmits<{
@@ -16,17 +17,16 @@ const emit = defineEmits<{
 <template>
   <button
     type="button"
-    :disabled="disabled"
-    :aria-disabled="disabled"
-    :aria-busy="isGenerating"
-    :class="{ 'is-disabled': disabled }"
+    :disabled="disabledAttr"
+    :aria-disabled="props.disabled"
+    :aria-busy="props.isGenerating"
+    :class="{ 'is-disabled': props.disabled }"
     class="generate-btn group"
     @click="emit('click')"
   >
     <!-- Ready state: Button-in-Button trailing icon -->
     <div
-      v-if="!isGenerating && modelStatus === 'ready'"
-      class="btn-content"
+      v-if="!props.isGenerating && props.modelStatus === 'ready'"
     >
       <span
         aria-hidden="true"
@@ -36,17 +36,15 @@ const emit = defineEmits<{
         Generate Speech
       </span>
     </div>
-
-    <!-- Error state -->
     <div
-      v-else-if="modelStatus === 'error'"
+      v-else-if="props.modelStatus === 'error'"
       class="btn-content"
     >
-      <span class="ph-fill ph-warning-circle text-xl text-red-500" aria-hidden="true" />
-      <span class="font-medium text-red-400 text-sm md:text-base">
-      </span>
+      <span
+        class="ph-fill ph-warning-circle text-xl text-red-500"
+        aria-hidden="true"
+      />
     </div>
-    <!-- Loading/Generating state -->
     <div
       v-else
       class="btn-content loading-state"

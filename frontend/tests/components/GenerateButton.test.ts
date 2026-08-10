@@ -14,7 +14,7 @@ describe('GenerateButton', () => {
 
     const btn = wrapper.find('button')
     // Native disabled attribute is set when disabled prop is true
-    expect(btn.attributes('disabled')).toBe('true')
+    expect(btn.attributes('disabled')).toBe('')
     expect(btn.classes()).toContain('is-disabled')
     expect(btn.element.disabled).toBe(true)
   })

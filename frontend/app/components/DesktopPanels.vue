@@ -4,8 +4,6 @@
 
 import { computed, useTemplateRef, watch } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
-import ModelStatusIndicator from './ModelStatusIndicator.vue'
-import MobileStatusIndicator from './MobileStatusIndicator.vue'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
 import SpeedSlider from './SpeedSlider.vue'
@@ -41,14 +39,18 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const controlDeckDesktopRef = useTemplateRef<HTMLDivElement | null>('control-deck-ref')
+const _controlDeckDesktopRef = useTemplateRef<HTMLDivElement | null>('control-deck-ref')
 const canvasHeaderRef = useTemplateRef<HTMLDivElement | null>('canvas-header-ref')
 
 // Scroll-reveal: observe desktop control deck sections for fade-up
 useScrollReveal(canvasHeaderRef as import('vue').Ref<HTMLElement | null>)
-
 const audioTemplateRef = useTemplateRef<HTMLAudioElement | null>('audio-el')
-watch(audioTemplateRef, (el) => { emit('setAudioRef', el) })
+
+watch(audioTemplateRef, (el) => {
+  if (el) {
+    emit('setAudioRef', el)
+  }
+})
 
 const charCount = computed(() => props.textInput.length)
 const isWarnLimit = computed(() => {
@@ -75,43 +77,6 @@ const isOverLimit = computed(() => charCount.value > 3000)
       data-panel="control-deck"
       class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-white dark:bg-stone-800 border-t md:border-t-0 md:border-r border-stone-200 dark:border-stone-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-sm dark:shadow-[0_-8px_32px_rgba(0,0,0,0.25)] md:shadow-sm dark:md:shadow-[0_-16px_48px_rgba(0,0,0,0.35)] shrink-0 order-2 md:order-1 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] fade-up delay-100"
     >
-      <!-- Mobile Header (logo + status, visible below 768px) -->
-      <header
-        class="flex md:hidden justify-between items-center px-4 py-3 bg-stone-100 dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 shrink-0 z-30"
-      >
-        <div class="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            class="ph-fill ph-waves text-primary-500 text-xl"
-          />
-          <h1 class="text-lg font-bold text-stone-800 dark:text-white tracking-tight">
-            Lughat<span class="text-gold-500">Chat</span>
-          </h1>
-        </div>
-        <MobileStatusIndicator />
-      </header>
-
-      <!-- Desktop Header (hidden on mobile) -->
-      <header
-        class="hidden md:flex px-6 py-4 border-b border-stone-200 dark:border-stone-700 justify-between items-center bg-gradient-to-b from-stone-100/50 to-transparent dark:from-[#1f1f1f] to-transparent shrink-0"
-      >
-        <div>
-          <h1 class="text-2xl font-bold text-stone-800 dark:text-white tracking-tight flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              class="ph-fill ph-waves text-primary-500"
-            />
-            Lughat<span class="text-gold-500">Chat</span>
-          </h1>
-          <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] font-medium bg-stone-100 dark:bg-white/[0.04] text-stone-600 dark:text-gray-400">
-            Premium Audio Studio
-          </span>
-        </div>
-
-        <!-- Status Indicator (pill style) -->
-        <ModelStatusIndicator />
-      </header>
-
       <!-- Controls Container — unified, compact -->
       <div class="flex-1 p-3 overflow-y-auto flex flex-col">
         <div class="flex flex-col gap-4 fade-up delay-200">

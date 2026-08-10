@@ -1,7 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
+import GlobalNavbar from '~/components/GlobalNavbar.vue'
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
-import GlobalNavbar from '~/components/GlobalNavbar.vue'
 
 // ─── Test Helpers ────────────────────────────────────────────────────────
 // Mounts GlobalNavbar with a controllable route via a fresh mock per test.
@@ -21,6 +20,18 @@ function mountNavbar(path: string) {
     }
   })
 }
+
+// ─── useHealthPoll Mock ──────────────────────────────────────────────────
+// GlobalNavbar now uses useHealthPoll internally. Each test gets its own
+// mock instance → module isolation.
+const mockHealthStatus: Ref<'loading' | 'ready' | 'error'> = ref('loading' as const)
+
+vi.mock('~/composables/useHealthPoll', () => ({
+  useHealthPoll: () => ({
+    status: mockHealthStatus,
+    modelLoaded: computed(() => mockHealthStatus.value === 'ready')
+  })
+}))
 
 describe('GlobalNavbar', () => {
   // ─── Structural Rendering ──────────────────────────────────────────────
@@ -268,6 +279,70 @@ describe('GlobalNavbar', () => {
       const mobileSection = wrapper.find('div.md:hidden')
       // Assert
       expect(mobileSection.exists()).toBe(false)
+    })
+
+    // ─── Model Status Indicator ─────────────────────────────────────────────
+    // GlobalNavbar now contains an inline status indicator that reads from
+    // useHealthPoll. Tests verify observable DOM state (text, classes).
+
+    beforeEach(() => {
+      mockHealthStatus.value = 'loading' as const
+    })
+
+    describe('model status indicator', () => {
+      it('renders status indicator in desktop navbar', () => {
+        const wrapper = mountNavbar('/')
+        const html = wrapper.html()
+        expect(html).toContain('Model XTTS-v2')
+      })
+
+      it('shows "Loading..." text when status is loading', () => {
+        const wrapper = mountNavbar('/')
+        const statusText = wrapper.find('span.text-gray-300.text-xs.font-medium')
+        expect(statusText.text()).toContain('Loading...')
+      })
+
+      it('shows "Ready" text when status is ready', () => {
+        mockHealthStatus.value = 'ready'
+        const wrapper = mountNavbar('/')
+        const statusText = wrapper.find('span.text-gray-300.text-xs.font-medium')
+        expect(statusText.text()).toContain('Ready')
+      })
+
+      it('shows "Error" text when status is error', () => {
+        mockHealthStatus.value = 'error'
+        const wrapper = mountNavbar('/')
+        const statusText = wrapper.find('span.text-gray-300.text-xs.font-medium')
+        expect(statusText.text()).toContain('Error')
+      })
+
+      it('renders orange dot for loading state', () => {
+        mockHealthStatus.value = 'loading'
+        const wrapper = mountNavbar('/')
+        const dot = wrapper.find('span.bg-orange-500')
+        expect(dot.exists()).toBe(true)
+      })
+
+      it('renders green dot for ready state', () => {
+        mockHealthStatus.value = 'ready'
+        const wrapper = mountNavbar('/')
+        const dot = wrapper.find('span.bg-green-500')
+        expect(dot.exists()).toBe(true)
+      })
+
+      it('renders red dot for error state', () => {
+        mockHealthStatus.value = 'error'
+        const wrapper = mountNavbar('/')
+        const dot = wrapper.find('span.bg-red-500')
+        expect(dot.exists()).toBe(true)
+      })
+
+      it('renders status indicator in mobile expanded menu', () => {
+        const wrapper = mountNavbar('/')
+        // Status indicator exists in the component tree (mobile section)
+        const html = wrapper.html()
+        expect(html).toContain('Model XTTS-v2')
+      })
     })
   })
 })

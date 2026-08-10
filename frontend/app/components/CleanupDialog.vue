@@ -38,6 +38,7 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 </script>
+
 <template>
   <div
     v-if="props.visible"

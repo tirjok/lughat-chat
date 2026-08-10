@@ -60,7 +60,6 @@ function handleOutsideMousedown(e: MouseEvent) {
   }
 }
 
-
 // Reactive style ref updated on scroll/resize for Teleport repositioning
 const menuStyle = ref<Record<string, string>>({})
 

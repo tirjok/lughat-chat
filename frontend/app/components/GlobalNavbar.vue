@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
+import { useHealthPoll } from '../composables/useHealthPoll'
 
 // ─── Route path: received from app.vue parent as a prop ─────────────────
-// GlobalNavbar lives in app.vue (outside <router-view>), so useRoute()
+// GlobalNavbar lives in app.vue (outside <router_view>), so useRoute()
 // throws. The parent passes the reactive path via prop.
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const _props = () => props.currentPath // eslint-disable-line
+const _props = () => props.currentPath
 // ─── Navigation definition (single source of truth) ──────────────────────
 
 interface NavItem {
@@ -88,6 +89,9 @@ if (typeof window !== 'undefined') {
   checkMobile()
   window.addEventListener('resize', checkMobile)
 }
+
+// ─── Health status (in GlobalNavbar) ──────────────────────────────────────
+const { status, modelLoaded } = useHealthPoll()
 </script>
 
 <template>
@@ -139,6 +143,41 @@ if (typeof window !== 'undefined') {
           My Courses
         </NuxtLink>
       </nav>
+
+      <!-- Model status indicator (desktop) -->
+      <div
+        class="bg-white/[0.02] ring-white/[0.06] flex items-center gap-2 rounded-full ring-1 px-2.5 py-1"
+        :title="`Model XTTS-v2 ${status === 'loading' ? 'Loading...' : status === 'error' ? 'Error' : 'Ready'}`"
+      >
+        <div
+          class="bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center gap-2 rounded-full px-3 py-1.5 border"
+        >
+          <!-- Loading state: pulsing orange dot -->
+          <span
+            v-if="status === 'loading'"
+            aria-hidden="true"
+            class="shadow-[0_0_8px_#f97316] w-2 h-2 rounded-full bg-orange-500 animate-pulse"
+          />
+
+          <!-- Ready state: green dot with glow -->
+          <span
+            v-else-if="modelLoaded"
+            aria-hidden="true"
+            class="shadow-[0_0_8px_#22c55e] w-2 h-2 rounded-full bg-green-500 animate-pulse"
+          />
+
+          <!-- Error state: red dot -->
+          <span
+            v-else
+            aria-hidden="true"
+            class="shadow-[0_0_8px_#ef4444] w-2 h-2 rounded-full bg-red-500"
+          />
+
+          <span class="text-gray-300 text-xs font-medium">
+            {{ status === 'loading' ? 'Loading...' : modelLoaded ? 'Ready' : 'Error' }}
+          </span>
+        </div>
+      </div>
 
       <!-- Desktop action buttons + avatar -->
       <div class="flex items-center gap-3">
@@ -221,8 +260,8 @@ if (typeof window !== 'undefined') {
 
         <!-- Expanded menu: staggered reveal -->
         <div
-          ref="menuRef"
           v-if="menuOpen"
+          ref="menuRef"
           class="border-t border-stone-100 dark:border-stone-800 px-3 pb-3 pt-2"
         >
           <!-- Nav links with icons -->
@@ -271,7 +310,10 @@ if (typeof window !== 'undefined') {
               aria-label="Ask Instructor"
               @click="closeMenu"
             >
-              <span class="ph ph-chats text-lg" aria-hidden="true" />
+              <span
+                class="ph ph-chats text-lg"
+                aria-hidden="true"
+              />
               Ask Instructor
             </button>
             <button
@@ -279,9 +321,41 @@ if (typeof window !== 'undefined') {
               aria-label="Settings"
               @click="closeMenu"
             >
-              <span class="ph ph-gear text-lg" aria-hidden="true" />
+              <span
+                class="ph ph-gear text-lg"
+                aria-hidden="true"
+              />
               Settings
             </button>
+          </div>
+
+          <!-- Mobile status indicator -->
+          <div
+            class="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-stone-100 dark:border-stone-800"
+            :title="`Model XTTS-v2 ${status === 'loading' ? 'Loading...' : status === 'error' ? 'Error' : 'Ready'}`"
+          >
+            <div
+              class="bg-stone-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] flex items-center gap-1.5 rounded-full px-2.5 py-1 border"
+            >
+              <span
+                v-if="status === 'loading'"
+                aria-hidden="true"
+                class="shadow-[0_0_8px_#f97316] w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"
+              />
+              <span
+                v-else-if="modelLoaded"
+                aria-hidden="true"
+                class="shadow-[0_0_8px_#22c55e] w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"
+              />
+              <span
+                v-else
+                aria-hidden="true"
+                class="shadow-[0_0_8px_#ef4444] w-1.5 h-1.5 rounded-full bg-red-500"
+              />
+              <span class="text-gray-300 text-[10px] font-medium">
+                {{ status === 'loading' ? 'Loading...' : modelLoaded ? 'Ready' : 'Error' }}
+              </span>
+            </div>
           </div>
         </div>
       </div>

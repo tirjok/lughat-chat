@@ -42,7 +42,7 @@ function handleKeydown(event: KeyboardEvent) {
     event.preventDefault()
     const stepped = Math.round((clampedValue.value - 0.1) / 0.1) * 0.1
     emit('update:modelValue', Math.max(0.5, stepped))
-}
+  }
 }
 function handleThumbDrag(event: MouseEvent) {
   const el = sliderRef.value

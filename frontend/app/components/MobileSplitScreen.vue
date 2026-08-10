@@ -6,7 +6,6 @@ import { computed, useTemplateRef, watch } from 'vue'
 // TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
 import { useDragResize } from '../composables/useDragResize'
 import { formatTime } from '../utils/formatTime'
-import MobileStatusIndicator from './MobileStatusIndicator.vue'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
 import SpeedSlider from './SpeedSlider.vue'
@@ -57,30 +56,18 @@ const isNearLimit = computed(() => {
 const isOverLimit = computed(() => charCount.value > 3000)
 const formatDuration = computed(() => formatTime(props.duration))
 const audioTemplateRef = useTemplateRef<HTMLAudioElement | null>('audio-el')
-watch(audioTemplateRef, (el) => { emit('setAudioRef', el) })
+watch(audioTemplateRef, (el) => {
+  if (el) {
+    emit('setAudioRef', el)
+  }
+})
 </script>
 
 <template>
   <div
     data-test-id="mobile-split-screen"
-    class="flex md:hidden flex-col h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full overflow-hidden"
+    class="flex md:hidden flex-col h-[calc(100vh-4rem)] w-full overflow-hidden"
   >
-    <!-- Mobile Top Bar (logo + status) — Floating Glass Pill (safe-area aware) -->
-    <header
-      class="flex justify-between items-center px-3 py-2.5 bg-stone-200/90 dark:bg-stone-800/90 backdrop-blur-xl ring-1 ring-stone-300 dark:ring-white/[0.06] rounded-full mx-[max(0.75rem,env(safe-area-inset-left),env(safe-area-inset-right))] mt-[max(0.625rem,env(safe-area-inset-top))] shrink-0 z-40 shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] fade-up"
-    >
-      <div class="flex items-center gap-2">
-        <span
-          aria-hidden="true"
-          class="ph-fill ph-waves text-primary-500 text-xl"
-        />
-        <h1 class="text-lg font-bold text-stone-800 dark:text-white tracking-tight">
-          Lughat<span class="text-gold-500">Chat</span>
-        </h1>
-      </div>
-      <MobileStatusIndicator />
-    </header>
-
     <!-- Mobile: Canvas (top half) -->
     <main
       role="region"
@@ -311,6 +298,9 @@ watch(audioTemplateRef, (el) => { emit('setAudioRef', el) })
         </div>
       </div>
     </aside>
-    <audio ref="audio-el" class="hidden" />
+    <audio
+      ref="audio-el"
+      class="hidden"
+    />
   </div>
 </template>

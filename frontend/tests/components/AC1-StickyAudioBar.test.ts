@@ -93,11 +93,6 @@ vi.mock('~/components/FocusHaloCanvas.vue', () => ({
   default: { template: '<div data-testid="focus-halo"></div>' }
 }))
 
-// ─── Module-level mock for MobileStatusIndicator ────────────────────
-vi.mock('~/components/MobileStatusIndicator.vue', () => ({
-  default: { template: '<div data-testid="mobile-status"></div>' }
-}))
-
 // ─── Module-level mock for GenerateButton ───────────────────────────
 vi.mock('~/components/GenerateButton.vue', () => ({
   default: { template: '<button data-testid="generate-btn">Generate</button>' }
