@@ -1,127 +1,111 @@
-# Plan: Fix SpeedSlider Thumb Track Centering
+# GenerateButton Usability Fixes — Plan
 
 ## Summary
 
-Replace the native `<input type="range">` in `SpeedSlider.vue` with a pure CSS `<div>`-based track + thumb, matching the pattern already used by `StickyAudioBar`'s progress bar. This fixes the visual bug where the filled track extends past the thumb, making it appear off-center.
+Fix critical visibility and accessibility issues in `GenerateButton.vue` that make the button nearly unusable in light mode when `disabled=false`. The dark text (`text-stone-800`) on the dark button background (`#1A1A1A`) produces near-zero contrast, rendering "Generate Speech" invisible. Additional issues: clicks fire when "disabled", no focus ring, no `aria-disabled`, and error state shows wrong text.
 
 ## Context
 
-**Current implementation** (`SpeedSlider.vue`, lines 61-71):
-- Uses native `<input type="range">` with `-webkit-appearance: none; appearance: none`.
-- JS `updateSliderFill()` sets `el.style.background` to a `linear-gradient` where the color split point is at the percentage position.
-- Browser renders the native thumb **on top** of this gradient. The gradient fills the entire input width, so the filled color extends past the thumb to the right edge — visually making the thumb appear off-center.
+**File:** `frontend/app/components/GenerateButton.vue` (177 lines)
 
-**Existing pattern** (`StickyAudioBar.vue`, lines 216-232):
-- Uses a `<div role="slider">` with an inner `<div>` fill that uses `:style="{ width: '${percent}%' }"`.
-- No native input. Pure CSS. Works correctly.
+**Consumers:** `DesktopPanels.vue` (line 132), `MobileSplitScreen.vue` (line 187)
+- Both pass `:disabled="!isValid || isGenerating || modelStatus === 'loading'"`
+- Both wire `@click="emit('synthesize')"`
 
-**Consumers** (no changes needed):
-- `DesktopPanels.vue` line 123-126: `<SpeedSlider :model-value="speedValue" @update:model-value="..."/>`
-- `MobileSplitScreen.vue` line 178-181: same usage pattern
-- Both only care about `modelValue` prop and `update:modelValue` event — the API surface stays identical.
+**State machine (current):**
+- `isGenerating=false, modelStatus='ready', disabled=false` → "Generate Speech" (ready state)
+- `isGenerating=true` OR `modelStatus !== 'ready'` → "Processing Model..." (loading state, `v-else`)
 
-**Tests** (`frontend/tests/components/SpeedSlider.test.ts`, 15 tests):
-- 3 tests in "native range input" assert on `input[type="range"]` existence, attributes, and value.
-- 12 other tests assert on behavior (display value, clamping, v-model emissions, responsive layout).
-- All behavioral tests (value display, clamping, emission) work regardless of DOM structure — only the 3 "native range input" tests need rewriting.
+**Visual design system:** The button uses a "Double-Bezel" (Doppelrand) design — dark shell (`#1A1A1A`) with gold/teal accent ring on hover. All transitions use 700ms (excessively slow).
+
+**Constraint:** This is a visual component inside `bg-stone-50` / `bg-stone-100` (light mode) containers. The dark button must have readable text in both light and dark modes.
 
 ## System Impact
 
-- **API surface**: Unchanged. `modelValue` prop + `update:modelValue` event remain identical.
-- **Consumers**: Zero changes needed in `DesktopPanels.vue` or `MobileSplitScreen.vue`.
-- **Tests**: 3 tests rewritten (assert on `<div>` structure instead of `<input>`). 12 behavioral tests unaffected.
-- **No new dependencies, no new files, no new composables.**
+- **One file changed:** `frontend/app/components/GenerateButton.vue`
+- **No interface changes** to props or emits — fixes are internal (CSS, attributes)
+- **No parent changes required** — fixes are self-contained in the component
+- **Existing tests** for disabled behavior (lines 76–87 of GenerateButton.test.ts) assert that clicks fire when disabled; this test will need updating once the fix adds native `disabled` attribute
 
 ## Approach
 
-Replace the native `<input type="range">` with a `<div>`-based track + thumb:
+### Primary Fix: Light-Mode Text Visibility (P0)
+The root cause of the screenshot issue: `text-stone-800` (`#292524`) on `background: #1A1A1A` produces ~1.5:1 contrast — text is invisible.
 
-1. **Track `<div>`**: Full-width, 4px height, rounded corners. Background is the track color (`#a8a29e` / `#2A2A2A` in dark mode).
-2. **Fill `<div>`**: Inner element inside the track, `height: 4px`, `background: #14b8a6`, `border-radius: 2px`, `width: ${percentage}%`. This is the exact same pattern as `StickyAudioBar`'s progress fill.
-3. **Thumb `<div>`**: 16px circle, positioned absolutely at `left: calc(percentage% - 8px)` (half the thumb width). Teal background with glow box-shadow. Hover: scale 1.2.
+**Fix:** Swap the ready-state text color to a light color in light mode:
+- Ready state: `text-white` (not `text-stone-800`) on the dark button
+- This matches the hover state (`group-hover:text-white`) and is consistent with the dark button design
+- Dark mode already uses `dark:text-white` — no change needed
 
-The percentage calculation stays the same (computed from `clampedValue`). The `handleInput` handler updates the model value — since there's no native input, we add a `@mousedown`/`@click` handler on the track to calculate position.
+This is a one-line change on line 31.
 
-### Interaction Model
+### Secondary Fixes (P1):
 
-Instead of relying on native `<input>` interaction, the track div captures click/mousedown events and calculates the percentage from the click position relative to the track width. The thumb updates immediately via the computed percentage.
+**2.1. `aria-disabled` binding** (line 18)
+- Add `:aria-disabled="disabled"` to the `<button>` so screen readers announce the state
 
-### Accessibility
+**2.2. Native `disabled` attribute** (line 17)
+- Add `:disabled="disabled"` to the `<button>` so the browser natively blocks interaction
+- This prevents the parent's `@click="emit('synthesize')"` from firing when disabled
+- Requires updating the test at GenerateButton.test.ts lines 76–87 (which asserts clicks fire when disabled — this is the bug, not the feature)
 
-Add `role="slider"`, `aria-label="Speech speed"`, `aria-valuemin="0.5"`, `aria-valuemax="2"`, `aria-valuenow` (computed from clampedValue), and `tabindex="0"` for keyboard focus. Add `@keydown` handler for arrow keys.
+**2.3. Focus-visible indicator** (after line 94)
+- Add `:focus-visible` rule with a gold ring matching the brand accent (`#f59e0b`)
+
+**2.4. Error state text** (lines 44–59)
+- Distinguish `modelStatus === 'error'` from loading/generating in the `v-else` branch
+- Show "Try Again" or "Model Error" text when status is 'error'
+
+### Tertiary Fixes (P2):
+
+**3.1. `type="button"`** (line 17)
+- Add to prevent accidental form submission
+
+**3.2. `aria-busy`** (line 17)
+- Bind `:aria-busy="isGenerating"` for screen readers
+
+**3.3. Transition speed** (lines 72, 79, 84, 98, 112, 147)
+- Reduce from 700ms to 200–300ms for transform, 300–400ms for box-shadow/background
 
 ## Changes
 
-### `frontend/app/components/SpeedSlider.vue` — Rewrite slider to `<div>`-based track + thumb
+### `frontend/app/components/GenerateButton.vue`
 
-**Script** (lines 1-43):
-- Remove `sliderRef` ref (no longer an `<input>`).
-- Remove `updateSliderFill()` function (no longer sets JS background gradient).
-- Keep `clampedValue` computed, `displayValue` computed.
-- Add `sliderValue` computed: `((clampedValue.value - 0.5) / 1.5) * 100` (the percentage 0-100).
-- Add `handleTrackClick(event: MouseEvent)` — calculates percentage from `event.offsetX / trackWidth`.
-- Add `handleKeydown(event: KeyboardEvent)` — ArrowRight increases by 0.1, ArrowLeft decreases by 0.1.
+| Line | Change |
+|------|--------|
+| 17 | Add `:disabled="disabled" type="button" :aria-disabled="disabled" :aria-busy="isGenerating"` |
+| 31 | Change `text-stone-800` → `text-white` (light mode text now readable on dark background) |
+| 44–59 | Add conditional: `v-if="modelStatus === 'error'"` shows error text; `v-else` remains loading |
+| 72 | Reduce transform transition from 700ms to 250ms |
+| 79 | Reduce box-shadow transition from 700ms to 300ms |
+| 84 | Reduce hover box-shadow transition from 700ms to 300ms |
+| 92–94 | Reduce :active transition from 700ms to 200ms |
+| 112 | Reduce ::before background transition from 700ms to 300ms |
+| 147 | Reduce ::after opacity transition from 700ms to 300ms |
+| After 94 | Add `:focus-visible` rule with gold ring |
 
-**Template** (lines 45-72):
-- Replace `<input type="range">` with:
-  ```html
-  <div
-    ref="sliderRef"
-    role="slider"
-    aria-label="Speech speed"
-    :aria-valuemin="0.5"
-    :aria-valuemax="2"
-    :aria-valuenow="clampedValue"
-    :tabindex="0"
-    class="relative h-4 w-full cursor-pointer group"
-    @click="handleTrackClick"
-    @keydown="handleKeydown"
-  >
-    <div class="absolute inset-y-0 left-0 w-1 bg-stone-300 dark:bg-stone-600 rounded-full" />
-    <div
-      class="absolute inset-y-0 rounded-full"
-      :style="{ width: `${sliderValue}%`, background: '#14b8a6' }"
-    />
-    <div
-      class="absolute top-1/2 -translate-y-1/2 rounded-full"
-      :style="{ left: `calc(${sliderValue}% - 8px)`, width: '16px', height: '16px', background: '#14b8a6', boxShadow: '0 0 10px rgba(20, 184, 166, 0.8)' }"
-    />
-  </div>
-  ```
+### `frontend/tests/components/GenerateButton.test.ts`
 
-**Style** (lines 75-125):
-- Remove ALL `::-webkit-slider-thumb`, `::-webkit-slider-runnable-track`, `::-moz-range-thumb`, `::-moz-range-track` rules (30+ lines of browser-specific pseudo-elements).
-- Keep only the hover scale transition on the thumb div (can be done via CSS class).
+| Line | Change |
+|------|--------|
+| 15–19 | Update test: `btn.attributes('disabled')` should now be `'true'` when disabled prop is true |
+| 19 | `btn.element.disabled` should now be `true` when disabled prop is true |
+| 76–87 | Update test name to "does NOT emit click when disabled" and assert `emitted('click')` is `undefined` or empty |
 
-### `frontend/tests/components/SpeedSlider.test.ts` — Rewrite 3 tests, add 1
-
-**Removed**: 3 tests in "native range input" describe block (assert on `input[type="range"]`).
-
-**Added**: 1 test in new "slider interaction" describe block:
-- "When track is clicked at 50% then thumb centers" — asserts the thumb element exists with correct left position.
-
-**Modified**: 2 responsive tests — change `toContain('type="range"')` to `toContain('role="slider"')`.
-
-**Unaffected**: 10 behavioral tests (display value, clamping, v-model emissions, formatting).
-
-### `specs/general/UI-IMPROVEMENTS.md` — Update Issue 13
-
-Update the "Current State" and "Recommendation" to reference the new `<div>`-based implementation and note that the thumb centering bug is resolved.
+### `frontend/.issues/CONTROL-DECK-001.md` (if exists, update reference)
+- Update disabled state description from `opacity: 0.4 on #1A1A1A` to the new visual design
 
 ## Verification
 
+1. **Visual check:** Open the app in light mode. The "Generate Speech" text should be clearly visible (white on dark button).
+2. **Disabled check:** When `disabled=true`, the button should show `cursor: not-allowed`, appear grayed out, and NOT fire `emit('click')`.
+3. **Accessibility check:** Use a screen reader — the button should announce "Generate Speech, button" (enabled) or "Generate Speech, button, disabled" (disabled).
+4. **Focus check:** Tab to the button — a gold focus ring should appear.
+5. **Error state:** When `modelStatus='error'`, the button should show an error message, not "Processing Model..."
+6. **Tests:** Run `pnpm test` — all GenerateButton tests should pass.
+
+**Commands:**
 ```bash
-# Run full test suite
-./run-tests.sh
-
-# Specifically component tests for SpeedSlider
-cd frontend && pnpm vitest --config vitest.component.config.ts run tests/components/SpeedSlider.test.ts
+cd frontend && pnpm test -- GenerateButton
+./run-tests.sh  # full stack verification
 ```
-
-**Edge cases to check**:
-- Value at 0.5 (min) → thumb at leftmost position (0%)
-- Value at 2.0 (max) → thumb at rightmost position (100%)
-- Value at 1.25 (mid) → thumb at 50% position
-- Keyboard arrow keys (ArrowLeft/ArrowRight)
-- Click on track at various positions
-- Dark mode track color

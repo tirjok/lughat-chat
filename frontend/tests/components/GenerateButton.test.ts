@@ -13,10 +13,10 @@ describe('GenerateButton', () => {
     })
 
     const btn = wrapper.find('button')
-    // No HTML disabled attribute — uses CSS class instead
-    expect(btn.attributes('disabled')).toBeUndefined()
+    // Native disabled attribute is set when disabled prop is true
+    expect(btn.attributes('disabled')).toBe('true')
     expect(btn.classes()).toContain('is-disabled')
-    expect(btn.element.disabled).toBe(false)
+    expect(btn.element.disabled).toBe(true)
   })
 
   it('does NOT apply is-disabled class when disabled prop is false', () => {
@@ -27,7 +27,6 @@ describe('GenerateButton', () => {
         disabled: false
       }
     })
-
     const btn = wrapper.find('button')
     expect(btn.attributes('disabled')).toBeUndefined()
     expect(btn.classes()).not.toContain('is-disabled')
@@ -73,7 +72,7 @@ describe('GenerateButton', () => {
     expect(wrapper.emitted('click')).toHaveLength(1)
   })
 
-  it('emits click event even when disabled (class-based approach)', async () => {
+  it('does NOT emit click when disabled (native attribute blocks interaction)', async () => {
     const wrapper = mount(GenerateButton, {
       props: {
         isGenerating: false,
@@ -83,6 +82,6 @@ describe('GenerateButton', () => {
     })
 
     await wrapper.find('button').trigger('click')
-    expect(wrapper.emitted('click')).toHaveLength(1)
+    expect(wrapper.emitted('click')).toBeUndefined()
   })
 })
