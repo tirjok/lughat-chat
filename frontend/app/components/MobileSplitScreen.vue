@@ -2,7 +2,7 @@
 // MobileSplitScreen: Mobile split-screen layout with draggable divider.
 // Contains: mobile canvas (top) + drag divider + control deck (bottom) + inline audio player.
 
-import { computed } from 'vue'
+import { computed, useTemplateRef, watch } from 'vue'
 // TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
 import { useDragResize } from '../composables/useDragResize'
 import { formatTime } from '../utils/formatTime'
@@ -35,6 +35,7 @@ interface Emits {
   (e: 'update:textInput' | 'update:selectedSpeaker', value: string): void
   (e: 'update:speedValue' | 'seek', ratio: number): void
   (e: 'synthesize' | 'clearText' | 'closePlayer' | 'toggle' | 'download'): void
+  (e: 'setAudioRef', ref: HTMLAudioElement | null): void
 }
 
 const props = defineProps<Props>()
@@ -45,12 +46,18 @@ const { canvasRatio, onDragStart, onDragMove, onDragEnd } = useDragResize({
 })
 
 const charCount = computed(() => props.textInput.length)
+const isWarnLimit = computed(() => {
+  const ratio = charCount.value / 3000
+  return ratio >= 0.6 && charCount.value <= 3000
+})
 const isNearLimit = computed(() => {
   const ratio = charCount.value / 3000
   return ratio >= 0.8 && charCount.value <= 3000
 })
 const isOverLimit = computed(() => charCount.value > 3000)
 const formatDuration = computed(() => formatTime(props.duration))
+const audioTemplateRef = useTemplateRef<HTMLAudioElement | null>('audio-el')
+watch(audioTemplateRef, (el) => { emit('setAudioRef', el) })
 </script>
 
 <template>
@@ -101,7 +108,7 @@ const formatDuration = computed(() => formatTime(props.duration))
           <div class="flex items-center gap-2 text-xs text-stone-500 dark:text-gray-500">
             <span
               class="font-mono"
-              :class="{ 'text-red-500 dark:text-red-400': isOverLimit, 'text-amber-600 dark:text-amber-400': isNearLimit, 'text-stone-500 dark:text-gray-500': !isNearLimit && !isOverLimit }"
+              :class="{ 'text-red-500 dark:text-red-400': isNearLimit, 'text-amber-600 dark:text-amber-400': isWarnLimit, 'text-stone-500 dark:text-gray-500': !isWarnLimit && !isNearLimit && !isOverLimit }"
             >
               {{ charCount }} / 3000
             </span>
@@ -183,6 +190,20 @@ const formatDuration = computed(() => formatTime(props.duration))
           :disabled="!isValid || isGenerating || modelStatus === 'loading'"
           @click="emit('synthesize')"
         />
+      </div>
+      <!-- Mobile: Keyboard shortcut hint -->
+      <div class="px-3 py-2 text-center">
+        <span class="text-[10px] text-stone-500 dark:text-gray-500">
+          Press
+          <span class="rounded-md ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02] inline-flex">
+            <span class="rounded-md bg-stone-200 dark:bg-stone-700 px-1.5 py-0.5 font-mono text-[9px] text-stone-600 dark:text-gray-400">Ctrl</span>
+          </span>
+          +
+          <span class="rounded-md ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02] inline-flex">
+            <span class="rounded-md bg-stone-200 dark:bg-stone-700 px-1.5 py-0.5 font-mono text-[9px] text-stone-600 dark:text-gray-400">Enter</span>
+          </span>
+          to generate
+        </span>
       </div>
 
       <!-- Mobile: Generated Audio Card: Double-Bezel -->
@@ -290,5 +311,6 @@ const formatDuration = computed(() => formatTime(props.duration))
         </div>
       </div>
     </aside>
+    <audio ref="audio-el" class="hidden" />
   </div>
 </template>

@@ -2,7 +2,7 @@
 // DesktopPanels: Desktop side-by-side layout.
 // Contains: left panel (control deck) + right panel (canvas/editor).
 
-import { computed, useTemplateRef } from 'vue'
+import { computed, useTemplateRef, watch } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import ModelStatusIndicator from './ModelStatusIndicator.vue'
 import MobileStatusIndicator from './MobileStatusIndicator.vue'
@@ -35,6 +35,7 @@ interface Emits {
   (e: 'update:textInput' | 'update:selectedSpeaker', value: string): void
   (e: 'update:speedValue' | 'seek', ratio: number): void
   (e: 'synthesize' | 'clearText' | 'closePlayer' | 'toggle' | 'download'): void
+  (e: 'setAudioRef', ref: HTMLAudioElement | null): void
 }
 
 const props = defineProps<Props>()
@@ -44,10 +45,16 @@ const controlDeckDesktopRef = useTemplateRef<HTMLDivElement | null>('control-dec
 const canvasHeaderRef = useTemplateRef<HTMLDivElement | null>('canvas-header-ref')
 
 // Scroll-reveal: observe desktop control deck sections for fade-up
-useScrollReveal(controlDeckDesktopRef as import('vue').Ref<HTMLElement | null>)
 useScrollReveal(canvasHeaderRef as import('vue').Ref<HTMLElement | null>)
 
+const audioTemplateRef = useTemplateRef<HTMLAudioElement | null>('audio-el')
+watch(audioTemplateRef, (el) => { emit('setAudioRef', el) })
+
 const charCount = computed(() => props.textInput.length)
+const isWarnLimit = computed(() => {
+  const ratio = charCount.value / 3000
+  return ratio >= 0.6 && charCount.value <= 3000
+})
 const isNearLimit = computed(() => {
   const ratio = charCount.value / 3000
   return ratio >= 0.8 && charCount.value <= 3000
@@ -166,19 +173,21 @@ const isOverLimit = computed(() => charCount.value > 3000)
           <div class="flex items-center gap-3 text-sm text-stone-500 dark:text-gray-500">
             <span
               class="font-mono text-xs"
-              :class="{ 'text-red-500 dark:text-red-400': isOverLimit, 'text-amber-600 dark:text-amber-400': isNearLimit, 'text-stone-500 dark:text-gray-500': !isNearLimit && !isOverLimit }"
+              :class="{ 'text-red-500 dark:text-red-400': isNearLimit, 'text-amber-600 dark:text-amber-400': isWarnLimit, 'text-stone-500 dark:text-gray-500': !isWarnLimit && !isNearLimit && !isOverLimit }"
             >
               {{ charCount }} / 3000
             </span>
-            <button
-              class="text-stone-500 dark:text-gray-500 bg-transparent hover:bg-stone-200 dark:hover:bg-stone-700"
-              @click="emit('clearText')"
-            >
-              <span
-                aria-hidden="true"
-                class="ph ph-trash text-lg"
-              />
-            </button>
+            <span class="rounded-full ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
+              <button
+                class="rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
+                @click="emit('clearText')"
+              >
+                <span
+                  aria-hidden="true"
+                  class="ph ph-trash"
+                />
+              </button>
+            </span>
           </div>
         </div>
 
@@ -193,45 +202,9 @@ const isOverLimit = computed(() => charCount.value > 3000)
             </h2>
           </div>
 
-          <!-- AI Smart Tools Toolbar: Double-Bezel -->
-          <!-- Outer Shell -->
-          <div class="hidden items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1 md:pb-0 md:pl-4 border-l border-stone-200 dark:border-stone-700 shrink-0">
-            <!-- Outer Shell per button -->
-            <span class="shrink-0 rounded-[0.75rem] ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
-              <!-- Inner Core -->
-              <button
-                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.75rem-0.125rem)] bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 px-3 py-1.5 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Type in any language and translate to Arabic"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Translate
-              </button>
-            </span>
-            <span class="shrink-0 rounded-[0.75rem] ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
-              <!-- Inner Core -->
-              <button
-                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-primary-500 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.75rem-0.125rem)] bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 px-3 py-1.5 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Add Harakat (diacritics) for perfect TTS pronunciation"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Add Diacritics
-              </button>
-            </span>
-            <span class="shrink-0 rounded-[0.75rem] ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
-              <!-- Inner Core -->
-              <button
-                class="shrink-0 flex items-center gap-1.5 text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-gold-500 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-[calc(0.75rem-0.125rem)] bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 px-3 py-1.5 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] group"
-                title="Let AI write the next few sentences"
-              >
-                <span class="group-hover:animate-pulse">✨</span> Continue Script
-              </button>
-            </span>
-          </div>
-        </div>
-
-        <!-- Desktop Char Count & Clear (hidden on mobile) -->
-        <div class="hidden md:flex items-center gap-4 text-sm text-stone-500 dark:text-gray-500 shrink-0">
           <span
             class="font-mono"
-            :class="{ 'text-red-500 dark:text-red-400': isOverLimit, 'text-amber-600 dark:text-amber-400': isNearLimit, 'text-stone-500 dark:text-gray-500': !isNearLimit && !isOverLimit }"
+            :class="{ 'text-red-500 dark:text-red-400': isNearLimit, 'text-amber-600 dark:text-amber-400': isWarnLimit, 'text-stone-500 dark:text-gray-500': !isWarnLimit && !isNearLimit && !isOverLimit }"
           >
             {{ charCount }} / 3000
           </span>
@@ -299,7 +272,7 @@ const isOverLimit = computed(() => charCount.value > 3000)
 
       <!-- Hidden audio element -->
       <audio
-        ref="audio"
+        ref="audio-el"
         class="hidden"
       />
     </main>

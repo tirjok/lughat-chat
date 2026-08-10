@@ -15,7 +15,7 @@ const emit = defineEmits<{
 
 <template>
   <button
-    :disabled="disabled"
+    :class="{ 'is-disabled': disabled }"
     class="generate-btn group"
     @click="emit('click')"
   >
@@ -54,7 +54,7 @@ const emit = defineEmits<{
         class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center shrink-0"
         aria-hidden="true"
       >
-        <span class="ph-fill ph-arrows-clockwise text-xs text-stone-500 dark:text-gray-500" />
+        <span class="ph-fill ph-arrows-clockwise text-xs text-stone-400" />
       </span>
     </div>
   </button>
@@ -93,10 +93,12 @@ const emit = defineEmits<{
   transform: scale(0.98);
 }
 
-.generate-btn:disabled {
+/* Disabled state: use class instead of :disabled attribute
+   so click events always fire (browsers suppress clicks on disabled buttons) */
+.generate-btn.is-disabled {
   background: #d6d3d1;
   cursor: not-allowed;
-  filter: none;
+  pointer-events: none;
 }
 
 /* Inner Core */
@@ -110,13 +112,13 @@ const emit = defineEmits<{
   transition: background 700ms var(--ease-spring);
   pointer-events: none;
 }
-.generate-btn:disabled::before {
+.generate-btn.is-disabled::before {
   background: #d6d3d1;
 }
-.dark .generate-btn:disabled {
+.dark .generate-btn.is-disabled {
   background: #44403c;
 }
-.dark .generate-btn:disabled::before {
+.dark .generate-btn.is-disabled::before {
   background: #44403c;
 }
 
@@ -149,9 +151,10 @@ const emit = defineEmits<{
   opacity: 1;
 }
 
-.generate-btn:disabled::after {
+.generate-btn.is-disabled::after {
   animation: none;
   opacity: 0;
+  pointer-events: none;
 }
 
 .btn-content {

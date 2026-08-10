@@ -11,18 +11,42 @@ interface Emits {
   (e: 'cleanup' | 'stay'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-</script>
+const dialogEl = useTemplateRef<HTMLDivElement | null>('dialogEl')
 
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Tab') return
+  const dialog = dialogEl.value
+  if (!dialog) return
+  const focusable = dialog.querySelectorAll<HTMLElement>(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (!first || !last) return
+  if (e.shiftKey) {
+    if (document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    }
+  } else {
+    if (document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+}
+</script>
 <template>
   <div
-    v-if="visible"
+    v-if="props.visible"
+    ref="dialogEl"
     data-cleanup-dialog
     role="dialog"
     aria-modal="true"
     aria-labelledby="cleanup-dialog-title"
-    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+    @keydown="handleKeydown"
     @keydown.escape.prevent="emit('stay')"
   >
     <div class="bg-stone-800 rounded-xl p-6 max-w-md w-full mx-4 ring-1 ring-white/[0.06] shadow-[0_32px_64px_rgba(0,0,0,0.5)]">

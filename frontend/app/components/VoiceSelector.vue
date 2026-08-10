@@ -60,22 +60,30 @@ function handleOutsideMousedown(e: MouseEvent) {
   }
 }
 
-const menuPositionStyle = computed(() => {
-  if (!triggerRef.value) return {}
+
+// Reactive style ref updated on scroll/resize for Teleport repositioning
+const menuStyle = ref<Record<string, string>>({})
+
+function updateMenuPosition() {
+  if (!triggerRef.value || !isOpen.value) return
   const rect = triggerRef.value.getBoundingClientRect()
-  return {
+  menuStyle.value = {
     top: `${rect.bottom + 8}px`,
     left: `${rect.left}px`,
     width: `${rect.width}px`
   }
-})
+}
 
 onMounted(() => {
   document.addEventListener('mousedown', handleOutsideMousedown)
+  window.addEventListener('scroll', updateMenuPosition, true)
+  window.addEventListener('resize', updateMenuPosition)
 })
 
 onUnmounted(() => {
   document.removeEventListener('mousedown', handleOutsideMousedown)
+  window.removeEventListener('scroll', updateMenuPosition, true)
+  window.removeEventListener('resize', updateMenuPosition)
 })
 </script>
 
@@ -146,7 +154,7 @@ onUnmounted(() => {
         v-if="isOpen"
         ref="menuRef"
         class="fixed z-50 bg-white dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-white/[0.06] rounded-[1.125rem] shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top opacity-100 scale-100 pointer-events-auto"
-        :style="menuPositionStyle"
+        :style="menuStyle"
       >
         <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
           <button

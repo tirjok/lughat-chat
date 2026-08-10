@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 
 interface Props {
   modelValue?: number
@@ -17,29 +17,56 @@ const clampedValue = computed(() =>
   Math.max(0.5, Math.min(2.0, props.modelValue))
 )
 
-const sliderRef = ref<HTMLInputElement | null>(null)
+const sliderValue = computed(() =>
+  ((clampedValue.value - 0.5) / 1.5) * 100
+)
 
-// Update gradient fill on the native range input (prototype style)
-function updateSliderFill() {
+const sliderRef = ref<HTMLDivElement | null>(null)
+
+function handleTrackClick(event: MouseEvent) {
   const el = sliderRef.value
   if (!el) return
-  const min = parseFloat(el.min)
-  const max = parseFloat(el.max)
-  const val = clampedValue.value
-  const percentage = ((val - min) / (max - min)) * 100
-  el.style.background = `linear-gradient(to right, #14b8a6 ${percentage}%, var(--slider-track, #a8a29e) ${percentage}%, var(--slider-track, #a8a29e) 100%)`
-}
-
-watch(clampedValue, updateSliderFill, { immediate: true })
-
-function handleInput(event: Event) {
-  const el = event.target as HTMLInputElement
-  const value = parseFloat(el.value)
+  const rect = el.getBoundingClientRect()
+  const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
+  const value = 0.5 + ratio * 1.5
   const stepped = Math.round(value / 0.1) * 0.1
   emit('update:modelValue', Math.max(0.5, Math.min(2.0, stepped)))
-  updateSliderFill()
 }
-const displayValue = computed(() => `${clampedValue.value.toFixed(1)}x`)
+
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    const stepped = Math.round((clampedValue.value + 0.1) / 0.1) * 0.1
+    emit('update:modelValue', Math.min(2.0, stepped))
+  } else if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    const stepped = Math.round((clampedValue.value - 0.1) / 0.1) * 0.1
+    emit('update:modelValue', Math.max(0.5, stepped))
+}
+}
+function handleThumbDrag(event: MouseEvent) {
+  const el = sliderRef.value
+  if (!el) return
+  const trackRect = el.getBoundingClientRect()
+
+  function onMove(e: MouseEvent) {
+    const ratio = Math.max(0, Math.min(1, (e.clientX - trackRect.left) / trackRect.width))
+    const value = 0.5 + ratio * 1.5
+    const stepped = Math.round(value / 0.1) * 0.1
+    emit('update:modelValue', Math.max(0.5, Math.min(2.0, stepped)))
+  }
+
+  function onUp() {
+    document.removeEventListener('mousemove', onMove)
+    document.removeEventListener('mouseup', onUp)
+  }
+
+  document.addEventListener('mousemove', onMove)
+  document.addEventListener('mouseup', onUp)
+  onMove(event)
+}
+
+const displayValue = computed(() => `${Math.max(0.5, Math.min(2.0, props.modelValue)).toFixed(1)}x`)
 </script>
 
 <template>
@@ -57,69 +84,38 @@ const displayValue = computed(() => `${clampedValue.value.toFixed(1)}x`)
       </span>
     </div>
 
-    <!-- Native <input type=range> with gradient track -->
-    <input
+    <!-- Slider track with fill and thumb -->
+    <div
       ref="sliderRef"
-      type="range"
-      min="0.5"
-      max="2.0"
-      step="0.1"
-      :value="clampedValue"
-      class="w-full"
-      style="-webkit-appearance: none; width: 100%; background: transparent;"
-      @input="handleInput"
+      role="slider"
+      aria-label="Speech speed"
+      :aria-valuemin="0.5"
+      :aria-valuemax="2"
+      :aria-valuenow="clampedValue"
+      :tabindex="0"
+      class="relative h-4 w-full cursor-pointer group"
+      @click="handleTrackClick"
+      @keydown="handleKeydown"
     >
+      <!-- Track background -->
+      <div class="absolute top-1/2 -translate-y-1/2 h-1 w-full rounded-full bg-stone-300 dark:bg-stone-600" />
+      <!-- Filled portion -->
+      <div
+        class="absolute top-1/2 -translate-y-1/2 h-1 rounded-full"
+        :style="{ width: `${sliderValue}%`, background: '#14b8a6' }"
+      />
+      <!-- Thumb -->
+      <div
+        class="slider-thumb absolute rounded-full bg-primary-500 shadow-[0_0_10px_rgba(20,184,166,0.8)] w-4 h-4 cursor-grab active:cursor-grabbing"
+        :style="{ left: `calc(${sliderValue}% - 8px)`, top: `calc(50% - 8px)`, width: '16px', height: '16px' }"
+        @mousedown="handleThumbDrag"
+      />
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* Native range input styling to match prototype */
-input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #14b8a6;
-  box-shadow: 0 0 10px rgba(20, 184, 166, 0.8);
+.slider-thumb {
   transition: transform 0.1s;
-}
-
-input[type='range']::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-input[type='range']::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 4px;
-  cursor: pointer;
-  background: #a8a29e;
-  border-radius: 2px;
-}
-
-/* Firefox */
-input[type='range'] {
-  appearance: none;
-  width: 100%;
-  background: transparent;
-}
-
-input[type='range']::-moz-range-thumb {
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #14b8a6;
-  box-shadow: 0 0 10px rgba(20, 184, 166, 0.8);
-}
-
-input[type='range']::-moz-range-track {
-  width: 100%;
-  height: 4px;
-  cursor: pointer;
-  background: #a8a29e;
-  border-radius: 2px;
-}
-.dark input[type='range']::-webkit-slider-runnable-track,
-.dark input[type='range']::-moz-range-track {
-  background: #2A2A2A;
 }
 </style>

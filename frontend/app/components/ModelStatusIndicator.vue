@@ -13,7 +13,7 @@ const { status, modelLoaded } = useHealthPoll()
       ? 'bg-stone-100 ring-stone-200'
       : 'bg-white/[0.02] ring-white/[0.06]'"
     class="flex items-center gap-2 rounded-full ring-1 px-2.5 py-1"
-    title="Model XTTS-v2 Ready"
+    :title="`Model XTTS-v2 ${status === 'loading' ? 'Loading...' : status === 'error' ? 'Error' : 'Ready'}`"
   >
     <!-- Inner Core -->
     <div

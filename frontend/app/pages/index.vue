@@ -211,6 +211,7 @@ const desktopPanelProps = computed(() => ({
       @toggle="audioModule.toggle()"
       @download="handleDownload"
       @seek="audioModule.seek"
+      @set-audio-ref="audioRef = $event"
     />
 
     <!-- Desktop: Side-by-side panels -->
@@ -224,8 +225,8 @@ const desktopPanelProps = computed(() => ({
       @clear-text="handleClearText"
       @close-player="handleClosePlayer"
       @toggle="audioModule.toggle()"
-      @download="handleDownload"
       @seek="audioModule.seek"
+      @set-audio-ref="audioRef = $event"
     />
 
     <!-- ── In-flight synthesis cleanup dialog ── -->

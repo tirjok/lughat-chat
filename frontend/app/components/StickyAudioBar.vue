@@ -153,7 +153,7 @@ defineExpose({
         data-testid="play-pause-button"
         data-icon="play"
         :aria-label="isPlaying ? 'Pause' : 'Play'"
-        class="primary-600 rounded-full w-11 h-11 flex items-center justify-center text-white shadow-[0_0_16px_rgba(221,36,118,0.3)] hover:scale-[1.04] active:scale-[0.96] transition-all duration-300"
+        class="bg-primary-600 rounded-full w-11 h-11 flex items-center justify-center text-white shadow-[0_0_16px_rgba(221,36,118,0.3)] hover:scale-[1.04] active:scale-[0.96] transition-all duration-300"
         @click="emit('toggle')"
       >
         <span
@@ -221,13 +221,12 @@ defineExpose({
         aria-valuemax="100"
         :class="isPlaying ? 'playing' : ''"
         data-testid="progress-bar"
-        class="flex-1 h-1.5 bg-stone-300 dark:bg-stone-600 rounded-full cursor-pointer relative group"
+        class="flex-1 h-8 bg-stone-300 dark:bg-stone-600 rounded-full cursor-pointer relative group flex items-center"
         @click="emit('seek', progressPercent / 100)"
       >
-        <!-- Progress fill -->
         <div
           data-testid="progress-fill"
-          class="h-full primary-600 rounded-full"
+          class="h-1.5 primary-600 rounded-full"
           :style="{ width: `${progressPercent}%` }"
         />
       </div>
@@ -269,7 +268,7 @@ defineExpose({
       <button
         data-testid="repeat-button"
         aria-label="Repeat mode"
-        class="flex items-center justify-center w-9 h-9 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+        class="relative flex items-center justify-center w-9 h-9 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
         :class="{ active: repeatMode !== 'off' }"
         @click="repeatNext"
       >
