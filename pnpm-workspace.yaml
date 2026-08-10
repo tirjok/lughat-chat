@@ -1,7 +1,7 @@
 packages:
   - 'frontend'
-
+ignoreScripts: false
 allowBuilds:
-  - esbuild
-  - sharp
-  - unrs-resolver
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
