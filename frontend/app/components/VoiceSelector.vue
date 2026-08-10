@@ -39,6 +39,12 @@ function getVoiceColorClass(): string {
 
 function toggleDropdown() {
   isOpen.value = !isOpen.value
+  if (isOpen.value) {
+    // Position the menu when the dropdown opens.
+    // Calling updateMenuPosition here ensures the menu is positioned
+    // below (or above, if near viewport bottom) the trigger.
+    updateMenuPosition()
+  }
 }
 
 function selectVoice(voice: Voice) {
@@ -66,10 +72,26 @@ const menuStyle = ref<Record<string, string>>({})
 function updateMenuPosition() {
   if (!triggerRef.value || !isOpen.value) return
   const rect = triggerRef.value.getBoundingClientRect()
-  menuStyle.value = {
-    top: `${rect.bottom + 8}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`
+  const viewportHeight = window.innerHeight
+  const menuHeight = 280 // matches max-h-[280px] in template
+  const spaceBelow = viewportHeight - rect.bottom
+  const spaceAbove = rect.top
+
+  // If there's not enough space below the trigger, flip the menu upward.
+  if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+    // Open upward: position the menu's bottom edge above the trigger.
+    menuStyle.value = {
+      bottom: `${window.innerHeight - rect.top + 8}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`
+    }
+  } else {
+    // Open downward (default).
+    menuStyle.value = {
+      top: `${rect.bottom + 8}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`
+    }
   }
 }
 
