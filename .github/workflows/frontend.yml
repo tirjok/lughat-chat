@@ -20,20 +20,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@v2
         with:
-          version: 11.20.0
+          version: 11.21.0
+          runtime: node@24
+          cache: true
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Approve build scripts
+        run: pnpm approve-builds --all
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        working-directory: frontend
 
       - name: Lint
         run: pnpm lint

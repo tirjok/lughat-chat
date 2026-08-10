@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const props = defineProps<{
-  isGenerating: boolean;
-  modelStatus: 'loading' | 'ready' | 'error';
-  disabled: boolean;
+  isGenerating: boolean
+  modelStatus: 'loading' | 'ready' | 'error'
+  disabled: boolean
 }>()
 
 const emit = defineEmits<{
@@ -26,15 +26,24 @@ const emit = defineEmits<{
     @click="emit('click')"
   >
     <template v-if="props.modelStatus === 'ready' && !props.isGenerating">
-      <span class="ph-fill ph-play-circle text-lg" aria-hidden="true" />
+      <span
+        class="ph-fill ph-play-circle text-lg"
+        aria-hidden="true"
+      />
       <span>Generate Speech</span>
     </template>
     <template v-else-if="props.modelStatus === 'error'">
-      <span class="ph-fill ph-warning-circle text-lg" aria-hidden="true" />
+      <span
+        class="ph-fill ph-warning-circle text-lg"
+        aria-hidden="true"
+      />
       <span>Error</span>
     </template>
     <template v-else>
-      <span class="ph ph-loader text-lg animate-spin" aria-hidden="true" />
+      <span
+        class="ph ph-loader text-lg animate-spin"
+        aria-hidden="true"
+      />
       <span class="animate-pulse">Processing Model...</span>
     </template>
   </button>
