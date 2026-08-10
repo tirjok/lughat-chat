@@ -1,14 +1,42 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-import LevelIndex from '../../app/pages/dashboard/level/[level]/index.vue'
+vi.mock('#imports', () => ({
+  useRoute: () => ({
+    path: '/dashboard/level/A1',
+    fullPath: '/dashboard/level/A1',
+    params: { level: 'A1' },
+    query: {},
+    hash: '',
+    name: 'level' as string | undefined,
+    matched: [],
+    meta: {}
+  })
+}))
+// eslint-disable-next-line import/first
+import LevelIndex from '~/pages/dashboard/level/[level]/index.vue'
 
 function getWrapper() {
   return shallowMount(LevelIndex, {
     global: {
+      plugins: [
+        {
+          install(app: Record<string, unknown>) {
+            Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
+              value: vi.fn(() => ({
+                route: { path: '/dashboard/level/A1', params: { level: 'A1' } },
+                isHydrating: () => false,
+                payload: { state: {} },
+                runWithContext: (fn: () => void) => fn(),
+                ssrContext: {}
+              }))
+            })
+          }
+        }
+      ],
       components: {
         NuxtLink: {
           props: ['to'],

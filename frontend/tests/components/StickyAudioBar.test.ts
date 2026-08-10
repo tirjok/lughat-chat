@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
-import StickyAudioBar from '../../app/components/StickyAudioBar.vue'
+import StickyAudioBar from '~/components/StickyAudioBar.vue'
 
 // ─── KeyboardEvent Factory ──────────────────────────────────────────────
 // Creates a minimal KeyboardEvent for testing keyboard shortcuts.

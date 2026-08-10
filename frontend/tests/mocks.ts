@@ -121,3 +121,27 @@ export const createMockUseVoices = (
   error: ref((options?.error ?? null) as string | null),
   loadVoices: vi.fn().mockResolvedValue(options?.voices ?? [])
 })
+// ─── Nuxt App Mock Factory ───────────────────────────────────────────
+// Returns a useNuxtApp-compatible stub with a controllable route.
+// Use createMockUseNuxtApp('/dashboard') to test navigation highlighting.
+// Use createMockUseNuxtApp('/dashboard/level/a1/5') to test lesson routes.
+export const createMockUseNuxtApp = (path: string) => {
+  const name = path === '/' ? undefined : (path.slice(1).split('/')[0] || undefined) as string | undefined
+  return () => ({
+    $router: {},
+    route: {
+      path,
+      fullPath: path,
+      params: {},
+      query: {},
+      hash: '',
+      name,
+      matched: [],
+      meta: {}
+    },
+    isHydrating: () => false,
+    payload: { state: {} },
+    runWithContext: (fn: () => unknown) => fn(),
+    ssrContext: {}
+  })
+}

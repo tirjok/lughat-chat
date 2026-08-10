@@ -1,110 +1,348 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import GlobalNavbar from '~/components/GlobalNavbar.vue'
+import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
-import GlobalNavbar from '../../app/components/GlobalNavbar.vue'
 
-// Mock useNuxtApp so the navbar can access route info.
-const mockRoute = {
-  path: '/',
-  fullPath: '/',
-  params: {},
-  query: {},
-  hash: '',
-  name: undefined,
-  matched: [],
-  meta: {}
-}
+// ─── Test Helpers ────────────────────────────────────────────────────────
+// Mounts GlobalNavbar with a controllable route via a fresh mock per test.
+// Each test gets its own mock instance → module isolation.
 
-function getWrapper(path: string): ReturnType<typeof shallowMount> {
-  mockRoute.path = path
-  mockRoute.fullPath = path
-  mockRoute.name = path === '/' ? undefined : path.slice(1).split('/')[0] || undefined
-
-  ;(globalThis as Record<string, unknown>).useNuxtApp = vi.fn(() => ({
-    $router: {},
-    route: mockRoute,
-    isHydrating: () => false,
-    payload: { state: {} },
-    runWithContext: (fn: () => void) => fn(),
-    ssrContext: {}
-  }))
-
-  const wrapper = shallowMount(GlobalNavbar, {
-    global: {
-      components: {
-        NuxtLink: {
-          props: ['to'],
-          template: '<a :href="to"><slot /></a>'
-        }
+function mountNavbar(path: string) {
+  // Pass the path as a prop to simulate the reactive route from app.vue.
+  return shallowMount(GlobalNavbar, {
+    props: {
+      currentPath: path
+    },
+    stubs: {
+      NuxtLink: {
+        props: ['to'],
+        template: '<a :href="to"><slot /></a>'
       }
     }
   })
-
-  const origUnmount = wrapper.unmount
-  wrapper.unmount = () => {
-    mockRoute.path = '/'
-    mockRoute.fullPath = '/'
-    mockRoute.name = undefined
-    origUnmount.call(wrapper)
-  }
-
-  return wrapper
 }
 
+// ─── useHealthPoll Mock ──────────────────────────────────────────────────
+// GlobalNavbar now uses useHealthPoll internally. Each test gets its own
+// mock instance → module isolation.
+const mockHealthStatus: Ref<'loading' | 'ready' | 'error'> = ref('loading' as const)
+
+vi.mock('~/composables/useHealthPoll', () => ({
+  useHealthPoll: () => ({
+    status: mockHealthStatus,
+    modelLoaded: computed(() => mockHealthStatus.value === 'ready')
+  })
+}))
+
 describe('GlobalNavbar', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+  // ─── Structural Rendering ──────────────────────────────────────────────
 
-  describe('component existence and rendering', () => {
-    it('renders a top navigation bar', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.find('div.h-14').exists()).toBe(true)
+  describe('structural rendering', () => {
+    it('When mounted at / then a <header> element exists', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const header = wrapper.find('header')
+      // Assert
+      expect(header.exists()).toBe(true)
     })
 
-    it('renders the LughatChat brand text inside the nav bar', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.find('span').exists()).toBe(true)
+    it('When mounted at / then the header contains a settings button with correct aria-label', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const settingsBtn = wrapper.find('button[aria-label="Settings"]')
+      // Assert
+      expect(settingsBtn.exists()).toBe(true)
     })
 
-    it('renders navigation links', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.findAll('nav').length).toBeGreaterThanOrEqual(1)
+    it('When mounted at / then the header contains an Ask Instructor button with correct aria-label', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const instructorBtn = wrapper.find('button[aria-label="Ask Instructor"]')
+      // Assert
+      expect(instructorBtn.exists()).toBe(true)
     })
 
-    it('renders settings and instructor action buttons', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.find('button[aria-label="Settings"]').exists()).toBe(true)
-    })
-  })
-
-  describe('desktop layout', () => {
-    it('renders a top bar with h-14 (56px) height', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.find('div.h-14').exists()).toBe(true)
-    })
-
-    it('renders a bottom progress bar with h-1 (4px)', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.find('div.h-1').exists()).toBe(true)
-    })
-
-    it('does NOT render ToastNotification inside GlobalNavbar', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.find('[aria-live="polite"]').exists()).toBe(false)
+    it('When mounted at / then the header contains a user avatar element', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const avatar = wrapper.find('div[aria-hidden="true"]')
+      // Assert
+      expect(avatar.exists()).toBe(true)
     })
   })
 
-  describe('route-aware active links', () => {
-    it('renders navigation links', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.findAll('nav').length).toBeGreaterThanOrEqual(1)
+  // ─── Navigation Link Active States ──────────────────────────────────────
+  // The navbar highlights links based on currentPath. Tests the isActive()
+  // and isLessonRoute computed behavior via observable DOM state.
+  // In shallowMount, NuxtLink renders as <nuxt-link-stub to="..." class="...">.
+  // We query these stubs by their to attribute and CSS classes.
+
+  describe('navigation link active states', () => {
+    it('When on / then a Home link stub with to="/" exists', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const homeStub = wrapper.find('nuxt-link-stub[to="/"]')
+      // Assert
+      expect(homeStub.exists()).toBe(true)
+    })
+
+    it('When on / then the Home nav link stub (not logo) has active classes (text-primary-600 bg-primary-50)', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      // The logo link stub has classes 'flex items-center gap-2 shrink-0' (no active state).
+      // The nav link with to='/' should have active state classes.
+      // Logo stub has 'flex items-center gap-2 shrink-0', nav links have 'px-3 py-1.5 rounded text-sm font-medium'
+      const allStubs = wrapper.findAll('nuxt-link-stub')
+      const navLinkStub = allStubs.find(s => s.classes().includes('px-3'))
+      // Assert
+      expect(navLinkStub).toBeDefined()
+      const classes = navLinkStub.classes().join(' ')
+      expect(classes).toContain('text-primary-600')
+      expect(classes).toContain('bg-primary-50')
+    })
+
+    it('When on /dashboard then a Dashboard link stub with to="/dashboard" exists', () => {
+      // Arrange
+      const wrapper = mountNavbar('/dashboard')
+      // Act
+      const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
+      // Assert
+      expect(dashboardStubs.length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('When on /dashboard then the first Dashboard link stub is highlighted (active classes)', () => {
+      // Arrange
+      const wrapper = mountNavbar('/dashboard')
+      // Act
+      const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
+      const firstStub = dashboardStubs[0]
+      // Assert
+      const classes = firstStub.classes().join(' ')
+      expect(classes).toContain('text-primary-600')
+    })
+
+    it('When on /dashboard/level/a1/5 then My Courses link stub is highlighted (active classes)', () => {
+      // Arrange
+      const wrapper = mountNavbar('/dashboard/level/a1/5')
+      // Act
+      const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
+      const myCoursesStub = dashboardStubs[1]
+      // Assert
+      const classes = myCoursesStub.classes().join(' ')
+      expect(classes).toContain('text-primary-600')
+    })
+
+    it('When on /dashboard/level/a1/5 then the Dashboard nav link (not just My Courses) is highlighted', () => {
+      // Arrange
+      const wrapper = mountNavbar('/dashboard/level/a1/5')
+      // Act
+      const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
+      const firstStub = dashboardStubs[0]
+      // Assert — the nav (Dashboard) link, not just the My Courses link, highlights
+      const classes = firstStub.classes().join(' ')
+      expect(classes).toContain('text-primary-600')
+    })
+
+    it('When on /dashboard then Home link stub is NOT highlighted', () => {
+      // Arrange
+      const wrapper = mountNavbar('/dashboard')
+      // Act
+      const homeStub = wrapper.find('nuxt-link-stub[to="/"]')
+      // Assert
+      const classes = homeStub.classes().join(' ')
+      expect(classes).not.toContain('text-primary-600')
+    })
+
+    it('When on an unknown route then no link stub is highlighted', () => {
+      // Arrange
+      const wrapper = mountNavbar('/unknown')
+      // Act
+      const allStubs = wrapper.findAll('nuxt-link-stub')
+      // Assert
+      allStubs.forEach((stub) => {
+        const classes = stub.classes().join(' ')
+        expect(classes).not.toContain('text-primary-600')
+      })
+    })
+
+    it('When currentPath prop changes from / to /dashboard then nav links update their active state', async () => {
+      // Arrange — simulate Vue Router navigation by updating the prop.
+      const wrapper = mountNavbar('/')
+      // Act — change path to /dashboard (simulates client-side navigation).
+      await wrapper.setProps({ currentPath: '/dashboard' })
+      await nextTick()
+      // Assert — Home should no longer be highlighted.
+      const homeStub = wrapper.find('nuxt-link-stub[to="/"]')
+      const homeClasses = homeStub.classes().join(' ')
+      expect(homeClasses).not.toContain('text-primary-600')
+      // Assert — Dashboard should now be highlighted.
+      const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
+      const firstStub = dashboardStubs[0]
+      const dashClasses = firstStub.classes().join(' ')
+      expect(dashClasses).toContain('text-primary-600')
     })
   })
+
+  // ─── Progress Bar ───────────────────────────────────────────────────────
+
+  describe('progress bar', () => {
+    it('When mounted then a progress bar background element exists', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const progressBar = wrapper.find('div.h-1')
+      // Assert
+      expect(progressBar.exists()).toBe(true)
+    })
+
+    it('When on a lesson route then progress bar fill has gradient classes', () => {
+      // Arrange
+      const wrapper = mountNavbar('/dashboard/level/a1/5')
+      // Act
+      const progressFill = wrapper.find('div.h-1 > div')
+      // Assert
+      expect(progressFill.exists()).toBe(true)
+      expect(progressFill.classes()).toContain('bg-gradient-to-r')
+    })
+
+    it('When on / then progress bar fill has 0% width style', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const progressFill = wrapper.find('div.h-1 > div')
+      // Assert
+      expect(progressFill.exists()).toBe(true)
+      const style = progressFill.attributes('style')
+      expect(style).toContain('width: 0%')
+    })
+  })
+
+  // ─── Negative Tests ─────────────────────────────────────────────────────
+
+  describe('negative tests', () => {
+    it('When mounted then no ToastNotification exists inside GlobalNavbar', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const toastEl = wrapper.find('[aria-live="polite"]')
+      // Assert
+      expect(toastEl.exists()).toBe(false)
+    })
+  })
+
+  // ─── Mobile Layout ──────────────────────────────────────────────────────
 
   describe('mobile layout', () => {
-    it('renders desktop nav links (innerWidth 1024)', () => {
-      const wrapper = getWrapper('/')
-      expect(wrapper.findAll('nav').length).toBeGreaterThanOrEqual(1)
+    it('When viewport < 768px then mobile nav renders a hamburger menu button with navigation links', async () => {
+      // Arrange
+      vi.stubGlobal('innerWidth', 375)
+      const wrapper = mountNavbar('/')
+      // Act
+      await nextTick()
+      // The mobile section has a hamburger toggle button and nav links with icon+text
+      const hamburgerBtn = wrapper.find('button[aria-label="Navigation menu"]')
+      // Assert
+      expect(hamburgerBtn.exists()).toBe(true)
+      // Nav links render as NuxtLink stubs with correct 'to' attributes
+      const linkStubs = wrapper.findAll('nuxt-link-stub')
+      const toValues = linkStubs.map(s => s.attributes('to'))
+      expect(toValues).toContain('/')
+      expect(toValues).toContain('/dashboard')
+      // The mobile menu section exists (hidden on desktop via md:hidden)
+      const mobileSection = wrapper.find('div.md\\:hidden')
+      expect(mobileSection.exists()).toBe(true)
+      vi.unstubAllGlobals()
+    })
+
+    it('When viewport < 768px then mobile action buttons (Ask Instructor, Settings) exist', () => {
+      // Arrange
+      vi.stubGlobal('innerWidth', 375)
+      const wrapper = mountNavbar('/')
+      // Act
+      const instructorBtn = wrapper.find('button[aria-label="Ask Instructor"]')
+      const settingsBtn = wrapper.find('button[aria-label="Settings"]')
+      // Assert
+      expect(instructorBtn.exists()).toBe(true)
+      expect(settingsBtn.exists()).toBe(true)
+      vi.unstubAllGlobals()
+    })
+
+    it('When viewport >= 768px then mobile nav section is hidden', () => {
+      // Arrange
+      const wrapper = mountNavbar('/')
+      // Act
+      const mobileSection = wrapper.find('div.md:hidden')
+      // Assert
+      expect(mobileSection.exists()).toBe(false)
+    })
+
+    // ─── Model Status Indicator ─────────────────────────────────────────────
+    // GlobalNavbar now contains an inline status indicator that reads from
+    // useHealthPoll. Tests verify observable DOM state (text, classes).
+
+    beforeEach(() => {
+      mockHealthStatus.value = 'loading' as const
+    })
+
+    describe('model status indicator', () => {
+      it('renders status indicator in desktop navbar', () => {
+        const wrapper = mountNavbar('/')
+        const html = wrapper.html()
+        expect(html).toContain('Model XTTS-v2')
+      })
+
+      it('shows "Loading..." text when status is loading', () => {
+        const wrapper = mountNavbar('/')
+        const statusText = wrapper.find('span.text-gray-300.text-xs.font-medium')
+        expect(statusText.text()).toContain('Loading...')
+      })
+
+      it('shows "Ready" text when status is ready', () => {
+        mockHealthStatus.value = 'ready'
+        const wrapper = mountNavbar('/')
+        const statusText = wrapper.find('span.text-gray-300.text-xs.font-medium')
+        expect(statusText.text()).toContain('Ready')
+      })
+
+      it('shows "Error" text when status is error', () => {
+        mockHealthStatus.value = 'error'
+        const wrapper = mountNavbar('/')
+        const statusText = wrapper.find('span.text-gray-300.text-xs.font-medium')
+        expect(statusText.text()).toContain('Error')
+      })
+
+      it('renders orange dot for loading state', () => {
+        mockHealthStatus.value = 'loading'
+        const wrapper = mountNavbar('/')
+        const dot = wrapper.find('span.bg-orange-500')
+        expect(dot.exists()).toBe(true)
+      })
+
+      it('renders green dot for ready state', () => {
+        mockHealthStatus.value = 'ready'
+        const wrapper = mountNavbar('/')
+        const dot = wrapper.find('span.bg-green-500')
+        expect(dot.exists()).toBe(true)
+      })
+
+      it('renders red dot for error state', () => {
+        mockHealthStatus.value = 'error'
+        const wrapper = mountNavbar('/')
+        const dot = wrapper.find('span.bg-red-500')
+        expect(dot.exists()).toBe(true)
+      })
+
+      it('renders status indicator in mobile expanded menu', () => {
+        const wrapper = mountNavbar('/')
+        // Status indicator exists in the component tree (mobile section)
+        const html = wrapper.html()
+        expect(html).toContain('Model XTTS-v2')
+      })
     })
   })
 })

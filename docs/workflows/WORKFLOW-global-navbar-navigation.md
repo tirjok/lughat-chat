@@ -628,7 +628,7 @@ This workflow defines the complete user and system journey for introducing a sha
 | # | Assumption | Where verified | Risk if wrong |
 |---|---|---|---|
 | A1 | Nuxt 4 merges root `useSeoMeta({ title: 'LughatChat' })` + per-page `useSeoMeta({ title: 'X' })` with ` - ` separator (producing "LughatChat - X") | Not verified — must test Nuxt 4 behavior. If it doesn't merge, manual concatenation needed in root. | Titles render as "LughatChatX" (no separator) or per-page title overrides root entirely. |
-| A2 | `useHealthPoll` can be shared as a singleton across components (index.vue, GlobalNavbar, ModelStatusIndicator) | Partially verified — current code creates independent instances. Need to refactor to singleton pattern. | 4 simultaneous 2s health polls = 8 requests/second to backend during model loading (120s = 480 requests). |
+| A2 | `useHealthPoll` can be shared as a singleton across components (GlobalNavbar, ModelStatusIndicator on dashboard) | Partially verified — current code creates independent instances. Need to refactor to singleton pattern. | 2 simultaneous 2s health polls = 4 requests/second to backend during model loading (120s = 240 requests).| |
 | A3 | Self-hosted Inter + Amiri woff2 files are < 500KB total | Not verified — must download and measure. If too large, subset fonts. | Slow initial page load, especially on mobile networks. |
 | A4 | UnoCSS `presetWind3` supports custom color palettes (primary-50 through primary-900, gold-400 through gold-600) | Not verified — must test. Tailwind v3 color scale may not map 1:1 to UnoCSS. | `bg-primary-500` utility doesn't generate — components fall back to default colors. |
 | A5 | GlobalNavbar can access `useRoute()` in SSR context | Not verified — Nuxt 4 may restrict router access during SSR. If unavailable, use `useNuxtApp()` fallback. | SSR renders navbar without active link, CSR swaps (hydration mismatch). |
@@ -643,7 +643,7 @@ This workflow defines the complete user and system journey for introducing a sha
 ## Open Questions
 
 1. **Nuxt 4 title merging behavior** — Does Nuxt 4 automatically concatenate root + page-level `useSeoMeta({ title })` with ` - ` separator, or does per-page title override root? (Assumption A1)
-2. **`useHealthPoll` singleton pattern** — How should the 4 instances (index.vue, ModelStatusIndicator, MobileStatusIndicator, GlobalNavbar) share one polling interval? (Assumption A2)
+2. **`useHealthPoll` singleton pattern** — How should the remaining instances (ModelStatusIndicator on dashboard, GlobalNavbar) share one polling interval?? (Assumption A2)
 3. **Font file sizes** — What is the total size of Inter (400, 500, 600, 700) + Amiri (400, 700) woff2 files? (Assumption A3)
 4. **Backend lesson progress API** — When will `/api/lessons/progress` be implemented? The progress bar is cosmetic until then. (RF-5 in REGISTRY.md)
 5. **`AudioPlayerPanel` vs `StickyAudioBar` migration** — What features exist in `AudioPlayerPanel` that `StickyAudioBar` doesn't cover? (Assumption A8)

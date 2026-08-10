@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import CleanupDialog from '../../app/components/CleanupDialog.vue'
+import CleanupDialog from '~/components/CleanupDialog.vue'
 
 // ─── beforeEach / afterEach ───────────────────────────────────────
 let wrapper: VueWrapper

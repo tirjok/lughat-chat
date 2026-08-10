@@ -178,7 +178,7 @@ const desktopPanelProps = computed(() => ({
 
 <template>
   <div
-    class="flex flex-col md:flex-row h-[calc(100vh-60px)] w-full overflow-hidden text-stone-text antialiased bg-stone-900"
+    class="flex flex-col md:flex-row h-[calc(100vh-60px)] w-full overflow-hidden text-stone-text antialiased bg-stone-50 dark:bg-stone-950"
     data-test-id="main-wrapper"
     dir="ltr"
     @keydown="handleKeyDown"
@@ -211,6 +211,7 @@ const desktopPanelProps = computed(() => ({
       @toggle="audioModule.toggle()"
       @download="handleDownload"
       @seek="audioModule.seek"
+      @set-audio-ref="audioRef = $event"
     />
 
     <!-- Desktop: Side-by-side panels -->
@@ -224,8 +225,8 @@ const desktopPanelProps = computed(() => ({
       @clear-text="handleClearText"
       @close-player="handleClosePlayer"
       @toggle="audioModule.toggle()"
-      @download="handleDownload"
       @seek="audioModule.seek"
+      @set-audio-ref="audioRef = $event"
     />
 
     <!-- ── In-flight synthesis cleanup dialog ── -->

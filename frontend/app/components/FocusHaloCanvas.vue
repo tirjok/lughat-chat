@@ -1,52 +1,35 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
 // TODO: migrated from sunrise-orange/magenta (see ISSUE-014)
 
-const haloRef = ref<HTMLDivElement | null>(null)
-let textareaEl: HTMLTextAreaElement | null = null
+const haloRef = useTemplateRef<HTMLDivElement | null>('haloRef')
 
-function handleFocus() {
-  if (haloRef.value) {
+function handleFocus(e: FocusEvent) {
+  const target = e.target as HTMLTextAreaElement
+  if (target.dir === 'rtl' && haloRef.value) {
     haloRef.value.classList.add('active')
   }
 }
 
-function handleBlur() {
-  if (textareaEl && textareaEl.value.trim() === '') {
-    haloRef.value?.classList.remove('active')
+function handleBlur(e: FocusEvent) {
+  const target = e.target as HTMLTextAreaElement
+  if (target.dir === 'rtl' && target.value.trim() === '' && haloRef.value) {
+    haloRef.value.classList.remove('active')
   }
 }
-
-function findTextarea(): HTMLTextAreaElement | null {
-  // Find the active textarea by checking parent containers
-  const activeEl = document.activeElement
-  if (activeEl?.tagName === 'TEXTAREA' && (activeEl as HTMLTextAreaElement).dir === 'rtl') {
-    return activeEl as HTMLTextAreaElement
-  }
-  // Fallback: find any RTL textarea in the app
-  return document.querySelector('textarea[dir="rtl"]') as HTMLTextAreaElement | null
-}
-
 onMounted(() => {
-  textareaEl = findTextarea()
-  if (textareaEl) {
-    textareaEl.addEventListener('focus', handleFocus)
-    textareaEl.addEventListener('blur', handleBlur)
-  }
+  document.addEventListener('focus', handleFocus, true)
+  document.addEventListener('blur', handleBlur, true)
 })
 
 onUnmounted(() => {
-  if (textareaEl) {
-    textareaEl.removeEventListener('focus', handleFocus)
-    textareaEl.removeEventListener('blur', handleBlur)
-  }
+  document.removeEventListener('focus', handleFocus, true)
+  document.removeEventListener('blur', handleBlur, true)
 })
 </script>
 
 <template>
   <div
     ref="haloRef"
-    class="canvas-halo"
   />
 </template>
 

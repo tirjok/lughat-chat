@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useToast, showToast } from '../../app/composables/useToast'
+import { useToast, showToast } from '~/composables/useToast'
 
 // Suppress Vue warning: onMounted called outside component context.
 // These unit tests call useToast() directly without mount(), which triggers

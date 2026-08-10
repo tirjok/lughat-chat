@@ -4,9 +4,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, computed, type Ref, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
-import DesktopPanels from '../../app/components/DesktopPanels.vue'
-import StickyAudioBar from '../../app/components/StickyAudioBar.vue'
-import type { Voice } from '../../app/composables/useVoices'
+import DesktopPanels from '~/components/DesktopPanels.vue'
+import StickyAudioBar from '~/components/StickyAudioBar.vue'
+import type { Voice } from '~/composables/useVoices'
 
 // ─── Module-level mock for useAudioModule ───────────────────────────
 const mockAudioState = {
@@ -23,15 +23,15 @@ const mockAudioState = {
   seek: vi.fn(),
   download: vi.fn(),
   dispose: vi.fn()
-} as unknown as ReturnType<typeof import('../../app/composables/useAudioModule').useAudioModule>
+} as unknown as ReturnType<typeof import('~/composables/useAudioModule').useAudioModule>
 
-vi.mock('../../app/composables/useAudioModule', () => ({
+vi.mock('~/composables/useAudioModule', () => ({
   useAudioModule: () => mockAudioState
 }))
 
 // ─── Module-level mock for useHealthPoll ────────────────────────────
 const mockStatus: Ref<'loading' | 'ready' | 'error'> = ref('ready' as const)
-vi.mock('../../app/composables/useHealthPoll', () => ({
+vi.mock('~/composables/useHealthPoll', () => ({
   useHealthPoll: () => ({
     status: mockStatus,
     modelLoaded: computed(() => mockStatus.value === 'ready')
@@ -40,29 +40,29 @@ vi.mock('../../app/composables/useHealthPoll', () => ({
 
 // ─── Module-level mock for useVoices ────────────────────────────────
 const mockVoices: Voice[] = [{ id: 'voice1', name: 'Test Voice' }]
-vi.mock('../../app/composables/useVoices', () => ({
+vi.mock('~/composables/useVoices', () => ({
   useVoices: () => ({ voices: ref(mockVoices) })
 }))
 
 // ─── Module-level mock for usePanelToggle ───────────────────────────
-vi.mock('../../app/composables/usePanelToggle', () => ({
+vi.mock('~/composables/usePanelToggle', () => ({
   usePanelToggle: () => ({ activePanel: ref('control-deck' as const) })
 }))
 
 // ─── Module-level mock for useInputValidation ───────────────────────
-vi.mock('../../app/composables/useInputValidation', () => ({
+vi.mock('~/composables/useInputValidation', () => ({
   useInputValidation: () => computed(() => ({ isValid: true }))
 }))
 
 // ─── Module-level mock for useTtsApi ────────────────────────────────
-vi.mock('../../app/composables/useTtsApi', () => ({
+vi.mock('~/composables/useTtsApi', () => ({
   useTtsApi: () => ({
     synthesize: vi.fn().mockResolvedValue(new Blob(['dummy'], { type: 'audio/mpeg' }))
   })
 }))
 
 // ─── Module-level mock for useToast ─────────────────────────────────
-vi.mock('../../app/composables/useToast', () => ({
+vi.mock('~/composables/useToast', () => ({
   showToast: vi.fn()
 }))
 
@@ -74,47 +74,42 @@ vi.mock('vue-router', () => ({
 }))
 
 // ─── Module-level mock for GlobalNavbar ─────────────────────────────
-vi.mock('../../app/components/GlobalNavbar.vue', () => ({
+vi.mock('~/components/GlobalNavbar.vue', () => ({
   default: { template: '<div id="global-nav"></div>' }
 }))
 
 // ─── Module-level mock for useDragResize ────────────────────────────
-vi.mock('../../app/composables/useDragResize', () => ({
+vi.mock('~/composables/useDragResize', () => ({
   useDragResize: () => ({ canvasRatio: ref(0.55), onDragStart: vi.fn(), onDragMove: vi.fn(), onDragEnd: vi.fn() })
 }))
 
 // ─── Module-level mock for useScrollReveal ──────────────────────────
-vi.mock('../../app/composables/useScrollReveal', () => ({
+vi.mock('~/composables/useScrollReveal', () => ({
   useScrollReveal: vi.fn()
 }))
 
 // ─── Module-level mock for FocusHaloCanvas ──────────────────────────
-vi.mock('../../app/components/FocusHaloCanvas.vue', () => ({
+vi.mock('~/components/FocusHaloCanvas.vue', () => ({
   default: { template: '<div data-testid="focus-halo"></div>' }
 }))
 
-// ─── Module-level mock for MobileStatusIndicator ────────────────────
-vi.mock('../../app/components/MobileStatusIndicator.vue', () => ({
-  default: { template: '<div data-testid="mobile-status"></div>' }
-}))
-
 // ─── Module-level mock for GenerateButton ───────────────────────────
-vi.mock('../../app/components/GenerateButton.vue', () => ({
+vi.mock('~/components/GenerateButton.vue', () => ({
   default: { template: '<button data-testid="generate-btn">Generate</button>' }
 }))
 
 // ─── Module-level mock for VoiceSelector ────────────────────────────
-vi.mock('../../app/components/VoiceSelector.vue', () => ({
+vi.mock('~/components/VoiceSelector.vue', () => ({
   default: { template: '<div data-testid="voice-selector"></div>' }
 }))
 
 // ─── Module-level mock for SpeedSlider ──────────────────────────────
-vi.mock('../../app/components/SpeedSlider.vue', () => ({
+vi.mock('~/components/SpeedSlider.vue', () => ({
   default: { template: '<div data-testid="speed-slider"></div>' }
 }))
 
 // ─── Module-level mock for CleanupDialog ────────────────────────────
-vi.mock('../../app/components/CleanupDialog.vue', () => ({
+vi.mock('~/components/CleanupDialog.vue', () => ({
   default: { template: '<div id="cleanup-dialog"></div>' }
 }))
 

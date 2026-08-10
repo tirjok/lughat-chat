@@ -50,8 +50,6 @@ C4Component
   Rel(indexPage, waveform, "Passes props", "visible, isPlaying, currentTime, duration")
   Rel(indexPage, focusHalo, "Passes prop", "focused")
   Rel(indexPage, generateBtn, "Passes props", "isGenerating, modelStatus, disabled")
-  Rel(indexPage, mobileStatus, "Embeds", "Compact status display")
-  Rel(indexPage, desktopStatus, "Embeds", "Status pill display")
   Rel(indexPage, panelToggle, "Embeds", "Panel toggle FAB")
   Rel(indexPage, speedSlider, "v-model", "speedValue")
   Rel(indexPage, toast, "Embeds", "Toast display")

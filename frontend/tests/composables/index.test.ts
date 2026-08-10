@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import { ref, computed } from 'vue'
-import Index from '../../app/pages/index.vue'
+import Index from '~/pages/index.vue'
 import { setBreakpoint } from '~~/tests/mocks'
 
 // ─── Mock vue-router ────────────────────────────────────────────
@@ -14,11 +14,11 @@ vi.mock('vue-router', () => ({
 // ─── Mock composables that index.vue uses directly.
 // These use vi.mock() to intercept the module imports — required now that
 // manual globalThis stubs are removed from setup.component.ts.
-vi.mock('../../app/composables/usePanelToggle', () => ({
+vi.mock('~/composables/usePanelToggle', () => ({
   usePanelToggle: () => ({ activePanel: ref('desktop') })
 }))
 
-vi.mock('../../app/composables/useAudioModule', () => ({
+vi.mock('~/composables/useAudioModule', () => ({
   useAudioModule: () => ({
     audioRef: ref(null),
     audioUrl: ref(null),
@@ -39,32 +39,32 @@ vi.mock('../../app/composables/useAudioModule', () => ({
   })
 }))
 
-vi.mock('../../app/composables/useScrollReveal', () => ({
+vi.mock('~/composables/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
     revealOnScroll: vi.fn(),
     isRevealed: computed(() => true)
   }))
 }))
 
-vi.mock('../../app/composables/useToast', () => ({
+vi.mock('~/composables/useToast', () => ({
   showToast: vi.fn()
 }))
 
 // New composables needed by the refactored index.vue
-vi.mock('../../app/composables/useTtsApi', () => ({
+vi.mock('~/composables/useTtsApi', () => ({
   useTtsApi: () => ({
     synthesize: vi.fn().mockResolvedValue(new Blob())
   })
 }))
 
-vi.mock('../../app/composables/useHealthPoll', () => ({
+vi.mock('~/composables/useHealthPoll', () => ({
   useHealthPoll: () => ({
     status: ref('ready' as const),
     modelLoaded: computed(() => true)
   })
 }))
 
-vi.mock('../../app/composables/useVoices', () => ({
+vi.mock('~/composables/useVoices', () => ({
   useVoices: () => ({
     voices: ref([]),
     loading: ref(false),
@@ -73,7 +73,7 @@ vi.mock('../../app/composables/useVoices', () => ({
   })
 }))
 
-vi.mock('../../app/composables/useInputValidation', () => ({
+vi.mock('~/composables/useInputValidation', () => ({
   useInputValidation: () => ({
     isValid: true,
     error: null

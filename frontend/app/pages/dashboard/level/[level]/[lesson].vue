@@ -76,7 +76,7 @@ if (typeof onBeforeRouteLeave === 'function') {
       aria-label="Breadcrumb"
       data-testid="breadcrumbs"
     >
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <ol class="flex items-center gap-2 text-sm">
           <li
             v-for="(crumb, idx) in breadcrumbs"
@@ -86,63 +86,59 @@ if (typeof onBeforeRouteLeave === 'function') {
             <NuxtLink
               v-if="crumb.to"
               :to="crumb.to"
-              class="text-primary-600 dark:text-primary-400 hover:underline"
+              class="text-primary-600 dark:text-primary-400 hover:text-primary-700 transition"
             >
               {{ crumb.label }}
             </NuxtLink>
             <span
               v-else
-              class="text-stone-500 dark:text-stone-400"
+              class="text-stone-800 dark:text-stone-200 font-medium"
             >
               {{ crumb.label }}
             </span>
-            <span
+            <svg
               v-if="idx < breadcrumbs.length - 1"
-              class="text-stone-400"
+              class="w-4 h-4 text-stone-400 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              ›
-            </span>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
           </li>
         </ol>
       </div>
     </nav>
 
     <!-- Hero section -->
-    <header
+    <div
       class="px-4 md:px-6 pb-6"
       data-testid="lesson-hero"
     >
-      <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1
-              class="text-2xl md:text-3xl font-bold text-stone-800 dark:text-stone-100"
-              data-testid="lesson-heading"
-            >
-              Lesson {{ currentLesson }} — Level {{ currentLevel }}
-            </h1>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
-              Placeholder — lesson content coming soon.
-            </p>
-            <NuxtLink
-              data-testid="back-to-level"
-              :to="`/dashboard/level/${currentLevel.toLowerCase()}`"
-            >
-              Back to Level
-            </NuxtLink>
-          </div>
-        </div>
+      <div class="max-w-7xl mx-auto">
+        <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-stone-800 dark:text-stone-100 mb-2">
+          Lesson {{ currentLesson }}
+        </h1>
+        <LessonHero
+          :level="currentLevel"
+          :lesson-number="currentLesson"
+          :is-ready="true"
+        />
       </div>
-    </header>
-
+    </div>
     <!-- Section tabs -->
     <section
       class="px-4 md:px-6 pb-4"
       data-testid="section-tabs"
     >
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div
-          class="flex flex-wrap gap-2 border-b border-stone-200 dark:border-stone-700"
+          class="bg-stone-100 dark:bg-stone-800 rounded-xl p-1.5 flex flex-wrap gap-1"
           role="tablist"
         >
           <button
@@ -153,10 +149,10 @@ if (typeof onBeforeRouteLeave === 'function') {
             :aria-selected="activeSection === tab"
             :aria-controls="`panel-${tab}`"
             :class="[
-              'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+              'flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2',
               activeSection === tab
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
+                ? 'bg-white dark:bg-stone-700 text-primary-700 dark:text-primary-400 shadow-sm'
+                : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
             ]"
             @click="activeSection = tab"
           >
@@ -168,7 +164,7 @@ if (typeof onBeforeRouteLeave === 'function') {
 
     <!-- Main content area (placeholder) -->
     <main class="px-4 md:px-6 pb-8">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="card">
           <p class="text-stone-500 dark:text-stone-400">
             Content for "{{ activeSection }}" section coming soon.
