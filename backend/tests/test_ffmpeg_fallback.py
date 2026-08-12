@@ -169,7 +169,7 @@ def test_generate_speech_ffmpeg_failure_does_not_serve_wav_as_mp3():
         cleanup()
 
 
-def test_generate_speech_ffmpeg_failure_cleans_up_wav_file():
+def test_generate_speech_ffmpeg_failure_cleans_up_wav_file(tmp_path):
     """When FFmpeg conversion fails, the intermediate WAV file must be cleaned up
     so it doesn't accumulate on disk.
 
@@ -177,6 +177,7 @@ def test_generate_speech_ffmpeg_failure_cleans_up_wav_file():
     after copying it to mp3_path, wasting 5–10× the storage of the final file.
     """
     import subprocess
+
     from fastapi.testclient import TestClient
 
     def _failing_ffmpeg(*args, **kwargs):
@@ -184,9 +185,18 @@ def test_generate_speech_ffmpeg_failure_cleans_up_wav_file():
             returncode=1, cmd=args[0], stderr=b"ffmpeg: error"
         )
 
-    cleanup = _setup_mock_model(mock_subprocess_run=_failing_ffmpeg)
+    fake_dir = tmp_path / "fake_audio_ffmpeg"
+    fake_dir.mkdir()
+
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
 
     try:
+        main_app.AUDIO_DIR = str(fake_dir)
+
+        cleanup = _setup_mock_model(mock_subprocess_run=_failing_ffmpeg)
+
         client = TestClient(app)
 
         response = client.post(
@@ -198,12 +208,11 @@ def test_generate_speech_ffmpeg_failure_cleans_up_wav_file():
         assert response.status_code >= 500
 
         # Check AUDIO_DIR for orphaned WAV files
-        import app as main_app
-
         wav_files = [f for f in os.listdir(main_app.AUDIO_DIR) if f.endswith(".wav")]
         assert len(wav_files) == 0, (
             f"Orphaned WAV files found after FFmpeg failure: {wav_files}"
         )
 
     finally:
+        main_app.AUDIO_DIR = original_dir
         cleanup()
