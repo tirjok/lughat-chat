@@ -1,5 +1,5 @@
 services:
-  # Backend service - FastAPI + XTTS-v2 (CPU-only)
+  # Backend service - FastAPI + Chatterbox (CPU-only)
   backend:
     build:
       context: ./backend
@@ -12,12 +12,9 @@ services:
       - tts-model-cache:/app/.cache/tts
       # Persist generated audio files
       - tts-audio-cache:/app/downloads
-      # Mount speaker_wavs so new .wav files are visible without rebuild
-      - ./backend/speaker_wavs:/app/speaker_wavs
     environment:
       - TZ=UTC
       - TTS_MODEL_CACHE=/app/.cache/tts
-      - COQUI_TOS_AGREED=1
       - LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/x86_64-linux-gnu
     restart: unless-stopped
     networks:

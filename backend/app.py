@@ -99,11 +99,11 @@ try:
 except ImportError:
     pass  # torch not available — acceptable in test environments
 
-# Coqui TTS imports (lazy — skip if torch not available, e.g. in CI tests)
+# Chatterbox TTS import (lazy — skip if torch not available, e.g. in CI tests)
 try:
-    from TTS.api import TTS
+    from chatterbox import Chatterbox
 except ImportError:
-    TTS = None  # type: ignore[misc, assignment]
+    Chatterbox = None  # type: ignore[misc, assignment]
 
 # Configuration
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
@@ -142,6 +142,7 @@ tts_model = None
 model_load_thread: Optional[threading.Thread] = (
     None  # Track initial load thread for reload safety
 )
+model_load_status: str = "loading"  # tracking initial load state
 
 
 @asynccontextmanager
@@ -157,9 +158,9 @@ async def lifespan(app: FastAPI):
     LOAD_HARD_TIMEOUT = 300  # 5 minutes hard timeout
 
     def load_model():
-        """Load TTS model with retry logic, exponential backoff, and hard timeout."""
+        """Load Chatterbox model with retry logic, exponential backoff, and hard timeout."""
         global tts_model, model_load_status
-        print("Loading XTTS-v2 model...")
+        print("Loading Chatterbox multilingual model...")
 
         for attempt in range(MAX_LOAD_RETRIES):
             # Check hard timeout
@@ -175,29 +176,28 @@ async def lifespan(app: FastAPI):
                 # Skip loading if already mocked (e.g. in tests)
                 with _model_lock:
                     if tts_model is not None:
-                        print("TTS model already loaded — skipping")
+                        print("Chatterbox model already loaded — skipping")
                         return
-                if TTS is None:
+                if Chatterbox is None:
                     print(
-                        "TTS library not available (torch not installed) — skipping model load"
+                        "Chatterbox library not available (torch not installed) — skipping model load"
                     )
                     with _model_lock:
                         model_load_status = "error"
                         tts_model = None
                     return
-                os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-                loaded_model = TTS("tts_models/multilingual/xtts_v2")
+                loaded_model = Chatterbox("multilingual")
                 with _model_lock:
                     tts_model = loaded_model
                     model_load_status = "ready"
-                print("XTTS-v2 model loaded successfully!")
+                print("Chatterbox model loaded successfully!")
                 return
             except Exception as e:
                 with _model_lock:
                     model_load_status = "error"
                     tts_model = None
                 print(
-                    f"Error loading TTS model (attempt {attempt + 1}/{MAX_LOAD_RETRIES}): {e}"
+                    f"Error loading Chatterbox model (attempt {attempt + 1}/{MAX_LOAD_RETRIES}): {e}"
                 )
                 if attempt < MAX_LOAD_RETRIES - 1:
                     delay = LOAD_RETRY_DELAYS[attempt]
@@ -219,8 +219,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Lughat Chat TTS API",
-    description="Text-to-Speech API with XTTS-v2 (Arabic & English)",
+    description="Text-to-Speech API with Chatterbox Multilingual TTS (Arabic & English)",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -300,27 +299,25 @@ async def health(reload: Optional[str] = Query(None)):
         print("Model reload requested via ?reload=1")
 
         def reload_model():
-            global tts_model, model_load_status
-            print("Reloading XTTS-v2 model...")
+            print("Reloading Chatterbox multilingual model...")
             try:
-                if TTS is None:
+                if Chatterbox is None:
                     print(
-                        "TTS library not available (torch not installed) — skipping model load"
+                        "Chatterbox library not available (torch not installed) — skipping model load"
                     )
                     with _model_lock:
                         model_load_status = "error"
                     return
-                os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-                loaded_model = TTS("tts_models/multilingual/xtts_v2")
+                loaded_model = Chatterbox("multilingual")
                 with _model_lock:
                     tts_model = loaded_model
                     model_load_status = "ready"
-                print("XTTS-v2 model reloaded successfully!")
+                print("Chatterbox model reloaded successfully!")
             except Exception as e:
                 with _model_lock:
                     model_load_status = "error"
                     tts_model = None
-                print(f"Error reloading TTS model: {e}")
+                print(f"Error reloading Chatterbox model: {e}")
 
         model_load_thread = threading.Thread(target=reload_model, daemon=True)
         # Brief pause to let the thread start before responding
@@ -346,7 +343,7 @@ async def generate_speech(request: SynthesisRequest):
         model = tts_model
         status = model_load_status
     if model is None or status != "ready":
-        raise HTTPException(status_code=503, detail="TTS model not ready")
+        raise HTTPException(status_code=503, detail="Chatterbox model not ready")
 
     try:
         # Generate unique filename
