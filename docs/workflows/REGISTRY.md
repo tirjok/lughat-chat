@@ -39,7 +39,7 @@ These are liabilities: they will be modified without understanding their full sh
 | **RF-24** | **Cross-Page Composable Lifecycle** | **Missing** | `frontend/app/composables/useHealthPoll.ts` (singleton), `frontend/app/composables/useVoices.ts` (page-scoped) | `useHealthPoll` returns a singleton (shared across all pages). `useVoices` is page-scoped (reloads on every page mount). No spec covers: what happens when navigating between pages? Does the singleton prevent memory leaks? |
 | **RF-25** | **In-Flight Synthesis Cleanup** | **Missing** | `frontend/app/composables/useCleanupNavigation.ts`, `frontend/app/components/CleanupDialog.vue` | Shows confirmation dialog when navigating away during active synthesis. Options: "Clean & Leave" (dispose + POST /api/cleanup) or "Stay" (cancel navigation). No spec covers: what happens if the cleanup POST fails (503 vs other error)? What about rapid dialog dismissal? |
 | **RF-26** | **Session Cleanup (24h TTL)** | **Missing** | `backend/app.py:562-583` (inline cleanup in `/api/history`), `backend/app.py:591-625` (`/api/cleanup`) | Files older than 24 hours are removed. Two code paths: inline (during history fetch) and explicit (POST /api/cleanup). No spec covers: race conditions (file modified during scan)? What about the `.json` sidecar (always removed with the MP3)? |
-| **RF-27** | **Global Navbar Navigation** | **Draft** (exists: `WORKFLOW-global-navbar-navigation.md`) | `frontend/app/components/GlobalNavbar.vue`, `frontend/app/app.vue` | The spec exists but has not been verified against the actual code. Key discrepancy: `app.vue` uses `globalThis.useNuxtApp()` (not `useRoute()`), and the progress bar uses a lesson number heuristic (not actual lesson data). Status: **Review** until verified. |
+| **RF-28** | **TTS Model Swap + Synthesis Cache** | **Spec: `WORKFLOW-tts-model-swap-and-cache.md`** | `backend/app.py:147-625`, `frontend/app/composables/useTtsApi.ts`, `frontend/app/composables/useVoices.ts`, `frontend/app/composables/useHealthPoll.ts`, `frontend/app/pages/index.vue`, `frontend/app/components/VoiceSelector.vue`, `frontend/app/components/SpeedSlider.vue`, `frontend/app/components/DesktopPanels.vue`, `frontend/app/components/MobileSplitScreen.vue`, `backend/Dockerfile`, `docker-compose.yml` | Comprehensive spec covers all 17 steps, 24 test cases, 6 failure paths per step, cleanup inventory, handoff contracts. Addresses ADR-007 (model swap) and ADR-008 (synthesis cache). Status: **Draft** — awaiting Reality Checker pass. |
 
 ---
 
@@ -76,7 +76,7 @@ These are liabilities: they will be modified without understanding their full sh
 | 27 | **Mobile Divider Dragging** | — | **Missing** | Touch/mouse drag | Frontend (useDragResize) | 2026-08-08 |
 | 28 | **Session Cleanup (24h TTL)** | — | **Missing** | Time passes, API calls | Backend (file system) | 2026-08-08 |
 | 29 | **Multi-Page SPA Routing** | `WORKFLOW-multi-page-spa-routing.md` | **Draft** | User clicks nav link / types URL / browser back-forward | Frontend (Nuxt Router + GlobalNavbar) | 2026-08-08 |
-| 30 | **Global Navbar Navigation** | `WORKFLOW-global-navbar-navigation.md` | **Review** | Route changes, page mounts | Frontend (app.vue + GlobalNavbar) | 2026-08-08 |
+| 31 | **TTS Model Swap + Synthesis Cache** | `WORKFLOW-tts-model-swap-and-cache.md` | **Draft** | Container rebuild + model load | Backend (daemon thread) | 2026-08-12 |
 
 ---
 
@@ -86,14 +86,14 @@ These are liabilities: they will be modified without understanding their full sh
 
 | Component | File(s) | Workflows it participates in |
 |---|---|---|
-| `app.py` (FastAPI) | `backend/app.py` (626 lines) | Model Initialization, Text Synthesis, Health Monitoring, Voice Discovery, Generation History + Cleanup, Session Cleanup (24h TTL), Model Reload on Failure, Model Loading Failure Recovery |
-| `lifespan()` | `backend/app.py:147-220` | Model Initialization, Model Loading Failure Recovery |
-| `generate_speech()` | `backend/app.py:342-504` | Text Synthesis, Session Cleanup (24h TTL) |
-| `get_history()` | `backend/app.py:507-588` | Generation History + Cleanup, Session Cleanup (24h TTL) |
-| `cleanup_old_files()` | `backend/app.py:591-625` | Generation History + Cleanup |
-| `health()` | `backend/app.py:272-333` | Health Monitoring, Model Reload on Failure, Model Loading Failure Recovery |
-| `list_voices()` | `backend/app.py:336-339` | Voice Discovery |
-| `discover_voices()` | `backend/app.py:116-129` | Voice Discovery |
+| `app.py` (FastAPI) | `backend/app.py` (626 lines) | Model Initialization, Text Synthesis, Health Monitoring, Voice Discovery, Generation History + Cleanup, Session Cleanup (24h TTL), Model Reload on Failure, Model Loading Failure Recovery, **TTS Model Swap + Synthesis Cache** |
+| `lifespan()` | `backend/app.py:147-220` | Model Initialization, Model Loading Failure Recovery, **TTS Model Swap + Synthesis Cache** |
+| `generate_speech()` | `backend/app.py:342-504` | Text Synthesis, Session Cleanup (24h TTL), **TTS Model Swap + Synthesis Cache** |
+| `get_history()` | `backend/app.py:507-588` | Generation History + Cleanup, Session Cleanup (24h TTL), **TTS Model Swap + Synthesis Cache** |
+| `cleanup_old_files()` | `backend/app.py:591-625` | Generation History + Cleanup, **TTS Model Swap + Synthesis Cache** |
+| `health()` | `backend/app.py:272-333` | Health Monitoring, Model Reload on Failure, Model Loading Failure Recovery, **TTS Model Swap + Synthesis Cache** |
+| `list_voices()` | `backend/app.py:336-339` | Voice Discovery, **TTS Model Swap + Synthesis Cache** |
+| `discover_voices()` | `backend/app.py:116-129` | Voice Discovery (deprecated — replaced by Chatterbox voice list) |
 
 ### Frontend — Pages
 
@@ -108,10 +108,10 @@ These are liabilities: they will be modified without understanding their full sh
 
 | Composable | File | Workflows it participates in |
 |---|---|---|
-| `useHealthPoll` | `frontend/app/composables/useHealthPoll.ts` | Health Monitoring, Frontend Application Lifecycle, Cross-Page Composable Lifecycle |
+| `useHealthPoll` | `frontend/app/composables/useHealthPoll.ts` | Health Monitoring, Frontend Application Lifecycle, Cross-Page Composable Lifecycle, **TTS Model Swap + Synthesis Cache** |
 | `useAudioModule` | `frontend/app/composables/useAudioModule.ts` | Audio Playback Lifecycle, Frontend Application Lifecycle |
-| `useTtsApi` | `frontend/app/composables/useTtsApi.ts` | Text Synthesis |
-| `useVoices` | `frontend/app/composables/useVoices.ts` | Voice Discovery, Frontend Application Lifecycle, Cross-Page Composable Lifecycle |
+| `useTtsApi` | `frontend/app/composables/useTtsApi.ts` | Text Synthesis, **TTS Model Swap + Synthesis Cache** |
+| `useVoices` | `frontend/app/composables/useVoices.ts` | Voice Discovery, Frontend Application Lifecycle, Cross-Page Composable Lifecycle, **TTS Model Swap + Synthesis Cache** |
 | `useInputValidation` | `frontend/app/composables/useInputValidation.ts` | Text Synthesis (precondition) |
 | `usePanelToggle` | `frontend/app/composables/usePanelToggle.ts` | Responsive Layout Toggle, Panel Focus Management, Cross-Page Composable Lifecycle |
 | `useScrollReveal` | `frontend/app/composables/useScrollReveal.ts` | Scroll Reveal Animation |
@@ -126,22 +126,22 @@ These are liabilities: they will be modified without understanding their full sh
 | `GlobalNavbar.vue` | `frontend/app/components/GlobalNavbar.vue` (185 lines) | Global Navbar Navigation, Frontend SPA Routing |
 | `CleanupDialog.vue` | `frontend/app/components/CleanupDialog.vue` (57 lines) | In-Flight Synthesis Cleanup |
 | `StickyAudioBar.vue` | `frontend/app/components/StickyAudioBar.vue` (337 lines) | Audio Playback Lifecycle |
-| `VoiceSelector.vue` | `frontend/app/components/VoiceSelector.vue` (231 lines) | Voice Discovery, Voice Preview (Dead Code) |
-| `GenerateButton.vue` | `frontend/app/components/GenerateButton.vue` (163 lines) | Text Synthesis (trigger) |
+| `VoiceSelector.vue` | `frontend/app/components/VoiceSelector.vue` (231 lines) | Voice Discovery, Voice Preview (Dead Code), **TTS Model Swap + Synthesis Cache** |
+| `GenerateButton.vue` | `frontend/app/components/GenerateButton.vue` (163 lines) | Text Synthesis (trigger), **TTS Model Swap + Synthesis Cache** |
 | `ModelStatusIndicator.vue` | `frontend/app/components/ModelStatusIndicator.vue` (45 lines) | Health Monitoring |
 | `MobileStatusIndicator.vue` | `frontend/app/components/MobileStatusIndicator.vue` (45 lines) | Health Monitoring (mobile) |
 | `FocusHaloCanvas.vue` | `frontend/app/components/FocusHaloCanvas.vue` (71 lines) | Focus Halo Effect |
-| `SpeedSlider.vue` | `frontend/app/components/SpeedSlider.vue` (123 lines) | Text Synthesis (parameter), Audio Playback Lifecycle (parameter) |
+| `SpeedSlider.vue` | `frontend/app/components/SpeedSlider.vue` (123 lines) | Text Synthesis (parameter), Audio Playback Lifecycle (parameter), **TTS Model Swap + Synthesis Cache (deprecated — removed)** |
 | `ToastNotification.vue` | `frontend/app/components/ToastNotification.vue` (84 lines) | Toast Notification System |
 | `WaveformCanvas.vue` | `frontend/app/components/WaveformCanvas.vue` (164 lines) | Audio Playback Lifecycle (visualization) |
-| `DesktopPanels.vue` | `frontend/app/components/DesktopPanels.vue` (307 lines) | Responsive Layout Toggle, Scroll Reveal Animation |
-| `MobileSplitScreen.vue` | `frontend/app/components/MobileSplitScreen.vue` (294 lines) | Mobile Divider Dragging, Responsive Layout Toggle |
+| `DesktopPanels.vue` | `frontend/app/components/DesktopPanels.vue` (307 lines) | Responsive Layout Toggle, Scroll Reveal Animation, **TTS Model Swap + Synthesis Cache** |
+| `MobileSplitScreen.vue` | `frontend/app/components/MobileSplitScreen.vue` (294 lines) | Mobile Divider Dragging, Responsive Layout Toggle, **TTS Model Swap + Synthesis Cache** |
 
 ### Infrastructure
 
 | Component | File(s) | Workflows it participates in |
 |---|---|---|
-| `docker-compose.yml` | `docker-compose.yml` (55 lines) | Container Startup/Health, Volume Persistence Lifecycle |
+| `docker-compose.yml` | `docker-compose.yml` (55 lines) | Container Startup/Health, Volume Persistence Lifecycle, **TTS Model Swap + Synthesis Cache** |
 | `nginx.conf` | `frontend/nginx.conf` (63 lines) | Nginx Large-File Streaming, Frontend SPA Routing (SPA fallback) |
 | `frontend.yml` | `.github/workflows/frontend.yml` | CI Pipeline Execution |
 | `backend.yml` | `.github/workflows/backend.yml` | CI Pipeline Execution |
@@ -150,7 +150,7 @@ These are liabilities: they will be modified without understanding their full sh
 | `optimize-docker.sh` | `scripts/optimize-docker.sh` (162 lines) | Docker Optimization |
 | `test-phase5.sh` | `scripts/test-phase5.sh` (111 lines) | Deprecated (Phase 5 wrapper) |
 | `test-volume-persistence.sh` | `scripts/test-volume-persistence.sh` (159 lines) | Volume Persistence Lifecycle (test) |
-| `nuxt.config.ts` | `frontend/nuxt.config.ts` (75 lines) | Frontend SPA Routing (routeRules) |
+| `Dockerfile` | `backend/Dockerfile` (55 lines) | **TTS Model Swap + Synthesis Cache** |
 
 ---
 

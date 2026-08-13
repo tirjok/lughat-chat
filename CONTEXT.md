@@ -40,8 +40,13 @@
 | Lesson Progress | Per-lesson completion state (`completed: true/false`, `progress: 0-100`). Stored in backend SQLite. |
 | Theme | Under full rebrand (D6). Current: green primary, slate neutral. New color TBD (OQ-3). |
 | Page Title | Pattern: `LughatChat - [page-name]` (e.g., "LughatChat - Playground", "LughatChat - Dashboard"). Mechanism TBD (OQ-4). |
+| Synthesis Model | The TTS model used for Arabic speech generation. Currently migrating from Coqui XTTS-v2 (voice-cloning, ~2GB) to Chatterbox Multilingual (non-cloning, ~500MB, 23 languages including Arabic). |
+| Voice Cloning | The XTTS-v2 capability of generating speech in a target voice from a reference audio clip. Being removed — replaced by Chatterbox's built-in voices. |
+| Speaker WAV File | A reference audio clip used for voice cloning. Currently `KSA Hamed - Male.wav` and `KSA Zariyah - Female.wav` in `speaker_wavs/`. Being removed with the model swap. |
+| Synthesis Cache | A backend file-based mechanism that stores previously generated audio in `downloads/` for identical text+voice+speed combinations, eliminating redundant CPU inference for repeated requests. |
+| Synthesis Key | A SHA-256 hash of the composite input (`text + language + voice + speed`). The hash is used as the filename for cached audio files, ensuring collision-free storage. Identical keys return cached audio instead of re-inference. |
 
----
++---
 
 ## Frontend Structure (`frontend/app/`)
 
@@ -96,8 +101,7 @@ btn-generate (loading state), audio/error/footer, spinner/fade/slide-up animatio
 
 - Loads on startup via lifespan. Status: `loading → ready | error`.
 - Cache dir: `/app/.cache/tts` (`TTS_MODEL_CACHE` env var).
-- KNOWN ISSUE: `tts-model-cache` volume mounts at `/root/.local/share/tts` but the app writes
-  to `/app/.cache/tts` — volume is NOT used; the ~2GB model re-downloads every container restart.
+- ~500MB model re-downloads per container restart (volume path mismatch above).
 - Audio output: `/app/downloads` (persisted via `tts-audio-cache`). No cleanup mechanism — files accumulate.
 
 ---
@@ -110,18 +114,14 @@ btn-generate (loading state), audio/error/footer, spinner/fade/slide-up animatio
 {
   "text": "مرحبا بك في لغةات",
   "language": "ar",      // optional, default "ar" | allowed: "ar" | "en"
-  "voice": "female",     // optional, any string (validated at runtime)
-  "speaker": "female",   // alias for voice; resolved as speaker ?? voice ?? "female"
-  "speed": 1.0,          // optional, 0.5–2.0
-  "pitch": 0.0,          // optional, -4.0–4.0
-  "seed": 42             // optional, deterministic (default 42)
+  "voice": "female"      // optional, Chatterbox built-in voice name
 }
 ```
 
 Response: `audio/mpeg` binary via `FileResponse` — NOT JSON. Frontend uses `URL.createObjectURL()`.
-Note: `SynthesisResponse` Pydantic model exists but is unused.
+Synthesis cache: identical `text + language + voice` keys return cached audio instead of re-inference.
 
-Errors: 400 (empty/too-long text), 503 (model still loading), 500 (missing speaker WAV / generation failure).
+Errors: 400 (empty/too-long text), 503 (model still loading), 500 (generation failure).
 
 ### `GET /health`
 
@@ -131,7 +131,7 @@ Errors: 400 (empty/too-long text), 503 (model still loading), 500 (missing speak
 
 ### `GET /api/voices`
 
-Array of `{ id, name }` from `.wav` filenames in `speaker_wavs/`.
+Array of `{ id, name }` from Chatterbox's built-in Arabic voices.
 
 ### `GET /api/history`
 
@@ -166,10 +166,10 @@ Backend: `HTTPException` with descriptive `detail`; CORS is `*` (dev-only — re
 
 ## Known Gotchas
 
-1. Model loading ~120s — first requests get 503. `useHealthPoll` polls `/health` every 2s (max 10 retries).
-2. ~2GB model re-downloads per container restart (volume path mismatch above).
-3. CPU-only inference — generation takes several seconds.
-4. Speaker WAVs < 0.33s cause 500 errors.
+1. Chatterbox model loads in ~30-60s (smaller than XTTS-v2's ~120s). `useHealthPoll` polls `/health` every 2s (max 10 retries).
+2. ~500MB model re-downloads per container restart (volume path mismatch above).
+3. CPU-only inference — generation takes 1-3s (vs several seconds with XTTS-v2).
+4. No speaker WAV files — Chatterbox uses built-in voices.
 5. Generated MP3s accumulate — no cleanup.
 6. Only `ar` and `en` accepted; other languages rejected.
 7. Seed defaults to 42 — outputs are deterministic unless overridden.
