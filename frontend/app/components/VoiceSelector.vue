@@ -145,9 +145,6 @@ onUnmounted(() => {
           <span class="text-sm font-bold text-stone-800 dark:text-white tracking-wide">
             {{ displayVoice.name }}
           </span>
-          <span class="text-xs text-stone-500 dark:text-gray-400 font-medium">
-            {{ displayVoice.dialect }}
-          </span>
         </div>
       </div>
 
@@ -184,7 +181,6 @@ onUnmounted(() => {
             class="voice-option w-full text-left rounded-[0.875rem] ring-1 ring-stone-200 dark:ring-white/[0.06] p-3 flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group fade-up"
             :data-voice="voice.id"
             :data-name="voice.name"
-            :data-tag="voice.tag"
             :data-color="getVoiceColorClass()"
             :class="[
               voice.id === modelValue
@@ -216,7 +212,6 @@ onUnmounted(() => {
               </div>
               <div class="flex flex-col">
                 <span class="text-sm font-bold text-stone-800 dark:text-white">{{ voice.name }}</span>
-                <span class="text-xs text-stone-500 dark:text-gray-500 font-medium">{{ voice.dialect }}</span>
               </div>
             </div>
 

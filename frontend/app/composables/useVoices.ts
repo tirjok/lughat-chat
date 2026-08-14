@@ -1,10 +1,6 @@
 export interface Voice {
   id: string
   name: string
-  dialect: string
-  tag: string
-  icon: string
-  speaker_wav: string
 }
 
 export const useVoices = () => {

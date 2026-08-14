@@ -105,3 +105,12 @@ def test_xtts_min_reference_duration_not_in_app():
     assert not hasattr(main_app, "XTTS_MIN_REFERENCE_DURATION"), (
         "XTTS_MIN_REFERENCE_DURATION is XTTS-specific and should be removed."
     )
+
+
+def test_discover_voices_not_in_app():
+    """discover_voices() is removed — Chatterbox uses built-in voices, no WAV discovery."""
+    import app as main_app
+
+    assert not hasattr(main_app, "discover_voices"), (
+        "discover_voices should be removed — GET /api/voices returns hardcoded voices."
+    )

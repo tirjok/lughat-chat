@@ -112,7 +112,7 @@ export const createMockUseToast = () => ({
 // or createMockUseVoices({ error: 'msg' }) to test failure paths.
 export const createMockUseVoices = (
   options?: {
-    voices?: Array<{ id: string, name: string, dialect: string, tag: string, icon: string, speaker_wav: string }>
+    voices?: Array<{ id: string, name: string }>
     error?: string
   }
 ) => ({

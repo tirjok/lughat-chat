@@ -81,22 +81,6 @@ AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads"
 MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
 
 
-def discover_voices(directory: str) -> list[dict]:
-    """Scan directory for .wav files and return voice entries.
-
-    Each discovered file produces a voice entry: { id: filename_without_extension, name: filename_without_extension }.
-    Non-.wav files are ignored. Returns empty list if directory doesn't exist.
-    """
-    voices = []
-    if not os.path.isdir(directory):
-        return voices
-    for filename in sorted(os.listdir(directory)):
-        if filename.endswith(".wav"):
-            name = filename[:-4]  # strip .wav extension
-            voices.append({"id": name, "name": name})
-    return voices
-
-
 # Create directories if writable (skip on read-only filesystems like Docker host mounts)
 for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
     try:

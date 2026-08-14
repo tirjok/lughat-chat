@@ -12,9 +12,9 @@ vi.mock('~/composables/useToast', () => ({
 vi.mock('~/composables/useVoices', () => ({
   useVoices: () => ({
     voices: ref([
-      { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
-      { id: 'tariq', name: 'Tariq - News Anchor', dialect: 'Modern Standard Arabic [MSA]', tag: 'MSA', icon: 'waveform', speaker_wav: 'male.wav' },
-      { id: 'laila', name: 'Laila - Storyteller', dialect: 'Levantine Arabic [AR-LB]', tag: 'AR-LB', icon: 'waveform', speaker_wav: 'female.wav' }
+      { id: 'aisha', name: 'Aisha - Conversational' },
+      { id: 'tariq', name: 'Tariq - News Anchor' },
+      { id: 'laila', name: 'Laila - Storyteller' }
     ])
   })
 }))
@@ -25,9 +25,9 @@ beforeEach(() => {
 
 function makeMockVoices(): Voice[] {
   return [
-    { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
-    { id: 'tariq', name: 'Tariq - News Anchor', dialect: 'Modern Standard Arabic [MSA]', tag: 'MSA', icon: 'waveform', speaker_wav: 'male.wav' },
-    { id: 'laila', name: 'Laila - Storyteller', dialect: 'Levantine Arabic [AR-LB]', tag: 'AR-LB', icon: 'waveform', speaker_wav: 'female.wav' }
+    { id: 'aisha', name: 'Aisha - Conversational' },
+    { id: 'tariq', name: 'Tariq - News Anchor' },
+    { id: 'laila', name: 'Laila - Storyteller' }
   ]
 }
 
