@@ -1,6 +1,6 @@
 import os
 import tempfile
-from app import app, discover_voices, SPEAKER_WAV_DIR
+from app import app, discover_voices
 
 
 def test_discover_voices_returns_voice_entries_for_wav_files():
@@ -81,7 +81,7 @@ def test_discover_voices_returns_sorted_by_filename():
 
 
 def test_list_voices_returns_voice_array():
-    """GET /api/voices returns a list of available voices discovered from speaker_wavs/."""
+    """GET /api/voices returns a list of available built-in voices."""
     from fastapi.testclient import TestClient
 
     client = TestClient(app)
@@ -98,16 +98,13 @@ def test_list_voices_returns_voice_array():
         assert "id" in v
         assert "name" in v
 
-    # Verify the API returns whatever .wav files exist in speaker_wavs/
-    expected_wavs = [f[:-4] for f in os.listdir(SPEAKER_WAV_DIR) if f.endswith(".wav")]
-    for expected_id in expected_wavs:
-        assert expected_id in ids, (
-            f"Expected voice '{expected_id}' not found in API response"
-        )
+    # Verify the API returns built-in voice presets (female + male).
+    assert "female" in ids
+    assert "male" in ids
 
 
-def test_api_voices_uses_discover_voices():
-    """GET /api/voices returns the discovered voices from speaker_wavs/."""
+def test_api_voices_returns_built_in_voices():
+    """GET /api/voices returns built-in voice presets (no speaker WAV files)."""
     from fastapi.testclient import TestClient
 
     client = TestClient(app)
@@ -117,12 +114,9 @@ def test_api_voices_uses_discover_voices():
     data = response.json()
     ids = [v["id"] for v in data]
 
-    # Verify the API returns whatever .wav files exist in speaker_wavs/
-    expected_wavs = [f[:-4] for f in os.listdir(SPEAKER_WAV_DIR) if f.endswith(".wav")]
-    for expected_id in expected_wavs:
-        assert expected_id in ids, (
-            f"Expected voice '{expected_id}' not found in API response"
-        )
+    # Verify the API returns built-in voice presets.
+    assert "female" in ids
+    assert "male" in ids
 
 
 def test_list_voices_includes_both_genders():

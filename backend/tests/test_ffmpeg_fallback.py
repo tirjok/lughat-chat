@@ -9,18 +9,12 @@ how to handle the failure.
 """
 
 import os
-import wave as _real_wave
+
+import wave
 
 from app import app
 
-# Capture the real wave.open BEFORE importing app (which may patch it).
-# Python modules are singletons — after app imports wave, any 'import wave'
-# everywhere gets the SAME module object. If we patch app.wave.open and then
-# a mock does 'import wave; wave.open(...)', it calls our own mock -> recursion.
-_ORIGINAL_WAVE_OPEN = _real_wave.open
-
-
-# ---------------------------------------------------------------------------
+_ORIGINAL_WAVE_OPEN = wave.open
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -52,61 +46,25 @@ def _mock_tts_model():
     return MockTTS()
 
 
-def _make_mock_wav():
-    """Mock a valid speaker WAV for _validate_speaker_wav."""
-
-    class _MockWavFile:
-        def __init__(self):
-            self._nframes = int(22050 * 0.5)
-            self._rate = 22050
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            return False
-
-        def getnframes(self):
-            return self._nframes
-
-        def getframerate(self):
-            return self._rate
-
-    return _MockWavFile()
-
-
 def _setup_mock_model(mock_subprocess_run=None):
     """Set up mock TTS model + optional subprocess.run mock.
 
-    Always mocks os.path.exists (speaker_wav check) and wave.open (validation
-    reads). Optionally mocks subprocess.run for FFmpeg failure tests.
-
-    Uses the captured _ORIGINAL_WAVE_OPEN for write-mode to avoid the Python
-    module singleton recursion trap (re-importing wave after patching gets
-    the patched version).
+    Mocks os.path.exists so the backend's speaker_wav file check passes,
+    while letting the TTS mock write real WAV files to disk.
+    Optionally mocks subprocess.run for FFmpeg failure tests.
 
     Returns a cleanup function that must be called in a finally block.
     """
     import app as main_app
 
-    _mock_wav = _make_mock_wav()
-
     def _mock_path_exists(path):
         return True
 
-    def _mock_wave_open(path, mode="r"):
-        if mode == "w":
-            # Use the captured original — NOT 'import wave' (singleton trap)
-            return _ORIGINAL_WAVE_OPEN(path, mode)
-        return _mock_wav
-
     # Capture originals for cleanup
     original_exists = main_app.os.path.exists
-    original_wave_open = main_app.wave.open
     original_subprocess_run = main_app.subprocess.run if mock_subprocess_run else None
 
     main_app.os.path.exists = _mock_path_exists
-    main_app.wave.open = _mock_wave_open
     main_app.tts_model = _mock_tts_model()
     main_app.model_load_status = "ready"
 
@@ -116,7 +74,6 @@ def _setup_mock_model(mock_subprocess_run=None):
     def _cleanup():
         """Restore all mocks to their original values."""
         main_app.os.path.exists = original_exists
-        main_app.wave.open = original_wave_open
         if original_subprocess_run is not None:
             main_app.subprocess.run = original_subprocess_run
 

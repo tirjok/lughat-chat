@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
@@ -10,7 +9,6 @@ import time
 import uuid
 import subprocess
 import threading
-import wave
 from typing import Optional
 
 # Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
@@ -20,34 +18,6 @@ import os as _os
 _torchcodec_env = "0"
 for _env_key in ["TORCHAUDIO_USE_TORCHCODEC", "TORCHCODEC_ENABLED"]:
     _os.environ.setdefault(_env_key, _torchcodec_env)
-
-# Minimum reference audio duration for XTTS-v2 voice cloning (seconds)
-XTTS_MIN_REFERENCE_DURATION = 0.33
-
-
-def _validate_speaker_wav(wav_path: str) -> None:
-    """Validate that a speaker WAV file meets XTTS-v2 minimum duration requirement."""
-    try:
-        with wave.open(wav_path) as wf:
-            frames = wf.getnframes()
-            rate = wf.getframerate()
-            duration = frames / rate
-        if duration < XTTS_MIN_REFERENCE_DURATION:
-            raise HTTPException(
-                status_code=500,
-                detail=(
-                    f"Speaker WAV file '{wav_path}' is too short ({duration:.2f}s). "
-                    f"XTTS-v2 requires at least {XTTS_MIN_REFERENCE_DURATION}s of reference audio. "
-                    f"Regenerate speaker_wavs/{os.path.basename(wav_path)} with longer text."
-                ),
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to validate speaker WAV file '{wav_path}': {e}",
-        )
 
 
 # Compatibility shim: isin_mps_friendly was removed in newer transformers
@@ -108,9 +78,6 @@ except ImportError:
 # Configuration
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
 MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
-SPEAKER_WAV_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "speaker_wavs"
-)
 
 
 def discover_voices(directory: str) -> list[dict]:
@@ -233,14 +200,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve downloads and speaker_wavs directories statically
-app.mount("/downloads", StaticFiles(directory=AUDIO_DIR), name="downloads")
-try:
-    os.makedirs(SPEAKER_WAV_DIR, exist_ok=True)
-except OSError:
-    pass  # Read-only filesystem
-app.mount("/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker_wavs")
-
 
 # Request/Response models
 class SynthesisRequest(BaseModel):
@@ -300,6 +259,7 @@ async def health(reload: Optional[str] = Query(None)):
 
         def reload_model():
             print("Reloading Chatterbox multilingual model...")
+            global tts_model, model_load_status
             try:
                 if Chatterbox is None:
                     print(
@@ -332,8 +292,15 @@ async def health(reload: Optional[str] = Query(None)):
 
 @app.get("/api/voices")
 async def list_voices():
-    """List available voices discovered from speaker_wavs/ directory."""
-    return discover_voices(SPEAKER_WAV_DIR)
+    """List available built-in voices.
+
+    Chatterbox uses built-in voices — no speaker WAV files needed.
+    Returns a hardcoded list of available voice presets.
+    """
+    return [
+        {"id": "female", "name": "female"},
+        {"id": "male", "name": "male"},
+    ]
 
 
 @app.post("/api/generate")
@@ -362,43 +329,15 @@ async def generate_speech(request: SynthesisRequest):
         _response_delivered = False
 
         try:
-            # Generate WAV first (XTTS native format)
+            # Generate audio (Chatterbox outputs WAV; ffmpeg converts to MP3).
             print(f"Generating speech: {request.text[:50]}...")
 
-            # Use the voice ID directly as the WAV filename
-            speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
-
-            if not os.path.exists(speaker_wav):
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Speaker WAV file not found for voice '{voice}' (expected at '{speaker_wav}'). Add it to speaker_wavs/.",
-                )
-
-            # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
-            _validate_speaker_wav(speaker_wav)
-
-            # Generate audio with speaker reference for voice cloning
-            # Use deterministic seed if provided
-            seed = request.seed if request.seed is not None else 42
-
-            # Set PyTorch random seed for deterministic XTTS generation.
-            # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
-            # seeding must be done at the PyTorch level before inference.
-            try:
-                import torch
-
-                torch.manual_seed(seed)
-            except ImportError:
-                pass  # torch not available (e.g. in tests) — skip seeding
-
+            # Generate audio using Chatterbox built-in voice (no reference audio needed).
             model.tts_to_file(
                 text=request.text,
-                speaker_wav=speaker_wav,
                 language=request.language,
                 file_path=wav_path,
-                temperature=0.4,  # Low temperature for consistent, deterministic voice output
             )
-
             if not os.path.exists(wav_path):
                 raise HTTPException(status_code=500, detail="Failed to generate audio")
 
@@ -446,9 +385,6 @@ async def generate_speech(request: SynthesisRequest):
                             "text": request.text,
                             "language": request.language,
                             "voice": voice,
-                            "speed": request.speed,
-                            "pitch": request.pitch,
-                            "seed": seed,
                             "created_at": str(int(time.time())),
                         },
                         f,
