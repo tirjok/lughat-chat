@@ -1,12 +1,13 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from contextlib import asynccontextmanager
 import json
 import os
 import time
 import uuid
+import hashlib
 import subprocess
 import threading
 from typing import Optional
@@ -203,17 +204,11 @@ app.add_middleware(
 
 # Request/Response models
 class SynthesisRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     text: str = Field(..., min_length=1, max_length=3000)
     language: str = Field(default="ar", pattern="^(ar|en)$")
-    voice: Optional[str] = Field(
-        default=None
-    )  # any string accepted; validated at runtime via file existence
-    speaker: Optional[str] = Field(
-        default=None  # Alias for voice (any string accepted)
-    )
-    speed: float = Field(default=1.0, ge=0.5, le=2.0)
-    pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
-    seed: Optional[int] = Field(default=None, ge=0)  # Deterministic seed (optional)
+    voice: str = Field(default="female")
 
 
 class SynthesisResponse(BaseModel):
@@ -303,6 +298,92 @@ async def list_voices():
     ]
 
 
+def _compute_cache_key(text: str, language: str, voice: str) -> str:
+    """Compute the SHA-256 hash of the composite input key.
+
+    Uses pipe-delimited concatenation to avoid hash collisions from
+    different input orderings (e.g., "ab|voice=c" vs "a|voice=bc").
+
+    Args:
+        text: The text to synthesize.
+        language: The language code (ar/en).
+        voice: The voice name.
+
+    Returns:
+        Hex digest of the SHA-256 hash.
+    """
+    composite = f"{text}|{language}|{voice}"
+    return hashlib.sha256(composite.encode("utf-8")).hexdigest()
+
+
+def _check_cache(cache_key: str) -> Optional[bytes]:
+    """Check if a cached MP3 exists for the given cache key.
+
+    Validates that the cached file contains valid MP3 data (ID3 tag or
+    syncword) before returning it. Corrupted or truncated files are
+    treated as cache misses.
+
+    Args:
+        cache_key: The SHA-256 hash of the composite input.
+
+    Returns:
+        MP3 data if cache hit, None if cache miss.
+    """
+    cache_mp3_path = os.path.join(AUDIO_DIR, f"{cache_key}.mp3")
+
+    try:
+        if os.path.exists(cache_mp3_path):
+            with open(cache_mp3_path, "rb") as f:
+                data = f.read()
+            # Validate MP3 format: must start with ID3 tag (b"ID3") or
+            # MPEG syncword (b"\\xff\\xfb" or b"\\xff\\xf3")
+            if data and len(data) > 0:
+                if data[:3] == b"ID3" or data[:2] in (b"\xff\xfb", b"\xff\xf3"):
+                    print(f"Cache HIT for {cache_key}.mp3")
+                    return data
+                else:
+                    print(f"Cache hit but file unreadable: {cache_mp3_path}")
+    except OSError as e:
+        print(f"Error reading cache file: {e}")
+
+    return None
+
+
+def _store_cache(
+    cache_key: str, mp3_data: bytes, text: str, language: str, voice: str
+) -> None:
+    """Store synthesized MP3 and sidecar JSON in downloads/.
+
+    Args:
+        cache_key: The SHA-256 hash of the composite input.
+        mp3_data: The MP3 binary data.
+        text: The original text.
+        language: The language code.
+        voice: The voice name.
+    """
+    try:
+        cache_mp3_path = os.path.join(AUDIO_DIR, f"{cache_key}.mp3")
+        with open(cache_mp3_path, "wb") as f:
+            f.write(mp3_data)
+
+        # Write sidecar metadata for history browsing
+        cache_meta_path = os.path.join(AUDIO_DIR, f"{cache_key}.json")
+        with open(cache_meta_path, "w") as f:
+            json.dump(
+                {
+                    "text": text,
+                    "language": language,
+                    "voice": voice,
+                    "created_at": str(int(time.time())),
+                },
+                f,
+            )
+
+        print(f"Cached synthesis: {cache_key}.mp3 (size={len(mp3_data)} bytes)")
+    except OSError as e:
+        print(f"Warning: could not write cache to {AUDIO_DIR}: {e}")
+
+
 @app.post("/api/generate")
 async def generate_speech(request: SynthesisRequest):
     """Generate speech from text and return MP3 audio blob."""
@@ -312,13 +393,29 @@ async def generate_speech(request: SynthesisRequest):
     if model is None or status != "ready":
         raise HTTPException(status_code=503, detail="Chatterbox model not ready")
 
+    # Use voice directly (no speaker alias resolution)
+    voice = request.voice or "female"
+
     try:
-        # Generate unique filename
+        # Compute cache key from composite input (pipe-delimited)
+        cache_key = _compute_cache_key(request.text, request.language, voice)
+        cache_mp3_path = os.path.join(AUDIO_DIR, f"{cache_key}.mp3")
+
+        # ── Cache Lookup ──
+        cached_data = _check_cache(cache_key)
+        if cached_data is not None:
+            print(f"Cache HIT for {cache_key}.mp3")
+            return FileResponse(
+                path=cache_mp3_path,
+                media_type="audio/mpeg",
+                filename=f"{cache_key}.mp3",
+            )
+
+        print(f"Cache MISS for {cache_key}.mp3")
+
+        # ── Cache Miss: Full Synthesis ──
         timestamp = uuid.uuid4().hex[:8]
         lang_code = request.language
-
-        # Resolve voice: accept both "voice" and "speaker" fields; default to "female"
-        voice = request.speaker if request.speaker else (request.voice or "female")
 
         filename = f"{lang_code}_{voice}_{timestamp}.mp3"
         wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
@@ -343,7 +440,7 @@ async def generate_speech(request: SynthesisRequest):
 
             intermediate_files.append(wav_path)
 
-            # Convert WAV to MP3 using ffmpeg
+            # Convert WAV to MP3 using ffmpeg (default speed, no speed control)
             try:
                 subprocess.run(
                     [
@@ -351,8 +448,6 @@ async def generate_speech(request: SynthesisRequest):
                         "-y",
                         "-i",
                         wav_path,
-                        "-filter:a",
-                        f"atempo={request.speed}",
                         "-b:a",
                         "192k",
                         mp3_path,
@@ -375,6 +470,16 @@ async def generate_speech(request: SynthesisRequest):
                 os.remove(wav_path)
             except OSError:
                 pass  # Already gone (e.g. race condition) — ignore
+
+            # ── Cache Store ──
+            # Store the synthesized MP3 under the cache key for future lookups.
+            # If caching fails (read-only filesystem), synthesis still succeeds.
+            try:
+                with open(mp3_path, "rb") as f:
+                    mp3_data = f.read()
+                _store_cache(cache_key, mp3_data, request.text, request.language, voice)
+            except OSError:
+                pass  # Non-fatal: synthesis succeeded, caching just failed
 
             # Write metadata sidecar for history browsing
             meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
@@ -463,8 +568,6 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                                 "text": meta.get("text", ""),
                                 "language": meta.get("language", "unknown"),
                                 "voice": meta.get("voice", "default"),
-                                "speed": meta.get("speed", 1.0),
-                                "pitch": meta.get("pitch", 0.0),
                                 "created_at": meta.get(
                                     "created_at", str(int(stat.st_mtime))
                                 ),
@@ -485,8 +588,6 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                         "text": "",
                         "language": language,
                         "voice": voice,
-                        "speed": 1.0,
-                        "pitch": 0.0,
                         "created_at": str(int(stat.st_mtime)),
                     }
                 )

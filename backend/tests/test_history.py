@@ -164,8 +164,6 @@ def test_history_with_sidecar_returns_text(tmp_path):
                 "text": "مرحبا بك في لغات",
                 "language": "ar",
                 "voice": "female",
-                "speed": 1.5,
-                "pitch": 0.5,
                 "created_at": "1234567890",
             },
             open(meta_file, "w"),
@@ -181,7 +179,5 @@ def test_history_with_sidecar_returns_text(tmp_path):
         assert entry["text"] == "مرحبا بك في لغات"
         assert entry["language"] == "ar"
         assert entry["voice"] == "female"
-        assert entry["speed"] == 1.5
-        assert entry["pitch"] == 0.5
     finally:
         main_app.AUDIO_DIR = original_dir
