@@ -562,9 +562,18 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                         pass  # Fall through to filename parsing
 
                 # Fallback: parse metadata from filename
-                parts = filename.split("_")
-                language = parts[0] if len(parts) > 0 else "unknown"
-                voice = parts[1] if len(parts) > 1 else "default"
+                # Cache-based filenames ({hash}.mp3) have no _ separators.
+                # Detect 64-char hex hashes and skip broken filename parsing.
+                base = filename.rsplit(".", 1)[0]  # strip .mp3/.wav extension
+                if len(base) == 64 and all(
+                    c in "0123456789abcdef" for c in base.lower()
+                ):
+                    language = "unknown"
+                    voice = "default"
+                else:
+                    parts = filename.split("_")
+                    language = parts[0] if len(parts) > 0 else "unknown"
+                    voice = parts[1] if len(parts) > 1 else "default"
 
                 items.append(
                     {

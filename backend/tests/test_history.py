@@ -1,5 +1,15 @@
 from app import app
 
+import hashlib
+import json
+import os
+
+
+def _compute_cache_key(text: str, language: str, voice: str) -> str:
+    """Compute the SHA-256 hash of the composite key."""
+    composite = f"{text}|{language}|{voice}"
+    return hashlib.sha256(composite.encode("utf-8")).hexdigest()
+
 
 def test_history_returns_list_of_audio_files():
     """GET /api/history returns a list of previously generated audio files."""
@@ -179,5 +189,248 @@ def test_history_with_sidecar_returns_text(tmp_path):
         assert entry["text"] == "مرحبا بك في لغات"
         assert entry["language"] == "ar"
         assert entry["voice"] == "female"
+    finally:
+        main_app.AUDIO_DIR = original_dir
+
+
+def test_history_cache_based_filename_without_sidecar_uses_fallback(tmp_path):
+    """GET /api/history handles cache-based {hash}.mp3 without sidecar JSON.
+
+    Cache-based filenames are 64-character hex hashes with no _ separators.
+    When no sidecar JSON exists, the fallback filename parsing breaks:
+    splitting 'abc123def456...789.mp3' on '_' yields no useful parts.
+    The endpoint must handle this gracefully: language='unknown',
+    voice='default', text=''.
+    """
+    from fastapi.testclient import TestClient
+
+    fake_dir = str(tmp_path / "fake_audio_no_sidecar")
+    os.makedirs(fake_dir, exist_ok=True)
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
+    try:
+        main_app.AUDIO_DIR = fake_dir
+
+        text = "مرحبا بالعالم"
+        language = "ar"
+        voice = "female"
+        cache_key = _compute_cache_key(text, language, voice)
+
+        # Create a cache-based MP3 file WITHOUT sidecar JSON
+        mp3_file = os.path.join(fake_dir, f"{cache_key}.mp3")
+        with open(mp3_file, "wb") as f:
+            f.write(b"\x00" * 100)  # dummy MP3 data
+
+        client = TestClient(app)
+        response = client.get("/api/history")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+
+        entry = data[0]
+        # Filename is the cache-based hash
+        assert entry["filename"] == f"{cache_key}.mp3"
+        # Fallback: no sidecar, no parsing possible for hash-based names
+        assert entry["text"] == ""
+        assert entry["language"] == "unknown"
+        assert entry["voice"] == "default"
+    finally:
+        main_app.AUDIO_DIR = original_dir
+
+
+def test_history_cache_based_filename_with_sidecar_returns_metadata(tmp_path):
+    """GET /api/history reads metadata from {hash}.json sidecar for cache-based filenames.
+
+    When a sidecar JSON exists alongside a cache-based {hash}.mp3,
+    the endpoint reads text, language, voice, and created_at from the sidecar.
+    """
+    from fastapi.testclient import TestClient
+
+    fake_dir = str(tmp_path / "fake_audio_cache_with_sidecar")
+    os.makedirs(fake_dir, exist_ok=True)
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
+    try:
+        main_app.AUDIO_DIR = fake_dir
+
+        text = "مرحبا بالعالم"
+        language = "ar"
+        voice = "female"
+        cache_key = _compute_cache_key(text, language, voice)
+
+        # Create a cache-based MP3 file
+        mp3_file = os.path.join(fake_dir, f"{cache_key}.mp3")
+        with open(mp3_file, "wb") as f:
+            f.write(b"\x00" * 100)  # dummy MP3 data
+
+        # Create sidecar JSON with metadata
+        meta_file = os.path.join(fake_dir, f"{cache_key}.mp3.json")
+        with open(meta_file, "w") as f:
+            json.dump(
+                {
+                    "text": text,
+                    "language": language,
+                    "voice": voice,
+                    "created_at": "1700000000",
+                },
+                f,
+            )
+
+        client = TestClient(app)
+        response = client.get("/api/history")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+
+        entry = data[0]
+        assert entry["filename"] == f"{cache_key}.mp3"
+        assert entry["text"] == text
+        assert entry["language"] == language
+        assert entry["voice"] == voice
+        assert entry["created_at"] == "1700000000"
+    finally:
+        main_app.AUDIO_DIR = original_dir
+
+
+def test_history_mixed_directory_old_and_cache_based_coexist(tmp_path):
+    """GET /api/history lists both old XTTS-v2 and cache-based files correctly.
+
+    Old XTTS-v2 files ({lang}_{voice}_{timestamp}.mp3) and cache-based
+    files ({hash}.mp3) coexist in the same downloads directory.
+    Old files use filename parsing; cache-based files use sidecar or fallback.
+    """
+    from fastapi.testclient import TestClient
+
+    fake_dir = str(tmp_path / "fake_audio_mixed")
+    os.makedirs(fake_dir, exist_ok=True)
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
+    try:
+        main_app.AUDIO_DIR = fake_dir
+
+        # Old XTTS-v2 file with sidecar
+        old_mp3 = os.path.join(fake_dir, "ar_female_old123.mp3")
+        with open(old_mp3, "wb") as f:
+            f.write(b"\x00" * 50)
+        old_meta = os.path.join(fake_dir, "ar_female_old123.mp3.json")
+        with open(old_meta, "w") as f:
+            json.dump(
+                {
+                    "text": "مرحبا بك في لغات",
+                    "language": "ar",
+                    "voice": "female",
+                    "created_at": "1600000000",
+                },
+                f,
+            )
+
+        # Cache-based file with sidecar
+        text = "Hello world"
+        language = "en"
+        voice = "male"
+        cache_key = _compute_cache_key(text, language, voice)
+        cache_mp3 = os.path.join(fake_dir, f"{cache_key}.mp3")
+        with open(cache_mp3, "wb") as f:
+            f.write(b"\x00" * 80)
+        cache_meta = os.path.join(fake_dir, f"{cache_key}.mp3.json")
+        with open(cache_meta, "w") as f:
+            json.dump(
+                {
+                    "text": text,
+                    "language": language,
+                    "voice": voice,
+                    "created_at": "1700000000",
+                },
+                f,
+            )
+
+        client = TestClient(app)
+        response = client.get("/api/history")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+
+        # Find entries by filename pattern
+        old_entries = [e for e in data if "ar_female" in e["filename"]]
+        cache_entries = [
+            e
+            for e in data
+            if e["filename"].endswith(".mp3")
+            and len(e["filename"].rsplit(".", 1)[0]) == 64
+        ]
+
+        assert len(old_entries) == 1
+        assert old_entries[0]["text"] == "مرحبا بك في لغات"
+        assert old_entries[0]["language"] == "ar"
+        assert old_entries[0]["voice"] == "female"
+
+        assert len(cache_entries) == 1
+        assert cache_entries[0]["text"] == text
+        assert cache_entries[0]["language"] == language
+        assert cache_entries[0]["voice"] == voice
+    finally:
+        main_app.AUDIO_DIR = original_dir
+
+
+def test_history_old_xtts_sidecar_with_unknown_fields_handled_gracefully(tmp_path):
+    """GET /api/history handles old XTTS-v2 sidecar JSON with unknown fields.
+
+    Old XTTS-v2 sidecar files may contain fields like 'pitch', 'seed', 'speed'
+    that are no longer relevant. The endpoint should ignore unknown fields
+    and use only the known ones (text, language, voice, created_at).
+    """
+    from fastapi.testclient import TestClient
+
+    fake_dir = str(tmp_path / "fake_audio_old_sidecar")
+    os.makedirs(fake_dir, exist_ok=True)
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
+    try:
+        main_app.AUDIO_DIR = fake_dir
+
+        # Old XTTS-v2 style file with sidecar containing unknown fields
+        mp3_file = os.path.join(fake_dir, "ar_female_xtts_old.mp3")
+        with open(mp3_file, "wb") as f:
+            f.write(b"\x00" * 60)
+
+        meta_file = os.path.join(fake_dir, "ar_female_xtts_old.mp3.json")
+        with open(meta_file, "w") as f:
+            json.dump(
+                {
+                    "text": "Testing old sidecar",
+                    "language": "ar",
+                    "voice": "female",
+                    "created_at": "1500000000",
+                    # Unknown XTTS-v2 fields — should be ignored
+                    "pitch": 0,
+                    "seed": 42,
+                    "speed": 1.0,
+                },
+                f,
+            )
+
+        client = TestClient(app)
+        response = client.get("/api/history")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+
+        entry = data[0]
+        assert entry["text"] == "Testing old sidecar"
+        assert entry["language"] == "ar"
+        assert entry["voice"] == "female"
+        assert entry["created_at"] == "1500000000"
+        # Unknown fields should not appear in the output
+        assert "pitch" not in entry
+        assert "seed" not in entry
+        assert "speed" not in entry
     finally:
         main_app.AUDIO_DIR = original_dir
