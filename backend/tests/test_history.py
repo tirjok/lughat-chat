@@ -148,6 +148,176 @@ def test_history_cleanup_with_cleanup_true_triggers_cleanup(tmp_path):
         main_app.AUDIO_DIR = original_dir
 
 
+def test_history_cleanup_removes_json_sidecars(tmp_path):
+    """POST /api/cleanup removes .json sidecars alongside old .mp3 files.
+
+    When an old .mp3 is cleaned up, its associated .json sidecar
+    must also be removed, leaving no orphaned metadata files.
+    """
+    import json as _json
+    import os as _os
+    import time as _time
+
+    from fastapi.testclient import TestClient
+
+    fake_dir = tmp_path / "fake_audio_sidecar_cleanup"
+    fake_dir.mkdir()
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
+
+    try:
+        main_app.AUDIO_DIR = str(fake_dir)
+
+        # Create an old .mp3 file (48 hours)
+        old_mp3 = fake_dir / "ar_female_abc123.mp3"
+        old_mp3.touch()
+        old_time = _time.time() - 48 * 3600  # 48 hours ago
+        _os.utime(old_mp3, (old_time, old_time))
+
+        # Create its sidecar .json (also 48 hours old)
+        old_meta = fake_dir / "ar_female_abc123.mp3.json"
+        _json.dump(
+            {
+                "text": "مرحبا",
+                "language": "ar",
+                "voice": "female",
+                "created_at": "1234567890",
+            },
+            open(old_meta, "w"),
+        )
+
+        # Create a recent .mp3 + .json pair (should NOT be removed)
+        recent_mp3 = fake_dir / "en_male_xyz789.mp3"
+        recent_mp3.touch()
+        recent_meta = fake_dir / "en_male_xyz789.mp3.json"
+        _json.dump(
+            {
+                "text": "Hello",
+                "language": "en",
+                "voice": "male",
+                "created_at": "1700000000",
+            },
+            open(recent_meta, "w"),
+        )
+
+        client = TestClient(app)
+        response = client.post("/api/cleanup")
+
+        assert response.status_code == 200
+        data = response.json()
+        # Only one old .mp3 was removed (the .json is not counted separately)
+        assert data["removed_count"] == 1
+        # Both old files must be gone
+        assert not old_mp3.exists()
+        assert not old_meta.exists()
+        # Recent files must remain
+        assert recent_mp3.exists()
+        assert recent_meta.exists()
+    finally:
+        main_app.AUDIO_DIR = original_dir
+
+
+def test_history_cleanup_with_cleanup_true_removes_json_sidecars(tmp_path):
+    """GET /api/history?cleanup=true removes .json sidecars alongside .mp3 files.
+
+    The cleanup triggered within get_history() must also remove .json
+    sidecars, not just audio files.
+    """
+    import json as _json
+    import os as _os
+    import time as _time
+    import asyncio
+
+    fake_dir = tmp_path / "fake_audio_history_cleanup"
+    fake_dir.mkdir()
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
+
+    try:
+        main_app.AUDIO_DIR = str(fake_dir)
+
+        # Create an old .mp3 + .json pair (48 hours)
+        old_mp3 = str(fake_dir / "ar_male_old456.mp3")
+        open(old_mp3, "w").close()
+        old_time = _time.time() - 48 * 3600  # 48 hours ago
+        _os.utime(old_mp3, (old_time, old_time))
+
+        old_meta = str(fake_dir / "ar_male_old456.mp3.json")
+        _json.dump(
+            {
+                "text": "قراءة اختبار",
+                "language": "ar",
+                "voice": "male",
+                "created_at": "1234567890",
+            },
+            open(old_meta, "w"),
+        )
+
+        # Call get_history with cleanup=true
+        result = asyncio.get_event_loop().run_until_complete(
+            main_app.get_history(cleanup="true")
+        )
+
+        assert isinstance(result, list)
+        files_after = _os.listdir(str(fake_dir))
+        # Both old .mp3 and its .json sidecar must be gone
+        assert "ar_male_old456.mp3" not in files_after
+        assert "ar_male_old456.mp3.json" not in files_after
+    finally:
+        main_app.AUDIO_DIR = original_dir
+
+
+def test_history_cleanup_preserves_orphaned_json_sidecars(tmp_path):
+    """Cleanup does NOT remove .json sidecars without a matching .mp3/.wav.
+
+       The cleanup endpoint only targets files ending in .mp3 or .wav.
+       Orphaned .json sidecars (leftover from manual deletion of the audio file)
+    must remain untouched.
+    """
+    import json as _json
+
+    from fastapi.testclient import TestClient
+
+    fake_dir = tmp_path / "fake_audio_orphaned"
+    fake_dir.mkdir()
+    import app as main_app
+
+    original_dir = main_app.AUDIO_DIR
+
+    try:
+        main_app.AUDIO_DIR = str(fake_dir)
+
+        # Create an orphaned .json without a matching .mp3/.wav
+        orphaned_meta = fake_dir / "orphaned_abc123.mp3.json"
+        _json.dump(
+            {
+                "text": "orphaned metadata",
+                "language": "en",
+                "voice": "female",
+                "created_at": "1000000000",
+            },
+            open(orphaned_meta, "w"),
+        )
+
+        # Also place a recent .mp3 that should NOT be cleaned up
+        recent_mp3 = fake_dir / "en_female_recent789.mp3"
+        recent_mp3.touch()
+
+        client = TestClient(app)
+        response = client.post("/api/cleanup")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["removed_count"] == 0
+        # Orphaned .json must still exist
+        assert orphaned_meta.exists()
+        # Recent .mp3 must still exist
+    finally:
+        main_app.AUDIO_DIR = original_dir
+
+
 def test_history_with_sidecar_returns_text(tmp_path):
     """GET /api/history reads text from sidecar JSON metadata."""
     import json as _json
