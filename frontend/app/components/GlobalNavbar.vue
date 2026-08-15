@@ -2,18 +2,11 @@
 import { computed, ref, useTemplateRef } from 'vue'
 import { useHealthPoll } from '../composables/useHealthPoll'
 
-// ─── Route path: received from app.vue parent as a prop ─────────────────
-// GlobalNavbar lives in app.vue (outside <router_view>), so useRoute()
-// throws. The parent passes the reactive path via prop.
-
 interface Props {
   currentPath: string
 }
 
 const props = defineProps<Props>()
-const _props = () => props.currentPath
-// ─── Navigation definition (single source of truth) ──────────────────────
-
 interface NavItem {
   to: string
   label: string
@@ -36,23 +29,16 @@ const navItems: NavItem[] = [
   }
 ]
 
-// "My Courses" — shares the Dashboard route but highlights on lesson pages
 const myCoursesActive = computed(() => props.currentPath.startsWith('/dashboard/level/'))
-
-// ─── Active-state helper ──────────────────────────────────────────────────
-// "Dashboard" should highlight on /dashboard AND any /dashboard/* sub-route.
-// "Home" highlights only on exact '/'.
 
 function isActive(item: NavItem): boolean {
   if (item.to === '/dashboard') return props.currentPath.startsWith('/dashboard')
   return props.currentPath === item.to
 }
 
-// Progress fill: 0% on / and /dashboard, partial on lesson pages
 const progressWidth = computed(() => {
   if (!myCoursesActive.value) return '0%'
   const parts = props.currentPath.split('/').filter(Boolean)
-  // /dashboard/level/{level}/{lesson_id}
   if (parts.length >= 4) {
     const lessonNum = parseInt(parts[3]!, 10)
     if (!isNaN(lessonNum) && lessonNum > 0) {
@@ -63,8 +49,6 @@ const progressWidth = computed(() => {
   }
   return '0%'
 })
-
-// ─── Mobile state ─────────────────────────────────────────────────────────
 
 const isMobile = ref(false)
 const menuOpen = ref(false)
@@ -84,13 +68,11 @@ function closeMenu(): void {
   menuOpen.value = false
 }
 
-// React to viewport changes (client-side only)
 if (typeof window !== 'undefined') {
   checkMobile()
   window.addEventListener('resize', checkMobile)
 }
 
-// ─── Health status (in GlobalNavbar) ──────────────────────────────────────
 const { status, modelLoaded } = useHealthPoll()
 </script>
 

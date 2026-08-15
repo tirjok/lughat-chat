@@ -3,8 +3,6 @@ export interface UseHealthPollOptions {
   maxRetries?: number
 }
 
-// ─── Module-level singleton state ────────────────────────────────────
-// Shared across ALL callers — one status, one interval, one lifecycle.
 const sharedStatus = ref<'loading' | 'ready' | 'error'>('loading')
 const sharedModelLoaded = computed(() => sharedStatus.value === 'ready')
 
@@ -13,7 +11,6 @@ let retryCount = 0
 let started = false
 let mountCount = 0
 
-// Single return object — every caller gets this exact reference.
 const singletonInstance = {
   get status() { return sharedStatus },
   get modelLoaded() { return sharedModelLoaded }
@@ -88,9 +85,6 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
   return singletonInstance
 }
 
-// ─── Test helper: reset singleton state ───────────────────────────────
-// Exposed so tests can isolate between test cases.
-// NOT used in production.
 export const resetHealthPoll = () => {
   sharedStatus.value = 'loading'
   retryCount = 0

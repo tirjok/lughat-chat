@@ -5,7 +5,6 @@ export interface AudioModuleOptions {
 }
 
 export function useAudioModule(options: AudioModuleOptions = {}) {
-  // ── State (exposed to callers) ────────────────────
   const isPlaying = ref(false)
   const isPaused = ref(false)
   const currentTime = ref(0)
@@ -14,15 +13,12 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   const isLoading = ref(false)
   const audioUrl = ref<string | null>(null)
 
-  // ── Internal refs ────────────────────────────────
   const blobRef = ref<Blob | null>(null)
   let currentObjectUrl: string | null = null
   const audioRef = ref<HTMLAudioElement | null>(null) as Ref<HTMLAudioElement | null>
 
-  // ── Internal: track all created object URLs ─────
   const objectUrls = new Set<string>()
 
-  // ── Internal: revoke all tracked object URLs ────
   function revokeAll() {
     for (const url of objectUrls) {
       URL.revokeObjectURL(url)
@@ -32,7 +28,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     blobRef.value = null
   }
 
-  // ── Load: blob → objectURL → wire element ────────
   function load(blob: Blob) {
     revokeAll()
     currentObjectUrl = URL.createObjectURL(blob)
@@ -47,7 +42,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Play (nextTick handled internally) ───────────
   async function play() {
     if (!audioRef.value) return
     try {
@@ -58,7 +52,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Pause ────────────────────────────────────────
   function pause() {
     if (audioRef.value) {
       audioRef.value.pause()
@@ -66,7 +59,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Toggle play/pause ────────────────────────────
   async function toggle() {
     if (!audioRef.value) return
     if (isPlaying.value && !isPaused.value) {
@@ -76,13 +68,11 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Seek ─────────────────────────────────────────
   function seek(ratio: number) {
     if (!audioRef.value || !duration.value) return
     audioRef.value.currentTime = ratio * duration.value
   }
 
-  // ── Download ─────────────────────────────────────
   function download(filename?: string) {
     if (!blobRef.value) return
     const url = URL.createObjectURL(blobRef.value)
@@ -99,7 +89,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }, 100)
   }
 
-  // ── Wire event listeners ─────────────────────────
   function wireEvents() {
     const audio = audioRef.value
     if (!audio) return
@@ -141,7 +130,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     })
   }
 
-  // ── Watch for audio element attachment ───────────
   watch(audioRef, (el) => {
     if (el) {
       wireEvents()
@@ -151,7 +139,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   })
 
-  // ── Dispose: safety net (caller may or may not use)
   function dispose() {
     revokeAll()
     if (audioRef.value) {
@@ -159,16 +146,12 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Expose ───────────────────────────────────────
   return {
-    // State
     isPlaying, isPaused, currentTime, duration,
     audioUrl,
 
-    // Template binding
     audioRef,
 
-    // Actions
     load,
     play,
     pause,
@@ -176,7 +159,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     seek,
     download,
 
-    // Safety net
     dispose
   }
 }

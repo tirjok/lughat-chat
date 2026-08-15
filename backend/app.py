@@ -13,8 +13,6 @@ import threading
 from typing import Optional
 
 
-# ── Configuration ──────────────────────────────────────────────────────
-
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
 MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
 
@@ -22,10 +20,8 @@ for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
     try:
         os.makedirs(dir_path, exist_ok=True)
     except OSError:
-        pass  # Read-only filesystem
+        pass
 
-
-# ── Model Manager (SRP: manages TTS model lifecycle) ──────────────────
 
 tts_model = None
 model_load_status: str = "loading"
@@ -72,23 +68,18 @@ async def lifespan(app: FastAPI):
     shutdown()
 
 
-# ── Cache Layer (SRP: cache lookup and storage) ────────────────────────
-
-
 def _compute_cache_key(text: str, language: str, voice: str) -> str:
     composite = f"{text}|{language}|{voice}"
     return hashlib.sha256(composite.encode("utf-8")).hexdigest()
 
 
 def _is_valid_mp3(data: bytes) -> bool:
-    """Check if bytes start with a valid MP3 signature."""
     if len(data) < 3:
         return False
     return data[:3] == b"ID3" or data[:2] in (b"\xff\xfb", b"\xff\xf3")
 
 
 def check_cache(cache_key: str) -> bytes | None:
-    """Return cached MP3 data if a valid cache hit exists."""
     path = os.path.join(AUDIO_DIR, f"{cache_key}.mp3")
     if not os.path.exists(path):
         return None
@@ -96,9 +87,7 @@ def check_cache(cache_key: str) -> bytes | None:
         with open(path, "rb") as f:
             data = f.read()
         if _is_valid_mp3(data):
-            print(f"Cache HIT for {cache_key}.mp3")
             return data
-        print(f"Cache hit but file unreadable: {path}")
     except OSError:
         pass
     return None
@@ -146,9 +135,6 @@ def store_history_meta(filename: str, text: str, language: str, voice: str) -> N
             )
     except OSError:
         pass
-
-
-# ── Synthesis Service (SRP: handles TTS generation and file pipeline) ──
 
 
 def _convert_to_mp3(wav_path: str, mp3_path: str) -> None:
@@ -224,9 +210,6 @@ def generate_speech(request: "SynthesisRequest") -> FileResponse:
 
     store_history_meta(filename, request.text, request.language, voice)
     return FileResponse(path=mp3_path, media_type="audio/mpeg", filename=filename)
-
-
-# ── History Service (SRP: file listing and cleanup) ────────────────────
 
 
 def _parse_meta_from_sidecar(filename: str) -> dict | None:
@@ -310,9 +293,6 @@ def cleanup_old_files() -> int:
     return removed
 
 
-# ── Pydantic Models ───────────────────────────────────────────────────
-
-
 class SynthesisRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(..., min_length=1, max_length=3000)
@@ -330,8 +310,6 @@ class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
 
-
-# ── FastAPI Routes ─────────────────────────────────────────────────────
 
 app = FastAPI(
     description="Text-to-Speech API with Chatterbox Multilingual TTS (Arabic & English)",

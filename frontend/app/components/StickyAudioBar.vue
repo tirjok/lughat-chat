@@ -100,10 +100,6 @@ defineExpose({
 </script>
 
 <template>
-  <!--
-    StickyAudioBar: Fixed bottom bar that slides up when active.
-    Three-section layout: left controls | center (waveform/time) | right controls.
-  -->
   <div
     data-testid="sticky-bar"
     role="region"

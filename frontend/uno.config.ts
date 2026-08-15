@@ -10,10 +10,6 @@ export default defineConfig({
     transformerDirectives()
   ],
   theme: {
-    // Proto specifies Inter + Amiri (Google Fonts). We use Plus Jakarta Sans +
-    // Noto Sans Arabic + Cairo (self-hosted .woff2) for 100% offline operation.
-    // See ADR-005 for rationale. The visual difference is acceptable: both Latin
-    // fonts are geometric sans-serifs; Arabic is sans-serif (not Naskh-serif).
     fontFamily: {
       sans: ['"Plus Jakarta Sans"', 'sans-serif'],
       arabic: ['"Noto Sans Arabic"', 'Cairo', 'sans-serif']

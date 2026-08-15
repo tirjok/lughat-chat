@@ -3,8 +3,6 @@
 // Contains: mobile canvas (top) + drag divider + control deck (bottom) + inline audio player.
 
 import { computed, useTemplateRef, watch } from 'vue'
-// TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
-import { useDragResize } from '../composables/useDragResize'
 import { formatTime } from '../utils/formatTime'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'

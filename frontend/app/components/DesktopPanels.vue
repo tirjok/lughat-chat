@@ -10,7 +10,6 @@ import GenerateButton from './GenerateButton.vue'
 import StickyAudioBar from './StickyAudioBar.vue'
 import type { Voice } from '../composables/useVoices'
 
-// TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
 interface Props {
   textInput: string
   selectedVoice: string

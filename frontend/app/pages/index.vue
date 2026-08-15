@@ -1,13 +1,7 @@
 <script setup lang="ts">
-// Index: Thin composition surface for the main TTS page.
-// Owns all state and business logic; delegates UI to child components.
-// Two-panel layout: Mobile (split-screen) | Desktop (side-by-side).
-
-// TODO: migrated from studio-900/sunrise-orange (see ISSUE-014)
 import { computed, nextTick, onUnmounted, shallowRef } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { usePanelToggle } from '../composables/usePanelToggle'
-import { useAudioModule } from '../composables/useAudioModule'
 import { useTtsApi } from '../composables/useTtsApi'
 import { useHealthPoll } from '../composables/useHealthPoll'
 import { useVoices } from '../composables/useVoices'
@@ -70,28 +64,20 @@ const panelAnnouncement = computed(() => {
     : 'Switched to text editor panel'
 })
 
-// ── In-flight synthesis cleanup guard (R-7) ──
 const cleanup = useCleanupNavigation(audioModule)
-// ─── Cleanup navigation logic (extracted for testability) ───────────────
 
 onBeforeRouteLeave(async () => {
-  // AC-1: guard fires when navigating away from /
-  // AC-2: show dialog when isGenerating=true or isStreaming
   const hasInFlightSynthesis = isGenerating.value
 
   if (!hasInFlightSynthesis) {
-    // No in-flight synthesis — allow navigation without dialog
     return true
   }
 
-  // AC-2: Show dialog when isGenerating=true or isStreaming
   cleanup.dialogVisible.value = true
 
-  // Block navigation until user responds
   return false
 })
 
-// ── Business logic ──────────────────────────────────────────────
 async function handleSynthesize() {
   if (!isValid.value) {
     showToast(validationState.value.error ?? 'Invalid text')
@@ -148,10 +134,8 @@ function handleClosePlayer() {
   audioModule.pause()
 }
 
-// Safety net: dispose on unmount
 onUnmounted(() => audioModule.dispose())
 
-// ── Derived data for child components ───────────────────────────
 const mobileScreenProps = computed(() => ({
   textInput: textInput.value,
   selectedVoice: selectedVoice.value,
@@ -210,6 +194,8 @@ const desktopPanelProps = computed(() => ({
       @set-audio-ref="audioRef = $event"
     />
 
+    <!-- Cleanup Settings — renders in both mobile and desktop layouts -->
+    <CleanupSettings />
     <!-- Desktop: Side-by-side panels -->
     <DesktopPanels
       v-if="desktopPanelProps"

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// TODO: migrated from sunrise-orange/magenta (see ISSUE-014)
-
 const haloRef = useTemplateRef<HTMLDivElement | null>('haloRef')
 
 function handleFocus(e: FocusEvent) {
