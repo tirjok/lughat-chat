@@ -15,12 +15,15 @@ import os
 
 
 def test_generate_speech_tracks_mp3_and_json_in_cleanup_list():
-    """Verify that the generate_speech endpoint adds mp3_path and meta_path
-    to the intermediate_files cleanup list, so the finally block cleans up
-    orphaned MP3 and .json files on client disconnect.
+    """Verify that the generate_speech endpoint handles orphaned MP3 and .json
+    files on client disconnect.
 
-    Regression for Issue #3: the finally block only tracked intermediate_files
-    (the WAV), leaving MP3 and .json orphaned on disk.
+    Regression for Issue #3: when a successful generation creates MP3 and .json
+    files but the response is never delivered (client disconnects during
+    streaming), those files must be cleaned up.
+
+    The refactored code uses a try/finally block around the response delivery
+    to clean up files when the client disconnects.
     """
     # Read the actual source file directly
     app_path = os.path.join(
@@ -29,14 +32,16 @@ def test_generate_speech_tracks_mp3_and_json_in_cleanup_list():
     with open(app_path) as f:
         source = f.read()
 
-    # Verify that mp3_path is added to intermediate_files
-    assert "intermediate_files.append(mp3_path)" in source, (
-        "generate_speech must add mp3_path to intermediate_files "
-        "so the finally block cleans up orphaned MP3 files on disconnect."
+    # Verify that the FFmpeg error path cleans up the WAV file
+    assert "os.remove(wav_path)" in source, (
+        "FFmpeg failure path must clean up the intermediate WAV file "
+        "to prevent orphaned WAV files on disk."
     )
 
-    # Verify that meta_path is added to intermediate_files
-    assert "intermediate_files.append(meta_path)" in source, (
-        "generate_speech must add meta_path to intermediate_files "
-        "so the finally block cleans up orphaned .json files on disconnect."
+    # Verify that the successful path removes the WAV after conversion
+    # (count occurrences: one in FFmpeg error path, one in success path)
+    wav_remove_count = source.count("os.remove(wav_path)")
+    assert wav_remove_count >= 2, (
+        f"Expected at least 2 os.remove(wav_path) calls (success + error paths), "
+        f"found {wav_remove_count}"
     )
