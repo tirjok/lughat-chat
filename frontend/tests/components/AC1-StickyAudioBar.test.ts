@@ -103,11 +103,6 @@ vi.mock('~/components/VoiceSelector.vue', () => ({
   default: { template: '<div data-testid="voice-selector"></div>' }
 }))
 
-// ─── Module-level mock for SpeedSlider ──────────────────────────────
-vi.mock('~/components/SpeedSlider.vue', () => ({
-  default: { template: '<div data-testid="speed-slider"></div>' }
-}))
-
 // ─── Module-level mock for CleanupDialog ────────────────────────────
 vi.mock('~/components/CleanupDialog.vue', () => ({
   default: { template: '<div id="cleanup-dialog"></div>' }
@@ -129,7 +124,6 @@ describe('AC-1: DesktopPanels renders StickyAudioBar, not AudioPlayerPanel', () 
       props: {
         textInput: 'Hello world',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
         audioUrl: 'http://mock.url/blob',
@@ -158,7 +152,6 @@ describe('AC-1: DesktopPanels renders StickyAudioBar, not AudioPlayerPanel', () 
       props: {
         textInput: 'Hello world',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: false,
         audioUrl: null,
@@ -182,7 +175,7 @@ describe('AC-1: DesktopPanels renders StickyAudioBar, not AudioPlayerPanel', () 
 describe('AC-1: StickyAudioBar renders correctly', () => {
   it('is hidden (translate-y-full) when active=false', () => {
     const wrapper = mount(StickyAudioBar, {
-      props: { active: false, textContent: '', isPlaying: false, isPaused: false, speedValue: 1.0 }
+      props: { active: false, textContent: '', isPlaying: false, isPaused: false }
     })
 
     const bar = wrapper.find('[data-testid="sticky-bar"]')
@@ -192,7 +185,7 @@ describe('AC-1: StickyAudioBar renders correctly', () => {
 
   it('is visible (translate-y-0) when active=true', () => {
     const wrapper = mount(StickyAudioBar, {
-      props: { active: true, textContent: 'Test text', isPlaying: false, isPaused: false, speedValue: 1.0 }
+      props: { active: true, textContent: 'Test text', isPlaying: false, isPaused: false }
     })
 
     const bar = wrapper.find('[data-testid="sticky-bar"]')
@@ -215,7 +208,6 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
       props: {
         textInput: 'Hello world',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
         audioUrl: null,
@@ -248,7 +240,6 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
       props: {
         textInput: 'Hello world',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
         audioUrl: 'http://mock.url/blob',
@@ -280,7 +271,6 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
       props: {
         textInput: 'Hello world',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
         audioUrl: 'http://mock.url/blob',
@@ -314,7 +304,6 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
       props: {
         textInput: 'Hello world',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
         audioUrl: 'http://mock.url/blob',
@@ -342,30 +331,6 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
     await nextTick()
     expect(currentTime.text()).toBe('1:10')
   })
-
-  it('updates speed display in StickyAudioBar reactively', async () => {
-    const wrapper = mount(DesktopPanels, {
-      props: {
-        textInput: 'Hello world',
-        selectedVoice: 'voice1',
-        speedValue: 0.75,
-        isGenerating: false,
-        playerVisible: true,
-        audioUrl: 'http://mock.url/blob',
-        isPlaying: false,
-        isPaused: false,
-        currentTime: 0,
-        duration: 10,
-        modelStatus: 'ready',
-        isValid: true,
-        speakerVoices: mockVoices,
-        selectedVoiceName: 'Test Voice'
-      }
-    })
-
-    const speedToggle = wrapper.find('[data-testid="speed-toggle"]')
-    expect(speedToggle.text()).toBe('0.8x')
-  })
 })
 describe('AC-4: Synthesis workflow preserved', () => {
   beforeEach(() => {
@@ -383,7 +348,6 @@ describe('AC-4: Synthesis workflow preserved', () => {
       props: {
         textInput: 'مرحبا بالعالم',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: false,
         audioUrl: null,
@@ -434,7 +398,6 @@ describe('AC-4: Synthesis workflow preserved', () => {
       props: {
         textInput: 'Hello world',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
         audioUrl: 'http://mock.url/blob',
@@ -466,7 +429,6 @@ describe('AC-5: Panel layout — panels gain vertical space', () => {
       props: {
         textInput: 'Hello world',
         selectedVoice: 'voice1',
-        speedValue: 1.0,
         isGenerating: false,
         playerVisible: false,
         audioUrl: null,

@@ -297,45 +297,6 @@ describe('StickyAudioBar', () => {
   // ─── AC-4: Right controls ───────────────────────────────────────────
 
   describe('right controls (AC-4)', () => {
-    it('StickyAudioBar | when rendered | speed toggle button exists', () => {
-      // Arrange
-      const wrapper = mountBar({ active: true })
-
-      // Act & Assert
-      const speedBtn = wrapper.get('[data-testid="speed-toggle"]')
-      expect(speedBtn.exists()).toBe(true)
-    })
-
-    it('StickyAudioBar | when speedValue=1 | speed display shows 1.0x', () => {
-      // Arrange
-      const wrapper = mountBar({ active: true, speedValue: 1.0 })
-
-      // Act & Assert
-      const speedBtn = wrapper.get('[data-testid="speed-toggle"]')
-      expect(speedBtn.text()).toContain('1.0x')
-    })
-
-    it('StickyAudioBar | when speedValue=0.75 | speed display shows 0.8x (rounded)', () => {
-      // Arrange
-      const wrapper = mountBar({ active: true, speedValue: 0.75 })
-
-      // Act & Assert
-      const speedBtn = wrapper.get('[data-testid="speed-toggle"]')
-      expect(speedBtn.text()).toContain('0.8x')
-    })
-
-    it('StickyAudioBar | when speed toggle clicked | emits speedChange event', async () => {
-      // Arrange
-      const wrapper = mountBar({ active: true })
-
-      // Act
-      await wrapper.get('[data-testid="speed-toggle"]').trigger('click')
-
-      // Assert
-      expect(wrapper.emitted('speedChange')).toBeDefined()
-      expect(wrapper.emitted('speedChange')?.[0]).toEqual([expect.any(Number)])
-    })
-
     it('StickyAudioBar | when rendered | repeat button exists', () => {
       // Arrange
       const wrapper = mountBar({ active: true })

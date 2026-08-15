@@ -6,7 +6,6 @@ import { computed, useTemplateRef, watch } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
-import SpeedSlider from './SpeedSlider.vue'
 import GenerateButton from './GenerateButton.vue'
 import StickyAudioBar from './StickyAudioBar.vue'
 import type { Voice } from '../composables/useVoices'
@@ -15,7 +14,6 @@ import type { Voice } from '../composables/useVoices'
 interface Props {
   textInput: string
   selectedVoice: string
-  speedValue: number
   isGenerating: boolean
   playerVisible: boolean
   audioUrl: string | null
@@ -31,11 +29,10 @@ interface Props {
 
 interface Emits {
   (e: 'update:textInput' | 'update:selectedVoice', value: string): void
-  (e: 'update:speedValue' | 'seek', ratio: number): void
+  (e: 'seek', ratio: number): void
   (e: 'synthesize' | 'clearText' | 'closePlayer' | 'toggle' | 'download'): void
   (e: 'setAudioRef', ref: HTMLAudioElement | null): void
 }
-
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
@@ -84,10 +81,6 @@ const isOverLimit = computed(() => charCount.value > 3000)
             :model-value="selectedVoice"
             :voices="speakerVoices"
             @update:model-value="emit('update:selectedVoice', $event)"
-          />
-          <SpeedSlider
-            :model-value="speedValue"
-            @update:model-value="emit('update:speedValue', $event)"
           />
         </div>
       </div>
@@ -229,7 +222,6 @@ const isOverLimit = computed(() => charCount.value > 3000)
         :is-paused="isPaused"
         :current-time="currentTime"
         :duration="duration"
-        :speed-value="speedValue"
         @close="emit('closePlayer')"
         @toggle="emit('toggle')"
         @seek="(ratio) => emit('seek', ratio)"

@@ -7,7 +7,6 @@ interface Props {
   isPlaying?: boolean
   isPaused?: boolean
   shortcutsEnabled?: boolean
-  speedValue?: number
   repeatMode?: 'off' | 'one' | 'all'
   currentTime?: number
   duration?: number
@@ -17,36 +16,19 @@ interface Emits {
   (e: 'close' | 'toggle' | 'prevTrack' | 'nextTrack'): void
   (e: 'seek' | 'speedChange', value: number): void
   (e: 'repeatChange', mode: 'off' | 'one' | 'all'): void
+  (e: 'setAudioRef', ref: HTMLAudioElement | null): void
 }
-
 const props = withDefaults(defineProps<Props>(), {
   active: false,
   textContent: '',
-  isPlaying: false,
   isPaused: false,
   shortcutsEnabled: false,
-  speedValue: 1.0,
   repeatMode: 'off',
   currentTime: 0,
   duration: 0
 })
 
 const emit = defineEmits<Emits>()
-
-type Speed = 0.75 | 1.0 | 1.25
-const speeds: Speed[] = [0.75, 1.0, 1.25]
-
-const currentSpeedIndex = computed<0 | 1 | 2>(() => {
-  const idx = speeds.indexOf(props.speedValue as Speed)
-  return (idx >= 0 ? idx : 1) as 0 | 1 | 2
-})
-
-const currentSpeed = computed<Speed>(() => speeds[currentSpeedIndex.value] as Speed)
-
-const speedNext = () => {
-  const nextIdx = (currentSpeedIndex.value + 1) % speeds.length
-  emit('speedChange', speeds[nextIdx] as Speed)
-}
 
 const repeatNext = () => {
   const order = ['off', 'one', 'all'] as const
@@ -254,16 +236,6 @@ defineExpose({
       data-testid="controls-right"
       class="flex items-center gap-2 shrink-0"
     >
-      <!-- Speed toggle -->
-      <button
-        data-testid="speed-toggle"
-        aria-label="Toggle speed"
-        class="text-xs font-mono text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors px-2 py-1 rounded"
-        @click="speedNext"
-      >
-        {{ currentSpeed.toFixed(1) }}x
-      </button>
-
       <!-- Repeat -->
       <button
         data-testid="repeat-button"

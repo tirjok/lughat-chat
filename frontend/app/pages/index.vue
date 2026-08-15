@@ -42,7 +42,6 @@ const { voices: speakerVoices } = useVoices()
 // ── Form state ──────────────────────────────────────────────────
 const textInput = shallowRef('')
 const selectedVoice = shallowRef('')
-const speedValue = shallowRef(1.0)
 const isGenerating = shallowRef(false)
 const playerVisible = shallowRef(false)
 
@@ -156,7 +155,6 @@ onUnmounted(() => audioModule.dispose())
 const mobileScreenProps = computed(() => ({
   textInput: textInput.value,
   selectedVoice: selectedVoice.value,
-  speedValue: speedValue.value,
   isGenerating: isGenerating.value,
   playerVisible: playerVisible.value,
   audioUrl: audioUrl.value,
@@ -203,7 +201,6 @@ const desktopPanelProps = computed(() => ({
       v-bind="mobileScreenProps"
       @update:text-input="textInput = $event"
       @update:selected-voice="selectedVoice = $event"
-      @update:speed-value="speedValue = $event"
       @synthesize="handleSynthesize"
       @clear-text="handleClearText"
       @close-player="handleClosePlayer"
@@ -219,7 +216,6 @@ const desktopPanelProps = computed(() => ({
       v-bind="desktopPanelProps"
       @update:text-input="textInput = $event"
       @update:selected-voice="selectedVoice = $event"
-      @update:speed-value="speedValue = $event"
       @synthesize="handleSynthesize"
       @clear-text="handleClearText"
       @close-player="handleClosePlayer"

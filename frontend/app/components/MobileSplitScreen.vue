@@ -8,7 +8,6 @@ import { useDragResize } from '../composables/useDragResize'
 import { formatTime } from '../utils/formatTime'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
-import SpeedSlider from './SpeedSlider.vue'
 import GenerateButton from './GenerateButton.vue'
 import WaveformCanvas from './WaveformCanvas.vue'
 import type { Voice } from '../composables/useVoices'
@@ -16,7 +15,6 @@ import type { Voice } from '../composables/useVoices'
 interface Props {
   textInput: string
   selectedVoice: string
-  speedValue: number
   isGenerating: boolean
   playerVisible: boolean
   audioUrl: string | null
@@ -26,17 +24,15 @@ interface Props {
   duration: number
   modelStatus: 'loading' | 'ready' | 'error'
   isValid: boolean
-  speakerVoices: Voice[]
   selectedVoiceName: string
+  speakerVoices: Voice[]
 }
-
 interface Emits {
   (e: 'update:textInput' | 'update:selectedVoice', value: string): void
-  (e: 'update:speedValue' | 'seek', ratio: number): void
+  (e: 'seek', ratio: number): void
   (e: 'synthesize' | 'clearText' | 'closePlayer' | 'toggle' | 'download'): void
   (e: 'setAudioRef', ref: HTMLAudioElement | null): void
 }
-
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
@@ -160,12 +156,6 @@ watch(audioTemplateRef, (el) => {
             :voices="speakerVoices"
             @update:model-value="emit('update:selectedVoice', $event)"
           />
-
-          <!-- Speed Control -->
-          <SpeedSlider
-            :model-value="speedValue"
-            @update:model-value="emit('update:speedValue', $event)"
-          />
         </div>
       </div>
 
@@ -219,7 +209,7 @@ watch(audioTemplateRef, (el) => {
                   Generated Audio
                 </h3>
                 <p class="text-[10px] text-stone-500 dark:text-gray-400 truncate">
-                  {{ selectedVoiceName }} • {{ speedValue.toFixed(1) }}x Speed
+                  {{ selectedVoiceName }}
                 </p>
               </div>
               <!-- Action buttons: Double-Bezel + Magnetic -->

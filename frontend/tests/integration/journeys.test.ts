@@ -16,7 +16,7 @@
 //  11. Keyboard shortcuts (Ctrl/Cmd+Enter)
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { nextTick, ref } from 'vue'
+import { ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import Index from '~/pages/index.vue'
 import {
@@ -181,18 +181,6 @@ describe('Journey 2: Playback controls', () => {
     expect(emitted).toBeDefined()
   })
 
-  it('speed toggle button exists and cycles through speeds', async () => {
-    const wrapper = mountIndex()
-    const stickyBar = wrapper.findComponent({ name: 'StickyAudioBar' })
-
-    const speedBtn = stickyBar.find('[data-testid="speed-toggle"]')
-    expect(speedBtn.exists()).toBe(true)
-
-    await speedBtn.trigger('click')
-    const emitted = stickyBar.emitted('speedChange')
-    expect(emitted).toBeDefined()
-  })
-
   it('close button exists and emits close event', async () => {
     const wrapper = mountIndex()
     const stickyBar = wrapper.findComponent({ name: 'StickyAudioBar' })
@@ -232,63 +220,6 @@ describe('Journey 2: Playback controls', () => {
 
     await nextBtn.trigger('click')
     expect(stickyBar.emitted('nextTrack')).toBeDefined()
-  })
-})
-
-// ─── Journey 3: Speed slider during playback ────────────────────────────
-
-describe('Journey 3: Speed slider during playback', () => {
-  it('SpeedSlider exists in the control deck', () => {
-    const wrapper = mountIndex()
-    const speedSlider = wrapper.findComponent({ name: 'SpeedSlider' })
-    expect(speedSlider.exists()).toBe(true)
-
-    // Check that the component receives a modelValue prop
-    const modelValue = speedSlider.props().modelValue
-    expect(modelValue).toBe(1.0)
-  })
-
-  it('SpeedSlider slider input renders with correct value', () => {
-    const wrapper = mountIndex()
-    const speedSlider = wrapper.findComponent({ name: 'SpeedSlider' })
-
-    const slider = speedSlider.find('[role="slider"]')
-    expect(slider.exists()).toBe(true)
-    expect(slider.attributes('aria-valuenow')).toBe('1')
-  })
-
-  it('SpeedSlider emits updated values on input', async () => {
-    const wrapper = mountIndex()
-    const speedSlider = wrapper.findComponent({ name: 'SpeedSlider' })
-
-    const slider = speedSlider.find('[role="slider"]')
-    await slider.trigger('click')
-    await nextTick()
-
-    const emitted = speedSlider.emitted('update:modelValue')
-    expect(emitted).toBeDefined()
-  })
-
-  it('SpeedSlider clamps values to 0.5–2.0 range', async () => {
-    const wrapper = mountIndex()
-    const speedSlider = wrapper.findComponent({ name: 'SpeedSlider' })
-
-    const slider = speedSlider.find('[role="slider"]')
-    await slider.trigger('click')
-    await nextTick()
-
-    // Should clamp to 0.5
-    const emitted = speedSlider.emitted('update:modelValue')
-    expect(emitted).toBeDefined()
-  })
-
-  it('display value shows formatted speed (e.g., "1.0x")', async () => {
-    const wrapper = mountIndex()
-    const speedSlider = wrapper.findComponent({ name: 'SpeedSlider' })
-
-    await nextTick()
-    const displayText = speedSlider.text()
-    expect(displayText).toContain('1.0x')
   })
 })
 
@@ -760,7 +691,7 @@ describe('Full page integration', () => {
 
     // Verify all expected props are present
     const expectedProps = [
-      'textInput', 'selectedVoice', 'speedValue', 'isGenerating',
+      'textInput', 'selectedVoice', 'isGenerating',
       'playerVisible', 'audioUrl', 'isPlaying', 'isPaused',
       'currentTime', 'duration', 'modelStatus', 'isValid',
       'speakerVoices', 'selectedVoiceName'
