@@ -44,7 +44,7 @@ const emit = defineEmits<{
         class="ph ph-loader text-lg animate-spin"
         aria-hidden="true"
       />
-      <span class="animate-pulse">Processing Model...</span>
+      <span class="animate-pulse">Generating Speech...</span>
     </template>
   </button>
 </template>

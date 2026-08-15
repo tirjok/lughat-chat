@@ -21,7 +21,7 @@ const singletonInstance = {
 
 export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
   const baseUrl = options.baseUrl || ''
-  const maxRetries = options.maxRetries ?? 150
+  const maxRetries = options.maxRetries ?? 60
 
   async function checkHealth() {
     try {
@@ -64,7 +64,7 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
     if (started) return
     started = true
 
-    intervalId = setInterval(checkHealth, 2000)
+    intervalId = setInterval(checkHealth, 5000)
 
     // Fire first check immediately
     void checkHealth()

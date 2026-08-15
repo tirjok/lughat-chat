@@ -150,7 +150,7 @@ describe('useHealthPoll', () => {
     it('frontend default maxRetries × 2s must be ≥ backend LOAD_HARD_TIMEOUT (300s)', () => {
       // This test verifies the frontend config aligns with the backend.
       // If the backend changes LOAD_HARD_TIMEOUT, update this test.
-      expect(150 * 2).toBeGreaterThanOrEqual(300)
+      expect(60 * 5).toBeGreaterThanOrEqual(300)
     })
   })
 
@@ -200,7 +200,7 @@ describe('useHealthPoll', () => {
 
       // Only ONE setInterval call should exist (singleton — first caller only)
       expect(spySetInterval).toHaveBeenCalledTimes(1)
-      expect(spySetInterval).toHaveBeenCalledWith(expect.any(Function), 2000)
+      expect(spySetInterval).toHaveBeenCalledWith(expect.any(Function), 5000)
 
       ;(globalThis as Record<string, unknown>).setInterval = originalSetInterval
     })
@@ -277,21 +277,20 @@ describe('useHealthPoll', () => {
         cb()
       }
 
-      // Wait for 5 retry cycles (5 × 2s interval + buffer)
-      await new Promise(resolve => setTimeout(resolve, 11000))
+      // Wait for 5 retry cycles (5 × 5s interval + buffer)
+      await new Promise(resolve => setTimeout(resolve, 30000))
 
       expect(poller.status.value).toBe('error')
-    }, 15000)
+    }, 35000)
 
-    it('uses default maxRetries of 150 when not specified', () => {
-      // This is a sanity check: the composable defaults to 150 retries.
-      // 150 × 2s = 300s, which is ≥ backend LOAD_HARD_TIMEOUT (300s).
+    it('uses default maxRetries of 60 when not specified (60 × 5s = 300s ≥ backend timeout)', () => {
+      // This is a sanity check: the composable defaults to 60 retries.
+      // 60 × 5s = 300s, which is ≥ backend LOAD_HARD_TIMEOUT (300s).
       const poller = useHealthPoll()
       expect(poller.status.value).toBe('loading')
       expect(poller.modelLoaded.value).toBe(false)
     })
   })
-
   describe('SPA navigation (AC-4)', () => {
     it('navigating between pages does not restart polling', async () => {
       global.fetch = vi.fn(() => Promise.resolve({

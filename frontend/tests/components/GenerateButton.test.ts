@@ -46,7 +46,7 @@ describe('GenerateButton', () => {
     expect(wrapper.text()).not.toContain('Processing')
   })
 
-  it('shows "Processing Model..." when generating', () => {
+  it('shows "Generating Speech..." when generating (model is loaded, synthesis in progress)', () => {
     const wrapper = mount(GenerateButton, {
       props: {
         isGenerating: true,
@@ -55,8 +55,8 @@ describe('GenerateButton', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Processing Model...')
-    expect(wrapper.text()).not.toContain('Generate Speech')
+    expect(wrapper.text()).toContain('Generating Speech...')
+    expect(wrapper.text()).not.toContain('Processing')
   })
 
   it('emits click event when button is clicked', async () => {
