@@ -760,7 +760,7 @@ describe('Full page integration', () => {
 
     // Verify all expected props are present
     const expectedProps = [
-      'textInput', 'selectedSpeaker', 'speedValue', 'isGenerating',
+      'textInput', 'selectedVoice', 'speedValue', 'isGenerating',
       'playerVisible', 'audioUrl', 'isPlaying', 'isPaused',
       'currentTime', 'duration', 'modelStatus', 'isValid',
       'speakerVoices', 'selectedVoiceName'

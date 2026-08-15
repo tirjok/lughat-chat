@@ -85,6 +85,48 @@ beforeEach(() => {
   global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }))
 })
 
+// ─── ISSUE-006: index.vue uses selectedVoice (not selectedSpeaker) ──
+
+describe('index.vue — ISSUE-006 state rename', () => {
+  it('When template is parsed then uses selected-voice event binding (not selected-speaker)', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const sourcePath = path.join(process.cwd(), 'app/pages/index.vue')
+    const source = fs.readFileSync(sourcePath, 'utf-8')
+
+    // The template should NOT contain @update:selected-speaker
+    expect(source).not.toContain('@update:selected-speaker')
+    // The template SHOULD contain @update:selected-voice
+    expect(source).toContain('@update:selected-voice')
+  })
+
+  it('When script is parsed then uses selectedVoice state (not selectedSpeaker)', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const sourcePath = path.join(process.cwd(), 'app/pages/index.vue')
+    const source = fs.readFileSync(sourcePath, 'utf-8')
+
+    // The script should NOT contain selectedSpeaker
+    expect(source).not.toContain('selectedSpeaker')
+    // The script SHOULD contain selectedVoice
+    expect(source).toContain('selectedVoice')
+  })
+
+  it('When handleSynthesize is called then passes { text, language: "ar", voice } (no speaker/speed/seed)', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const sourcePath = path.join(process.cwd(), 'app/pages/index.vue')
+    const source = fs.readFileSync(sourcePath, 'utf-8')
+
+    // Verify synthesize call uses new contract
+    expect(source).toContain('text: textInput.value')
+    expect(source).toMatch(/language: 'ar'/)
+    expect(source).toContain('voice: selectedVoice.value')
+    // Verify old fields are NOT in the synthesize call
+    expect(source).not.toContain('speaker:')
+    expect(source).not.toMatch(/seed:\s*42/)
+  })
+})
 // ─── Behavioral Tests (black-box: rendered component tree, emitted events) ──
 
 describe('index.vue', () => {

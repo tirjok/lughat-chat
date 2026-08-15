@@ -15,7 +15,7 @@ import type { Voice } from '../composables/useVoices'
 
 interface Props {
   textInput: string
-  selectedSpeaker: string
+  selectedVoice: string
   speedValue: number
   isGenerating: boolean
   playerVisible: boolean
@@ -31,7 +31,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:textInput' | 'update:selectedSpeaker', value: string): void
+  (e: 'update:textInput' | 'update:selectedVoice', value: string): void
   (e: 'update:speedValue' | 'seek', ratio: number): void
   (e: 'synthesize' | 'clearText' | 'closePlayer' | 'toggle' | 'download'): void
   (e: 'setAudioRef', ref: HTMLAudioElement | null): void
@@ -156,9 +156,9 @@ watch(audioTemplateRef, (el) => {
         <div class="flex flex-col gap-4">
           <!-- Voice Selection -->
           <VoiceSelector
-            :model-value="selectedSpeaker"
+            :model-value="selectedVoice"
             :voices="speakerVoices"
-            @update:model-value="emit('update:selectedSpeaker', $event)"
+            @update:model-value="emit('update:selectedVoice', $event)"
           />
 
           <!-- Speed Control -->

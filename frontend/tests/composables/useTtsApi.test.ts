@@ -6,8 +6,8 @@ describe('useTtsApi', () => {
     vi.clearAllMocks()
   })
 
-  describe('#sanity synthesize', () => {
-    it('When text and speaker are provided then sends correct POST body', async () => {
+  describe('new SynthesisRequest interface (ISSUE-006)', () => {
+    it('When synthesize is called with text, language, and voice then sends POST body with language and voice (no speaker/speed/seed)', async () => {
       // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
@@ -16,24 +16,20 @@ describe('useTtsApi', () => {
       }))
       const { synthesize } = useTtsApi()
       // Act
-      await synthesize({ text: 'مرحبا', speaker: 'female', speed: 1.2 })
+      await synthesize({ text: 'مرحبا', language: 'ar', voice: 'female' })
       // Assert
-      expect(fetch).toHaveBeenCalledWith(
-        '/api/generate',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: 'مرحبا',
-            speaker: 'female',
-            speed: 1.2,
-            language: 'ar'
-          })
-        })
-      )
+      const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
+      expect(body).toEqual({
+        text: 'مرحبا',
+        language: 'ar',
+        voice: 'female'
+      })
+      expect(body).not.toHaveProperty('speaker')
+      expect(body).not.toHaveProperty('speed')
+      expect(body).not.toHaveProperty('seed')
     })
 
-    it('When speaker is not provided then sends undefined speaker', async () => {
+    it('When synthesize is called with only text then defaults language to "ar" and omits voice', async () => {
       // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
@@ -45,7 +41,52 @@ describe('useTtsApi', () => {
       await synthesize({ text: 'Hello' })
       // Assert
       const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
-      expect(body.speaker).toBeUndefined()
+      expect(body.text).toBe('Hello')
+      expect(body.language).toBe('ar')
+      expect(body).not.toHaveProperty('voice')
+      expect(body).not.toHaveProperty('speaker')
+      expect(body).not.toHaveProperty('speed')
+      expect(body).not.toHaveProperty('seed')
+    })
+
+    it('When text and voice are provided then sends correct POST body', async () => {
+      // Arrange
+      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob)
+      }))
+      const { synthesize } = useTtsApi()
+      // Act
+      await synthesize({ text: 'مرحبا', voice: 'female', language: 'ar' })
+      // Assert
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/generate',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: 'مرحبا',
+            voice: 'female',
+            language: 'ar'
+          })
+        })
+      )
+    })
+
+    it('When voice is not provided then omits voice from POST body', async () => {
+      // Arrange
+      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob)
+      }))
+      const { synthesize } = useTtsApi()
+      // Act
+      await synthesize({ text: 'Hello' })
+      // Assert
+      const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
+      expect(body).not.toHaveProperty('voice')
     })
 
     it('When custom voice name is provided then sends it as a plain string', async () => {
@@ -57,13 +98,13 @@ describe('useTtsApi', () => {
       }))
       const { synthesize } = useTtsApi()
       // Act
-      await synthesize({ text: 'Hello', speaker: 'ahmed_ksa' })
+      await synthesize({ text: 'Hello', voice: 'ahmed_ksa' })
       // Assert
       const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
-      expect(body.speaker).toBe('ahmed_ksa')
+      expect(body.voice).toBe('ahmed_ksa')
     })
 
-    it('When speed is not provided then defaults to 1.0', async () => {
+    it('When language is provided then includes it in POST body', async () => {
       // Arrange
       const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
       global.fetch = vi.fn(() => Promise.resolve({
@@ -72,10 +113,10 @@ describe('useTtsApi', () => {
       }))
       const { synthesize } = useTtsApi()
       // Act
-      await synthesize({ text: 'Hello' })
+      await synthesize({ text: 'Hello', language: 'en' })
       // Assert
       const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
-      expect(body.speed).toBe(1.0)
+      expect(body.language).toBe('en')
     })
 
     it('When language is not provided then always sends "ar"', async () => {
@@ -105,36 +146,6 @@ describe('useTtsApi', () => {
       const result = await synthesize({ text: 'Hello' })
       // Assert
       expect(result).toBeInstanceOf(Blob)
-    })
-
-    it('When seed is provided then includes it in POST body', async () => {
-      // Arrange
-      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
-      global.fetch = vi.fn(() => Promise.resolve({
-        ok: true,
-        blob: () => Promise.resolve(mockBlob)
-      }))
-      const { synthesize } = useTtsApi()
-      // Act
-      await synthesize({ text: 'Hello', seed: 123 })
-      // Assert
-      const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
-      expect(body.seed).toBe(123)
-    })
-
-    it('When seed is not provided then omits it from POST body', async () => {
-      // Arrange
-      const mockBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
-      global.fetch = vi.fn(() => Promise.resolve({
-        ok: true,
-        blob: () => Promise.resolve(mockBlob)
-      }))
-      const { synthesize } = useTtsApi()
-      // Act
-      await synthesize({ text: 'Hello' })
-      // Assert
-      const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
-      expect(body.seed).toBeUndefined()
     })
   })
 

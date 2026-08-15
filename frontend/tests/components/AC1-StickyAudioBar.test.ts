@@ -128,7 +128,7 @@ describe('AC-1: DesktopPanels renders StickyAudioBar, not AudioPlayerPanel', () 
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
@@ -157,7 +157,7 @@ describe('AC-1: DesktopPanels renders StickyAudioBar, not AudioPlayerPanel', () 
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: false,
@@ -214,7 +214,7 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
@@ -247,7 +247,7 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
@@ -279,7 +279,7 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
@@ -313,7 +313,7 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
@@ -347,7 +347,7 @@ describe('AC-2: Audio module data flow to StickyAudioBar', () => {
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 0.75,
         isGenerating: false,
         playerVisible: true,
@@ -382,7 +382,7 @@ describe('AC-4: Synthesis workflow preserved', () => {
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'مرحبا بالعالم',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: false,
@@ -433,7 +433,7 @@ describe('AC-4: Synthesis workflow preserved', () => {
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: true,
@@ -465,7 +465,7 @@ describe('AC-5: Panel layout — panels gain vertical space', () => {
     const wrapper = mount(DesktopPanels, {
       props: {
         textInput: 'Hello world',
-        selectedSpeaker: 'voice1',
+        selectedVoice: 'voice1',
         speedValue: 1.0,
         isGenerating: false,
         playerVisible: false,

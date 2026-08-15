@@ -41,20 +41,20 @@ const { voices: speakerVoices } = useVoices()
 
 // ── Form state ──────────────────────────────────────────────────
 const textInput = shallowRef('')
-const selectedSpeaker = shallowRef('')
+const selectedVoice = shallowRef('')
 const speedValue = shallowRef(1.0)
 const isGenerating = shallowRef(false)
 const playerVisible = shallowRef(false)
 
 // Track selected voice for display
 const selectedVoiceName = computed(() => {
-  const voice = speakerVoices.value.find(v => v.id === selectedSpeaker.value)
+  const voice = speakerVoices.value.find(v => v.id === selectedVoice.value)
   return voice ? voice.name : ''
 })
 
 watch(speakerVoices, (v) => {
-  if (!selectedSpeaker.value && v.length > 0) {
-    selectedSpeaker.value = v[0]!.id
+  if (!selectedVoice.value && v.length > 0) {
+    selectedVoice.value = v[0]!.id
   }
 }, { immediate: true })
 
@@ -105,9 +105,8 @@ async function handleSynthesize() {
   try {
     const audioBlob = await synthesize({
       text: textInput.value,
-      speaker: selectedSpeaker.value,
-      speed: speedValue.value,
-      seed: 42
+      language: 'ar',
+      voice: selectedVoice.value
     })
 
     audioModule.load(audioBlob)
@@ -156,7 +155,7 @@ onUnmounted(() => audioModule.dispose())
 // ── Derived data for child components ───────────────────────────
 const mobileScreenProps = computed(() => ({
   textInput: textInput.value,
-  selectedSpeaker: selectedSpeaker.value,
+  selectedVoice: selectedVoice.value,
   speedValue: speedValue.value,
   isGenerating: isGenerating.value,
   playerVisible: playerVisible.value,
@@ -203,7 +202,7 @@ const desktopPanelProps = computed(() => ({
       v-if="mobileScreenProps"
       v-bind="mobileScreenProps"
       @update:text-input="textInput = $event"
-      @update:selected-speaker="selectedSpeaker = $event"
+      @update:selected-voice="selectedVoice = $event"
       @update:speed-value="speedValue = $event"
       @synthesize="handleSynthesize"
       @clear-text="handleClearText"
@@ -219,7 +218,7 @@ const desktopPanelProps = computed(() => ({
       v-if="desktopPanelProps"
       v-bind="desktopPanelProps"
       @update:text-input="textInput = $event"
-      @update:selected-speaker="selectedSpeaker = $event"
+      @update:selected-voice="selectedVoice = $event"
       @update:speed-value="speedValue = $event"
       @synthesize="handleSynthesize"
       @clear-text="handleClearText"

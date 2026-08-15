@@ -2,9 +2,8 @@
 
 export interface SynthesisRequest {
   text: string
-  speaker?: string
-  speed?: number
-  seed?: number
+  language?: string
+  voice?: string
 }
 
 export interface SynthesisResponse {
@@ -37,10 +36,8 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
         },
         body: JSON.stringify({
           text: request.text,
-          speaker: request.speaker,
-          speed: request.speed || 1.0,
-          seed: request.seed,
-          language: 'ar'
+          voice: request.voice,
+          language: request.language ?? 'ar'
         })
       })
     } catch {

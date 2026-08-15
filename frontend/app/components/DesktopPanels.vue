@@ -14,7 +14,7 @@ import type { Voice } from '../composables/useVoices'
 // TODO: migrated from studio-900/sunrise-orange/sunrise-magenta (see ISSUE-014)
 interface Props {
   textInput: string
-  selectedSpeaker: string
+  selectedVoice: string
   speedValue: number
   isGenerating: boolean
   playerVisible: boolean
@@ -30,7 +30,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:textInput' | 'update:selectedSpeaker', value: string): void
+  (e: 'update:textInput' | 'update:selectedVoice', value: string): void
   (e: 'update:speedValue' | 'seek', ratio: number): void
   (e: 'synthesize' | 'clearText' | 'closePlayer' | 'toggle' | 'download'): void
   (e: 'setAudioRef', ref: HTMLAudioElement | null): void
@@ -81,9 +81,9 @@ const isOverLimit = computed(() => charCount.value > 3000)
       <div class="flex-1 p-3 overflow-y-auto flex flex-col">
         <div class="flex flex-col gap-4 fade-up delay-200">
           <VoiceSelector
-            :model-value="selectedSpeaker"
+            :model-value="selectedVoice"
             :voices="speakerVoices"
-            @update:model-value="emit('update:selectedSpeaker', $event)"
+            @update:model-value="emit('update:selectedVoice', $event)"
           />
           <SpeedSlider
             :model-value="speedValue"
