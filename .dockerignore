@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+.output/
+.dist/
+.nuxt/
+
+# Environment
+.env
+.env.*
+
+# Git
+.git/
+.gitignore
+
+# Docker (not needed in build context)
+docker-compose.yml
+Dockerfile
+
+# Backend (not needed in frontend image)
+backend/
+
+# Docs
+docs/
+scripts/
