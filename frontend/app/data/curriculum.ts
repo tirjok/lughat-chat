@@ -69,7 +69,7 @@ export type ActivityType =
 export const curriculum: CurriculumLevel[] = [
   {
     code: 'A1',
-    title: 'Foundation',
+    title: 'Beginner',
     arabicTitle: 'المستوى المبتدئ',
     description: 'Memorize ~500 Arabic root words, handle basic everyday interactions with memorized phrases, reduce language-switching, speak at ~20–40 WPM, and read at <30 WPM.',
     lessonRange: 'Lessons 1–10',
@@ -314,7 +314,7 @@ export const curriculum: CurriculumLevel[] = [
   },
   {
     code: 'A2',
-    title: 'Building',
+    title: 'Elementary',
     arabicTitle: 'المستوى الأساسي',
     description: 'Memorize ~1200 root words, transition from relying on set phrases to constructing your own basic sentences with correct tenses, minimize English usage, speak at ~40–60 WPM, and read at ~30–60 WPM.',
     lessonRange: 'Lessons 11–26',

@@ -28,7 +28,6 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
-
   routeRules: {
     '/': { prerender: true },
     '/dashboard': { prerender: false },

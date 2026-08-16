@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getLessonById } from '../../../../data/curriculum'
+import { getLessonById } from '~/data/curriculum'
 
 // Route access — deferred inside computed getters to avoid
 // NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).

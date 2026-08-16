@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import Dashboard from '~/pages/dashboard.vue'
+import Dashboard from '~/pages/dashboard/index.vue'
 
 // ─── Route Mocking ──────────────────────────────────────────────────────
 // GlobalNavbar accesses route via useNuxtApp — stub it so the navbar
@@ -49,7 +49,7 @@ function getWrapper(path: string) {
 
 // ─── Behavioral Tests ───────────────────────────────────────────────────
 
-describe('dashboard.vue', () => {
+describe('dashboard/index.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

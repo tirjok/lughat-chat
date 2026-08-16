@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { curriculum, getTotalLessonCount } from '../data/curriculum'
+import { curriculum, getTotalLessonCount } from '~/data/curriculum'
 
 const levels = curriculum
 
@@ -134,7 +134,7 @@ function gradientToBg(token: string): string {
                   <span class="text-white/90 text-xs font-medium">{{ level.title }}</span>
                 </div>
                 <h2 class="text-white font-bold text-lg">
-                  {{ level.arabicTitle }}
+                  {{ level.title }}
                 </h2>
               </div>
             </div>

@@ -18,7 +18,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { shallowMount, mount } from '@vue/test-utils'
-import Dashboard from '~/pages/dashboard.vue'
+import Dashboard from '~/pages/dashboard/index.vue'
 import LessonHero from '~/components/LessonHero.vue'
 import LessonPage from '~/pages/dashboard/level/[level]/[lesson].vue'
 import Index from '~/pages/index.vue'
