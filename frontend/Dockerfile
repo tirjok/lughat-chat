@@ -1,32 +1,32 @@
-# Stage 1: Build the Nuxt.js application
 FROM node:24-alpine AS builder
 
 # Install pnpm globally
 RUN corepack enable && corepack prepare pnpm@11.21.0 --activate
 
+# Workspace root — needed for pnpm-workspace.yaml + pnpm-lock.yaml
 WORKDIR /app
 
-# Copy package files first (for better layer caching)
+# Copy workspace config and root package.json first (layer caching)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Install dependencies
+# Install workspace dependencies (resolves catalog: refs in frontend/package.json)
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY . .
+# Copy frontend source (build only the frontend workspace package)
+COPY frontend/ ./frontend/
 
-# Build the application (produces .output directory)
-RUN pnpm build
+# Build the frontend workspace package
+RUN cd frontend && pnpm build
 
 # Stage 2: Serve with Nginx + reverse proxy to backend
 FROM nginx:alpine AS production
 
 # Remove default nginx config and copy custom config
 RUN rm /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built Nuxt files
-COPY --from=builder /app/.output/public /usr/share/nginx/html
+COPY --from=builder /app/frontend/.output/public /usr/share/nginx/html
 
 EXPOSE 80
 

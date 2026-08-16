@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+.output/
+.dist/
+
+# Nuxt build cache
+.nuxt/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.*
+
+# Git
+.git/
+.gitignore
+
+# Docker
+docker-compose.yml
+Dockerfile
+
+# Docs / specs / ADRs
+docs/
+specs/
+adr/
+architecture/
+proto/
+PLAN.md
+CONTEXT.md
+AGENTS.md
+README.md
+
+# Scripts (not needed in image)
+scripts/
+
+# Backend (not needed in frontend image)
+backend/

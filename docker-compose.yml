@@ -33,9 +33,8 @@ services:
   # Frontend service - Nuxt.js + Nginx (reverse proxy to backend)
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: lughat-frontend
+      context: .
+      dockerfile: frontend/Dockerfile
     ports:
       - "9001:80"  # Host port 9001 → container port 80
     depends_on:
