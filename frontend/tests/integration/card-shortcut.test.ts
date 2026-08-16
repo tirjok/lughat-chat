@@ -24,9 +24,9 @@ describe('Card shortcut', () => {
     expect(match![1]).not.toContain('rounded-lg')
   })
 
-  it('dashboard.vue cards use the card class (which resolves to rounded-xl)', () => {
+  it('dashboard/index.vue cards use the card class (which resolves to rounded-xl)', () => {
     const content = readFileSync(
-      resolve(__dirname, '../../app/pages/dashboard.vue'),
+      resolve(__dirname, '../../app/pages/dashboard/index.vue'),
       'utf-8'
     )
     expect(content).toContain('card')

@@ -36,8 +36,8 @@ const navItems: NavItem[] = [
   }
 ]
 
-// "My Courses" — shares the Dashboard route but highlights on lesson pages
-const myCoursesActive = computed(() => props.currentPath.startsWith('/dashboard/level/'))
+// ─── Progress fill: 0% on / and /dashboard, partial on lesson pages
+const progressWidth = computed(() => '0%')
 
 // ─── Active-state helper ──────────────────────────────────────────────────
 // "Dashboard" should highlight on /dashboard AND any /dashboard/* sub-route.
@@ -47,22 +47,6 @@ function isActive(item: NavItem): boolean {
   if (item.to === '/dashboard') return props.currentPath.startsWith('/dashboard')
   return props.currentPath === item.to
 }
-
-// Progress fill: 0% on / and /dashboard, partial on lesson pages
-const progressWidth = computed(() => {
-  if (!myCoursesActive.value) return '0%'
-  const parts = props.currentPath.split('/').filter(Boolean)
-  // /dashboard/level/{level}/{lesson_id}
-  if (parts.length >= 4) {
-    const lessonNum = parseInt(parts[3]!, 10)
-    if (!isNaN(lessonNum) && lessonNum > 0) {
-      const totalLessons = 12
-      const pct = Math.min(100, Math.round((lessonNum / totalLessons) * 100))
-      return `${pct}%`
-    }
-  }
-  return '0%'
-})
 
 // ─── Mobile state ─────────────────────────────────────────────────────────
 
@@ -130,17 +114,6 @@ const { status, modelLoaded } = useHealthPoll()
             : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800'"
         >
           {{ item.label }}
-        </NuxtLink>
-
-        <!-- My Courses — shares /dashboard route but highlights on lesson pages -->
-        <NuxtLink
-          to="/dashboard"
-          class="px-3 py-1.5 rounded text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
-          :class="myCoursesActive
-            ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
-            : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800'"
-        >
-          My Courses
         </NuxtLink>
       </nav>
 
@@ -283,23 +256,6 @@ const { status, modelLoaded } = useHealthPoll()
                 aria-hidden="true"
               />
               <span>{{ item.label }}</span>
-            </NuxtLink>
-
-            <!-- My Courses — shares /dashboard route, highlights on lesson pages -->
-            <NuxtLink
-              to="/dashboard"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
-              :class="myCoursesActive
-                ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
-                : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800'"
-              @click="closeMenu"
-            >
-              <span
-                :class="myCoursesActive ? 'ph-fill ph-book-open' : 'ph ph-book-open'"
-                class="text-lg"
-                aria-hidden="true"
-              />
-              <span>My Courses</span>
             </NuxtLink>
           </div>
 

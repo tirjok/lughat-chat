@@ -125,19 +125,7 @@ describe('GlobalNavbar', () => {
       const classes = firstStub.classes().join(' ')
       expect(classes).toContain('text-primary-600')
     })
-
-    it('When on /dashboard/level/a1/5 then My Courses link stub is highlighted (active classes)', () => {
-      // Arrange
-      const wrapper = mountNavbar('/dashboard/level/a1/5')
-      // Act
-      const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
-      const myCoursesStub = dashboardStubs[1]
-      // Assert
-      const classes = myCoursesStub.classes().join(' ')
-      expect(classes).toContain('text-primary-600')
-    })
-
-    it('When on /dashboard/level/a1/5 then the Dashboard nav link (not just My Courses) is highlighted', () => {
+    it('When on /dashboard/level/a1/5 then the Dashboard nav link is highlighted', () => {
       // Arrange
       const wrapper = mountNavbar('/dashboard/level/a1/5')
       // Act

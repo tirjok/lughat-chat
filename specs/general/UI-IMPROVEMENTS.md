@@ -1,290 +1,287 @@
-# UI/UX Improvements — LughatChat Index Page
+# UI/UX Improvements — Dashboard Page
 
 ## Summary
 
-Review of the LughatChat Arabic TTS main page (desktop + mobile) conducted on 2026-08-09. The interface is visually polished with a premium dark-theme aesthetic, strong RTL Arabic support, and a well-structured two-panel desktop layout with a split-screen mobile layout. However, the review identified several critical accessibility gaps, usability frictions in the mobile experience, and structural inconsistencies that undermine the premium feel.
+Review of the Dashboard page (`dashboard.vue`) conducted on 2026-08-16. The page is a curriculum overview with a hero section (overall progress ring + "Continue Learning" CTA) and a grid of CEFR-level cards. Visually, the gradient tile headers are attractive and the card layout is clean. However, the review identified critical accessibility gaps, misleading static content (hardcoded zeros), structural redundancy, and interaction design issues that undermine the user's ability to understand and act on their learning progress.
 
 ---
 
 ## Critical Issues
 
-### Issue 1: `dir="ltr"` on Root Element Contradicts Arabic-First Content
+### Issue 1: Hardcoded `0` Values Make Progress Data Deceptive
 
-**Current State**: The root wrapper on `index.vue` line 183 sets `dir="ltr"` explicitly:
+**Current State**: Lines 8, 148, 150, 157 all use the literal `0` instead of any real completion data:
 ```html
-<div ... dir="ltr">
+const completedLessons = computed(() => 0)
+<!-- Card body -->
+<span>{{ 0 }} / {{ level.lessons.length }} lessons</span>
+<span>{{ 0 >= level.lessons.length ? 'Completed' : 'In Progress' }}</span>
+:style="{ width: level.lessons.length > 0 ? `${(0 / level.lessons.length) * 100}%` : '0%' }"
 ```
 
-**Problem**: The textarea content is Arabic (RTL), the placeholder is Arabic, and the application's entire purpose is Arabic text-to-speech. Forcing `dir="ltr"` on the root while individual textareas use `dir="rtl"` creates a layout paradox: flexbox ordering, text alignment, and icon placement all follow LTR conventions, fighting against the RTL nature of the content. This causes visual confusion — icons like "Generate Speech" with an arrow pointing up-right (`ph-arrow-up-right`) point in the wrong direction for Arabic readers.
+**Problem**: Every card shows "0 / N lessons" with a 0% progress bar and "In Progress" status — always, forever. The dashboard's primary purpose is to show learning progress, but the data is completely static. This creates a **misleading mental model**: users see a dashboard that looks functional but provides zero information. It's worse than no dashboard — it actively communicates "you've made no progress" even if progress tracking is wired up later.
 
-**Recommendation**: Set `dir="rtl"` on the root wrapper. Swap `flex-row` to `flex-row-reverse` (or rely on RTL flexbox mirroring) on desktop. Move the control deck (currently `order-2` on mobile, `order-1` on desktop) to follow RTL reading flow: control deck on the right, canvas on the left. This is the single most impactful RTL fix for the interface.
+**Recommendation**: Replace all `0` literals with a real completion-tracking composable (e.g., `useLessonProgress()`). Until that composable exists, show a clear "No progress data yet" state or a loading skeleton. Do not ship a progress dashboard with hardcoded zeros — users will assume the app is broken.
 
-**Impact**: Corrects all layout mirroring for Arabic readers. Icons, navigation, and panel ordering align with Arabic reading direction.
-
-**Implementation Notes**: Requires flipping panel order, swapping `flex-row` → `flex-row-reverse` (or relying on CSS logical properties), and reversing the "arrow-up-right" icon to "arrow-up-left" (or using `ph-arrow-up-right` with `dir="rtl"` which should auto-mirror).
+**Impact**: Restores trust in the dashboard as a functional progress tracker.
 
 ---
 
-### Issue 2: Voice Selector Dropdown Uses `title` Instead of `aria-label` on Preview Button
+### Issue 2: "Continue Learning" Button Links to `/dashboard` (Itself)
 
-**Current State**: The voice preview button in `VoiceSelector.vue` (line 197) uses `title="Preview Voice"`:
+**Current State**: Line 96:
 ```html
-<span class="..." title="Preview Voice" @click.stop="previewVoice(voice)">
-  <span class="ph-fill ph-play text-sm" aria-hidden="true" />
+<NuxtLink to="/dashboard" class="...">
+  Continue Learning
+</NuxtLink>
+```
+
+**Problem**: The CTA links to the same page it's already on. This is a **dead link** — clicking it navigates to the current page, causing a full page reload with no user benefit. For a dashboard whose purpose is to guide users to lessons, having the primary action button do nothing is a severe usability failure.
+
+**Recommendation**: The button should link to the first incomplete level, or the user's first "In Progress" lesson. If no progress exists yet, link to `/dashboard/level/A1` (the first level). The label "Continue Learning" implies forward motion — the destination must match.
+
+**Impact**: The primary CTA becomes functional and drives lesson engagement.
+
+---
+
+### Issue 3: Progress Ring Has No Accessible Label
+
+**Current State**: Lines 60-84 render an SVG circular progress indicator with a percentage number centered inside:
+```html
+<svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+  <circle ... />
+  <circle ... :stroke-dasharray="`${overallProgress * 0.974}, 100`" />
+</svg>
+<span class="absolute inset-0 ...">{{ overallProgress }}%</span>
+```
+
+**Problem**: The SVG has no `role`, no `aria-label`, no `aria-valuenow`, and no `aria-valuemax`. Screen readers will announce "SVG" with no context. The percentage text is inside a `<span>` with no ARIA linkage to the SVG. The visual progress is invisible to assistive technology users.
+
+**Recommendation**: Add `role="img"` and `aria-label="Overall progress: {{ overallProgress }} percent"` to the SVG. The centered percentage text is sufficient as a visual label; it does not need a separate accessible label if the SVG itself is properly labeled.
+
+**Impact**: Progress ring becomes accessible to screen reader users.
+
+---
+
+### Issue 4: Card Content Is Not Keyboard-Focusable, CTA Buttons Within Are
+
+**Current State**: Each level card is a `<NuxtLink>` (line 110), which is correct — the entire card is clickable. However, the card body (lines 142-160) contains a progress bar that is purely decorative but visually communicates progress. There is no `aria-label` on the progress bar to indicate it is a visual progress indicator.
+
+**Problem**: While the card-as-link pattern is correct, the progress bar inside has no semantic meaning. Keyboard users who tab to the link get the card's URL, but no information about what the card represents beyond its gradient header. The progress bar is a visual-only element with no `role="progressbar"` or `aria-label`, making it invisible to assistive technology.
+
+**Recommendation**: Add `role="progressbar"` and `aria-label` to the progress bar `<div>` (line 154-158). Example: `aria-label="Progress: 0% — 0 of {{ level.lessons.length }} lessons completed"`.
+
+**Impact**: Keyboard and screen reader users can understand each card's progress state without visual inspection.
+
+---
+
+### Issue 5: Arabic Watermark Text Is Visible and Distracting
+
+**Current State**: Lines 122-127:
+```html
+<span class="absolute top-2 right-3 font-arabic text-white/30 text-2xl select-none" aria-hidden="true">
+  {{ level.arabicTitle }}
 </span>
 ```
 
-**Problem**: The preview button has no visible label, no `aria-label`, and no `role="button"`. Screen readers will only announce "play icon" — users cannot discover this button exists. The `title` attribute is not announced by screen readers. Additionally, `previewVoice()` calls `showToast()` with a message that is not accessible to non-visual users.
+**Problem**: The Arabic title watermark is at `text-white/30` (30% opacity) on top of a dark gradient background. At 30% opacity on dark gradients, the text is **too visible** — it reads as content rather than decoration. Users scanning the card will notice the Arabic title twice: once as the watermark (large, right-aligned) and once as the actual title (smaller, left-aligned below the badge). This creates visual confusion about which is the primary label.
 
-**Recommendation**: Add `aria-label="Preview ${voice.name} voice"` to the preview button. Replace `showToast()` with a live region announcement or a proper audio playback with accessible controls. Add `role="button"` explicitly if the element is not a native `<button>`.
+**Recommendation**: Reduce opacity to `text-white/10` (10%) or remove the watermark entirely. If keeping it as a design element, make it significantly more subtle — it should be felt, not read. Alternatively, position it more decoratively (e.g., rotated, or as a background pattern) rather than as legible text.
 
-**Impact**: Voice preview becomes discoverable and usable by keyboard and screen reader users.
-
----
-
-### Issue 3: Generate Button Has No Accessible Label When Disabled
-
-**Current State**: The `GenerateButton` component (lines 17-60) renders a `<button :disabled="disabled">` but when disabled, there is no `aria-label` or `title` explaining *why* it is disabled. The button text changes to "Processing Model..." when the model is loading, but when `!isValid` (no text entered), the button is disabled with no explanation.
-
-**Problem**: A disabled button with no accessible label is invisible to screen readers. Users who cannot see the UI cannot know why they cannot generate speech. The validation error is only shown in a toast (which is also not reliably announced).
-
-**Recommendation**: Add conditional `aria-label` to the disabled button: "Generate Speech — text is required" or "Generate Speech — model is not ready". When the model is loading, the text "Processing Model..." is adequate. When no text is entered, the aria-label should explain the validation state.
-
-**Impact**: Disabled state becomes semantically meaningful to assistive technology users.
-
----
-
-### Issue 4: Mobile Audio Player Lacks Keyboard Focus Management
-
-**Current State**: The mobile audio player (lines 192-294 in `MobileSplitScreen.vue`) renders inline below the control deck when `playerVisible && audioUrl`. The play/pause, download, and close buttons are native `<button>` elements, but there is no focus trap, no visible focus indicator, and no `tabindex` management when the player appears.
-
-**Problem**: When the mobile audio card appears, the user's focus does not move to the new player controls. Keyboard users continue tabbing from where they were (e.g., the textarea). The player is invisible to keyboard navigation until they happen to tab to the right place. No `aria-live` region announces the player's appearance.
-
-**Recommendation**: When `playerVisible` becomes true, programmatically move focus to the play/pause button. Add `aria-live="polite"` to a region that announces "Audio player visible" when the card appears. Ensure the player has a visible focus ring (currently missing — no `focus:ring` classes on any button).
-
-**Impact**: Keyboard and screen reader users can discover and interact with the audio player when it appears.
-
----
-
-### Issue 5: Sticky Audio Bar on Desktop Missing Keyboard Shortcut Announcements
-
-**Current State**: The `StickyAudioBar` component (lines 78-99) registers keyboard shortcuts (` `, `ArrowLeft`, `ArrowRight`, `Escape`) but these are only active when `shortcutsEnabled` is true. The shortcuts are not documented visually in the bar itself, and pressing them produces no accessible feedback.
-
-**Problem**: Keyboard shortcuts are invisible to users who do not see the UI. The spacebar toggles play/pause, arrow keys seek — but there is no accessible announcement when these shortcuts fire. The bar also has no visible help text listing available shortcuts.
-
-**Recommendation**: Add an `aria-live="assertive"` region that announces the action when a shortcut fires (e.g., "Paused", "Seeked forward 5 seconds", "Audio player closed"). Display a keyboard shortcut help indicator (e.g., "?" icon) that opens a tooltip/list of available shortcuts.
-
-**Impact**: Keyboard power users get feedback; screen reader users are informed of shortcut actions.
+**Impact**: Reduces visual clutter; the actual Arabic title becomes the clear primary label.
 
 ---
 
 ## High Priority Improvements
 
-### Issue 6: Toast Notifications Are Not Announced to Screen Readers
+### Issue 6: Goal Text Is Redundant With Level Description
 
-**Current State**: Toast notifications (`ToastNotification.vue`) use `aria-live="polite"` on the container, but each toast message is rendered inside a `<p class="text-sm text-white">` without `role="status"` or `role="alert"`. The toast appears with a slide-in animation.
+**Current State**: Lines 144-146:
+```html
+<p class="text-sm text-stone-600 dark:text-stone-300 mb-3 line-clamp-3">
+  {{ level.goal }}
+</p>
+```
 
-**Problem**: Toast messages for errors (e.g., "Invalid text", "An unexpected error occurred") are critical user feedback but may not be reliably announced. The `aria-live="polite"` on the container is good, but individual toasts need `role="alert"` for errors and `role="status"` for info to ensure proper screen reader behavior.
+**Problem**: The `goal` field from curriculum data is a full paragraph (e.g., "Memorize ~500 Arabic root words, handle basic everyday interactions..."). Displaying this as a `line-clamp-3` card body text creates a wall of text that users will not read. The goal is educational content better suited for a detail view, not a summary card.
 
-**Recommendation**: Add `role="alert"` to error toasts and `role="status"` to info/success toasts. Ensure the toast container has `aria-atomic="true"` so screen readers announce the full message.
+**Recommendation**: Replace `level.goal` with `level.keySkills` — render the first key skill as a short, scannable line (e.g., "Greet people and introduce oneself."). Key skills are concise, action-oriented, and give users a clear sense of what each level offers without overwhelming them.
 
-**Impact**: Error and success feedback is reliably communicated to assistive technology users.
-
----
-
-### Issue 7: Character Counter Lacks Accessible State Communication
-
-**Current State**: The character count (`{{ charCount }} / 3000`) is displayed as plain text with color coding (red when over limit, amber when near limit). There is no `aria-live` region or `aria-describedby` linking the textarea to the counter.
-
-**Problem**: Screen reader users are not informed when they approach or exceed the 3000-character limit. The color change is purely visual. When the text exceeds 3000 characters, the synthesis is silently blocked (the button is disabled), but no accessible warning is provided.
-
-**Recommendation**: Add `aria-describedby="char-count"` to the textarea. Give the character counter `id="char-count"` and `role="status"`. When the character count exceeds 3000, use `aria-live="assertive"` to announce "Text exceeds maximum of 3000 characters."
-
-**Impact**: Users who cannot see color changes are informed about character limit status.
+**Impact**: Cards become scannable; users can quickly assess which level matches their needs.
 
 ---
 
-### Issue 8: Double-Bezel Pattern Creates Cognitive Overload
+### Issue 7: Status Label "In Progress" Is Always True (Misleading)
 
-**Current State**: Nearly every interactive element uses a "Double-Bezel" pattern: an outer shell (`rounded-[0.875rem] ring-1 ring-stone-300 ... p-0.5 bg-stone-100`) wrapping an inner core (`rounded-[calc(0.75rem-0.125rem)] bg-white ...`). This pattern appears on: GenerateButton, SpeedSlider, VoiceSelector, Clear button, AI Tools toolbar, shortcut hint, audio player, and StickyAudioBar.
+**Current State**: Lines 149-151:
+```html
+<span class="text-primary-600 dark:text-primary-400 font-medium text-xs uppercase tracking-wide">
+  {{ 0 >= level.lessons.length ? 'Completed' : 'In Progress' }}
+</span>
+```
 
-**Problem**: The double-bezel pattern adds visual noise and cognitive overhead without functional benefit. It creates a "nested container" mental model that is confusing — users perceive two layers of interaction when there is only one. The pattern is inconsistent: some elements use it, others don't. It also increases DOM depth unnecessarily, impacting render performance.
+**Problem**: Since `0` is hardcoded, this always evaluates to "In Progress" (unless a level has zero lessons, which none do). The label is **permanently misleading** — it tells users every level is in progress, even if they've completed all lessons. When real progress data is wired up, this logic is correct, but until then it communicates false information.
 
-**Recommendation**: Standardize on a single border/ring pattern. Choose either (a) a single ring with appropriate padding, or (b) the double-bezel for *primary* actions only (Generate button, Play button) and remove it from secondary elements (clear button, toolbar buttons, shortcut hint). Document the decision in the design system.
+**Recommendation**: When progress data is unavailable (the `0` state), render "Not Started" or omit the status label entirely. When real data exists, show "Completed" when `completed >= total` and "In Progress" otherwise. The conditional is correct; the input (`0`) is not.
 
-**Impact**: Reduces visual clutter, improves scan time, and creates a clearer visual hierarchy between primary and secondary actions.
-
----
-
-### Issue 9: AI Smart Tools Toolbar Buttons Are Non-Functional Placeholders
-
-**Current State**: The AI Smart Tools toolbar (lines 199-230 in `DesktopPanels.vue`) contains three buttons: "Translate", "Add Diacritics", and "Continue Script". Each has an emoji (`✨`) and a description in the `title` attribute. None of these buttons have any `@click` handler — they are dead UI.
-
-**Problem**: These buttons create user expectations that cannot be fulfilled. Users will click them expecting functionality. The sparkle emoji (`✨`) implies AI magic that does not exist. This is a "fake feature" — it damages trust when users discover the buttons do nothing.
-
-**Recommendation**: Either implement the functionality (translation via API, diacritics via NLP library, script continuation via LLM API) or remove the buttons entirely. If the features are planned but not ready, replace them with a disabled state and a tooltip: "Coming soon" rather than implying functionality.
-
-**Impact**: Restores user trust. Prevents frustration from clicking non-functional controls.
+**Impact**: Status labels accurately reflect the user's actual state.
 
 ---
 
-### Issue 10: Focus Halo Canvas Has Broken Logic
+### Issue 8: Card Grid Has Insufficient Spacing for Touch Targets
 
-**Current State**: The `FocusHaloCanvas` component (`FocusHaloCanvas.vue`, lines 20-28) attempts to find the textarea using `document.activeElement` and `document.querySelector('textarea[dir="rtl"]')`. However, `haloRef` is a `<div>` with `position: absolute; bottom: 0;` — it is positioned at the bottom of its container, not behind the textarea.
+**Current State**: Line 109:
+```html
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+```
 
-**Problem**: The halo is visually positioned at the bottom of the canvas area, not behind the textarea. When the user focuses the textarea (which may be anywhere vertically in the scrollable area), the glow appears at the wrong location. The component also does not update when the textarea scrolls — the halo stays fixed while the textarea moves.
+**Problem**: `gap-4` (16px) is tight for touch targets on mobile devices. While the entire card is a `<NuxtLink>`, the visual separation between cards is minimal. On touch devices, users may tap between cards expecting a gap, or accidentally trigger adjacent cards. The `lg:grid-cols-3` layout on desktop also creates narrow cards that compress the gradient header and body text.
 
-**Recommendation**: Either (a) position the halo absolutely behind the textarea element itself (not at the bottom of the container), or (b) remove the halo entirely as it provides no functional value and is visually confusing. If keeping the halo, bind its position to the textarea's scroll position.
+**Recommendation**: Increase to `gap-5` (20px) for better touch target isolation. On `lg`, consider `gap-6` (24px). Ensure minimum card width is `min-w-[280px]` to prevent excessive narrowing on wide screens with 3 columns.
 
-**Impact**: Eliminates a visual element that does not match user expectation, reducing confusion.
+**Impact**: Better touch target isolation; cards maintain readable proportions at all breakpoints.
+
+---
+
+### Issue 9: No Empty State or Onboarding Guidance
+
+**Current State**: The dashboard renders all 6 CEFR levels as cards, each showing "0 / N lessons" with 0% progress. There is no guidance for new users about what to do next.
+
+**Problem**: A new user landing on this dashboard sees six cards, all showing "In Progress" with 0% completion. There is no clear next step. The "Continue Learning" button (Issue 2) is broken. The hero section says "Track your progress" but there is no progress to track. This is a **cold start problem** — the dashboard has no onboarding state.
+
+**Recommendation**: When `completedLessons === 0 && overallProgress === 0`, show an onboarding state: a prominent "Start with A1 — Foundation" card (visually elevated above others), and a hero message: "Ready to start? Begin with A1 — Foundation level." The first level card could have a visual indicator (e.g., a small "Start Here" badge) to guide new users.
+
+**Impact**: New users get clear guidance on where to begin; reduces decision paralysis.
 
 ---
 
 ## Medium Priority Enhancements
 
-### Issue 11: Mobile Header Pill Floats Without Clear Purpose
+### Issue 10: Progress Bar Uses Hardcoded 0 Width
 
-**Current State**: On mobile, the header (`MobileSplitScreen.vue` lines 65-78) renders as a floating glass pill detached from edges with `mx-[max(0.75rem,...)] mt-[max(0.625rem,...)] rounded-full backdrop-blur-xl`.
-
-**Problem**: This floating pill takes up valuable screen real estate on an already small mobile canvas. It sits between the safe area and the canvas content, creating a visual gap that serves no function. The logo + status indicator could be integrated into the canvas header area without a floating container.
-
-**Recommendation**: On mobile, make the header flush with the top edge (respecting safe-area insets only). Remove the floating pill styling — it adds no value and consumes ~48px of vertical space that would otherwise extend the canvas.
-
-**Impact**: Gains ~48px of vertical canvas space on mobile devices.
-
----
-
-### Issue 12: Drag Divider Has Minimal Visual Feedback
-
-**Current State**: The mobile drag divider (lines 141-153 in `MobileSplitScreen.vue`) is a 16px-tall area with a single 1px line (`w-full h-px bg-stone-300 dark:bg-white/[0.06]`).
-
-**Problem**: The divider is nearly invisible, especially in dark mode where `bg-white/[0.06]` is barely perceptible. Users may not discover that they can resize the panels. There is no hover state, no cursor change, and no touch feedback.
-
-**Recommendation**: Make the divider more visible with a 2px line, add a subtle handle (two or three dots centered), and add `cursor: row-resize` / `cursor: grab`. On touch, show a subtle highlight. This is a discoverable interaction pattern.
-
-**Impact**: Increases discoverability of the resizeable panel feature on mobile.
-
----
-
-### Issue 13: Speed Slider Thumb Track Positioning (RESOLVED)
-
-**Current State**: The `SpeedSlider` (lines 46-72 in `SpeedSlider.vue`) previously used a native `<input type="range">` with a JavaScript-driven `linear-gradient` background. The gradient filled the entire input width, causing the filled color to extend past the native thumb — making the thumb visually appear off-center.
-
-**Resolution**: The component was rewritten to use a `<div>`-based track + fill + thumb (matching the `StickyAudioBar` progress bar pattern). The track is a `<div role="slider">` with three children: a background track div, a fill div whose `width` equals the percentage position, and an absolutely-positioned thumb div whose `left` is `calc(percentage% - 8px)` (half the 16px thumb width). This ensures the thumb center aligns exactly with the filled track edge.
-
-**Impact**: Thumb is now visually centered on the track fill at all values (0.5x → 2.0x). Interaction supports click on track and keyboard arrow keys (ArrowLeft/ArrowRight). Full ARIA attributes (`role="slider"`, `aria-valuemin`, `aria-valuemax`, `aria-valuenow`) for accessibility.
----
-
-### Issue 14: Voice Selector Preview Uses Toast Instead of Audio
-
-**Current State**: The `previewVoice()` function (line 50) calls `showToast()` with the message `"Playing 1-second preview of ${voice.name}..."` — but it does NOT actually play audio. It is a no-op that only shows a toast message.
-
-**Problem**: Users clicking the preview button expect to hear the voice. Getting only a toast message is misleading and breaks the mental model of a voice selector. This is functionally equivalent to Issue 9 (non-functional UI).
-
-**Recommendation**: Implement actual audio preview by fetching a short audio sample for each voice, or remove the preview button entirely. If the backend supports voice preview, wire it up. If not, remove the button and the "Preview Voice" tooltip.
-
-**Impact**: Removes broken interaction; if implemented, provides a valuable voice comparison feature.
-
----
-
-### Issue 15: Model Status Indicator Uses Pulsing Animation Inappropriately
-
-**Current State**: The `ModelStatusIndicator` (lines 26-47) applies `animate-pulse` to the status dot even in the "Ready" state:
+**Current State**: Lines 154-158:
 ```html
-<span class="... bg-green-500 animate-pulse">
+<div class="w-full h-1.5 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+  <div class="h-full bg-primary-500 rounded-full transition-all duration-500"
+       :style="{ width: level.lessons.length > 0 ? `${(0 / level.lessons.length) * 100}%` : '0%' }" />
+</div>
 ```
 
-**Problem**: A pulsing green dot implies "something is happening" — the opposite of "ready." The pulse animation should only appear during loading. In the ready state, a steady green dot communicates stability. The pulsing ready state creates subtle visual noise and may confuse users about the actual system state.
+**Problem**: The progress bar is always 0% width. The `transition-all duration-500` is defined but never triggered because the width never changes. When real data is wired up, the transition will work — but until then, the bar is a static visual element that communicates nothing.
 
-**Recommendation**: Remove `animate-pulse` from the ready state. Keep the pulse only on the loading state (orange dot). The ready state should be a steady, non-animated green dot.
+**Recommendation**: When progress is 0%, consider showing a subtle "empty" state (e.g., a dashed border instead of a solid bar, or a faint placeholder). This signals "progress tracking not yet active" rather than "0% complete."
 
-**Impact**: Reduces visual noise and makes the loading state more distinguishable.
+**Impact**: Better visual distinction between "no data" and "0% progress."
 
 ---
 
-### Issue 16: Shortcut Hint Is Visually Buried and Non-Discoverable
+### Issue 11: Lesson Count Display Is Redundant With Progress Bar
 
-**Current State**: The keyboard shortcut hint ("Press Ctrl + Enter to generate") is positioned at `absolute bottom-6 right-8` (line 269 in `DesktopPanels.vue`) and hidden on mobile (`hidden md:flex`). It uses the double-bezel pattern and has low contrast (`text-stone-600 dark:text-gray-600`).
+**Current State**: Lines 147-158 render both a text summary ("0 / N lessons") AND a progress bar (0% width) AND a status label ("In Progress"). That's three redundant progress indicators in one card.
 
-**Problem**: This hint is easy to miss — it's small, low-contrast, and positioned in a corner that users rarely look at during text entry. On mobile, it is completely hidden, yet the same shortcut (`Ctrl/Cmd + Enter`) works on mobile too.
+**Problem**: Users don't need three separate widgets to communicate the same information. The text summary, progress bar, and status label all convey "no progress" — this is visual redundancy that wastes precious card real estate.
 
-**Recommendation**: Move the hint to a more visible location: either inline next to the Generate button text, or as a small label below the textarea. On mobile, replace the keyboard shortcut hint with a tap-to-generate instruction ("Tap Generate to synthesize"). Consider making it dismissible.
+**Recommendation**: When progress is 0%, keep only the status label ("Not Started") and remove the progress bar. When real progress data exists, keep the progress bar + text summary (the bar gives a quick visual scan; the text gives the exact count). The status label can be removed when a progress bar is present (the bar is self-explanatory).
 
-**Impact**: Increases shortcut discoverability for new users.
+**Impact**: Cleaner cards with better information hierarchy.
+
+---
+
+### Issue 12: Level Badge and Title Are Too Small in Gradient Header
+
+**Current State**: Lines 129-133:
+```html
+<span class="px-2.5 py-0.5 rounded-full text-white text-[10px] font-bold tracking-wider ring-1 ring-white/30">
+  {{ level.code }}
+</span>
+<span class="text-white/90 text-xs font-medium">{{ level.title }}</span>
+```
+
+**Problem**: The CEFR code badge (`text-[10px]`) and level title (`text-xs`) are extremely small in the gradient header. The gradient header takes ~80px of vertical space (pt-5 + pb-4 + px-5 padding) but contains only 24px of actual content (badge + title). This is **inefficient use of space** — the header is disproportionately large for its content.
+
+**Recommendation**: Reduce header padding to `pt-4 pb-3` (or `pt-3 pb-2`). Increase badge to `text-[11px]` and title to `text-sm`. The Arabic title below (line 135) is the primary card label and is `text-lg` — the header should not compete with it.
+
+**Impact**: Better space efficiency; clearer visual hierarchy between header metadata and card body content.
+
+---
+
+### Issue 13: No Loading State for Curriculum Data
+
+**Current State**: The curriculum data is imported directly from a TypeScript module (line 3). There is no loading state, no error handling, and no skeleton UI.
+
+**Problem**: If the curriculum data were ever fetched from an API (as the comment on line 6-7 of `curriculum.ts` suggests), there would be a flash of empty cards. Even with static data, if the curriculum is large, there could be a brief render delay. No loading state means no graceful handling of this transition.
+
+**Recommendation**: Add a skeleton loading state for the card grid (6 skeleton cards matching the card shape). This is a forward-looking improvement that prepares for API-based curriculum loading.
+
+**Impact**: Graceful loading experience when curriculum is fetched from an API.
 
 ---
 
 ## Low Priority Suggestions
 
-### Issue 17: Placeholder Text Could Be More Helpful
+### Issue 14: Hero Section Subtitle Is Generic
 
-**Current State**: The textarea placeholder is `"اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"` (Write text here... Example: Peace be upon you...).
+**Current State**: Lines 52-54:
+```html
+<p class="text-sm text-stone-500 dark:text-stone-400 mt-2 max-w-md">
+  Track your progress across CEFR levels. Complete lessons to advance through the curriculum.
+</p>
+```
 
-**Problem**: While the Arabic example is culturally appropriate, it doesn't help users understand what *type* of text works best. A short example sentence is good, but adding a hint about supported content (e.g., "Supports Arabic text, numbers, and basic punctuation") would help non-native Arabic speakers.
+**Problem**: The subtitle is generic and could apply to any learning platform. It doesn't mention Arabic, CEFR, or anything specific to Lughat's context. It reads like a placeholder.
 
-**Recommendation**: Consider a two-line placeholder: the Arabic example on line 1, and a smaller hint on line 2. Or add a small helper text below the textarea: "Supports Arabic text, numbers, and basic punctuation."
+**Recommendation**: Make it more specific: "Track your Arabic learning journey across CEFR levels — from A1 (Foundation) to C2 (Mastery)." This reinforces the app's purpose and gives users context about the curriculum structure.
 
-**Impact**: Reduces onboarding friction for non-native Arabic speakers.
-
----
-
-### Issue 18: No Loading State for Voice List
-
-**Current State**: Voices are loaded via `useVoices()` and immediately rendered. If voice discovery takes time (e.g., scanning `speaker_wavs/`), the dropdown may briefly show "Select a voice" before populating.
-
-**Problem**: A brief "Select a voice" state may confuse users who expect a voice to be pre-selected. The auto-selection logic (lines 55-59 in `index.vue`) handles this, but there is no visual loading indicator during voice discovery.
-
-**Recommendation**: Show a loading skeleton in the voice selector dropdown while voices are being discovered. This is a minor polish item.
-
-**Impact**: Smoother perceived loading experience.
+**Impact**: Better onboarding context for first-time users.
 
 ---
 
-### Issue 19: Generate Button Trailing Icon Uses Gold-to-Primary Gradient That Clashes
+### Issue 15: "Your Learning Journey" Label Is Redundant
 
-**Current State**: The Generate button's trailing icon (lines 35-39) transitions from gold (`text-gold-500`) to primary (`text-primary-500`) on hover. The icon is `ph-play-circle` wrapped in a gold background circle.
+**Current State**: Lines 46-48:
+```html
+<p class="text-xs font-semibold tracking-widest text-primary-600 dark:text-primary-400 uppercase mb-2">
+  Your Learning Journey
+</p>
+```
 
-**Problem**: The gold-to-primary color transition on the icon creates a color shift that doesn't match the button's overall gradient (which goes from gold to primary). The icon itself should remain gold throughout, with only the background gradient changing on hover.
+**Problem**: This label sits above "Dashboard" and adds no information. "Dashboard" is the page title; "Your Learning Journey" is a decorative subtitle that users will ignore. It takes vertical space that could be used for the progress ring (currently pushed to the side by `md:flex-row`).
 
-**Recommendation**: Keep the icon color constant (gold) and only animate the background gradient. This maintains visual consistency.
+**Recommendation**: Remove "Your Learning Journey" or replace it with actionable metadata: "6 Levels · {{ totalLessons }} Lessons · {{ completedLessons }} Completed". This turns a decorative label into useful information.
 
-**Impact**: Subtle polish — reduces visual noise on interaction.
+**Impact**: More useful information in the hero section; cleaner hierarchy.
 
 ---
 
-### Issue 20: No Error Recovery Path After Model Error State
+### Issue 16: No Dark Mode Contrast Verification for Gradient Headers
 
-**Current State**: When `modelStatus === 'error'`, the Generate button is disabled. The error state is communicated via a red dot in the status indicator, but there is no "Retry" or "Reload" button visible to users.
+**Current State**: The gradient headers use dark gradient colors (e.g., `#0f766e → #134e4a` for teal). In dark mode, the white text (`text-white`) on these dark gradients may have insufficient contrast for some users, especially on lower-quality displays.
 
-**Problem**: If the model fails to load (network issue, server crash), users have no visible way to recover. They must refresh the entire page. The status indicator shows "Error" but provides no action.
+**Problem**: The gradient `#134e4a` (teal-900) on a dark background (`bg-stone-950`) has the same dark tone as the page background, making the card header blend into the background in dark mode. The white text is readable, but the card boundary is hard to perceive.
 
-**Recommendation**: Add a "Retry" button next to the status indicator when `modelStatus === 'error'`. This button should trigger a manual health check retry. Document this as a micro-interaction in the design system.
+**Recommendation**: Add a subtle `ring-1 ring-stone-700 dark:ring-stone-600` to the card container (line 114) to define the card boundary in dark mode. The `card` class may already provide this — verify. If not, add it.
 
-**Impact**: Gives users a recovery path without page reload.
+**Impact**: Better card boundary perception in dark mode.
 
 ---
 
 ## Positive Observations
 
-1. **Dark theme is well-executed**: The "Sunrise Surge" color system (teal primary, gold accent, stone neutrals) is cohesive and the dark mode variants are carefully tuned.
+1. **Gradient tile headers are visually distinctive**: Each CEFR level has a unique gradient (teal, emerald, cyan, sky, indigo, violet), creating an immediate visual distinction between levels. This is a strong design choice.
 
-2. **RTL textarea is correct**: The textarea uses `dir="rtl"` appropriately, and the Arabic font (Noto Sans Arabic + Cairo) is embedded offline — no CDN dependency.
+2. **Card-as-link pattern is correct**: Using `<NuxtLink>` as the card wrapper (line 110) means the entire card is clickable, not just a small button. This is excellent for both mouse and touch interaction.
 
-3. **Two-panel desktop layout is logical**: Control deck (left) + Canvas (right) follows standard TTS tool conventions. The panel toggle (`usePanelToggle`) provides accessibility for switching focus.
+3. **Progress ring in hero section is a nice touch**: The circular SVG progress indicator with centered percentage is a compact, visually appealing way to show overall progress. The `-rotate-90` rotation to start from the top is the correct SVG approach.
 
-4. **Mobile split-screen with drag divider is innovative**: The resizable panel approach is a smart use of limited mobile screen real estate.
+4. **Arabic watermark in cards is a creative design element**: Even though it's too visible (Issue 5), the concept of embedding Arabic text as a decorative watermark adds cultural flavor and visual interest.
 
-5. **Sticky audio bar on desktop is well-designed**: Three-section layout (controls | waveform/time | playback controls) with keyboard shortcuts (` `, `←/→`, `Esc`) is a power-user feature well-implemented.
+5. **Dark mode support is present**: `dark:bg-stone-950`, `dark:text-*` variants throughout show that dark mode was considered from the start.
 
-6. **Model health polling is proactive**: The `useHealthPoll` composable proactively checks the TTS model status, preventing user frustration from submitting to an unavailable model.
+6. **Responsive grid layout is sensible**: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` provides appropriate column counts across breakpoints.
 
-7. **Cleanup dialog (R-7) is a good safety net**: Preventing navigation away during in-flight synthesis with a "Clean & Leave" / "Stay" choice is excellent UX for a stateful audio application.
+7. **Cubic-bezier easing on cards is a nice polish**: `ease-[cubic-bezier(0.32,0.72,0,1)]` gives cards a satisfying, non-linear hover animation.
 
-8. **Focus halo is an ambitious visual touch**: While currently broken (see Issue 10), the concept of a radial glow behind the focused textarea is a nice premium detail worth fixing rather than discarding.
-
-9. **Consistent use of Phosphor icons**: Icon naming and usage is consistent across all components.
-
-10. **Reduced motion support**: `main.css` includes `@media (prefers-reduced-motion: reduce)` that disables animations for users who need it — a critical accessibility feature.
+8. **Curriculum data is well-structured**: The `curriculum.ts` data source is comprehensive with `keySkills`, `description`, `arabicTitle`, `goal`, and `lessonRange` fields — providing rich data for future dashboard enhancements.
 
 ---
 
@@ -292,23 +289,13 @@ Review of the LughatChat Arabic TTS main page (desktop + mobile) conducted on 20
 
 | Priority | Issues | Estimated Effort |
 |----------|--------|------------------|
-| Critical | 1, 2, 3, 4, 5 | Medium (RTL flip is largest) |
-| High | 6, 7, 8, 9, 10 | Medium-High |
-| Medium | 11, 12, 13, 14, 15, 16 | Low-Medium |
-| Low | 17, 18, 19, 20 | Low |
+| Critical | 1, 2, 3, 4, 5 | Medium (data wiring is largest) |
+| High | 6, 7, 8, 9 | Low-Medium |
+| Medium | 10, 11, 12, 13 | Low |
+| Low | 14, 15, 16 | Low |
 
 ---
 
-## Recommended Implementation Order
+## Notes on Relationship to Existing Reviews
 
-1. **RTL flip** (Issue 1) — foundational, affects everything
-2. **Voice selector accessibility** (Issue 2) — small fix, high value
-3. **Generate button accessible labels** (Issue 3) — prevents silent failures
-4. **Mobile player focus management** (Issue 4) — keyboard accessibility
-5. **Sticky bar shortcut announcements** (Issue 5) — power-user feedback
-6. **Remove non-functional AI toolbar** (Issue 9) — builds trust
-7. **Fix broken Focus Halo** (Issue 10) — polish or remove
-8. **Toast accessibility** (Issue 6) — critical feedback channel
-9. **Character counter accessibility** (Issue 7) — validation feedback
-10. **Standardize double-bezel** (Issue 8) — design system cleanup
-11-20. Remaining medium/low priority items
+This dashboard review is independent of the Index Page review (already in this document). The dashboard is a separate page (`/dashboard`) with different components and UX concerns. The existing index page issues (RTL, voice selector, generate button, etc.) do not overlap with dashboard-specific issues.

@@ -31,15 +31,23 @@
 | Term | Definition |
 |------|-----------|
 | Language Learning Platform | The app's identity — Arabic learning with integrated TTS. Supersedes the previous "Arabic TTS web app" identity. |
-| TTS Studio | The original two-panel page (`/`): free-form text input + audio generation/playback. Moved from root concept to one page among many. |
+| TTS Studio | The synthesis page at `/`: on desktop, side-by-side editor + waveform panels (drag-resizable); on mobile, a toggle between editor view and player view. Free-form text input + audio generation/playback. |
 | Dashboard | The learning content catalog (`/dashboard`): displays CEFR levels (A1, A2, B1, B2...) with lesson lists, progress, and completion status. |
-| Lesson Page | Dynamic route (`/level/{level}/{lesson_id}`): displays lesson content (dialogues, vocabulary, grammar, activities) from JSON files. |
-| Shared Layout | `app.vue` acts as a layout shell with a shared navbar. All pages include the navbar. |
-| Single Anonymous User | No authentication. Progress is tracked per-device via backend SQLite. |
-| Lesson Content | JSON files containing structured Arabic learning material: sections (dialogue, vocabulary, grammar) and activities (listen-translate, role-play, etc.). Stored location TBD (OQ-5). |
-| Lesson Progress | Per-lesson completion state (`completed: true/false`, `progress: 0-100`). Stored in backend SQLite. |
-| Theme | Under full rebrand (D6). Current: green primary, slate neutral. New color TBD (OQ-3). |
-| Page Title | Pattern: `LughatChat - [page-name]` (e.g., "LughatChat - Playground", "LughatChat - Dashboard"). Mechanism TBD (OQ-4). |
+| CEFR Level | Curriculum tier (A1, A2, B1, B2) encoding difficulty progression. Each level has a title, Arabic title, description, lesson range, vocabulary count, speaking/reading WPM targets, goals, and key skills. |
+| Lesson | A single unit within a CEFR Level, identified by a composite ID (`{level}-{number}`), with a title, Arabic title, description, and sections. |
+| Section | A category within a Lesson: Dialogue, Vocabulary, Pronouns, Expressions, Grammar, or Activities. |
+| Section Item | A single learnable unit within a Section: Arabic text with optional transliteration, English translation, and notes. For Activity sections, also carries an `activityType` (listen-translate, role-play, fill-blank, matching) and expected answer/options. |
+| Activity | An interactive exercise type within a Lesson: `listen-translate` (hear Arabic, type translation), `role-play` (dialogue practice), `fill-blank` (complete sentence), `matching` (pair concepts). |
+| Speaker | The raw reference audio (`.wav` file) used for voice cloning in XTTS-v2. A speaker must be ≥ 0.33 seconds. Resolved at the API level as `speaker ?? voice ?? "female"`. |
+| Voice | The user-facing label for a speaker: `{ id, name, dialect, tag, icon, speaker_wav }`. A voice maps to exactly one speaker WAV file. Voices are discovered dynamically from `speaker_wavs/`. |
+| Dialect | The regional variant of a voice (e.g., "KSA" for Saudi Arabian). Stored per-voice. |
+| Reference Audio | The `.wav` file used by XTTS-v2 for voice cloning. Same as "speaker" in API terms; "reference audio" is the domain concept. Minimum duration: 0.33 seconds. |
+| Synthesis | The end-to-end lifecycle: user submits text → server runs TTS model → MP3 audio blob returned → client creates an object URL → plays via `<audio>`. If the user navigates away before playback completes, the audio file becomes an orphan (no consumer), but synthesis continues server-side. No cancellation mechanism exists. |
+| Synthesis Request | The client's synthesis call: text + optional speaker/speed/seed. The API endpoint is `POST /api/generate`; the frontend composable calls it `synthesize()`. The word "synthesis" is canonical (more precise than "generation"). |
+| Orphan File | A generated MP3 on the server with no active consumer — the user navigated away during synthesis. The 24-hour cleanup endpoint (`POST /api/cleanup`) removes these. The frontend also disposes client-side object URLs on navigation (`useAudioModule.dispose()`). |
+| Curriculum | Static, in-app curriculum data (`frontend/app/data/curriculum.ts`) defining all CEFR levels, lessons, sections, and section items. Serves as the single source of truth for the learning catalog. When backend endpoints exist, this file can be replaced with a composable that fetches from the API. |
+| Learning Progress | Per-lesson completion state (`completed: true/false`, `progress: 0-100`). Stored in backend SQLite. |
+| Theme | Partially rebranded. Light mode: `primary` (teal scale, 50–900) + `gold` (accent scale, 400–600) — complete. Dark mode: gradient orbs still use `#DD2476` (sunrise-magenta) and `#FF512F` (sunrise-orange). Color tokens fully migrated; dark gradient background not yet migrated. |
 
 ---
 
@@ -53,7 +61,11 @@ app/
 ├── pages/
 │   ├── index.vue          # TTS Studio (/) — two-panel layout
 │   ├── dashboard.vue      # Dashboard (/dashboard) — learning catalog
-│   └── level/[level]/[lesson_id].vue  # Lesson page (/level/a1/1)
+│   └── dashboard/
+│       └── level/
+│           ├── [level]/
+│           │   ├── index.vue        → /dashboard/level/{level}
+│           │   └── [lesson].vue     → /dashboard/level/{level}/{lesson}
 ├── components/            # 9 Vue components (list dir for current set)
 └── composables/           # 8 composables (list dir for current set)
 ```
@@ -170,7 +182,7 @@ Backend: `HTTPException` with descriptive `detail`; CORS is `*` (dev-only — re
 2. ~2GB model re-downloads per container restart (volume path mismatch above).
 3. CPU-only inference — generation takes several seconds.
 4. Speaker WAVs < 0.33s cause 500 errors.
-5. Generated MP3s accumulate — no cleanup.
+5. Orphan MP3s accumulate between cleanup cycles (24h TTL). The `POST /api/cleanup` endpoint removes them, and the frontend calls it during navigation (`useCleanupNavigation`). Files older than 24 hours are removed automatically.
 6. Only `ar` and `en` accepted; other languages rejected.
 7. Seed defaults to 42 — outputs are deterministic unless overridden.
 8. Host ports are 9000/9001, not 8000/80. Local dev proxies to localhost:9000.

@@ -7,14 +7,14 @@ import { resolve } from 'node:path'
 describe('Layout consistency — dashboard pages', () => {
   const base = resolve(__dirname, '../../app/pages/dashboard')
 
-  it('dashboard.vue uses max-w-7xl (not max-w-6xl)', () => {
-    const content = readFileSync(resolve(__dirname, '../../app/pages/dashboard.vue'), 'utf-8')
+  it('dashboard/index.vue uses max-w-7xl (not max-w-6xl)', () => {
+    const content = readFileSync(resolve(__dirname, '../../app/pages/dashboard/index.vue'), 'utf-8')
     expect(content).toContain('max-w-7xl')
     expect(content).not.toContain('max-w-6xl')
   })
 
-  it('dashboard.vue page title uses text-3xl md:text-4xl', () => {
-    const content = readFileSync(resolve(__dirname, '../../app/pages/dashboard.vue'), 'utf-8')
+  it('dashboard/index.vue page title uses text-3xl md:text-4xl', () => {
+    const content = readFileSync(resolve(__dirname, '../../app/pages/dashboard/index.vue'), 'utf-8')
     expect(content).toContain('text-3xl md:text-4xl')
     expect(content).not.toContain('text-2xl md:text-3xl')
   })

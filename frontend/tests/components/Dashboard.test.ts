@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import Dashboard from '~/pages/dashboard.vue'
+import Dashboard from '~/pages/dashboard/index.vue'
 
 // ─── Route Mocking ──────────────────────────────────────────────────────
 // GlobalNavbar accesses route via useNuxtApp — stub it so the navbar
@@ -49,7 +49,7 @@ function getWrapper(path: string) {
 
 // ─── Behavioral Tests ───────────────────────────────────────────────────
 
-describe('dashboard.vue', () => {
+describe('dashboard/index.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -123,6 +123,79 @@ describe('dashboard.vue', () => {
       // Health status is now rendered in GlobalNavbar (outside router-view).
       // Dashboard page renders regardless of health state.
       expect(wrapper.exists()).toBe(true)
+    })
+  })
+  // ─── AC-5: Tile Content — Curriculum-Driven ───────────────────────────
+  // Each dashboard tile must display: badge (code), title (code + title),
+  // Arabic subtitle, goal text, lesson count.
+
+  describe('AC-5: Tile Content — Curriculum-Driven', () => {
+    it('renders each level card with the level code badge', async () => {
+      const wrapper = getWrapper('/dashboard')
+      const cards = wrapper.findAll('a[href*="/dashboard/level/"]')
+      expect(cards.length).toBe(6)
+
+      // A1 card should contain "A1" badge text
+      const a1Card = cards.find(c => c.attributes('href') === '/dashboard/level/A1')
+      expect(a1Card).toBeDefined()
+      expect(a1Card!.text()).toContain('A1')
+
+      // C2 card should contain "C2" badge text
+      const c2Card = cards.find(c => c.attributes('href') === '/dashboard/level/C2')
+      expect(c2Card).toBeDefined()
+      expect(c2Card!.text()).toContain('C2')
+    })
+
+    it('renders each level card with the level title from curriculum data', async () => {
+      const wrapper = getWrapper('/dashboard')
+      const cards = wrapper.findAll('a[href*="/dashboard/level/"]')
+
+      const a1Card = cards.find(c => c.attributes('href') === '/dashboard/level/A1')
+      // "Foundation" is the title for A1
+      expect(a1Card!.text()).toContain('Foundation')
+
+      const c2Card = cards.find(c => c.attributes('href') === '/dashboard/level/C2')
+      // "Proficiency" is the title for C2
+      expect(c2Card!.text()).toContain('Proficiency')
+    })
+
+    it('renders each level card with the Arabic subtitle from curriculum data', async () => {
+      const wrapper = getWrapper('/dashboard')
+      const cards = wrapper.findAll('a[href*="/dashboard/level/"]')
+
+      const a1Card = cards.find(c => c.attributes('href') === '/dashboard/level/A1')
+      // A1 arabicTitle is "المستوى المبتدئ"
+      expect(a1Card!.text()).toContain('المستوى المبتدئ')
+
+      const c2Card = cards.find(c => c.attributes('href') === '/dashboard/level/C2')
+      // C2 arabicTitle is "إتقان اللغة"
+      expect(c2Card!.text()).toContain('إتقان اللغة')
+    })
+
+    it('renders each level card with the goal text from curriculum data', async () => {
+      const wrapper = getWrapper('/dashboard')
+      const cards = wrapper.findAll('a[href*="/dashboard/level/"]')
+
+      const a1Card = cards.find(c => c.attributes('href') === '/dashboard/level/A1')
+      // A1 goal starts with "Memorize ~500 Arabic root words"
+      expect(a1Card!.text()).toContain('Memorize ~500 Arabic root words')
+
+      const b1Card = cards.find(c => c.attributes('href') === '/dashboard/level/B1')
+      // B1 goal starts with "Memorize ~2500 root words"
+      expect(b1Card!.text()).toContain('Memorize ~2500 root words')
+    })
+
+    it('renders each level card with the correct lesson count', async () => {
+      const wrapper = getWrapper('/dashboard')
+      const cards = wrapper.findAll('a[href*="/dashboard/level/"]')
+
+      const a1Card = cards.find(c => c.attributes('href') === '/dashboard/level/A1')
+      // A1 has 2 lessons (a1-01, a1-02)
+      expect(a1Card!.text()).toContain('2')
+
+      const a2Card = cards.find(c => c.attributes('href') === '/dashboard/level/A2')
+      // A2 has 2 lessons (a2-01, a2-02)
+      expect(a2Card!.text()).toContain('2')
     })
   })
 })

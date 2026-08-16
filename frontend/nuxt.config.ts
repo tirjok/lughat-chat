@@ -2,7 +2,6 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/test-utils/module',
-    '@nuxt/image',
     '@unocss/nuxt'
   ],
   devtools: {
@@ -28,7 +27,6 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
-
   routeRules: {
     '/': { prerender: true },
     '/dashboard': { prerender: false },

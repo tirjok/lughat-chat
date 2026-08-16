@@ -80,12 +80,16 @@ export default defineConfig({
       }
     })
   ],
-  shortcuts: {
-    'btn': 'px-4 py-2 rounded font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors',
-    'card': 'rounded-xl bg-white border border-stone-200 shadow-sm',
-    'flex-center': 'flex items-center justify-center',
-    'flex-between': 'flex items-center justify-between'
-  },
+  safelist: [
+    // Dashboard tiles use dynamic gradient from curriculum.ts data.
+    // UnoCSS tree-shakes unused utilities; safelist forces generation.
+    'from-teal-700', 'via-teal-800', 'to-teal-900',
+    'from-emerald-700', 'via-emerald-800', 'to-emerald-900',
+    'from-cyan-700', 'via-cyan-800', 'to-cyan-900',
+    'from-sky-700', 'via-sky-800', 'to-sky-900',
+    'from-indigo-700', 'via-indigo-800', 'to-indigo-900',
+    'from-violet-700', 'via-violet-800', 'to-violet-900'
+  ],
   rules: [
     // Custom text gradient utility
     ['text-gradient', {
