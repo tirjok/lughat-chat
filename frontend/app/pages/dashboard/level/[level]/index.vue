@@ -1,23 +1,28 @@
 <script setup lang="ts">
-const route = useRoute()
-const currentLevel = (route.params.level as string) || 'A1'
+import { computed } from 'vue'
+import { getLevelByCode } from '../../../../data/curriculum'
 
-const levelNames: Record<string, { title: string, arabic: string }> = {
-  A1: { title: 'Beginner', arabic: 'المستوى المبتدئ' },
-  A2: { title: 'Elementary', arabic: 'المستوى الأساسي' },
-  B1: { title: 'Intermediate', arabic: 'المستوى المتوسط' },
-  B2: { title: 'Upper Intermediate', arabic: 'المستوى المتقدم' },
-  C1: { title: 'Advanced', arabic: 'المستوى المتقدم جداً' },
-  C2: { title: 'Proficiency', arabic: 'إتقان اللغة' }
+function safeRoute() {
+  try {
+    return useRoute()
+  }
+  catch {
+    return {} as unknown as ReturnType<typeof useRoute>
+  }
 }
+const route = computed(() => safeRoute())
+const currentLevel = computed(() => (route.value.params?.level as string) || 'A1')
 
-const info = levelNames[currentLevel] || { title: currentLevel, arabic: currentLevel }
+const level = computed(() => getLevelByCode(currentLevel.value))
+const info = computed(() => level.value
+  ? { title: level.value.title, arabic: level.value.arabicTitle }
+  : { title: currentLevel.value, arabic: currentLevel.value })
 </script>
 
 <template>
   <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
     <!-- ── Level Header ─────────────────────────────────────────────── -->
-    <section class="px-4 md:px-6 pt-8 pb-6">
+    <header class="px-4 md:px-6 pt-8 pb-6">
       <div class="max-w-7xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div>
@@ -27,11 +32,8 @@ const info = levelNames[currentLevel] || { title: currentLevel, arabic: currentL
               </span>
               <span class="text-sm text-stone-500 dark:text-stone-400">{{ info.title }}</span>
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100">
-              {{ info.arabic }}
-            </h1>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-2">
-              Lesson content coming soon.
+            <h1 class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100" data-testid="level-heading">Level {{ currentLevel }}: {{ info.title }} — {{ info.arabic }}</h1>
+            <p class="text-sm text-stone-500 dark:text-stone-400 mt-2" data-testid="level-description">
             </p>
           </div>
           <NuxtLink
@@ -42,8 +44,7 @@ const info = levelNames[currentLevel] || { title: currentLevel, arabic: currentL
           </NuxtLink>
         </div>
       </div>
-    </section>
-
+    </header>
     <!-- ── Breadcrumbs ──────────────────────────────────────────────── -->
     <nav
       class="px-4 md:px-6 pt-4 pb-2"

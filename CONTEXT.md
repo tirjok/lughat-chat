@@ -31,15 +31,15 @@
 | Term | Definition |
 |------|-----------|
 | Language Learning Platform | The app's identity — Arabic learning with integrated TTS. Supersedes the previous "Arabic TTS web app" identity. |
-| TTS Studio | The original two-panel page (`/`): free-form text input + audio generation/playback. Moved from root concept to one page among many. |
+| TTS Studio | The synthesis page at `/`: on desktop, side-by-side editor + waveform panels (drag-resizable); on mobile, a toggle between editor view and player view. Free-form text input + audio generation/playback. |
 | Dashboard | The learning content catalog (`/dashboard`): displays CEFR levels (A1, A2, B1, B2...) with lesson lists, progress, and completion status. |
-| Lesson Page | Dynamic route (`/level/{level}/{lesson_id}`): displays lesson content (dialogues, vocabulary, grammar, activities) from JSON files. |
-| Shared Layout | `app.vue` acts as a layout shell with a shared navbar. All pages include the navbar. |
-| Single Anonymous User | No authentication. Progress is tracked per-device via backend SQLite. |
-| Lesson Content | JSON files containing structured Arabic learning material: sections (dialogue, vocabulary, grammar) and activities (listen-translate, role-play, etc.). Stored location TBD (OQ-5). |
+| Lesson Page | Dynamic route (`/level/{level}/{lesson_id}`): static UI shell with breadcrumbs, section tabs (Dialogue, Vocabulary, Pronouns, Expressions, Grammar, Activities), and hero section. NO data fetching implemented — all content is hardcoded placeholders. Backend endpoints (`/api/levels`, `/api/lessons`, `/api/progress`) do not exist. |
+| Shared Layout | `app.vue` wraps `<NuxtPage />` in a container with an optional `GlobalNavbar` (shown for known routes `['/', '/dashboard', '/dashboard/level/**']`, hidden for unknown). Not all pages get a navbar. |
+| Single Anonymous User | No authentication. A single SQLite file serves all concurrent requests. "Single" means one deployment = one user — not per-browser isolation. There is no session or identity concept. |
+| Lesson Content | Conceptual: JSON files with structured Arabic learning material (sections: dialogue, vocabulary, grammar; activities: listen-translate, role-play). NOT YET IMPLEMENTED — no JSON files exist, no API endpoints exist, no fetching code exists. Backend endpoints `/api/levels`, `/api/lessons`, `/api/progress` are still TBD (OQ-5, OQ-8, OQ-9). |
 | Lesson Progress | Per-lesson completion state (`completed: true/false`, `progress: 0-100`). Stored in backend SQLite. |
-| Theme | Under full rebrand (D6). Current: green primary, slate neutral. New color TBD (OQ-3). |
-| Page Title | Pattern: `LughatChat - [page-name]` (e.g., "LughatChat - Playground", "LughatChat - Dashboard"). Mechanism TBD (OQ-4). |
+| Theme | Partially rebranded. Light mode: `primary` (teal scale, 50–900) + `gold` (accent scale, 400–600) — complete. Dark mode: gradient orbs still use `#DD2476` (sunrise-magenta) and `#FF512F` (sunrise-orange). Color tokens fully migrated; dark gradient background not yet migrated. |
+| Synthesis Lifecycle | Request → server processes (several seconds, CPU-only) → MP3 response → client creates object URL → plays via `<audio>`. If user navigates away during synthesis, the client-side `useAudioModule.dispose()` revokes the object URL, but the server-side synthesis continues with no consumer. No cancellation mechanism exists. |
 
 ---
 

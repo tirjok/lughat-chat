@@ -1,27 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { curriculum, getTotalLessonCount } from '../data/curriculum'
 
-interface LevelInfo {
-  code: string
-  title: string
-  arabicTitle: string
-  lessons: number
-  completed: number
-  gradient: string
-}
+const levels = curriculum
 
-const levels: LevelInfo[] = [
-  { code: 'A1', title: 'Beginner', arabicTitle: 'المستوى المبتدئ', lessons: 12, completed: 0, gradient: 'from-teal-700 via-teal-800 to-teal-900' },
-  { code: 'A2', title: 'Elementary', arabicTitle: 'المستوى الأساسي', lessons: 12, completed: 0, gradient: 'from-emerald-700 via-emerald-800 to-emerald-900' },
-  { code: 'B1', title: 'Intermediate', arabicTitle: 'المستوى المتوسط', lessons: 12, completed: 0, gradient: 'from-cyan-700 via-cyan-800 to-cyan-900' },
-  { code: 'B2', title: 'Upper Intermediate', arabicTitle: 'المستوى المتقدم', lessons: 12, completed: 0, gradient: 'from-sky-700 via-sky-800 to-sky-900' },
-  { code: 'C1', title: 'Advanced', arabicTitle: 'المستوى المتقدم جداً', lessons: 12, completed: 0, gradient: 'from-indigo-700 via-indigo-800 to-indigo-900' },
-  { code: 'C2', title: 'Proficiency', arabicTitle: 'إتقان اللغة', lessons: 12, completed: 0, gradient: 'from-violet-700 via-violet-800 to-violet-900' }
-]
-
-const totalLessons = computed(() => levels.reduce((sum, l) => sum + l.lessons, 0))
-const completedLessons = computed(() => levels.reduce((sum, l) => sum + l.completed, 0))
-const overallProgress = computed(() => totalLessons.value > 0 ? Math.round((completedLessons.value / totalLessons.value) * 100) : 0)
+const totalLessons = computed(() => getTotalLessonCount())
+const completedLessons = computed(() => 0)
+const overallProgress = computed(() => {
+  if (totalLessons.value === 0) return 0
+  return Math.round((completedLessons.value / totalLessons.value) * 100)
+})
 </script>
 
 <template>
@@ -129,16 +117,16 @@ const overallProgress = computed(() => totalLessons.value > 0 ? Math.round((comp
             <!-- Card body -->
             <div class="p-5">
               <div class="flex items-center justify-between text-sm text-stone-500 dark:text-stone-400 mb-3">
-                <span>{{ level.completed }} / {{ level.lessons }} lessons</span>
+                <span>{{ 0 }} / {{ level.lessons.length }} lessons</span>
                 <span class="text-primary-600 dark:text-primary-400 font-medium text-xs uppercase tracking-wide">
-                  {{ level.completed >= level.lessons ? 'Completed' : 'In Progress' }}
+                  {{ 0 >= level.lessons.length ? 'Completed' : 'In Progress' }}
                 </span>
               </div>
               <!-- Progress bar -->
               <div class="w-full h-1.5 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
                 <div
                   class="h-full bg-primary-500 rounded-full transition-all duration-500"
-                  :style="{ width: level.lessons > 0 ? `${(level.completed / level.lessons) * 100}%` : '0%' }"
+                  :style="{ width: level.lessons.length > 0 ? `${(0 / level.lessons.length) * 100}%` : '0%' }"
                 />
               </div>
             </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue'
+import { getLessonById } from '../../../../data/curriculum'
 
 // Route access — deferred inside computed getters to avoid
 // NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).
@@ -43,16 +43,23 @@ const breadcrumbs = computed(() => [
   { label: `Lesson ${currentLesson.value}`, to: undefined }
 ])
 
-const sectionTabs = [
-  'Dialogue',
-  'Vocabulary',
-  'Pronouns',
-  'Expressions',
-  'Grammar',
-  'Activities'
-]
-
+const sectionTabs = computed(() => {
+  const lesson = getLessonById(levelParam.value + '-' + lessonParam.value.padStart(2, '0'))
+  return lesson ? lesson.sections.map(s => s.name) : ['Dialogue', 'Vocabulary', 'Pronouns', 'Expressions', 'Grammar', 'Activities']
+})
 const activeSection = shallowRef('Dialogue')
+
+const currentLessonData = computed(() => {
+  const lesson = getLessonById(levelParam.value + '-' + lessonParam.value.padStart(2, '0'))
+  return lesson
+})
+
+const currentSectionItems = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return []
+  const section = lesson.sections.find(s => s.name === activeSection.value)
+  return section ? section.items : []
+})
 
 // AC-5: Redirect to dashboard when level param is missing.
 // Guarded against jsdom tests where onBeforeRouteLeave is not available.
@@ -155,22 +162,36 @@ if (typeof onBeforeRouteLeave === 'function') {
                 : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
             ]"
             @click="activeSection = tab"
-          >
-            {{ tab }}
-          </button>
+          >{{ tab }}</button>
         </div>
-      </div>
-    </section>
-
-    <!-- Main content area (placeholder) -->
-    <main class="px-4 md:px-6 pb-8">
-      <div class="max-w-7xl mx-auto">
-        <div class="card">
+        <div v-if="currentSectionItems.length > 0" class="space-y-4">
+          <div
+            v-for="item in currentSectionItems"
+            :key="item.id"
+            class="card"
+          >
+            <div class="flex flex-col gap-2">
+              <p class="text-lg font-arabic text-stone-800 dark:text-stone-100 text-right" dir="rtl">
+                {{ item.arabic }}
+              </p>
+              <p v-if="item.transliteration" class="text-sm text-stone-500 dark:text-stone-400 italic">
+                {{ item.transliteration }}
+              </p>
+              <p v-if="item.english" class="text-sm text-stone-600 dark:text-stone-300">
+                {{ item.english }}
+              </p>
+              <p v-if="item.notes" class="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 rounded p-2">
+                {{ item.notes }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div v-else class="card">
           <p class="text-stone-500 dark:text-stone-400">
             Content for "{{ activeSection }}" section coming soon.
           </p>
         </div>
       </div>
-    </main>
+    </section>
   </div>
 </template>
