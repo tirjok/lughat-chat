@@ -4,7 +4,7 @@
 //
 // Acceptance Criteria (happy paths):
 //   AC-1: Dashboard — click "Dashboard" in GlobalNavbar from /
-//   AC-2: Lesson — click "My Courses" → select level → select lesson
+//   AC-2: Lesson — click "Dashboard" → select level → select lesson
 //   AC-3: Browser back/forward
 //   AC-7: Direct URL
 //   AC-15: Active synthesis — no navigation
@@ -184,7 +184,35 @@ function mountDashboard(path: string) {
     }
   })
 }
+// ─── Helper: mount LessonPage at a path ──────────────────────────────────
 
+function mountLessonPage(path: string, extraComponents?: Record<string, unknown>) {
+  const nuxtApp = buildNuxtApp(path)
+  const mountOpts: { global: Record<string, unknown> } = {
+    global: {
+      plugins: [
+        {
+          install(app: Record<string, unknown>) {
+            app.config.globalProperties.$router = {}
+            Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
+              value: vi.fn(() => nuxtApp)
+            })
+          }
+        }
+      ],
+      stubs: {
+        NuxtLink: {
+          props: ['to'],
+          template: '<a :href="to"><slot /></a>'
+        }
+      }
+    }
+  }
+  if (extraComponents) {
+    mountOpts.global.components = extraComponents
+  }
+  return shallowMount(LessonPage, mountOpts)
+}
 // ─── Helper: mount Index (TTS Studio) at a path ─────────────────────────
 
 function mountIndex(path: string) {
@@ -253,105 +281,28 @@ describe('AC-1: Dashboard navigation (click "Dashboard" in GlobalNavbar from /)'
     // not in the Dashboard page itself. Page renders regardless of health.
     expect(wrapper.exists()).toBe(true)
   })
-
-  it('GlobalNavbar renders "My Courses" link when on /dashboard', () => {
-    const navbar = mountGlobalNavbar('/dashboard')
-    const navLinks = navbar.findAll('nav a')
-    const myCoursesLink = navLinks.find(link => link.text() === 'My Courses')
-    expect(myCoursesLink).toBeDefined()
-  })
 })
-
 // ─── AC-2: Happy path — Lesson page ──────────────────────────────────────
 
-describe('AC-2: Lesson page navigation (click "My Courses" → select level → select lesson)', () => {
+describe('AC-2: Lesson page navigation (click "Dashboard" → select level → select lesson)', () => {
   it('renders /dashboard/level/a1/1 page when path is /dashboard/level/a1/1', () => {
-    const wrapper = shallowMount(LessonPage, {
-      global: {
-        plugins: [
-          {
-            install(app: Record<string, unknown>) {
-              app.config.globalProperties.$router = {}
-              Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
-                value: vi.fn(() => buildNuxtApp('/dashboard/level/a1/1'))
-              })
-            }
-          }
-        ],
-        stubs: {
-          NuxtLink: {
-            props: ['to'],
-            template: '<a :href="to"><slot /></a>'
-          }
-        }
-      }
-    })
-    expect(wrapper.exists()).toBe(true)
+    expect(mountLessonPage('/dashboard/level/a1/1').exists()).toBe(true)
   })
 
   it('renders lesson heading with "Lesson 1 — Level A1" on /dashboard/level/a1/1', () => {
-    const wrapper = shallowMount(LessonPage, {
-      global: {
-        plugins: [
-          {
-            install(app: Record<string, unknown>) {
-              app.config.globalProperties.$router = {}
-              Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
-                value: vi.fn(() => buildNuxtApp('/dashboard/level/a1/1'))
-              })
-            }
-          }
-        ],
-        components: {
-          NuxtLink: {
-            props: ['to'],
-            template: '<a :href="to"><slot /></a>'
-          },
-          LessonHero
-        }
-      }
-    })
+    const wrapper = mountLessonPage('/dashboard/level/a1/1', { LessonHero })
     const hero = wrapper.find('[data-testid="lesson-hero"]')
-    expect(hero.exists()).toBe(true)
-    // LessonHero component is verified by its own test suite (21 tests)
-    // Just verify the hero wrapper exists
     expect(hero.exists()).toBe(true)
   })
 
   it('renders breadcrumb trail (Dashboard → Level A1 → Lesson 1)', () => {
-    const wrapper = shallowMount(LessonPage, {
-      global: {
-        plugins: [
-          {
-            install(app: Record<string, unknown>) {
-              app.config.globalProperties.$router = {}
-              Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
-                value: vi.fn(() => buildNuxtApp('/dashboard/level/a1/1'))
-              })
-            }
-          }
-        ],
-        stubs: {
-          NuxtLink: {
-            props: ['to'],
-            template: '<a :href="to"><slot /></a>'
-          }
-        }
-      }
-    })
+    const wrapper = mountLessonPage('/dashboard/level/a1/1')
     const breadcrumbs = wrapper.find('[data-testid="breadcrumbs"]')
     expect(breadcrumbs.exists()).toBe(true)
     const breadcrumbText = breadcrumbs.text()
     expect(breadcrumbText).toContain('Dashboard')
     expect(breadcrumbText).toContain('Level A1')
     expect(breadcrumbText).toContain('Lesson 1')
-  })
-
-  it('GlobalNavbar highlights "My Courses" when on /dashboard/level/a1/1', () => {
-    const navbar = mountGlobalNavbar('/dashboard/level/a1/1')
-    const navLinks = navbar.findAll('nav a')
-    const myCoursesLink = navLinks.find(link => link.text() === 'My Courses')
-    expect(myCoursesLink).toBeDefined()
   })
 
   it('GlobalNavbar highlights "Dashboard" when on /dashboard/level/a1/1 (isActive fallback)', () => {
@@ -362,26 +313,7 @@ describe('AC-2: Lesson page navigation (click "My Courses" → select level → 
   })
 
   it('renders section tabs (Dialogue, Vocabulary, Pronouns, etc.)', () => {
-    const wrapper = shallowMount(LessonPage, {
-      global: {
-        plugins: [
-          {
-            install(app: Record<string, unknown>) {
-              app.config.globalProperties.$router = {}
-              Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
-                value: vi.fn(() => buildNuxtApp('/dashboard/level/a1/1'))
-              })
-            }
-          }
-        ],
-        stubs: {
-          NuxtLink: {
-            props: ['to'],
-            template: '<a :href="to"><slot /></a>'
-          }
-        }
-      }
-    })
+    const wrapper = mountLessonPage('/dashboard/level/a1/1')
     const tabs = wrapper.find('[data-testid="section-tabs"]')
     expect(tabs.exists()).toBe(true)
     const tabButtons = wrapper.findAll('[role="tab"]')
@@ -389,52 +321,13 @@ describe('AC-2: Lesson page navigation (click "My Courses" → select level → 
   })
 
   it('renders a "Back to Level" link', () => {
-    const wrapper = shallowMount(LessonPage, {
-      global: {
-        plugins: [
-          {
-            install(app: Record<string, unknown>) {
-              app.config.globalProperties.$router = {}
-              Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
-                value: vi.fn(() => buildNuxtApp('/dashboard/level/a1/1'))
-              })
-            }
-          }
-        ],
-        components: {
-          NuxtLink: {
-            props: ['to'],
-            template: '<a :href="to"><slot /></a>'
-          },
-          LessonHero
-        }
-      }
-    })
+    const wrapper = mountLessonPage('/dashboard/level/a1/1', { LessonHero })
     const hero = wrapper.find('[data-testid="lesson-hero"]')
     expect(hero.exists()).toBe(true)
   })
 
   it('renders lesson hero section', () => {
-    const wrapper = shallowMount(LessonPage, {
-      global: {
-        plugins: [
-          {
-            install(app: Record<string, unknown>) {
-              app.config.globalProperties.$router = {}
-              Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
-                value: vi.fn(() => buildNuxtApp('/dashboard/level/a1/1'))
-              })
-            }
-          }
-        ],
-        stubs: {
-          NuxtLink: {
-            props: ['to'],
-            template: '<a :href="to"><slot /></a>'
-          }
-        }
-      }
-    })
+    const wrapper = mountLessonPage('/dashboard/level/a1/1')
     const hero = wrapper.find('[data-testid="lesson-hero"]')
     expect(hero.exists()).toBe(true)
   })
@@ -467,13 +360,11 @@ describe('AC-3: Browser back/forward (back from /dashboard to /)', () => {
     expect(homeLink).toBeDefined()
   })
 
-  it('GlobalNavbar does NOT highlight "Dashboard" or "My Courses" when on /', () => {
+  it('GlobalNavbar does NOT highlight "Dashboard" when on /', () => {
     const navbar = mountGlobalNavbar('/')
     const navLinks = navbar.findAll('nav a')
     const dashboardLink = navLinks.find(link => link.text() === 'Dashboard')
-    const myCoursesLink = navLinks.find(link => link.text() === 'My Courses')
     expect(dashboardLink).toBeDefined()
-    expect(myCoursesLink).toBeDefined()
   })
 
   it('StickyAudioBar exists in the component tree with active=false by default', () => {
@@ -514,27 +405,7 @@ describe('AC-7: Direct URL navigation (type /dashboard/level/a1/1 in address bar
   })
 
   it('renders /dashboard/level/a1/1 page when directly navigating', () => {
-    const wrapper = shallowMount(LessonPage, {
-      global: {
-        plugins: [
-          {
-            install(app: Record<string, unknown>) {
-              app.config.globalProperties.$router = {}
-              Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
-                value: vi.fn(() => buildNuxtApp('/dashboard/level/a1/1'))
-              })
-            }
-          }
-        ],
-        stubs: {
-          NuxtLink: {
-            props: ['to'],
-            template: '<a :href="to"><slot /></a>'
-          }
-        }
-      }
-    })
-    expect(wrapper.exists()).toBe(true)
+    expect(mountLessonPage('/dashboard/level/a1/1').exists()).toBe(true)
   })
 
   it('GlobalNavbar renders correctly when directly navigating to /dashboard', () => {
@@ -544,39 +415,13 @@ describe('AC-7: Direct URL navigation (type /dashboard/level/a1/1 in address bar
     expect(dashboardLink).toBeDefined()
   })
 
-  it('GlobalNavbar renders correctly when directly navigating to /dashboard/level/a1/1', () => {
-    const navbar = mountGlobalNavbar('/dashboard/level/a1/1')
-    const navLinks = navbar.findAll('nav a')
-    const myCoursesLink = navLinks.find(link => link.text() === 'My Courses')
-    expect(myCoursesLink).toBeDefined()
-  })
-
   it('health poll starts (non-blocking) when directly navigating to any page', () => {
     // Dashboard renders regardless of health status
     const dashboardWrapper = mountDashboard('/dashboard')
     expect(dashboardWrapper.exists()).toBe(true)
 
     // Lesson page renders regardless of health status
-    const lessonWrapper = shallowMount(LessonPage, {
-      global: {
-        plugins: [
-          {
-            install(app: Record<string, unknown>) {
-              app.config.globalProperties.$router = {}
-              Object.defineProperty(app.config.globalProperties, 'useNuxtApp', {
-                value: vi.fn(() => buildNuxtApp('/dashboard/level/a1/1'))
-              })
-            }
-          }
-        ],
-        stubs: {
-          NuxtLink: {
-            props: ['to'],
-            template: '<a :href="to"><slot /></a>'
-          }
-        }
-      }
-    })
+    const lessonWrapper = mountLessonPage('/dashboard/level/a1/1')
     expect(lessonWrapper.exists()).toBe(true)
   })
 })
