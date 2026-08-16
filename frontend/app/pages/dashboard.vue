@@ -10,6 +10,31 @@ const overallProgress = computed(() => {
   if (totalLessons.value === 0) return 0
   return Math.round((completedLessons.value / totalLessons.value) * 100)
 })
+
+// ─── Gradient helper — maps curriculum gradient tokens to CSS background-image ──
+// UnoCSS gradient tokens (e.g. 'from-teal-700 via-teal-800 to-teal-900')
+// are data strings, not static class attributes. UnoCSS tree-shakes them at
+// build time unless safelisted. Using inline styles is the correct pattern
+// for data-driven dynamic values — the gradient is rendered directly.
+
+const gradientMap: Record<string, string> = {
+  'from-teal-700 via-teal-800 to-teal-900':
+    'linear-gradient(135deg, #0f766e, #115e59, #134e4a)',
+  'from-emerald-700 via-emerald-800 to-emerald-900':
+    'linear-gradient(135deg, #047857, #065f46, #064e3b)',
+  'from-cyan-700 via-cyan-800 to-cyan-900':
+    'linear-gradient(135deg, #0e7490, #155e75, #164e63)',
+  'from-sky-700 via-sky-800 to-sky-900':
+    'linear-gradient(135deg, #0369a1, #0c4a6e, #082f49)',
+  'from-indigo-700 via-indigo-800 to-indigo-900':
+    'linear-gradient(135deg, #4338ca, #3730a3, #312e81)',
+  'from-violet-700 via-violet-800 to-violet-900':
+    'linear-gradient(135deg, #6d28d9, #5b21b6, #4c1d95)'
+}
+
+function gradientToBg(token: string): string {
+  return gradientMap[token] ?? 'linear-gradient(135deg, #374151, #1f2937, #111827)'
+}
 </script>
 
 <template>
@@ -91,22 +116,22 @@ const overallProgress = computed(() => {
           >
             <!-- Gradient header with Arabic overlay -->
             <div
-              :class="level.gradient"
+              :style="{ backgroundImage: gradientToBg(level.gradient) }"
               class="relative px-5 pt-5 pb-4 overflow-hidden"
             >
-              <!-- Decorative Arabic text -->
+              <!-- Decorative Arabic text watermark — visible but subtle -->
               <span
-                class="absolute top-2 right-3 font-arabic text-white/10 text-2xl select-none"
+                class="absolute top-2 right-3 font-arabic text-white/30 text-2xl select-none"
                 aria-hidden="true"
               >
                 {{ level.arabicTitle }}
               </span>
               <div class="relative z-10">
                 <div class="flex items-center gap-2 mb-2">
-                  <span class="px-2.5 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-[10px] font-bold tracking-wider">
+                  <span class="px-2.5 py-0.5 rounded-full text-white text-[10px] font-bold tracking-wider ring-1 ring-white/30">
                     {{ level.code }}
                   </span>
-                  <span class="text-white/70 text-xs">{{ level.title }}</span>
+                  <span class="text-white/90 text-xs font-medium">{{ level.title }}</span>
                 </div>
                 <h2 class="text-white font-bold text-lg">
                   {{ level.arabicTitle }}
@@ -116,6 +141,10 @@ const overallProgress = computed(() => {
 
             <!-- Card body -->
             <div class="p-5">
+              <!-- Goal text — primary value-add of the tile -->
+              <p class="text-sm text-stone-600 dark:text-stone-300 mb-3 line-clamp-3">
+                {{ level.goal }}
+              </p>
               <div class="flex items-center justify-between text-sm text-stone-500 dark:text-stone-400 mb-3">
                 <span>{{ 0 }} / {{ level.lessons.length }} lessons</span>
                 <span class="text-primary-600 dark:text-primary-400 font-medium text-xs uppercase tracking-wide">
