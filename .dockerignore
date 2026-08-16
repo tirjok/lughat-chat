@@ -5,21 +5,7 @@ node_modules/
 # Build output
 .output/
 .dist/
-
-# Nuxt build cache
 .nuxt/
-
-# IDE
-.idea/
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-logs/
-*.log
 
 # Environment
 .env
@@ -29,23 +15,13 @@ logs/
 .git/
 .gitignore
 
-# Docker
+# Docker (not needed in build context)
 docker-compose.yml
 Dockerfile
 
-# Docs / specs / ADRs
-docs/
-specs/
-adr/
-architecture/
-proto/
-PLAN.md
-CONTEXT.md
-AGENTS.md
-README.md
-
-# Scripts (not needed in image)
-scripts/
-
 # Backend (not needed in frontend image)
 backend/
+
+# Docs
+docs/
+scripts/
