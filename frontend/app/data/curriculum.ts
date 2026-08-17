@@ -58,11 +58,65 @@ export interface SectionItem {
   options?: string[]
 }
 
-export type ActivityType =
+export type SectionType
+  =
+  | 'dialogue'
+  | 'vocabulary'
+  | 'pronouns'
+  | 'expressions'
+  | 'grammar'
+
+export interface DialogueLine {
+  speaker: string
+  arabic: string
+  english: string
+  notes?: string
+}
+
+export interface VocabWord {
+  arabic: string
+  english: string
+  singular?: string
+  plural?: string
+}
+
+export type SectionContent
+  =
+  | { type: 'dialogue', scenes: { label: string, lines: DialogueLine[] }[] }
+  | { type: 'vocabulary', categories: { label: string, words: VocabWord[] }[] }
+  | { type: 'pronouns', pronouns: { arabic: string, english: string, example: string }[] }
+  | { type: 'expressions', expressions: { arabic: string, english: string }[] }
+  | { type: 'grammar', topics: { name: string, description: string, examples: { arabic: string, english: string }[] }[] }
+
+export type ActivityContent
+  =
+  | { type: 'listen-translate', dialogue: { [sceneKey: string]: { label: string, arabic: string, english_expected: string } } }
+  | { type: 'translate-to-english', sentences: { arabic: string, english_expected: string }[] }
+  | { type: 'translate-to-arabic', sentences: { english: string, arabic_expected: string }[] }
+  | { type: 'introduce-characters', characters: { name: string, arabic: string, gender: string, sentences: { english: string, arabic_expected: string }[] }[] }
+  | { type: 'role-play', scenario: string, expectedElements: string[] }
+  | { type: 'fill-blank', prompt: string, answer: string, options?: string[] }
+  | { type: 'matching', pairs: { source: string, target: string }[] }
+
+export interface ActivityDefinition {
+  id: number
+  type: ActivityType
+  title: string
+  description: string
+  order: number
+  competencyMap: Record<string, number>
+  maxAttempts: number
+  content: ActivityContent
+}
+export type ActivityType
+  =
   | 'listen-translate'
   | 'role-play'
   | 'fill-blank'
   | 'matching'
+  | 'translate-to-english'
+  | 'translate-to-arabic'
+  | 'introduce-characters'
 
 // ─── Curricula ──────────────────────────────────────────────────────────
 
