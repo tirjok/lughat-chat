@@ -411,6 +411,7 @@ export const curriculum: CurriculumLevel[] = [
             },
             maxAttempts: 3,
             content: {
+              type: 'listen-translate',
               dialogue: {
                 scene1: {
                   label: 'Muhammad ↔ Ali',
@@ -437,6 +438,7 @@ export const curriculum: CurriculumLevel[] = [
             },
             maxAttempts: 3,
             content: {
+              type: 'translate-to-english',
               sentences: [
                 { arabic: 'أَنَا مُسْلِمٌ', english_expected: 'I am a Muslim' },
                 { arabic: 'أَنْتَ مُسْلِمٌ', english_expected: 'You are a Muslim (male)' },
@@ -460,6 +462,7 @@ export const curriculum: CurriculumLevel[] = [
             },
             maxAttempts: 3,
             content: {
+              type: 'translate-to-arabic',
               sentences: [
                 { english: 'I am Ahmad, and I am a Muslim', arabic_expected: 'أَنَا أَحْمَد، وَأَنَا مُسْلِم' },
                 { english: 'You (male) are a Muslim', arabic_expected: 'أَنْتَ مُسْلِم' },
@@ -483,6 +486,7 @@ export const curriculum: CurriculumLevel[] = [
             },
             maxAttempts: 3,
             content: {
+              type: 'introduce-characters',
               characters: [
                 { name: 'Muhammad', arabic: 'مُحَمَّد', gender: 'male', sentences: [
                   { english: 'He is Muhammad', arabic_expected: 'هُوَ مُحَمَّد' },
@@ -509,8 +513,9 @@ export const curriculum: CurriculumLevel[] = [
             },
             maxAttempts: 3,
             content: {
+              type: 'role-play',
               scenario: 'You meet someone new at the mosque. Exchange greetings, introduce yourself, and ask how they are.',
-              expected_elements: [
+              expectedElements: [
                 'Greeting (السَّلَامُ عَلَيْكُمْ)',
                 'Response (وَعَلَيْكُمُ السَّلَام)',
                 'Self-introduction (أَنَا ...)',
@@ -523,6 +528,7 @@ export const curriculum: CurriculumLevel[] = [
       },
       {
         id: 'a1-02',
+        arabicTitle: 'الأرقام والمعلومات الشخصية',
         title: 'Numbers & Personal Info',
         description: 'Counting, stating your age, nationality, and basic personal details.',
         sections: [
