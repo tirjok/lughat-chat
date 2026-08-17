@@ -149,3 +149,149 @@ describe('curriculum.ts — Issue 2: Restructured interfaces', () => {
     })
   })
 })
+
+// ─── Issue 3: Flat `items` Accessor Tests ───────────────────────────────
+// These tests verify that SectionDefinition.items is a **getter** (not a
+// static property) that flattens nested `content` into SectionItem[] with
+// IDs matching the current flat data format. This is the backward-compatibility
+// contract — any code reading `item.id` must get the same values as before.
+
+describe('curriculum.ts — Issue 3: Flat items accessor', () => {
+  describe('Backward-compatible ID generation', () => {
+    it('a1-01 dialogue items have IDs matching current flat format (a1-01-d1 through a1-01-d4)', () => {
+      const lesson = getLessonById('a1-01')
+      expect(lesson).toBeDefined()
+      const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
+      expect(dialogueSection).toBeDefined()
+      const items = dialogueSection!.items
+      expect(items.length).toBe(4)
+      expect(items.map(i => i.id)).toEqual(['a1-01-d1', 'a1-01-d2', 'a1-01-d3', 'a1-01-d4'])
+    })
+
+    it('a1-01 vocabulary items have IDs matching current flat format (a1-01-v1 through a1-01-v5)', () => {
+      const lesson = getLessonById('a1-01')
+      const vocabSection = lesson!.sections.find(s => s.name === 'Vocabulary')
+      expect(vocabSection).toBeDefined()
+      const items = vocabSection!.items
+      expect(items.length).toBe(5)
+      expect(items.map(i => i.id)).toEqual(['a1-01-v1', 'a1-01-v2', 'a1-01-v3', 'a1-01-v4', 'a1-01-v5'])
+    })
+
+    it('a1-01 pronouns items have IDs matching current flat format (a1-01-p1 through a1-01-p4)', () => {
+      const lesson = getLessonById('a1-01')
+      const pronounsSection = lesson!.sections.find(s => s.name === 'Pronouns')
+      expect(pronounsSection).toBeDefined()
+      const items = pronounsSection!.items
+      expect(items.length).toBe(4)
+      expect(items.map(i => i.id)).toEqual(['a1-01-p1', 'a1-01-p2', 'a1-01-p3', 'a1-01-p4'])
+    })
+
+    it('a1-01 expressions items have IDs matching current flat format (a1-01-e1 through a1-01-e2)', () => {
+      const lesson = getLessonById('a1-01')
+      const expressionsSection = lesson!.sections.find(s => s.name === 'Expressions')
+      expect(expressionsSection).toBeDefined()
+      const items = expressionsSection!.items
+      expect(items.length).toBe(2)
+      expect(items.map(i => i.id)).toEqual(['a1-01-e1', 'a1-01-e2'])
+    })
+
+    it('a1-01 grammar items have IDs matching current flat format (a1-01-g1 through a1-01-g2)', () => {
+      const lesson = getLessonById('a1-01')
+      const grammarSection = lesson!.sections.find(s => s.name === 'Grammar')
+      expect(grammarSection).toBeDefined()
+      const items = grammarSection!.items
+      expect(items.length).toBe(2)
+      expect(items.map(i => i.id)).toEqual(['a1-01-g1', 'a1-01-g2'])
+    })
+  })
+
+  describe('arabic / english / notes preservation', () => {
+    it('dialogue items preserve arabic, english, and notes from nested content', () => {
+      const lesson = getLessonById('a1-01')
+      const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
+      const items = dialogueSection!.items
+      expect(items[0].arabic).toBe('مَرْحَبًا')
+      expect(items[0].english).toBe('Hello')
+      expect(items[0].notes).toBe('Universal greeting, formal and informal')
+      expect(items[3].arabic).toBe('شُكْرًا')
+      expect(items[3].english).toBe('Thank you')
+    })
+
+    it('vocabulary items preserve arabic, english; notes = singular ?? plural ?? undefined', () => {
+      const lesson = getLessonById('a1-01')
+      const vocabSection = lesson!.sections.find(s => s.name === 'Vocabulary')
+      const items = vocabSection!.items
+      expect(items[0].arabic).toBe('صَباحَ الخَيْر')
+      expect(items[0].english).toBe('Good morning')
+      // Vocab section: notes comes from singular (no plural field set)
+      expect(items[0].notes).toBe('Ṣabāḥ al-khayr')
+    })
+
+    it('pronouns items: notes = example from nested pronoun', () => {
+      const lesson = getLessonById('a1-01')
+      const pronounsSection = lesson!.sections.find(s => s.name === 'Pronouns')
+      const items = pronounsSection!.items
+      expect(items[0].arabic).toBe('أَنَا')
+      expect(items[0].english).toBe('I / me')
+      expect(items[0].notes).toBe('Anā')
+    })
+
+    it('grammar items: notes = topic.description from nested topic', () => {
+      const lesson = getLessonById('a1-01')
+      const grammarSection = lesson!.sections.find(s => s.name === 'Grammar')
+      const items = grammarSection!.items
+      expect(items[0].arabic).toBe('أنا طالب')
+      expect(items[0].english).toBe('I am a student')
+      expect(items[0].notes).toBe('')
+      expect(items[1].notes).toBe('')
+    })
+  })
+
+  describe('cross-lesson ID format consistency', () => {
+    it('a1-02 dialogue IDs follow lesson-prefix format (a1-02-d1, a1-02-d2)', () => {
+      const lesson = getLessonById('a1-02')
+      expect(lesson).toBeDefined()
+      const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
+      const items = dialogueSection!.items
+      expect(items.length).toBe(2)
+      expect(items.map(i => i.id)).toEqual(['a1-02-d1', 'a1-02-d2'])
+    })
+
+    it('a1-02 vocabulary IDs follow lesson-prefix format (a1-02-v1 through a1-02-v5)', () => {
+      const lesson = getLessonById('a1-02')
+      const vocabSection = lesson!.sections.find(s => s.name === 'Vocabulary')
+      const items = vocabSection!.items
+      expect(items.length).toBe(5)
+      expect(items.map(i => i.id)).toEqual(['a1-02-v1', 'a1-02-v2', 'a1-02-v3', 'a1-02-v4', 'a1-02-v5'])
+    })
+
+    it('a2-01 dialogue IDs follow lesson-prefix format (a2-01-d1, a2-01-d2)', () => {
+      const lesson = getLessonById('a2-01')
+      expect(lesson).toBeDefined()
+      const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
+      const items = dialogueSection!.items
+      expect(items.length).toBe(2)
+      expect(items.map(i => i.id)).toEqual(['a2-01-d1', 'a2-01-d2'])
+    })
+  })
+
+  describe('transliteration and audioUrl are undefined', () => {
+    it('flat accessor does not produce transliteration (undefined for all items)', () => {
+      const lesson = getLessonById('a1-01')
+      lesson!.sections.forEach(section => {
+        section.items.forEach(item => {
+          expect(item.transliteration).toBeUndefined()
+        })
+      })
+    })
+
+    it('flat accessor does not produce audioUrl (undefined for all items)', () => {
+      const lesson = getLessonById('a1-01')
+      lesson!.sections.forEach(section => {
+        section.items.forEach(item => {
+          expect(item.audioUrl).toBeUndefined()
+        })
+      })
+    })
+  })
+})

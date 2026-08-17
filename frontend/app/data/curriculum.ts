@@ -45,8 +45,82 @@ export interface SectionDefinition {
   title?: string
   /** Nested, type-aware content (SectionContent discriminated union). */
   content: SectionContent
-  /** Flat projection of nested content — preserves backward compatibility with existing templates. */
-  items: SectionItem[]
+  /** Parent lesson ID, used by the `items` getter for backward-compatible ID generation. */
+  _lessonId: string
+  /** Getter: flattens nested `content` into `SectionItem[]` with backward-compatible IDs. */
+  get items(): SectionItem[]
+}
+
+
+// ─── Section flattening helper ──────────────────────────────────────────
+// Generates backward-compatible IDs: "${lessonId}-${sectionChar}${index}"
+// where sectionChar is derived from SectionType.
+
+const SECTION_CHARS: Record<string, string> = {
+  dialogue: 'd',
+  vocabulary: 'v',
+  pronouns: 'p',
+  expressions: 'e',
+  grammar: 'g',
+  activity: 'a',
+}
+
+/** Build a backward-compatible ID for a flat section item. */
+function buildSectionId(lessonId: string, sectionType: string, index: number): string {
+  const char = SECTION_CHARS[sectionType] ?? 'x'
+  return `${lessonId}-${char}${index}`
+}
+
+/** Flatten any SectionContent into SectionItem[] with backward-compatible IDs. */
+function flattenSectionContent(content: SectionContent, lessonId: string): SectionItem[] {
+  switch (content.type) {
+    case 'dialogue': {
+      const scenes = content as { type: 'dialogue', scenes: { label: string, lines: DialogueLine[] }[] }
+      return scenes.scenes.flatMap(scene => scene.lines).map((line, index) => ({
+        id: buildSectionId(lessonId, 'dialogue', index + 1),
+        arabic: line.arabic,
+        english: line.english,
+        notes: line.notes,
+      }))
+    }
+    case 'vocabulary': {
+      const vocab = content as { type: 'vocabulary', categories: { label: string, words: VocabWord[] }[] }
+      return vocab.categories.flatMap(cat => cat.words).map((word, index) => ({
+        id: buildSectionId(lessonId, 'vocabulary', index + 1),
+        arabic: word.arabic,
+        english: word.english,
+        notes: word.singular ?? word.plural,
+      }))
+    }
+    case 'pronouns': {
+      const pron = content as { type: 'pronouns', pronouns: { arabic: string, english: string, example: string }[] }
+      return pron.pronouns.map((p, index) => ({
+        id: buildSectionId(lessonId, 'pronouns', index + 1),
+        arabic: p.arabic,
+        english: p.english,
+        notes: p.example,
+      }))
+    }
+    case 'expressions': {
+      const expr = content as { type: 'expressions', expressions: { arabic: string, english: string }[] }
+      return expr.expressions.map((e, index) => ({
+        id: buildSectionId(lessonId, 'expressions', index + 1),
+        arabic: e.arabic,
+        english: e.english,
+      }))
+    }
+    case 'grammar': {
+      const gram = content as { type: 'grammar', topics: { name: string, description: string, examples: { arabic: string, english: string }[] }[] }
+      return gram.topics.flatMap(topic => topic.examples.map((ex, index) => ({
+        id: buildSectionId(lessonId, 'grammar', index + 1),
+        arabic: ex.arabic,
+        english: ex.english,
+        notes: topic.description,
+      }))).flat()
+    }
+    default:
+      return []
+  }
 }
 
 export type SectionItemType = 'dialogue' | 'vocabulary' | 'pronoun' | 'expression' | 'grammar' | 'activity'
@@ -169,36 +243,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              {
-                id: 'a1-01-d1',
-                arabic: 'مَرْحَبًا',
-                transliteration: 'marḥaban',
-                english: 'Hello',
-                notes: 'Universal greeting, formal and informal'
-              },
-              {
-                id: 'a1-01-d2',
-                arabic: 'كَيْفَ حَالُكَ؟',
-                transliteration: 'Kayfa ḥāluka?',
-                english: 'How are you? (m.)',
-                notes: 'Used when addressing a male'
-              },
-              {
-                id: 'a1-01-d3',
-                arabic: 'حَمْدًا لِلَّهِ',
-                transliteration: 'Ḥamdan lillāh',
-                english: 'Praise be to God / Fine',
-                notes: 'Common polite response'
-              },
-              {
-                id: 'a1-01-d4',
-                arabic: 'شُكْرًا',
-                transliteration: 'Shukran',
-                english: 'Thank you',
-                notes: 'Universal expression of gratitude'
-              }
-            ]
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
@@ -217,38 +263,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              {
-                id: 'a1-01-v1',
-                arabic: 'صَباحَ الخَيْر',
-                transliteration: 'Ṣabāḥ al-khayr',
-                english: 'Good morning'
-              },
-              {
-                id: 'a1-01-v2',
-                arabic: 'مَسَاءَ الخَيْر',
-                transliteration: 'Masāʾ al-khayr',
-                english: 'Good evening'
-              },
-              {
-                id: 'a1-01-v3',
-                arabic: 'مَعَ السَّلَامَة',
-                transliteration: 'Maʿa al-salāmah',
-                english: 'Goodbye'
-              },
-              {
-                id: 'a1-01-v4',
-                arabic: 'نَعَم',
-                transliteration: 'Naʿam',
-                english: 'Yes'
-              },
-              {
-                id: 'a1-01-v5',
-                arabic: 'لَا',
-                transliteration: 'Lā',
-                english: 'No'
-              }
-            ]
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
@@ -263,32 +279,8 @@ export const curriculum: CurriculumLevel[] = [
                 { arabic: 'هُوَ', english: 'he', example: 'Huwa' }
               ]
             },
-            items: [
-              {
-                id: 'a1-01-p1',
-                arabic: 'أَنَا',
-                transliteration: 'Anā',
-                english: 'I / me'
-              },
-              {
-                id: 'a1-01-p2',
-                arabic: 'أَنْتَ',
-                transliteration: 'Anta',
-                english: 'you (m.)'
-              },
-              {
-                id: 'a1-01-p3',
-                arabic: 'أَنْتِ',
-                transliteration: 'Anti',
-                english: 'you (f.)'
-              },
-              {
-                id: 'a1-01-p4',
-                arabic: 'هُوَ',
-                transliteration: 'Huwa',
-                english: 'he'
-              }
-            ]
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
@@ -301,22 +293,8 @@ export const curriculum: CurriculumLevel[] = [
                 { arabic: 'أنا من السعودية', english: 'I am from Saudi Arabia' }
               ]
             },
-            items: [
-              {
-                id: 'a1-01-e1',
-                arabic: 'مَا اسْمُكَ؟',
-                transliteration: 'Mā ismuka?',
-                english: 'What is your name? (m.)',
-                notes: 'Literal: "What is your name?"'
-              },
-              {
-                id: 'a1-01-e2',
-                arabic: 'أنا من السعودية',
-                transliteration: 'Ana min al-Suʿūdiyyah',
-                english: 'I am from Saudi Arabia',
-                notes: 'Use من (min) for "from"'
-              }
-            ]
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
@@ -333,44 +311,16 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              {
-                id: 'a1-01-g1',
-                arabic: 'أنا طالب',
-                transliteration: 'Anā ṭālib',
-                english: 'I am a student',
-                notes: 'No "to be" verb in present tense Arabic'
-              },
-              {
-                id: 'a1-01-g2',
-                arabic: 'هذه كتاب',
-                transliteration: 'Hādhī kitāb',
-                english: 'This is a book',
-                notes: 'Demonstrative + noun, no "is"'
-              }
-            ]
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
             type: 'grammar',
             title: 'Activities',
             content: { type: 'grammar', topics: [] },
-            items: [
-              {
-                id: 'a1-01-a1',
-                arabic: 'مَرْحَبًا',
-                english: 'Hello',
-                activityType: 'listen-translate',
-                answer: 'مرحبا'
-              },
-              {
-                id: 'a1-01-a2',
-                arabic: 'شُكْرًا',
-                english: 'Thank you',
-                activityType: 'listen-translate',
-                answer: 'شكرا'
-              }
-            ]
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
         ],
         competencies: [
@@ -403,22 +353,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              {
-                id: 'a1-02-d1',
-                arabic: 'كَمْ عُمْرُكَ؟',
-                transliteration: 'Kam ʿumruka?',
-                english: 'How old are you?',
-                notes: 'Literal: "How much is your age?"'
-              },
-              {
-                id: 'a1-02-d2',
-                arabic: 'عُمْرِي خَمْسَ عَشْرَةَ سَنَةً',
-                transliteration: 'Umru khamsa asharah sanah',
-                english: 'I am fifteen years old.',
-                notes: 'Age uses the word سَنَة (sanah)'
-              }
-            ]
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
@@ -437,13 +373,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              { id: 'a1-02-v1', arabic: 'وَاحِد', transliteration: 'Wāḥid', english: 'One (1)' },
-              { id: 'a1-02-v2', arabic: 'اِثْنَان', transliteration: 'Ithnān', english: 'Two (2)' },
-              { id: 'a1-02-v3', arabic: 'ثَلَاثَة', transliteration: 'Thalāthah', english: 'Three (3)' },
-              { id: 'a1-02-v4', arabic: 'أَرْبَعَة', transliteration: 'Arbaʿah', english: 'Four (4)' },
-              { id: 'a1-02-v5', arabic: 'خَمْسَة', transliteration: 'Khamsah', english: 'Five (5)' }
-            ]
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
@@ -453,9 +384,8 @@ export const curriculum: CurriculumLevel[] = [
               type: 'pronouns',
               pronouns: [{ arabic: 'هُمَا', english: 'they two (m./f.)', example: 'Humā' }]
             },
-            items: [
-              { id: 'a1-02-p1', arabic: 'هُمَا', transliteration: 'Humā', english: 'they two (m./f.)' }
-            ]
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
@@ -465,9 +395,8 @@ export const curriculum: CurriculumLevel[] = [
               type: 'expressions',
               expressions: [{ arabic: 'سَاعَة، مِنْ فَضْلِكَ', english: 'One minute, please' }]
             },
-            items: [
-              { id: 'a1-02-e1', arabic: 'سَاعَة، مِنْ فَضْلِكَ', transliteration: 'Sāʿah, min faḍlik', english: 'One minute, please' }
-            ]
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
@@ -481,18 +410,16 @@ export const curriculum: CurriculumLevel[] = [
                 examples: [{ arabic: 'لَدَيَّ ثَلَاثُ كُتُب', english: 'I have three books' }]
               }]
             },
-            items: [
-              { id: 'a1-02-g1', arabic: 'لَدَيَّ ثَلَاثُ كُتُب', transliteration: 'Ladayy thalāthu kutub', english: 'I have three books', notes: 'لَدَيَّ (ladayy) = "I have" + dual form' }
-            ]
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
             type: 'grammar',
             title: 'Activities',
             content: { type: 'grammar', topics: [] },
-            items: [
-              { id: 'a1-02-a1', arabic: 'خَمْسَة', english: 'Five', activityType: 'listen-translate', answer: '5' }
-            ]
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
         ],
         activities: []
@@ -539,21 +466,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              {
-                id: 'a2-01-d1',
-                arabic: 'أَصْحُو سَادِسَ الصَّبَاح',
-                transliteration: 'Aṣḥū sādisa al-ṣabāḥ',
-                english: "I wake up at six o'clock.",
-                notes: 'Uses the accusative case for time'
-              },
-              {
-                id: 'a2-01-d2',
-                arabic: 'أَذْهَبُ إِلَى الْمَدْرَسَةِ',
-                transliteration: 'Aḏhabu ilā al-madrasah',
-                english: 'I go to school.'
-              }
-            ]
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
@@ -572,13 +486,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              { id: 'a2-01-v1', arabic: 'أَكُل', transliteration: 'Akul', english: 'I eat' },
-              { id: 'a2-01-v2', arabic: 'أَشْرَب', transliteration: 'Ashrab', english: 'I drink' },
-              { id: 'a2-01-v3', arabic: 'أَنَام', transliteration: 'Anām', english: 'I sleep' },
-              { id: 'a2-01-v4', arabic: 'أَدْرُس', transliteration: 'Adrus', english: 'I study' },
-              { id: 'a2-01-v5', arabic: 'أَلْعَب', transliteration: 'Alʿab', english: 'I play' }
-            ]
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
@@ -591,10 +500,8 @@ export const curriculum: CurriculumLevel[] = [
                 { arabic: 'هُنَّ', english: 'they (f.)', example: 'Hunna' }
               ]
             },
-            items: [
-              { id: 'a2-01-p1', arabic: 'هُمْ', transliteration: 'Hum', english: 'they (m.)' },
-              { id: 'a2-01-p2', arabic: 'هُنَّ', transliteration: 'Hunna', english: 'they (f.)' }
-            ]
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
@@ -604,9 +511,8 @@ export const curriculum: CurriculumLevel[] = [
               type: 'expressions',
               expressions: [{ arabic: 'كَيْفَ تَذْهَبُ إِلَى الْمَدْرَسَة؟', english: 'How do you go to school?' }]
             },
-            items: [
-              { id: 'a2-01-e1', arabic: 'كَيْفَ تَذْهَبُ إِلَى الْمَدْرَسَة؟', transliteration: 'Kayfa tadhhabu ilā al-madrasah?', english: 'How do you go to school?' }
-            ]
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
@@ -620,18 +526,16 @@ export const curriculum: CurriculumLevel[] = [
                 examples: [{ arabic: 'أَذْهَبُ إِلَى الْمَسْجِد', english: 'I go to the mosque' }]
               }]
             },
-            items: [
-              { id: 'a2-01-g1', arabic: 'أَذْهَبُ إِلَى الْمَسْجِد', transliteration: 'Aḏhabu ilā al-masjid', english: 'I go to the mosque', notes: 'إلى (ilā) = "to" + definite article' }
-            ]
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
             type: 'grammar',
             title: 'Activities',
             content: { type: 'grammar', topics: [] },
-            items: [
-              { id: 'a2-01-a1', arabic: 'أَكُل', english: 'I eat', activityType: 'listen-translate', answer: 'أكُل' }
-            ]
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
         ],
         activities: []
@@ -656,20 +560,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              {
-                id: 'a2-02-d1',
-                arabic: 'بِكَمْ هَٰذَا؟',
-                transliteration: 'Bikammā hādhā?',
-                english: 'How much is this?'
-              },
-              {
-                id: 'a2-02-d2',
-                arabic: 'عَشْرَةُ دَرَاهِم',
-                transliteration: 'ʿAsharah dirāham',
-                english: 'Ten dirhams.'
-              }
-            ]
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
@@ -688,20 +580,16 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              { id: 'a2-02-v1', arabic: 'سُوق', transliteration: 'Sūq', english: 'market' },
-              { id: 'a2-02-v2', arabic: 'سِعْر', transliteration: 'Siʿr', english: 'price' },
-              { id: 'a2-02-v3', arabic: 'غَالٍ', transliteration: 'Ghālin', english: 'expensive' },
-              { id: 'a2-02-v4', arabic: 'رَخِيص', transliteration: 'Rakhīṣ', english: 'cheap' },
-              { id: 'a2-02-v5', arabic: 'شِرَاء', transliteration: 'Sharāʾ', english: 'purchase' }
-            ]
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
             type: 'pronouns',
             title: 'Pronouns',
             content: { type: 'pronouns', pronouns: [] },
-            items: []
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
@@ -711,9 +599,8 @@ export const curriculum: CurriculumLevel[] = [
               type: 'expressions',
               expressions: [{ arabic: 'هَلْ تُمْكِنُكَ تَخْفِيضُ السِّعْر؟', english: 'Can you lower the price?' }]
             },
-            items: [
-              { id: 'a2-02-e1', arabic: 'هَلْ تُمْكِنُكَ تَخْفِيضُ السِّعْر؟', transliteration: 'Hal tumkinuka takhfīḍ al-siʿr?', english: 'Can you lower the price?' }
-            ]
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
@@ -727,18 +614,16 @@ export const curriculum: CurriculumLevel[] = [
                 examples: [{ arabic: 'أُرِيدُ أَنْ أَشْرَبَ مَاء', english: 'I want to drink water' }]
               }]
             },
-            items: [
-              { id: 'a2-02-g1', arabic: 'أُرِيدُ أَنْ أَشْرَبَ مَاء', transliteration: 'Urīdu an ashrafa māʾ', english: 'I want to drink water', notes: 'أُرِيدُ أَنْ (urīdu an) = "I want to" + subjunctive' }
-            ]
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
             type: 'grammar',
             title: 'Activities',
             content: { type: 'grammar', topics: [] },
-            items: [
-              { id: 'a2-02-a1', arabic: 'غَالٍ', english: 'expensive', activityType: 'listen-translate', answer: 'غالي' }
-            ]
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
         ],
         activities: []
@@ -785,20 +670,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              {
-                id: 'b1-01-d1',
-                arabic: 'أُرِيدُ أَنْ أُسَافِرَ إِلَى القَاهِرَة',
-                transliteration: 'Urīdu an usāfira ilā al-Qāhirah',
-                english: 'I want to travel to Cairo.'
-              },
-              {
-                id: 'b1-01-d2',
-                arabic: 'هَلْ حَجَزْتَ فُنْكَةً؟',
-                transliteration: 'Hal ḥajazta funkah?',
-                english: 'Have you booked a hotel?'
-              }
-            ]
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
@@ -817,20 +690,16 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              { id: 'b1-01-v1', arabic: 'مَطَار', transliteration: 'Maṭār', english: 'airport' },
-              { id: 'b1-01-v2', arabic: 'تِكْتُه', transliteration: 'Tiklah', english: 'ticket' },
-              { id: 'b1-01-v3', arabic: 'حِجْز', transliteration: 'Ḥijz', english: 'booking' },
-              { id: 'b1-01-v4', arabic: 'وِزَارَة', transliteration: 'Wizārah', english: 'ministry' },
-              { id: 'b1-01-v5', arabic: 'جَوَّال', transliteration: 'Jawwāl', english: 'mobile phone' }
-            ]
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
             type: 'pronouns',
             title: 'Pronouns',
             content: { type: 'pronouns', pronouns: [] },
-            items: []
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
@@ -840,9 +709,8 @@ export const curriculum: CurriculumLevel[] = [
               type: 'expressions',
               expressions: [{ arabic: 'أَيْنَ الوَقْف؟', english: 'Where is the stop?' }]
             },
-            items: [
-              { id: 'b1-01-e1', arabic: 'أَيْنَ الوَقْف؟', transliteration: 'Ayna al-waqf?', english: 'Where is the stop?' }
-            ]
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
@@ -856,18 +724,16 @@ export const curriculum: CurriculumLevel[] = [
                 examples: [{ arabic: 'إِذَا سَافَرْتَ، خُذْ جَوَّابَكَ', english: 'If you travel, take your phone' }]
               }]
             },
-            items: [
-              { id: 'b1-01-g1', arabic: 'إِذَا سَافَرْتَ، خُذْ جَوَّابَكَ', transliteration: 'Idhā sāfarta, khudh jawwābaka', english: 'If you travel, take your phone', notes: 'Conditional: إِذَا (idhā) + past tense' }
-            ]
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
             type: 'grammar',
             title: 'Activities',
             content: { type: 'grammar', topics: [] },
-            items: [
-              { id: 'b1-01-a1', arabic: 'مَطَار', english: 'airport', activityType: 'listen-translate', answer: 'مطار' }
-            ]
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
         ],
         activities: []
@@ -914,20 +780,8 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              {
-                id: 'b2-01-d1',
-                arabic: 'التِّكْنُولُوجْيَا غَيَّرَتْ حَيَاتِنَا',
-                transliteration: 'At-tiknūlūjiyā ghayyarat ḥayātinā',
-                english: 'Technology has changed our lives.'
-              },
-              {
-                id: 'b2-01-d2',
-                arabic: 'نَعَم، وَلَكِنَّهَا جَاءَتْ بِمُشْكِلات',
-                transliteration: 'Naʿam, walākinahā jāʾat bi-mushkilāt',
-                english: 'Yes, but it brought problems.'
-              }
-            ]
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
@@ -946,20 +800,16 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              { id: 'b2-01-v1', arabic: 'إِنْتِرْنِت', transliteration: 'Intirnīt', english: 'internet' },
-              { id: 'b2-01-v2', arabic: 'حَاسُوب', transliteration: 'Ḥāsūb', english: 'computer' },
-              { id: 'b2-01-v3', arabic: 'مِعْلُومَات', transliteration: 'Maʿlūmāt', english: 'information' },
-              { id: 'b2-01-v4', arabic: 'أَمْن', transliteration: 'Amn', english: 'security' },
-              { id: 'b2-01-v5', arabic: 'خَاصَّة', transliteration: 'Khāṣṣah', english: 'privacy' }
-            ]
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
             type: 'pronouns',
             title: 'Pronouns',
             content: { type: 'pronouns', pronouns: [] },
-            items: []
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
@@ -969,9 +819,8 @@ export const curriculum: CurriculumLevel[] = [
               type: 'expressions',
               expressions: [{ arabic: 'بِحَسَبِي، التِّكْنُولُوجْيَا نَافِعَة', english: 'In my opinion, technology is beneficial' }]
             },
-            items: [
-              { id: 'b2-01-e1', arabic: 'بِحَسَبِي، التِّكْنُولُوجْيَا نَافِعَة', transliteration: 'Biḥasābī, at-tiknūlūjiyā nāfiʿah', english: 'In my opinion, technology is beneficial' }
-            ]
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
@@ -985,18 +834,16 @@ export const curriculum: CurriculumLevel[] = [
                 examples: [{ arabic: 'لَوْ كَانَ الْإِنْسَانُ أَعْقَلَ، لَمْ يَتْرُكْ الطَّبِيعَة', english: 'If humans were wiser, they would not destroy nature' }]
               }]
             },
-            items: [
-              { id: 'b2-01-g1', arabic: 'لَوْ كَانَ الْإِنْسَانُ أَعْقَلَ، لَمْ يَتْرُكْ الطَّبِيعَة', transliteration: 'Law kāna al-insānu aʿqala, lam yatruk al-ṭabīʿah', english: 'If humans were wiser, they would not destroy nature', notes: 'Past tense for unreal condition: لَوْ (law) + past' }
-            ]
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
             type: 'grammar',
             title: 'Activities',
             content: { type: 'grammar', topics: [] },
-            items: [
-              { id: 'b2-01-a1', arabic: 'مِعْلُومَات', english: 'information', activityType: 'listen-translate', answer: 'معلومات' }
-            ]
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
         ],
         activities: []
@@ -1040,14 +887,8 @@ export const curriculum: CurriculumLevel[] = [
                 lines: [{ speaker: '', arabic: 'الشِّعْر الْجَاهِلِيَّة كَانَتْ مُفْصَّلَة', english: 'Pre-Islamic poetry was detailed.' }]
               }]
             },
-            items: [
-              {
-                id: 'c1-01-d1',
-                arabic: 'الشِّعْر الْجَاهِلِيَّة كَانَتْ مُفْصَّلَة',
-                transliteration: 'Ash-shiʿru al-jāhiliyyah kānat mufassalah',
-                english: 'Pre-Islamic poetry was detailed.'
-              }
-            ]
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
@@ -1066,27 +907,24 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              { id: 'c1-01-v1', arabic: 'شِعْر', transliteration: 'Shiʿr', english: 'poetry' },
-              { id: 'c1-01-v2', arabic: 'نَثْر', transliteration: 'Nathr', english: 'prose' },
-              { id: 'c1-01-v3', arabic: 'بَلَاغَة', transliteration: 'Balāghah', english: 'rhetoric' },
-              { id: 'c1-01-v4', arabic: 'بَدِيع', transliteration: 'Badīʿ', english: 'imaginative writing' },
-              { id: 'c1-01-v5', arabic: 'مَعَانِي', transliteration: 'Maʿānī', english: 'semantics' }
-            ]
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
             type: 'pronouns',
             title: 'Pronouns',
             content: { type: 'pronouns', pronouns: [] },
-            items: []
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
             type: 'expressions',
             title: 'Expressions',
             content: { type: 'expressions', expressions: [] },
-            items: []
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
@@ -1100,18 +938,16 @@ export const curriculum: CurriculumLevel[] = [
                 examples: [{ arabic: 'كُنْتُ أَكْتُبُ كُلَّ يَوْم', english: 'I used to write every day' }]
               }]
             },
-            items: [
-              { id: 'c1-01-g1', arabic: 'كُنْتُ أَكْتُبُ كُلَّ يَوْم', transliteration: 'Kuntu aktubu kulla yawm', english: 'I used to write every day', notes: 'Past habitual: كُنْتُ + imperfect' }
-            ]
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
             type: 'grammar',
             title: 'Activities',
             content: { type: 'grammar', topics: [] },
-            items: [
-              { id: 'c1-01-a1', arabic: 'بَلَاغَة', english: 'rhetoric', activityType: 'listen-translate', answer: 'بلاغة' }
-            ]
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
         ],
         activities: []
@@ -1155,14 +991,8 @@ export const curriculum: CurriculumLevel[] = [
                 lines: [{ speaker: '', arabic: 'اللُّغَة العَرَبِيَّة أَسْمَكُ اللُّغَات', english: 'Arabic is the richest of languages.' }]
               }]
             },
-            items: [
-              {
-                id: 'c2-01-d1',
-                arabic: 'اللُّغَة العَرَبِيَّة أَسْمَكُ اللُّغَات',
-                transliteration: 'Al-lughatu al-ʿarabiyyatu asmaku al-lughāt',
-                english: 'Arabic is the richest of languages.'
-              }
-            ]
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
@@ -1181,27 +1011,24 @@ export const curriculum: CurriculumLevel[] = [
                 ]
               }]
             },
-            items: [
-              { id: 'c2-01-v1', arabic: 'إِطْنَاب', transliteration: 'Iṭnāb', english: 'ellipsis' },
-              { id: 'c2-01-v2', arabic: 'تَضَادّ', transliteration: 'Taḍādd', english: 'antonymy' },
-              { id: 'c2-01-v3', arabic: 'مُضَارَعَة', transliteration: 'Muḍārah', english: 'derivation' },
-              { id: 'c2-01-v4', arabic: 'تَرْجَمَة', transliteration: 'Tarjamah', english: 'translation' },
-              { id: 'c2-01-v5', arabic: 'تَرْبِيب', transliteration: 'Tarbīb', english: 'arrangement/rhetoric' }
-            ]
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
             type: 'pronouns',
             title: 'Pronouns',
             content: { type: 'pronouns', pronouns: [] },
-            items: []
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
             type: 'expressions',
             title: 'Expressions',
             content: { type: 'expressions', expressions: [] },
-            items: []
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
@@ -1215,18 +1042,16 @@ export const curriculum: CurriculumLevel[] = [
                 examples: [{ arabic: 'لَوْ لَا الْكِتَابُ لَمَا عَرَفْنَا', english: 'Were it not for the book, we would not have known' }]
               }]
             },
-            items: [
-              { id: 'c2-01-g1', arabic: 'لَوْ لَا الْكِتَابُ لَمَا عَرَفْنَا', transliteration: 'Law lā al-kitābu lamā ʿarafnā', english: 'Were it not for the book, we would not have known', notes: 'لَوْ لَا (law lā) = "Were it not for" — strong conditional' }
-            ]
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
             type: 'grammar',
             title: 'Activities',
             content: { type: 'grammar', topics: [] },
-            items: [
-              { id: 'c2-01-a1', arabic: 'إِطْنَاب', english: 'ellipsis', activityType: 'listen-translate', answer: 'إطناب' }
-            ]
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
         ],
         activities: []
