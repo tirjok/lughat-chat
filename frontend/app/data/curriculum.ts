@@ -234,12 +234,22 @@ export const curriculum: CurriculumLevel[] = [
             content: {
               type: 'dialogue',
               scenes: [{
-                label: '',
+                label: 'Scene 1: Muhammad ↔ Ali (Male-to-Male)',
                 lines: [
-                  { speaker: '', arabic: 'مَرْحَبًا', english: 'Hello', notes: 'Universal greeting, formal and informal' },
-                  { speaker: '', arabic: 'كَيْفَ حَالُكَ؟', english: 'How are you? (m.)', notes: 'Used when addressing a male' },
-                  { speaker: '', arabic: 'حَمْدًا لِلَّهِ', english: 'Praise be to God / Fine', notes: 'Common polite response' },
-                  { speaker: '', arabic: 'شُكْرًا', english: 'Thank you', notes: 'Universal expression of gratitude' }
+                  { speaker: 'Muhammad', arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ', english: 'Peace be upon you and Allah\'s mercy', notes: 'Formal Islamic greeting' },
+                  { speaker: 'Ali', arabic: 'وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ', english: 'And upon you be peace and Allah\'s mercy and blessings', notes: 'Complete response — adds \'and His blessings\'' },
+                  { speaker: 'Muhammad', arabic: 'كَيْفَ حَالُكَ يَا أَخِي؟', english: 'How are you? (asking a male)', notes: 'أَخِي = my brother (male address)' },
+                  { speaker: 'Ali', arabic: 'اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكَ؟', english: 'All praise be to Allah, I am fine, thank you. And how are you?', notes: 'Standard positive response' },
+                  { speaker: 'Muhammad', arabic: 'اَلْحَمْدُ لِلَّهِ، أَنَا أَيْضًا بِخَيْرٍ. مَرْحَبًا بِكَ فِي مَسْجِدِنَا', english: 'All praise be to Allah, I am fine as well. Welcome to our mosque.', notes: 'مَرْحَبًا بِكَ = welcome (addressing male)' }
+                ]
+              }, {
+                label: 'Scene 2: Khadija ↔ Aisha (Female-to-Female)',
+                lines: [
+                  { speaker: 'Khadija', arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ', english: 'Peace be upon you and Allah\'s mercy', notes: 'Same greeting, gender-neutral' },
+                  { speaker: 'Aisha', arabic: 'وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ', english: 'And upon you be peace and Allah\'s mercy and blessings', notes: 'Same complete response' },
+                  { speaker: 'Khadija', arabic: 'كَيْفَ حَالُكِ يَا أُخْتِي؟', english: 'How are you? (asking a female)', notes: 'أُخْتِي = my sister; حَالُكِ = your state (female)' },
+                  { speaker: 'Aisha', arabic: 'اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكِ؟', english: 'All praise be to Allah, I am fine, thank you. And how are you?', notes: 'Same response, gender-neutral' },
+                  { speaker: 'Khadija', arabic: 'اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ أَيْضًا. مَرْحَبًا بِكِ فِي بَيْتِنَا', english: 'All praise be to Allah, I am fine as well. Welcome to our house.', notes: 'مَرْحَبًا بِكِ = welcome (addressing female)' }
                 ]
               }]
             },

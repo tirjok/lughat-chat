@@ -158,16 +158,15 @@ describe('curriculum.ts — Issue 2: Restructured interfaces', () => {
 
 describe('curriculum.ts — Issue 3: Flat items accessor', () => {
   describe('Backward-compatible ID generation', () => {
-    it('a1-01 dialogue items have IDs matching current flat format (a1-01-d1 through a1-01-d4)', () => {
+    it('a1-01 dialogue items have IDs matching current flat format (a1-01-d1 through a1-01-d10)', () => {
       const lesson = getLessonById('a1-01')
       expect(lesson).toBeDefined()
       const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
       expect(dialogueSection).toBeDefined()
       const items = dialogueSection!.items
-      expect(items.length).toBe(4)
-      expect(items.map(i => i.id)).toEqual(['a1-01-d1', 'a1-01-d2', 'a1-01-d3', 'a1-01-d4'])
+      expect(items.length).toBe(10)
+      expect(items.map(i => i.id)).toEqual(['a1-01-d1', 'a1-01-d2', 'a1-01-d3', 'a1-01-d4', 'a1-01-d5', 'a1-01-d6', 'a1-01-d7', 'a1-01-d8', 'a1-01-d9', 'a1-01-d10'])
     })
-
     it('a1-01 vocabulary items have IDs matching current flat format (a1-01-v1 through a1-01-v5)', () => {
       const lesson = getLessonById('a1-01')
       const vocabSection = lesson!.sections.find(s => s.name === 'Vocabulary')
@@ -204,17 +203,18 @@ describe('curriculum.ts — Issue 3: Flat items accessor', () => {
       expect(items.map(i => i.id)).toEqual(['a1-01-g1', 'a1-01-g2'])
     })
   })
-
   describe('arabic / english / notes preservation', () => {
     it('dialogue items preserve arabic, english, and notes from nested content', () => {
       const lesson = getLessonById('a1-01')
       const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
       const items = dialogueSection!.items
-      expect(items[0].arabic).toBe('مَرْحَبًا')
-      expect(items[0].english).toBe('Hello')
-      expect(items[0].notes).toBe('Universal greeting, formal and informal')
-      expect(items[3].arabic).toBe('شُكْرًا')
-      expect(items[3].english).toBe('Thank you')
+      // First line: formal Islamic greeting (Scene 1, line 1)
+      expect(items[0].arabic).toBe('السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ')
+      expect(items[0].english).toBe('Peace be upon you and Allah\'s mercy')
+      expect(items[0].notes).toBe('Formal Islamic greeting')
+      // Fourth line: standard positive response (Scene 1, line 4)
+      expect(items[3].arabic).toBe('اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكَ؟')
+      expect(items[3].english).toBe('All praise be to Allah, I am fine, thank you. And how are you?')
     })
 
     it('vocabulary items preserve arabic, english; notes = singular ?? plural ?? undefined', () => {
