@@ -5,7 +5,7 @@ export default defineVitestConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/composables/**/*.test.ts'],
+    include: ['tests/composables/**/*.test.ts', 'tests/data/**/*.test.ts'],
     environmentOptions: {
       nuxt: {
         rootDir: fileURLToPath(new URL('.', import.meta.url))
