@@ -4,6 +4,7 @@ import {
   getLevelByCode,
   getLevelForLesson,
   getAllLessons,
+  getActivitiesByLesson,
   getTotalLessonCount
 } from '~/data/curriculum'
 
@@ -293,5 +294,108 @@ describe('curriculum.ts — Issue 3: Flat items accessor', () => {
         })
       })
     })
+  })
+})
+// ─── Issue 5: Migrate Remaining 7 Lessons to Nested Structure ────────
+// These tests verify that the 7 non-a1-01 lessons have:
+// - No `competencies` field (undefined, not [] or null)
+// - No `sequence` field (undefined, not 0 or null)
+// - Empty `activities: []`
+// - Working flat `items` accessor on every section
+
+describe('curriculum.ts — Issue 5: Migrate 7 remaining lessons', () => {
+  const nonA101Lessons = [
+    'a1-02', 'a2-01', 'a2-02', 'b1-01', 'b2-01', 'c1-01', 'c2-01'
+  ]
+
+  describe('TC-competencies-undefined: non-a1-01 lessons have no competencies field', () => {
+    for (const lessonId of nonA101Lessons) {
+      it(`getLessonById('${lessonId}')?.competencies is undefined (not [] or null)`, () => {
+        const lesson = getLessonById(lessonId)
+        expect(lesson).toBeDefined()
+        const l = lesson!
+        expect(l.competencies).toBeUndefined()
+      })
+    }
+  })
+
+  describe('TC-sequence-undefined: non-a1-01 lessons have no sequence field', () => {
+    for (const lessonId of nonA101Lessons) {
+      it(`getLessonById('${lessonId}')?.sequence is undefined (not 0 or null)`, () => {
+        const lesson = getLessonById(lessonId)
+        expect(lesson).toBeDefined()
+        const l = lesson!
+        expect(l.sequence).toBeUndefined()
+      })
+    }
+  })
+
+  describe('TC-empty-activities: non-a1-01 lessons have empty activities array', () => {
+    for (const lessonId of nonA101Lessons) {
+      it(`getLessonById('${lessonId}').activities is []`, () => {
+        const lesson = getLessonById(lessonId)
+        expect(lesson).toBeDefined()
+        const l = lesson!
+        expect(l.activities).toEqual([])
+      })
+    }
+  })
+
+  describe('TC-items-accessor: flat items accessor works for all sections of all 7 lessons', () => {
+    for (const lessonId of nonA101Lessons) {
+      it(`getLessonById('${lessonId}') sections.items produces valid SectionItem[] for every section`, () => {
+        const lesson = getLessonById(lessonId)
+        expect(lesson).toBeDefined()
+        const l = lesson!
+
+        for (const section of l.sections) {
+          const items = section.items
+          expect(Array.isArray(items)).toBe(true)
+          // Every item must have a valid ID matching the backward-compatible format
+          for (const item of items) {
+            expect(typeof item.id).toBe('string')
+            expect(item.id).toMatch(new RegExp(`^${lessonId}-[a-z]\\d+$`))
+            expect(typeof item.arabic).toBe('string')
+            expect(item.arabic.length).toBeGreaterThan(0)
+          }
+        }
+      })
+    }
+  })
+
+  describe('TC-competencies-a101-still-present: a1-01 competencies unchanged', () => {
+    it('getLessonById("a1-01")?.competencies is defined with 5 strings', () => {
+      const lesson = getLessonById('a1-01')
+      expect(lesson).toBeDefined()
+      const l = lesson!
+      expect(Array.isArray(l.competencies)).toBe(true)
+      expect(l.competencies!.length).toBe(5)
+    })
+  })
+})
+
+// ─── Issue 6: getActivitiesByLesson Helper ────────────────────────────
+// These tests verify the new `getActivitiesByLesson` helper function:
+// - Returns 5 ActivityDefinition[] for 'a1-01' (TC-02)
+// - Returns [] for all other lessons (TC-03)
+
+describe('curriculum.ts — Issue 6: getActivitiesByLesson helper', () => {
+  it("TC-02: returns 5 ActivityDefinition objects for 'a1-01'", () => {
+    const activities = getActivitiesByLesson('a1-01')
+    expect(activities.length).toBe(5)
+    expect(activities).toHaveLength(5)
+  })
+
+  const nonA101Lessons = [
+    'a1-02', 'a2-01', 'a2-02', 'b1-01', 'b2-01', 'c1-01', 'c2-01'
+  ]
+
+  describe('TC-03: other lessons return empty array', () => {
+    for (const lessonId of nonA101Lessons) {
+      it(`returns [] for '${lessonId}'`, () => {
+        const activities = getActivitiesByLesson(lessonId)
+        expect(activities).toEqual([])
+      })
+    }
   })
 })

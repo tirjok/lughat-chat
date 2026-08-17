@@ -1100,3 +1100,12 @@ export function getAllLessons(): LessonDefinition[] {
 export function getTotalLessonCount(): number {
   return curriculum.reduce((sum, l) => sum + l.lessons.length, 0)
 }
+/**
+ * Returns all activities for a given lesson.
+ * @deprecated — used when activity rendering component is built (Phase 2+).
+ * Returns 5 activities for 'a1-01', [] for all others.
+ */
+export function getActivitiesByLesson(lessonId: string): ActivityDefinition[] {
+  const lesson = getLessonById(lessonId)
+  return lesson?.activities ?? []
+}
