@@ -29,32 +29,18 @@ export interface LessonDefinition {
   arabicTitle: string
   description: string
   sections: SectionDefinition[]
-  /** Learning outcomes from the lesson (from lesson-01.json). */
   competencies?: string[]
-  /** Ordering within a level. */
   sequence?: number
-  /** Rich activity definitions (from lesson-01.json). */
   activities: ActivityDefinition[]
 }
 
 export interface SectionDefinition {
-  name: string
-  /** Section type discriminator (dialogue, vocabulary, etc.). */
   type?: SectionType
-  /** Bilingual section title. */
   title?: string
-  /** Nested, type-aware content (SectionContent discriminated union). */
   content: SectionContent
-  /** Parent lesson ID, used by the `items` getter for backward-compatible ID generation. */
   _lessonId: string
-  /** Getter: flattens nested `content` into `SectionItem[]` with backward-compatible IDs. */
   get items(): SectionItem[]
 }
-
-// ─── Section flattening helper ──────────────────────────────────────────
-// Generates backward-compatible IDs: "${lessonId}-${sectionChar}${index}"
-// where sectionChar is derived from SectionType.
-
 const SECTION_CHARS: Record<string, string> = {
   dialogue: 'd',
   vocabulary: 'v',
@@ -64,13 +50,11 @@ const SECTION_CHARS: Record<string, string> = {
   activity: 'a'
 }
 
-/** Build a backward-compatible ID for a flat section item. */
 function buildSectionId(lessonId: string, sectionType: string, index: number): string {
   const char = SECTION_CHARS[sectionType] ?? 'x'
   return `${lessonId}-${char}${index}`
 }
 
-/** Flatten any SectionContent into SectionItem[] with backward-compatible IDs. */
 function flattenSectionContent(content: SectionContent, lessonId: string): SectionItem[] {
   switch (content.type) {
     case 'dialogue': {
@@ -136,10 +120,6 @@ export interface SectionItem {
   english?: string
   notes?: string
   audioUrl?: string
-  /** For activities: the activity type */
-  activityType?: ActivityType
-  /** For activities: expected answer / options */
-  answer?: string
   options?: string[]
 }
 
@@ -1283,11 +1263,6 @@ export function getAllLessons(): LessonDefinition[] {
 export function getTotalLessonCount(): number {
   return curriculum.reduce((sum, l) => sum + l.lessons.length, 0)
 }
-/**
- * Returns all activities for a given lesson.
- * @deprecated — used when activity rendering component is built (Phase 2+).
- * Returns 5 activities for 'a1-01', [] for all others.
- */
 export function getActivitiesByLesson(lessonId: string): ActivityDefinition[] {
   const lesson = getLessonById(lessonId)
   return lesson?.activities ?? []
