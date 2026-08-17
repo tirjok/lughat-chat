@@ -76,7 +76,7 @@ These are liabilities: they will be modified without understanding their full sh
 | 27 | **Mobile Divider Dragging** | — | **Missing** | Touch/mouse drag | Frontend (useDragResize) | 2026-08-08 |
 | 28 | **Session Cleanup (24h TTL)** | — | **Missing** | Time passes, API calls | Backend (file system) | 2026-08-08 |
 | 29 | **Multi-Page SPA Routing** | `WORKFLOW-multi-page-spa-routing.md` | **Draft** | User clicks nav link / types URL / browser back-forward | Frontend (Nuxt Router + GlobalNavbar) | 2026-08-08 |
-| 30 | **Global Navbar Navigation** | `WORKFLOW-global-navbar-navigation.md` | **Review** | Route changes, page mounts | Frontend (app.vue + GlobalNavbar) | 2026-08-08 |
+| 31 | **Lesson Data Model Alignment** | `WORKFLOW-lesson-data-model-alignment.md` | **Draft** | Developer restructures curriculum.ts | Frontend (data layer) | 2026-08-16 |
 
 ---
 
@@ -136,7 +136,7 @@ These are liabilities: they will be modified without understanding their full sh
 | `WaveformCanvas.vue` | `frontend/app/components/WaveformCanvas.vue` (164 lines) | Audio Playback Lifecycle (visualization) |
 | `DesktopPanels.vue` | `frontend/app/components/DesktopPanels.vue` (307 lines) | Responsive Layout Toggle, Scroll Reveal Animation |
 | `MobileSplitScreen.vue` | `frontend/app/components/MobileSplitScreen.vue` (294 lines) | Mobile Divider Dragging, Responsive Layout Toggle |
-
+| `curriculum.ts` | `frontend/app/data/curriculum.ts` (786 lines) | Lesson Data Model Alignment |
 ### Infrastructure
 
 | Component | File(s) | Workflows it participates in |
@@ -175,6 +175,7 @@ These are liabilities: they will be modified without understanding their full sh
 | Sees focus glow behind textarea | Focus Halo Effect | Textarea focus/blur |
 | Navigates during synthesis | In-Flight Synthesis Cleanup | `onBeforeRouteLeave` |
 | Navigates between pages | Frontend SPA Routing → Cross-Page Composable Lifecycle | `<NuxtLink>`, URL, back/forward |
+| Browses lesson content | Lesson Data Model Alignment (data layer) → Frontend SPA Routing | `/dashboard/level/{level}/{lesson}` |
 
 ### Operator Journeys
 

@@ -4,16 +4,9 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
 const testMountedCallbacks: (() => void)[] = []
 
-mockNuxtImport('onMounted', (original) => {
+mockNuxtImport('onMounted', () => {
   return (cb: () => void) => {
     testMountedCallbacks.push(cb)
-    // If onMounted is available (real component mount), call it directly.
-    // Otherwise, tests trigger callbacks manually.
-    try {
-      original(cb)
-    } catch {
-      // onMounted not available in unit test context
-    }
   }
 })
 

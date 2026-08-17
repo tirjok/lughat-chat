@@ -29,20 +29,89 @@ export interface LessonDefinition {
   arabicTitle: string
   description: string
   sections: SectionDefinition[]
+  competencies?: string[]
+  sequence?: number
+  activities: ActivityDefinition[]
 }
 
 export interface SectionDefinition {
-  name: string
-  items: SectionItem[]
+  type?: SectionType
+  title?: string
+  content: SectionContent
+  _lessonId: string
+  get items(): SectionItem[]
+}
+const SECTION_CHARS: Record<string, string> = {
+  dialogue: 'd',
+  vocabulary: 'v',
+  pronouns: 'p',
+  expressions: 'e',
+  grammar: 'g',
+  activity: 'a'
 }
 
-export type SectionItemType =
-  | 'dialogue'
-  | 'vocabulary'
-  | 'pronoun'
-  | 'expression'
-  | 'grammar'
-  | 'activity'
+function buildSectionId(lessonId: string, sectionType: string, index: number): string {
+  const char = SECTION_CHARS[sectionType] ?? 'x'
+  return `${lessonId}-${char}${index}`
+}
+
+function flattenSectionContent(content: SectionContent, lessonId: string): SectionItem[] {
+  switch (content.type) {
+    case 'dialogue': {
+      const scenes = content as { type: 'dialogue', scenes: { label: string, lines: DialogueLine[] }[] }
+      return scenes.scenes.flatMap(scene => scene.lines).map((line, index) => ({
+        id: buildSectionId(lessonId, 'dialogue', index + 1),
+        arabic: line.arabic,
+        english: line.english,
+        notes: line.notes
+      }))
+    }
+    case 'vocabulary': {
+      const vocab = content as { type: 'vocabulary', categories: { label: string, words: VocabWord[] }[] }
+      return vocab.categories.flatMap(cat => cat.words).map((word, index) => ({
+        id: buildSectionId(lessonId, 'vocabulary', index + 1),
+        arabic: word.arabic,
+        english: word.english,
+        notes: word.singular ?? word.plural
+      }))
+    }
+    case 'pronouns': {
+      const pron = content as { type: 'pronouns', pronouns: { arabic: string, english: string, example: string }[] }
+      return pron.pronouns.map((p, index) => ({
+        id: buildSectionId(lessonId, 'pronouns', index + 1),
+        arabic: p.arabic,
+        english: p.english,
+        notes: p.example
+      }))
+    }
+    case 'expressions': {
+      const expr = content as { type: 'expressions', expressions: { arabic: string, english: string }[] }
+      return expr.expressions.map((e, index) => ({
+        id: buildSectionId(lessonId, 'expressions', index + 1),
+        arabic: e.arabic,
+        english: e.english
+      }))
+    }
+    case 'grammar': {
+      const gram = content as { type: 'grammar', topics: { name: string, description: string, examples: { arabic: string, english: string }[] }[] }
+      let globalIndex = 0
+      return gram.topics.flatMap(topic => topic.examples.map((ex) => {
+        const id = buildSectionId(lessonId, 'grammar', globalIndex + 1)
+        globalIndex++
+        return {
+          id,
+          arabic: ex.arabic,
+          english: ex.english,
+          notes: topic.description
+        }
+      })).flat()
+    }
+    default:
+      return []
+  }
+}
+
+export type SectionItemType = 'dialogue' | 'vocabulary' | 'pronoun' | 'expression' | 'grammar' | 'activity'
 
 export interface SectionItem {
   id: string
@@ -51,18 +120,64 @@ export interface SectionItem {
   english?: string
   notes?: string
   audioUrl?: string
-  /** For activities: the activity type */
-  activityType?: ActivityType
-  /** For activities: expected answer / options */
-  answer?: string
   options?: string[]
 }
 
-export type ActivityType =
-  | 'listen-translate'
-  | 'role-play'
-  | 'fill-blank'
-  | 'matching'
+export type SectionType
+  = | 'dialogue'
+    | 'vocabulary'
+    | 'pronouns'
+    | 'expressions'
+    | 'grammar'
+    | 'activity'
+export interface DialogueLine {
+  speaker: string
+  arabic: string
+  english: string
+  notes?: string
+}
+
+export interface VocabWord {
+  arabic: string
+  english: string
+  singular?: string
+  plural?: string
+}
+
+export type SectionContent
+  = | { type: 'dialogue', scenes: { label: string, lines: DialogueLine[] }[] }
+    | { type: 'vocabulary', categories: { label: string, words: VocabWord[] }[] }
+    | { type: 'pronouns', pronouns: { arabic: string, english: string, example: string }[] }
+    | { type: 'expressions', expressions: { arabic: string, english: string }[] }
+    | { type: 'grammar', topics: { name: string, description: string, examples: { arabic: string, english: string }[] }[] }
+
+export type ActivityContent
+  = | { type: 'listen-translate', dialogue: { [sceneKey: string]: { label: string, arabic: string, english_expected: string } } }
+    | { type: 'translate-to-english', sentences: { arabic: string, english_expected: string }[] }
+    | { type: 'translate-to-arabic', sentences: { english: string, arabic_expected: string }[] }
+    | { type: 'introduce-characters', characters: { name: string, arabic: string, gender: string, sentences: { english: string, arabic_expected: string }[] }[] }
+    | { type: 'role-play', scenario: string, expectedElements: string[] }
+    | { type: 'fill-blank', prompt: string, answer: string, options?: string[] }
+    | { type: 'matching', pairs: { source: string, target: string }[] }
+
+export interface ActivityDefinition {
+  id: number
+  type: ActivityType
+  title: string
+  description: string
+  order: number
+  competencyMap: Record<string, number>
+  maxAttempts: number
+  content: ActivityContent
+}
+export type ActivityType
+  = | 'listen-translate'
+    | 'role-play'
+    | 'fill-blank'
+    | 'matching'
+    | 'translate-to-english'
+    | 'translate-to-arabic'
+    | 'introduce-characters'
 
 // ─── Curricula ──────────────────────────────────────────────────────────
 
@@ -95,220 +210,392 @@ export const curriculum: CurriculumLevel[] = [
         sections: [
           {
             name: 'Dialogue',
-            items: [
-              {
-                id: 'a1-01-d1',
-                arabic: 'مَرْحَبًا',
-                transliteration: 'marḥaban',
-                english: 'Hello',
-                notes: 'Universal greeting, formal and informal'
-              },
-              {
-                id: 'a1-01-d2',
-                arabic: 'كَيْفَ حَالُكَ؟',
-                transliteration: 'Kayfa ḥāluka?',
-                english: 'How are you? (m.)',
-                notes: 'Used when addressing a male'
-              },
-              {
-                id: 'a1-01-d3',
-                arabic: 'حَمْدًا لِلَّهِ',
-                transliteration: 'Ḥamdan lillāh',
-                english: 'Praise be to God / Fine',
-                notes: 'Common polite response'
-              },
-              {
-                id: 'a1-01-d4',
-                arabic: 'شُكْرًا',
-                transliteration: 'Shukran',
-                english: 'Thank you',
-                notes: 'Universal expression of gratitude'
-              }
-            ]
+            type: 'dialogue',
+            title: 'Dialogue',
+            content: {
+              type: 'dialogue',
+              scenes: [{
+                label: 'Scene 1: Muhammad ↔ Ali (Male-to-Male)',
+                lines: [
+                  { speaker: 'Muhammad', arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ', english: 'Peace be upon you and Allah\'s mercy', notes: 'Formal Islamic greeting' },
+                  { speaker: 'Ali', arabic: 'وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ', english: 'And upon you be peace and Allah\'s mercy and blessings', notes: 'Complete response — adds \'and His blessings\'' },
+                  { speaker: 'Muhammad', arabic: 'كَيْفَ حَالُكَ يَا أَخِي؟', english: 'How are you? (asking a male)', notes: 'أَخِي = my brother (male address)' },
+                  { speaker: 'Ali', arabic: 'اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكَ؟', english: 'All praise be to Allah, I am fine, thank you. And how are you?', notes: 'Standard positive response' },
+                  { speaker: 'Muhammad', arabic: 'اَلْحَمْدُ لِلَّهِ، أَنَا أَيْضًا بِخَيْرٍ. مَرْحَبًا بِكَ فِي مَسْجِدِنَا', english: 'All praise be to Allah, I am fine as well. Welcome to our mosque.', notes: 'مَرْحَبًا بِكَ = welcome (addressing male)' }
+                ]
+              }, {
+                label: 'Scene 2: Khadija ↔ Aisha (Female-to-Female)',
+                lines: [
+                  { speaker: 'Khadija', arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ', english: 'Peace be upon you and Allah\'s mercy', notes: 'Same greeting, gender-neutral' },
+                  { speaker: 'Aisha', arabic: 'وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ', english: 'And upon you be peace and Allah\'s mercy and blessings', notes: 'Same complete response' },
+                  { speaker: 'Khadija', arabic: 'كَيْفَ حَالُكِ يَا أُخْتِي؟', english: 'How are you? (asking a female)', notes: 'أُخْتِي = my sister; حَالُكِ = your state (female)' },
+                  { speaker: 'Aisha', arabic: 'اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكِ؟', english: 'All praise be to Allah, I am fine, thank you. And how are you?', notes: 'Same response, gender-neutral' },
+                  { speaker: 'Khadija', arabic: 'اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ أَيْضًا. مَرْحَبًا بِكِ فِي بَيْتِنَا', english: 'All praise be to Allah, I am fine as well. Welcome to our house.', notes: 'مَرْحَبًا بِكِ = welcome (addressing female)' }
+                ]
+              }]
+            },
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
-            items: [
-              {
-                id: 'a1-01-v1',
-                arabic: 'صَباحَ الخَيْر',
-                transliteration: 'Ṣabāḥ al-khayr',
-                english: 'Good morning'
-              },
-              {
-                id: 'a1-01-v2',
-                arabic: 'مَسَاءَ الخَيْر',
-                transliteration: 'Masāʾ al-khayr',
-                english: 'Good evening'
-              },
-              {
-                id: 'a1-01-v3',
-                arabic: 'مَعَ السَّلَامَة',
-                transliteration: 'Maʿa al-salāmah',
-                english: 'Goodbye'
-              },
-              {
-                id: 'a1-01-v4',
-                arabic: 'نَعَم',
-                transliteration: 'Naʿam',
-                english: 'Yes'
-              },
-              {
-                id: 'a1-01-v5',
-                arabic: 'لَا',
-                transliteration: 'Lā',
-                english: 'No'
-              }
-            ]
+            type: 'vocabulary',
+            title: 'Vocabulary',
+            content: {
+              type: 'vocabulary',
+              categories: [{
+                label: 'Salutations',
+                words: [
+                  { arabic: 'تَحِيَّة', english: 'salutation/greeting', singular: 'تَحِيَّة', plural: 'تَحِيَاتٌ' },
+                  { arabic: 'سَلَام', english: 'peace', singular: 'سَلَام', plural: 'سُلُومٌ' }
+                ]
+              }, {
+                label: 'Nouns',
+                words: [
+                  { arabic: 'دَرْس', english: 'lesson', singular: 'دَرْس', plural: 'دُرُوسٌ' },
+                  { arabic: 'أَوَّل', english: 'first', singular: 'أَوَّل', plural: 'أَوَّلُونَ' },
+                  { arabic: 'مَسْجِد', english: 'mosque', singular: 'مَسْجِد', plural: 'مَسَاجِد' },
+                  { arabic: 'بَيْت', english: 'house', singular: 'بَيْت', plural: 'بُيُوت' }
+                ]
+              }, {
+                label: 'Key Words',
+                words: [
+                  { arabic: 'كَيْف', english: 'how' },
+                  { arabic: 'فِي', english: 'in' }
+                ]
+              }]
+            },
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
-            items: [
-              {
-                id: 'a1-01-p1',
-                arabic: 'أَنَا',
-                transliteration: 'Anā',
-                english: 'I / me'
-              },
-              {
-                id: 'a1-01-p2',
-                arabic: 'أَنْتَ',
-                transliteration: 'Anta',
-                english: 'you (m.)'
-              },
-              {
-                id: 'a1-01-p3',
-                arabic: 'أَنْتِ',
-                transliteration: 'Anti',
-                english: 'you (f.)'
-              },
-              {
-                id: 'a1-01-p4',
-                arabic: 'هُوَ',
-                transliteration: 'Huwa',
-                english: 'he'
-              }
-            ]
+            type: 'pronouns',
+            title: 'Pronouns',
+            content: {
+              type: 'pronouns',
+              pronouns: [
+                { arabic: 'أَنَا', english: 'I', example: 'أَنَا أَخٌ / أُخْت' },
+                { arabic: 'أَنْتَ', english: 'you (male)', example: 'أَنْتَ أَخ' },
+                { arabic: 'أَنْتِ', english: 'you (female)', example: 'أَنْتِ أُخْت' },
+                { arabic: 'نَحْنُ', english: 'we', example: 'نَحْنُ إِخْوَةٌ / أُخَوَات' },
+                { arabic: 'أَنْتُمَا', english: 'you (dual)', example: 'أَنْتُمَا أَخَوَانِ / أُخْتَانِ' },
+                { arabic: 'أَنْتُمْ', english: 'you (male plural)', example: 'أَنْتُمْ إِخْوَة' },
+                { arabic: 'أَنْتُنَّ', english: 'you (female plural)', example: 'أَنْتُنَّ أُخَوَات' },
+                { arabic: 'هُوَ', english: 'he', example: 'هُوَ أَخ' },
+                { arabic: 'هِيَ', english: 'she', example: 'هِيَ أُخْت' },
+                { arabic: 'هُمَا', english: 'they (dual)', example: 'هُمَا أَخَوَانِ / أُخْتَانِ' },
+                { arabic: 'هُمْ', english: 'they (male)', example: 'هُمْ إِخْوَة' },
+                { arabic: 'هُنَّ', english: 'they (female)', example: 'هُنَّ أُخَوَات' }
+              ]
+            },
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
-            items: [
-              {
-                id: 'a1-01-e1',
-                arabic: 'مَا اسْمُكَ؟',
-                transliteration: 'Mā ismuka?',
-                english: 'What is your name? (m.)',
-                notes: 'Literal: "What is your name?"'
-              },
-              {
-                id: 'a1-01-e2',
-                arabic: 'أنا من السعودية',
-                transliteration: 'Ana min al-Suʿūdiyyah',
-                english: 'I am from Saudi Arabia',
-                notes: 'Use من (min) for "from"'
-              }
-            ]
+            type: 'expressions',
+            title: 'Expressions',
+            content: {
+              type: 'expressions',
+              expressions: [
+                { arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ', english: 'Peace be upon you and Allah\'s mercy' },
+                { arabic: 'وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ', english: 'And upon you be peace and Allah\'s mercy and blessings' },
+                { arabic: 'كَيْفَ حَالُكَ؟', english: 'How are you? (male)' },
+                { arabic: 'كَيْفَ حَالُكِ؟', english: 'How are you? (female)' },
+                { arabic: 'يَا أَخِي', english: 'Oh! My brother' },
+                { arabic: 'يَا أُخْتِي', english: 'Oh! My sister' },
+                { arabic: 'اَلْحَمْدُ لِلَّهِ', english: 'All praise be to Allah' },
+                { arabic: 'أَنَا بِخَيْرٍ، شُكْرًا', english: 'I am fine, thank you' },
+                { arabic: 'أَنَا بِخَيْرٍ أَيْضًا', english: 'I am fine as well' },
+                { arabic: 'مَرْحَبًا بِكَ', english: 'Welcome (male)' },
+                { arabic: 'مَرْحَبًا بِكِ', english: 'Welcome (female)' },
+                { arabic: 'مَا اسْمُكَ؟', english: 'What is your name? (male)' },
+                { arabic: 'مَا اسْمُكِ؟', english: 'What is your name? (female)' },
+                { arabic: 'اسْمِي ...', english: 'My name is ...' },
+                { arabic: 'مِنْ أَيْنَ أَنْتَ؟', english: 'Where are you from?' },
+                { arabic: 'إِلَى اللِّقَاء', english: 'Until next time' }
+              ]
+            },
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
-            items: [
-              {
-                id: 'a1-01-g1',
-                arabic: 'أنا طالب',
-                transliteration: 'Anā ṭālib',
-                english: 'I am a student',
-                notes: 'No "to be" verb in present tense Arabic'
-              },
-              {
-                id: 'a1-01-g2',
-                arabic: 'هذه كتاب',
-                transliteration: 'Hādhī kitāb',
-                english: 'This is a book',
-                notes: 'Demonstrative + noun, no "is"'
-              }
-            ]
+            type: 'grammar',
+            title: 'Grammar',
+            content: {
+              type: 'grammar',
+              topics: [
+                {
+                  name: 'Nominative Sentences (الجملة الاسمية)',
+                  description: 'A sentence starting with a noun (ism) followed by a predicate (khabar). Common pattern: Pronoun + Noun/Adjective',
+                  examples: [
+                    { arabic: 'أَنَا مُسْلِم', english: 'I am a Muslim' },
+                    { arabic: 'هُوَ أَخِي', english: 'He is my brother' },
+                    { arabic: 'هِيَ أُخْتِي', english: 'She is my sister' },
+                    { arabic: 'نَحْنُ مُسْلِمُونَ', english: 'We are Muslims' }
+                  ]
+                },
+                {
+                  name: 'Gender Agreement in Pronouns',
+                  description: 'Arabic pronouns encode gender. The verb/adjective must match the pronoun\'s gender.',
+                  examples: [
+                    { arabic: 'كَيْفَ حَالُكَ؟', english: 'How are you? (to male) — حَالُكَ uses masculine suffix' },
+                    { arabic: 'كَيْفَ حَالُكِ؟', english: 'How are you? (to female) — حَالُكِ uses feminine suffix' },
+                    { arabic: 'مَرْحَبًا بِكَ', english: 'Welcome (to male)' },
+                    { arabic: 'مَرْحَبًا بِكِ', english: 'Welcome (to female)' }
+                  ]
+                },
+                {
+                  name: 'Number: Singular, Dual, Plural',
+                  description: 'Arabic has three numbers: singular (مفرد), dual (ثنائي), and plural (جمع).',
+                  examples: [
+                    { arabic: 'أَخ', english: 'brother (singular)' },
+                    { arabic: 'أَخَوَانِ / أُخْتَانِ', english: 'two brothers / two sisters (dual)' },
+                    { arabic: 'إِخْوَة / أُخَوَات', english: 'brothers (m.pl.) / sisters (f.pl.)' }
+                  ]
+                }
+              ]
+            },
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
-            items: [
-              {
-                id: 'a1-01-a1',
-                arabic: 'مَرْحَبًا',
-                english: 'Hello',
-                activityType: 'listen-translate',
-                answer: 'مرحبا'
-              },
-              {
-                id: 'a1-01-a2',
-                arabic: 'شُكْرًا',
-                english: 'Thank you',
-                activityType: 'listen-translate',
-                answer: 'شكرا'
+            type: 'grammar',
+            title: 'Activities',
+            content: { type: 'grammar', topics: [] },
+            _lessonId: 'a1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
+          }
+        ],
+        competencies: [
+          'Can read fluently short paragraphs with harakat',
+          'Good understanding of basic salutations',
+          'Ability to use pronouns correctly',
+          'Differentiates between the pronouns used when talking to the different genders',
+          'Grasps the method of forming nominative sentences with pronouns + nouns'
+        ],
+        sequence: 1,
+        activities: [
+          {
+            id: 1,
+            type: 'listen-translate',
+            title: 'Read the Dialogue & Translate',
+            description: 'Read the Arabic dialogue, then translate it to English.',
+            order: 1,
+            competencyMap: {
+              read_fluently_with_harakat: 0.4,
+              understand_basic_salutations: 0.3
+            },
+            maxAttempts: 3,
+            content: {
+              type: 'listen-translate',
+              dialogue: {
+                scene1: {
+                  label: 'Muhammad ↔ Ali',
+                  arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ — وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ — كَيْفَ حَالُكَ يَا أَخِي؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكَ؟ — اَلْحَمْدُ لِلَّهِ، أَنَا أَيْضًا بِخَيْرٍ. مَرْحَبًا بِكَ فِي مَسْجِدِنَا',
+                  english_expected: 'Peace be upon you and Allah\'s mercy — And upon you be peace and Allah\'s mercy and blessings — How are you? (my brother) — All praise be to Allah, I am fine, thank you. And how are you? — All praise be to Allah, I am fine as well. Welcome to our mosque.'
+                },
+                scene2: {
+                  label: 'Khadija ↔ Aisha',
+                  arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ — وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ — كَيْفَ حَالُكِ يَا أُخْتِي؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكِ؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ أَيْضًا. مَرْحَبًا بِكِ فِي بَيْتِنَا',
+                  english_expected: 'Peace be upon you and Allah\'s mercy — And upon you be peace and Allah\'s mercy and blessings — How are you? (my sister) — All praise be to Allah, I am fine, thank you. And how are you? — All praise be to Allah, I am fine as well. Welcome to our house.'
+                }
               }
-            ]
+            }
+          },
+          {
+            id: 2,
+            type: 'translate-to-english',
+            title: 'Translate Sentences to English',
+            description: 'Translate the following Arabic sentences into English.',
+            order: 2,
+            competencyMap: {
+              understand_basic_salutations: 0.5,
+              use_pronouns_correctly: 0.5
+            },
+            maxAttempts: 3,
+            content: {
+              type: 'translate-to-english',
+              sentences: [
+                { arabic: 'أَنَا مُسْلِمٌ', english_expected: 'I am a Muslim' },
+                { arabic: 'أَنْتَ مُسْلِمٌ', english_expected: 'You are a Muslim (male)' },
+                { arabic: 'أَنَا عَائِشَةُ، وَأَنَا مُسْلِمَةٌ', english_expected: 'I am Aisha, and I am a Muslim (female)' },
+                { arabic: 'نَحْنُ مُسْلِمُونَ', english_expected: 'We are Muslims' },
+                { arabic: 'هُمْ مُسْلِمُونَ', english_expected: 'They (males) are Muslims' },
+                { arabic: 'هُوَ أَخِي', english_expected: 'He is my brother' },
+                { arabic: 'هِيَ أُخْتِي', english_expected: 'She is my sister' }
+              ]
+            }
+          },
+          {
+            id: 3,
+            type: 'translate-to-arabic',
+            title: 'Translate Sentences to Arabic',
+            description: 'Translate the following English sentences into Arabic with harakat.',
+            order: 3,
+            competencyMap: {
+              use_pronouns_correctly: 0.5,
+              form_nominative_sentences: 0.5
+            },
+            maxAttempts: 3,
+            content: {
+              type: 'translate-to-arabic',
+              sentences: [
+                { english: 'I am Ahmad, and I am a Muslim', arabic_expected: 'أَنَا أَحْمَد، وَأَنَا مُسْلِم' },
+                { english: 'You (male) are a Muslim', arabic_expected: 'أَنْتَ مُسْلِم' },
+                { english: 'I am Aisha, and I am a Muslim', arabic_expected: 'أَنَا عَائِشَةُ، وَأَنَا مُسْلِمَةٌ' },
+                { english: 'We are Muslims', arabic_expected: 'نَحْنُ مُسْلِمُونَ' },
+                { english: 'They (males) are Muslims', arabic_expected: 'هُمْ مُسْلِمُونَ' },
+                { english: 'You (females) are Muslims', arabic_expected: 'أَنْتُنَّ مُسْلِمَات' },
+                { english: 'You (two) are Muslims', arabic_expected: 'أَنْتُمَا مُسْلِمَان' }
+              ]
+            }
+          },
+          {
+            id: 4,
+            type: 'introduce-characters',
+            title: 'Introduce the Characters',
+            description: 'Introduce these characters to your teacher using proper Arabic sentences.',
+            order: 4,
+            competencyMap: {
+              differentiate_pronouns_by_gender: 0.6,
+              form_nominative_sentences: 0.4
+            },
+            maxAttempts: 3,
+            content: {
+              type: 'introduce-characters',
+              characters: [
+                { name: 'Muhammad', arabic: 'مُحَمَّد', gender: 'male', sentences: [
+                  { english: 'He is Muhammad', arabic_expected: 'هُوَ مُحَمَّد' },
+                  { english: 'They are Muhammad and Aisha', arabic_expected: 'هُمَا مُحَمَّدٌ وَعَائِشَةُ' },
+                  { english: 'They are Muslims', arabic_expected: 'هُمْ مُسْلِمُونَ' }
+                ] },
+                { name: 'Aisha', gender: 'female', arabic: 'عَائِشَةُ', sentences: [
+                  { english: 'She is Aisha', arabic_expected: 'هِيَ عَائِشَةُ' },
+                  { english: 'They (females) are Muslims', arabic_expected: 'هُنَّ مُسْلِمَات' }
+                ] }
+              ]
+            }
+          },
+          {
+            id: 5,
+            type: 'role-play',
+            title: 'Role-Play: Introduce Yourself',
+            description: 'Role-play with your teacher and introduce yourself using what you\'ve learned.',
+            order: 5,
+            competencyMap: {
+              use_pronouns_correctly: 0.3,
+              differentiate_pronouns_by_gender: 0.3,
+              understand_basic_salutations: 0.4
+            },
+            maxAttempts: 3,
+            content: {
+              type: 'role-play',
+              scenario: 'You meet someone new at the mosque. Exchange greetings, introduce yourself, and ask how they are.',
+              expectedElements: [
+                'Greeting (السَّلَامُ عَلَيْكُمْ)',
+                'Response (وَعَلَيْكُمُ السَّلَام)',
+                'Self-introduction (أَنَا ...)',
+                'Asking how they are (كَيْفَ حَالُكَ/حَالُكِ؟)',
+                'Response (اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ)'
+              ]
+            }
           }
         ]
       },
       {
         id: 'a1-02',
-        title: 'Numbers & Personal Info',
         arabicTitle: 'الأرقام والمعلومات الشخصية',
+        title: 'Numbers & Personal Info',
         description: 'Counting, stating your age, nationality, and basic personal details.',
         sections: [
           {
             name: 'Dialogue',
-            items: [
-              {
-                id: 'a1-02-d1',
-                arabic: 'كَمْ عُمْرُكَ؟',
-                transliteration: 'Kam ʿumruka?',
-                english: 'How old are you?',
-                notes: 'Literal: "How much is your age?"'
-              },
-              {
-                id: 'a1-02-d2',
-                arabic: 'عُمْرِي خَمْسَ عَشْرَةَ سَنَةً',
-                transliteration: 'Umru khamsa asharah sanah',
-                english: 'I am fifteen years old.',
-                notes: 'Age uses the word سَنَة (sanah)'
-              }
-            ]
+            type: 'dialogue',
+            title: 'Dialogue',
+            content: {
+              type: 'dialogue',
+              scenes: [{
+                label: '',
+                lines: [
+                  { speaker: '', arabic: 'كَمْ عُمْرُكَ؟', english: 'How old are you?', notes: 'Literal: "How much is your age?"' },
+                  { speaker: '', arabic: 'عُمْرِي خَمْسَ عَشْرَةَ سَنَةً', english: 'I am fifteen years old.', notes: 'Age uses the word سَنَة (sanah)' }
+                ]
+              }]
+            },
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
-            items: [
-              { id: 'a1-02-v1', arabic: 'وَاحِد', transliteration: 'Wāḥid', english: 'One (1)' },
-              { id: 'a1-02-v2', arabic: 'اِثْنَان', transliteration: 'Ithnān', english: 'Two (2)' },
-              { id: 'a1-02-v3', arabic: 'ثَلَاثَة', transliteration: 'Thalāthah', english: 'Three (3)' },
-              { id: 'a1-02-v4', arabic: 'أَرْبَعَة', transliteration: 'Arbaʿah', english: 'Four (4)' },
-              { id: 'a1-02-v5', arabic: 'خَمْسَة', transliteration: 'Khamsah', english: 'Five (5)' }
-            ]
+            type: 'vocabulary',
+            title: 'Vocabulary',
+            content: {
+              type: 'vocabulary',
+              categories: [{
+                label: '',
+                words: [
+                  { arabic: 'وَاحِد', english: 'One (1)', singular: 'Wāḥid' },
+                  { arabic: 'اِثْنَان', english: 'Two (2)', singular: 'Ithnān' },
+                  { arabic: 'ثَلَاثَة', english: 'Three (3)', singular: 'Thalāthah' },
+                  { arabic: 'أَرْبَعَة', english: 'Four (4)', singular: 'Arbaʿah' },
+                  { arabic: 'خَمْسَة', english: 'Five (5)', singular: 'Khamsah' }
+                ]
+              }]
+            },
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
-            items: [
-              { id: 'a1-02-p1', arabic: 'هُمَا', transliteration: 'Humā', english: 'they two (m./f.)' }
-            ]
+            type: 'pronouns',
+            title: 'Pronouns',
+            content: {
+              type: 'pronouns',
+              pronouns: [{ arabic: 'هُمَا', english: 'they two (m./f.)', example: 'Humā' }]
+            },
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
-            items: [
-              { id: 'a1-02-e1', arabic: 'سَاعَة، مِنْ فَضْلِكَ', transliteration: 'Sāʿah, min faḍlik', english: 'One minute, please' }
-            ]
+            type: 'expressions',
+            title: 'Expressions',
+            content: {
+              type: 'expressions',
+              expressions: [{ arabic: 'سَاعَة، مِنْ فَضْلِكَ', english: 'One minute, please' }]
+            },
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
-            items: [
-              { id: 'a1-02-g1', arabic: 'لَدَيَّ ثَلَاثُ كُتُب', transliteration: 'Ladayy thalāthu kutub', english: 'I have three books', notes: 'لَدَيَّ (ladayy) = "I have" + dual form' }
-            ]
+            type: 'grammar',
+            title: 'Grammar',
+            content: {
+              type: 'grammar',
+              topics: [{
+                name: '',
+                description: '',
+                examples: [{ arabic: 'لَدَيَّ ثَلَاثُ كُتُب', english: 'I have three books' }]
+              }]
+            },
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
-            items: [
-              { id: 'a1-02-a1', arabic: 'خَمْسَة', english: 'Five', activityType: 'listen-translate', answer: '5' }
-            ]
+            type: 'grammar',
+            title: 'Activities',
+            content: { type: 'grammar', topics: [] },
+            _lessonId: 'a1-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
-        ]
+        ],
+        activities: []
       }
     ]
   },
@@ -340,58 +627,91 @@ export const curriculum: CurriculumLevel[] = [
         sections: [
           {
             name: 'Dialogue',
-            items: [
-              {
-                id: 'a2-01-d1',
-                arabic: 'أَصْحُو سَادِسَ الصَّبَاح',
-                transliteration: 'Aṣḥū sādisa al-ṣabāḥ',
-                english: 'I wake up at six o\'clock.',
-                notes: 'Uses the accusative case for time'
-              },
-              {
-                id: 'a2-01-d2',
-                arabic: 'أَذْهَبُ إِلَى الْمَدْرَسَةِ',
-                transliteration: 'Aḏhabu ilā al-madrasah',
-                english: 'I go to school.'
-              }
-            ]
+            type: 'dialogue',
+            title: 'Dialogue',
+            content: {
+              type: 'dialogue',
+              scenes: [{
+                label: '',
+                lines: [
+                  { speaker: '', arabic: 'أَصْحُو سَادِسَ الصَّبَاح', english: 'I wake up at six o\'clock.', notes: 'Uses the accusative case for time' },
+                  { speaker: '', arabic: 'أَذْهَبُ إِلَى الْمَدْرَسَةِ', english: 'I go to school.' }
+                ]
+              }]
+            },
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
-            items: [
-              { id: 'a2-01-v1', arabic: 'أَكُل', transliteration: 'Akul', english: 'I eat' },
-              { id: 'a2-01-v2', arabic: 'أَشْرَب', transliteration: 'Ashrab', english: 'I drink' },
-              { id: 'a2-01-v3', arabic: 'أَنَام', transliteration: 'Anām', english: 'I sleep' },
-              { id: 'a2-01-v4', arabic: 'أَدْرُس', transliteration: 'Adrus', english: 'I study' },
-              { id: 'a2-01-v5', arabic: 'أَلْعَب', transliteration: 'Alʿab', english: 'I play' }
-            ]
+            type: 'vocabulary',
+            title: 'Vocabulary',
+            content: {
+              type: 'vocabulary',
+              categories: [{
+                label: '',
+                words: [
+                  { arabic: 'أَكُل', english: 'I eat', singular: 'Akul' },
+                  { arabic: 'أَشْرَب', english: 'I drink', singular: 'Ashrab' },
+                  { arabic: 'أَنَام', english: 'I sleep', singular: 'Anām' },
+                  { arabic: 'أَدْرُس', english: 'I study', singular: 'Adrus' },
+                  { arabic: 'أَلْعَب', english: 'I play', singular: 'Alʿab' }
+                ]
+              }]
+            },
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
-            items: [
-              { id: 'a2-01-p1', arabic: 'هُمْ', transliteration: 'Hum', english: 'they (m.)' },
-              { id: 'a2-01-p2', arabic: 'هُنَّ', transliteration: 'Hunna', english: 'they (f.)' }
-            ]
+            type: 'pronouns',
+            title: 'Pronouns',
+            content: {
+              type: 'pronouns',
+              pronouns: [
+                { arabic: 'هُمْ', english: 'they (m.)', example: 'Hum' },
+                { arabic: 'هُنَّ', english: 'they (f.)', example: 'Hunna' }
+              ]
+            },
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
-            items: [
-              { id: 'a2-01-e1', arabic: 'كَيْفَ تَذْهَبُ إِلَى الْمَدْرَسَة؟', transliteration: 'Kayfa tadhhabu ilā al-madrasah?', english: 'How do you go to school?' }
-            ]
+            type: 'expressions',
+            title: 'Expressions',
+            content: {
+              type: 'expressions',
+              expressions: [{ arabic: 'كَيْفَ تَذْهَبُ إِلَى الْمَدْرَسَة؟', english: 'How do you go to school?' }]
+            },
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
-            items: [
-              { id: 'a2-01-g1', arabic: 'أَذْهَبُ إِلَى الْمَسْجِد', transliteration: 'Aḏhabu ilā al-masjid', english: 'I go to the mosque', notes: 'إلى (ilā) = "to" + definite article' }
-            ]
+            type: 'grammar',
+            title: 'Grammar',
+            content: {
+              type: 'grammar',
+              topics: [{
+                name: '',
+                description: '',
+                examples: [{ arabic: 'أَذْهَبُ إِلَى الْمَسْجِد', english: 'I go to the mosque' }]
+              }]
+            },
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
-            items: [
-              { id: 'a2-01-a1', arabic: 'أَكُل', english: 'I eat', activityType: 'listen-translate', answer: 'أكُل' }
-            ]
+            type: 'grammar',
+            title: 'Activities',
+            content: { type: 'grammar', topics: [] },
+            _lessonId: 'a2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
-        ]
+        ],
+        activities: []
       },
       {
         id: 'a2-02',
@@ -401,54 +721,85 @@ export const curriculum: CurriculumLevel[] = [
         sections: [
           {
             name: 'Dialogue',
-            items: [
-              {
-                id: 'a2-02-d1',
-                arabic: 'بِكَمْ هَٰذَا؟',
-                transliteration: 'Bikammā hādhā?',
-                english: 'How much is this?'
-              },
-              {
-                id: 'a2-02-d2',
-                arabic: 'عَشْرَةُ دَرَاهِم',
-                transliteration: 'ʿAsharah dirāham',
-                english: 'Ten dirhams.'
-              }
-            ]
+            type: 'dialogue',
+            title: 'Dialogue',
+            content: {
+              type: 'dialogue',
+              scenes: [{
+                label: '',
+                lines: [
+                  { speaker: '', arabic: 'بِكَمْ هَٰذَا؟', english: 'How much is this?' },
+                  { speaker: '', arabic: 'عَشْرَةُ دَرَاهِم', english: 'Ten dirhams.' }
+                ]
+              }]
+            },
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
-            items: [
-              { id: 'a2-02-v1', arabic: 'سُوق', transliteration: 'Sūq', english: 'market' },
-              { id: 'a2-02-v2', arabic: 'سِعْر', transliteration: 'Siʿr', english: 'price' },
-              { id: 'a2-02-v3', arabic: 'غَالٍ', transliteration: 'Ghālin', english: 'expensive' },
-              { id: 'a2-02-v4', arabic: 'رَخِيص', transliteration: 'Rakhīṣ', english: 'cheap' },
-              { id: 'a2-02-v5', arabic: 'شِرَاء', transliteration: 'Sharāʾ', english: 'purchase' }
-            ]
+            type: 'vocabulary',
+            title: 'Vocabulary',
+            content: {
+              type: 'vocabulary',
+              categories: [{
+                label: '',
+                words: [
+                  { arabic: 'سُوق', english: 'market', singular: 'Sūq' },
+                  { arabic: 'سِعْر', english: 'price', singular: 'Siʿr' },
+                  { arabic: 'غَالٍ', english: 'expensive', singular: 'Ghālin' },
+                  { arabic: 'رَخِيص', english: 'cheap', singular: 'Rakhīṣ' },
+                  { arabic: 'شِرَاء', english: 'purchase', singular: 'Sharāʾ' }
+                ]
+              }]
+            },
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
-            items: []
+            type: 'pronouns',
+            title: 'Pronouns',
+            content: { type: 'pronouns', pronouns: [] },
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
-            items: [
-              { id: 'a2-02-e1', arabic: 'هَلْ تُمْكِنُكَ تَخْفِيضُ السِّعْر؟', transliteration: 'Hal tumkinuka takhfīḍ al-siʿr?', english: 'Can you lower the price?' }
-            ]
+            type: 'expressions',
+            title: 'Expressions',
+            content: {
+              type: 'expressions',
+              expressions: [{ arabic: 'هَلْ تُمْكِنُكَ تَخْفِيضُ السِّعْر؟', english: 'Can you lower the price?' }]
+            },
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
-            items: [
-              { id: 'a2-02-g1', arabic: 'أُرِيدُ أَنْ أَشْرَبَ مَاء', transliteration: 'Urīdu an ashrafa māʾ', english: 'I want to drink water', notes: 'أُرِيدُ أَنْ (urīdu an) = "I want to" + subjunctive' }
-            ]
+            type: 'grammar',
+            title: 'Grammar',
+            content: {
+              type: 'grammar',
+              topics: [{
+                name: '',
+                description: '',
+                examples: [{ arabic: 'أُرِيدُ أَنْ أَشْرَبَ مَاء', english: 'I want to drink water' }]
+              }]
+            },
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
-            items: [
-              { id: 'a2-02-a1', arabic: 'غَالٍ', english: 'expensive', activityType: 'listen-translate', answer: 'غالي' }
-            ]
+            type: 'grammar',
+            title: 'Activities',
+            content: { type: 'grammar', topics: [] },
+            _lessonId: 'a2-02',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
-        ]
+        ],
+        activities: []
       }
     ]
   },
@@ -480,54 +831,85 @@ export const curriculum: CurriculumLevel[] = [
         sections: [
           {
             name: 'Dialogue',
-            items: [
-              {
-                id: 'b1-01-d1',
-                arabic: 'أُرِيدُ أَنْ أُسَافِرَ إِلَى القَاهِرَة',
-                transliteration: 'Urīdu an usāfira ilā al-Qāhirah',
-                english: 'I want to travel to Cairo.'
-              },
-              {
-                id: 'b1-01-d2',
-                arabic: 'هَلْ حَجَزْتَ فُنْكَةً؟',
-                transliteration: 'Hal ḥajazta funkah?',
-                english: 'Have you booked a hotel?'
-              }
-            ]
+            type: 'dialogue',
+            title: 'Dialogue',
+            content: {
+              type: 'dialogue',
+              scenes: [{
+                label: '',
+                lines: [
+                  { speaker: '', arabic: 'أُرِيدُ أَنْ أُسَافِرَ إِلَى القَاهِرَة', english: 'I want to travel to Cairo.' },
+                  { speaker: '', arabic: 'هَلْ حَجَزْتَ فُنْكَةً؟', english: 'Have you booked a hotel?' }
+                ]
+              }]
+            },
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
-            items: [
-              { id: 'b1-01-v1', arabic: 'مَطَار', transliteration: 'Maṭār', english: 'airport' },
-              { id: 'b1-01-v2', arabic: 'تِكْتُه', transliteration: 'Tiklah', english: 'ticket' },
-              { id: 'b1-01-v3', arabic: 'حِجْز', transliteration: 'Ḥijz', english: 'booking' },
-              { id: 'b1-01-v4', arabic: 'وِزَارَة', transliteration: 'Wizārah', english: 'ministry' },
-              { id: 'b1-01-v5', arabic: 'جَوَّال', transliteration: 'Jawwāl', english: 'mobile phone' }
-            ]
+            type: 'vocabulary',
+            title: 'Vocabulary',
+            content: {
+              type: 'vocabulary',
+              categories: [{
+                label: '',
+                words: [
+                  { arabic: 'مَطَار', english: 'airport', singular: 'Maṭār' },
+                  { arabic: 'تِكْتُه', english: 'ticket', singular: 'Tiklah' },
+                  { arabic: 'حِجْز', english: 'booking', singular: 'Ḥijz' },
+                  { arabic: 'وِزَارَة', english: 'ministry', singular: 'Wizārah' },
+                  { arabic: 'جَوَّال', english: 'mobile phone', singular: 'Jawwāl' }
+                ]
+              }]
+            },
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
-            items: []
+            type: 'pronouns',
+            title: 'Pronouns',
+            content: { type: 'pronouns', pronouns: [] },
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
-            items: [
-              { id: 'b1-01-e1', arabic: 'أَيْنَ الوَقْف؟', transliteration: 'Ayna al-waqf?', english: 'Where is the stop?' }
-            ]
+            type: 'expressions',
+            title: 'Expressions',
+            content: {
+              type: 'expressions',
+              expressions: [{ arabic: 'أَيْنَ الوَقْف؟', english: 'Where is the stop?' }]
+            },
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
-            items: [
-              { id: 'b1-01-g1', arabic: 'إِذَا سَافَرْتَ، خُذْ جَوَّابَكَ', transliteration: 'Idhā sāfarta, khudh jawwābaka', english: 'If you travel, take your phone', notes: 'Conditional: إِذَا (idhā) + past tense' }
-            ]
+            type: 'grammar',
+            title: 'Grammar',
+            content: {
+              type: 'grammar',
+              topics: [{
+                name: '',
+                description: '',
+                examples: [{ arabic: 'إِذَا سَافَرْتَ، خُذْ جَوَّابَكَ', english: 'If you travel, take your phone' }]
+              }]
+            },
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
-            items: [
-              { id: 'b1-01-a1', arabic: 'مَطَار', english: 'airport', activityType: 'listen-translate', answer: 'مطار' }
-            ]
+            type: 'grammar',
+            title: 'Activities',
+            content: { type: 'grammar', topics: [] },
+            _lessonId: 'b1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
-        ]
+        ],
+        activities: []
       }
     ]
   },
@@ -559,54 +941,85 @@ export const curriculum: CurriculumLevel[] = [
         sections: [
           {
             name: 'Dialogue',
-            items: [
-              {
-                id: 'b2-01-d1',
-                arabic: 'التِّكْنُولُوجْيَا غَيَّرَتْ حَيَاتِنَا',
-                transliteration: 'At-tiknūlūjiyā ghayyarat ḥayātinā',
-                english: 'Technology has changed our lives.'
-              },
-              {
-                id: 'b2-01-d2',
-                arabic: 'نَعَم، وَلَكِنَّهَا جَاءَتْ بِمُشْكِلات',
-                transliteration: 'Naʿam, walākinahā jāʾat bi-mushkilāt',
-                english: 'Yes, but it brought problems.'
-              }
-            ]
+            type: 'dialogue',
+            title: 'Dialogue',
+            content: {
+              type: 'dialogue',
+              scenes: [{
+                label: '',
+                lines: [
+                  { speaker: '', arabic: 'التِّكْنُولُوجْيَا غَيَّرَتْ حَيَاتِنَا', english: 'Technology has changed our lives.' },
+                  { speaker: '', arabic: 'نَعَم، وَلَكِنَّهَا جَاءَتْ بِمُشْكِلات', english: 'Yes, but it brought problems.' }
+                ]
+              }]
+            },
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
-            items: [
-              { id: 'b2-01-v1', arabic: 'إِنْتِرْنِت', transliteration: 'Intirnīt', english: 'internet' },
-              { id: 'b2-01-v2', arabic: 'حَاسُوب', transliteration: 'Ḥāsūb', english: 'computer' },
-              { id: 'b2-01-v3', arabic: 'مِعْلُومَات', transliteration: 'Maʿlūmāt', english: 'information' },
-              { id: 'b2-01-v4', arabic: 'أَمْن', transliteration: 'Amn', english: 'security' },
-              { id: 'b2-01-v5', arabic: 'خَاصَّة', transliteration: 'Khāṣṣah', english: 'privacy' }
-            ]
+            type: 'vocabulary',
+            title: 'Vocabulary',
+            content: {
+              type: 'vocabulary',
+              categories: [{
+                label: '',
+                words: [
+                  { arabic: 'إِنْتِرْنِت', english: 'internet', singular: 'Intirnīt' },
+                  { arabic: 'حَاسُوب', english: 'computer', singular: 'Ḥāsūb' },
+                  { arabic: 'مِعْلُومَات', english: 'information', singular: 'Maʿlūmāt' },
+                  { arabic: 'أَمْن', english: 'security', singular: 'Amn' },
+                  { arabic: 'خَاصَّة', english: 'privacy', singular: 'Khāṣṣah' }
+                ]
+              }]
+            },
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
-            items: []
+            type: 'pronouns',
+            title: 'Pronouns',
+            content: { type: 'pronouns', pronouns: [] },
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
-            items: [
-              { id: 'b2-01-e1', arabic: 'بِحَسَبِي، التِّكْنُولُوجْيَا نَافِعَة', transliteration: 'Biḥasābī, at-tiknūlūjiyā nāfiʿah', english: 'In my opinion, technology is beneficial' }
-            ]
+            type: 'expressions',
+            title: 'Expressions',
+            content: {
+              type: 'expressions',
+              expressions: [{ arabic: 'بِحَسَبِي، التِّكْنُولُوجْيَا نَافِعَة', english: 'In my opinion, technology is beneficial' }]
+            },
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
-            items: [
-              { id: 'b2-01-g1', arabic: 'لَوْ كَانَ الْإِنْسَانُ أَعْقَلَ، لَمْ يَتْرُكْ الطَّبِيعَة', transliteration: 'Law kāna al-insānu aʿqala, lam yatruk al-ṭabīʿah', english: 'If humans were wiser, they would not destroy nature', notes: 'Past tense for unreal condition: لَوْ (law) + past' }
-            ]
+            type: 'grammar',
+            title: 'Grammar',
+            content: {
+              type: 'grammar',
+              topics: [{
+                name: '',
+                description: '',
+                examples: [{ arabic: 'لَوْ كَانَ الْإِنْسَانُ أَعْقَلَ، لَمْ يَتْرُكْ الطَّبِيعَة', english: 'If humans were wiser, they would not destroy nature' }]
+              }]
+            },
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
-            items: [
-              { id: 'b2-01-a1', arabic: 'مِعْلُومَات', english: 'information', activityType: 'listen-translate', answer: 'معلومات' }
-            ]
+            type: 'grammar',
+            title: 'Activities',
+            content: { type: 'grammar', topics: [] },
+            _lessonId: 'b2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
-        ]
+        ],
+        activities: []
       }
     ]
   },
@@ -638,46 +1051,79 @@ export const curriculum: CurriculumLevel[] = [
         sections: [
           {
             name: 'Dialogue',
-            items: [
-              {
-                id: 'c1-01-d1',
-                arabic: 'الشِّعْر الْجَاهِلِيَّة كَانَتْ مُفْصَّلَة',
-                transliteration: 'Ash-shiʿru al-jāhiliyyah kānat mufassalah',
-                english: 'Pre-Islamic poetry was detailed.'
-              }
-            ]
+            type: 'dialogue',
+            title: 'Dialogue',
+            content: {
+              type: 'dialogue',
+              scenes: [{
+                label: '',
+                lines: [{ speaker: '', arabic: 'الشِّعْر الْجَاهِلِيَّة كَانَتْ مُفْصَّلَة', english: 'Pre-Islamic poetry was detailed.' }]
+              }]
+            },
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
-            items: [
-              { id: 'c1-01-v1', arabic: 'شِعْر', transliteration: 'Shiʿr', english: 'poetry' },
-              { id: 'c1-01-v2', arabic: 'نَثْر', transliteration: 'Nathr', english: 'prose' },
-              { id: 'c1-01-v3', arabic: 'بَلَاغَة', transliteration: 'Balāghah', english: 'rhetoric' },
-              { id: 'c1-01-v4', arabic: 'بَدِيع', transliteration: 'Badīʿ', english: 'imaginative writing' },
-              { id: 'c1-01-v5', arabic: 'مَعَانِي', transliteration: 'Maʿānī', english: 'semantics' }
-            ]
+            type: 'vocabulary',
+            title: 'Vocabulary',
+            content: {
+              type: 'vocabulary',
+              categories: [{
+                label: '',
+                words: [
+                  { arabic: 'شِعْر', english: 'poetry', singular: 'Shiʿr' },
+                  { arabic: 'نَثْر', english: 'prose', singular: 'Nathr' },
+                  { arabic: 'بَلَاغَة', english: 'rhetoric', singular: 'Balāghah' },
+                  { arabic: 'بَدِيع', english: 'imaginative writing', singular: 'Badīʿ' },
+                  { arabic: 'مَعَانِي', english: 'semantics', singular: 'Maʿānī' }
+                ]
+              }]
+            },
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
-            items: []
+            type: 'pronouns',
+            title: 'Pronouns',
+            content: { type: 'pronouns', pronouns: [] },
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
-            items: []
+            type: 'expressions',
+            title: 'Expressions',
+            content: { type: 'expressions', expressions: [] },
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
-            items: [
-              { id: 'c1-01-g1', arabic: 'كُنْتُ أَكْتُبُ كُلَّ يَوْم', transliteration: 'Kuntu aktubu kulla yawm', english: 'I used to write every day', notes: 'Past habitual: كُنْتُ + imperfect' }
-            ]
+            type: 'grammar',
+            title: 'Grammar',
+            content: {
+              type: 'grammar',
+              topics: [{
+                name: '',
+                description: '',
+                examples: [{ arabic: 'كُنْتُ أَكْتُبُ كُلَّ يَوْم', english: 'I used to write every day' }]
+              }]
+            },
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
-            items: [
-              { id: 'c1-01-a1', arabic: 'بَلَاغَة', english: 'rhetoric', activityType: 'listen-translate', answer: 'بلاغة' }
-            ]
+            type: 'grammar',
+            title: 'Activities',
+            content: { type: 'grammar', topics: [] },
+            _lessonId: 'c1-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
-        ]
+        ],
+        activities: []
       }
     ]
   },
@@ -699,7 +1145,7 @@ export const curriculum: CurriculumLevel[] = [
       'Read and analyze classical Arabic texts, poetry, and literature fluently.',
       'Teach or explain Arabic grammar and usage to others.'
     ],
-    gradient: 'from-violet-700 via-violet-800 to-violet-900',
+    gradient: 'from-violet-700 via-violet-900',
     lessons: [
       {
         id: 'c2-01',
@@ -709,46 +1155,79 @@ export const curriculum: CurriculumLevel[] = [
         sections: [
           {
             name: 'Dialogue',
-            items: [
-              {
-                id: 'c2-01-d1',
-                arabic: 'اللُّغَة العَرَبِيَّة أَسْمَكُ اللُّغَات',
-                transliteration: 'Al-lughatu al-ʿarabiyyatu asmaku al-lughāt',
-                english: 'Arabic is the richest of languages.'
-              }
-            ]
+            type: 'dialogue',
+            title: 'Dialogue',
+            content: {
+              type: 'dialogue',
+              scenes: [{
+                label: '',
+                lines: [{ speaker: '', arabic: 'اللُّغَة العَرَبِيَّة أَسْمَكُ اللُّغَات', english: 'Arabic is the richest of languages.' }]
+              }]
+            },
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Vocabulary',
-            items: [
-              { id: 'c2-01-v1', arabic: 'إِطْنَاب', transliteration: 'Iṭnāb', english: 'ellipsis' },
-              { id: 'c2-01-v2', arabic: 'تَضَادّ', transliteration: 'Taḍādd', english: 'antonymy' },
-              { id: 'c2-01-v3', arabic: 'مُضَارَعَة', transliteration: 'Muḍārah', english: 'derivation' },
-              { id: 'c2-01-v4', arabic: 'تَرْجَمَة', transliteration: 'Tarjamah', english: 'translation' },
-              { id: 'c2-01-v5', arabic: 'تَرْبِيب', transliteration: 'Tarbīb', english: 'arrangement/rhetoric' }
-            ]
+            type: 'vocabulary',
+            title: 'Vocabulary',
+            content: {
+              type: 'vocabulary',
+              categories: [{
+                label: '',
+                words: [
+                  { arabic: 'إِطْنَاب', english: 'ellipsis', singular: 'Iṭnāb' },
+                  { arabic: 'تَضَادّ', english: 'antonymy', singular: 'Taḍādd' },
+                  { arabic: 'مُضَارَعَة', english: 'derivation', singular: 'Muḍārah' },
+                  { arabic: 'تَرْجَمَة', english: 'translation', singular: 'Tarjamah' },
+                  { arabic: 'تَرْبِيب', english: 'arrangement/rhetoric', singular: 'Tarbīb' }
+                ]
+              }]
+            },
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Pronouns',
-            items: []
+            type: 'pronouns',
+            title: 'Pronouns',
+            content: { type: 'pronouns', pronouns: [] },
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Expressions',
-            items: []
+            type: 'expressions',
+            title: 'Expressions',
+            content: { type: 'expressions', expressions: [] },
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Grammar',
-            items: [
-              { id: 'c2-01-g1', arabic: 'لَوْ لَا الْكِتَابُ لَمَا عَرَفْنَا', transliteration: 'Law lā al-kitābu lamā ʿarafnā', english: 'Were it not for the book, we would not have known', notes: 'لَوْ لَا (law lā) = "Were it not for" — strong conditional' }
-            ]
+            type: 'grammar',
+            title: 'Grammar',
+            content: {
+              type: 'grammar',
+              topics: [{
+                name: '',
+                description: '',
+                examples: [{ arabic: 'لَوْ لَا الْكِتَابُ لَمَا عَرَفْنَا', english: 'Were it not for the book, we would not have known' }]
+              }]
+            },
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           },
           {
             name: 'Activities',
-            items: [
-              { id: 'c2-01-a1', arabic: 'إِطْنَاب', english: 'ellipsis', activityType: 'listen-translate', answer: 'إطناب' }
-            ]
+            type: 'grammar',
+            title: 'Activities',
+            content: { type: 'grammar', topics: [] },
+            _lessonId: 'c2-01',
+            get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
           }
-        ]
+        ],
+        activities: []
       }
     ]
   }
@@ -783,4 +1262,8 @@ export function getAllLessons(): LessonDefinition[] {
 /** Get total lesson count across all levels. */
 export function getTotalLessonCount(): number {
   return curriculum.reduce((sum, l) => sum + l.lessons.length, 0)
+}
+export function getActivitiesByLesson(lessonId: string): ActivityDefinition[] {
+  const lesson = getLessonById(lessonId)
+  return lesson?.activities ?? []
 }

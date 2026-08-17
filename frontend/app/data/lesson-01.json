@@ -1,0 +1,327 @@
+{
+  "id": 1,
+  "level": "A1",
+  "sequence": 1,
+  "title": "The Salutations — التحيّة الأولى",
+  "competencies": [
+    "Can read fluently short paragraphs with harakat",
+    "Good understanding of basic salutations",
+    "Ability to use pronouns correctly",
+    "Differentiates between the pronouns used when talking to the different genders",
+    "Grasps the method of forming nominative sentences with pronouns + nouns"
+  ],
+  "sections": [
+    {
+      "type": "dialogue",
+      "title": "Main Text — الحوار",
+      "content": {
+        "scenes": [
+          {
+            "label": "Scene 1: Muhammad ↔ Ali (Male-to-Male)",
+            "lines": [
+              {
+                "speaker": "Muhammad",
+                "arabic": "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ",
+                "english": "Peace be upon you and Allah's mercy",
+                "notes": "Formal Islamic greeting"
+              },
+              {
+                "speaker": "Ali",
+                "arabic": "وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ",
+                "english": "And upon you be peace and Allah's mercy and blessings",
+                "notes": "Complete response — adds 'and His blessings'"
+              },
+              {
+                "speaker": "Muhammad",
+                "arabic": "كَيْفَ حَالُكَ يَا أَخِي؟",
+                "english": "How are you? (asking a male)",
+                "notes": "أَخِي = my brother (male address)"
+              },
+              {
+                "speaker": "Ali",
+                "arabic": "اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكَ؟",
+                "english": "All praise be to Allah, I am fine, thank you. And how are you?",
+                "notes": "Standard positive response"
+              },
+              {
+                "speaker": "Muhammad",
+                "arabic": "اَلْحَمْدُ لِلَّهِ، أَنَا أَيْضًا بِخَيْرٍ. مَرْحَبًا بِكَ فِي مَسْجِدِنَا",
+                "english": "All praise be to Allah, I am fine as well. Welcome to our mosque.",
+                "notes": "مَرْحَبًا بِكَ = welcome (addressing male)"
+              }
+            ]
+          },
+          {
+            "label": "Scene 2: Khadija ↔ Aisha (Female-to-Female)",
+            "lines": [
+              {
+                "speaker": "Khadija",
+                "arabic": "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ",
+                "english": "Peace be upon you and Allah's mercy",
+                "notes": "Same greeting, gender-neutral"
+              },
+              {
+                "speaker": "Aisha",
+                "arabic": "وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ",
+                "english": "And upon you be peace and Allah's mercy and blessings",
+                "notes": "Same complete response"
+              },
+              {
+                "speaker": "Khadija",
+                "arabic": "كَيْفَ حَالُكِ يَا أُخْتِي؟",
+                "english": "How are you? (asking a female)",
+                "notes": "أُخْتِي = my sister; حَالُكِ = your state (female)"
+              },
+              {
+                "speaker": "Aisha",
+                "arabic": "اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكِ؟",
+                "english": "All praise be to Allah, I am fine, thank you. And how are you?",
+                "notes": "Same response, gender-neutral"
+              },
+              {
+                "speaker": "Khadija",
+                "arabic": "اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ أَيْضًا. مَرْحَبًا بِكِ فِي بَيْتِنَا",
+                "english": "All praise be to Allah, I am fine as well. Welcome to our house.",
+                "notes": "مَرْحَبًا بِكِ = welcome (addressing female)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "vocabulary",
+      "title": "Vocabulary — المفردات",
+      "content": {
+        "categories": [
+          {
+            "label": "Salutations",
+            "words": [
+              { "arabic": "تَحِيَّة", "english": "salutation/greeting", "singular": "تَحِيَّة", "plural": "تَحِيَاتٌ" },
+              { "arabic": "سَلَام", "english": "peace", "singular": "سَلَام", "plural": "سُلُومٌ" }
+            ]
+          },
+          {
+            "label": "Nouns",
+            "words": [
+              { "arabic": "دَرْس", "english": "lesson", "singular": "دَرْس", "plural": "دُرُوسٌ" },
+              { "arabic": "أَوَّل", "english": "first", "singular": "أَوَّل", "plural": "أَوَّلُونَ" },
+              { "arabic": "مَسْجِد", "english": "mosque", "singular": "مَسْجِد", "plural": "مَسَاجِد" },
+              { "arabic": "بَيْت", "english": "house", "singular": "بَيْت", "plural": "بُيُوت" }
+            ]
+          },
+          {
+            "label": "Key Words",
+            "words": [
+              { "arabic": "كَيْف", "english": "how" },
+              { "arabic": "فِي", "english": "in" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "pronouns",
+      "title": "Pronouns — الضمائر المنفصلة",
+      "content": {
+        "pronouns": [
+          { "arabic": "أَنَا", "english": "I", "example": "أَنَا أَخٌ / أُخْت" },
+          { "arabic": "أَنْتَ", "english": "you (male)", "example": "أَنْتَ أَخ" },
+          { "arabic": "أَنْتِ", "english": "you (female)", "example": "أَنْتِ أُخْت" },
+          { "arabic": "نَحْنُ", "english": "we", "example": "نَحْنُ إِخْوَةٌ / أُخَوَات" },
+          { "arabic": "أَنْتُمَا", "english": "you (dual)", "example": "أَنْتُمَا أَخَوَانِ / أُخْتَانِ" },
+          { "arabic": "أَنْتُمْ", "english": "you (male plural)", "example": "أَنْتُمْ إِخْوَة" },
+          { "arabic": "أَنْتُنَّ", "english": "you (female plural)", "example": "أَنْتُنَّ أُخَوَات" },
+          { "arabic": "هُوَ", "english": "he", "example": "هُوَ أَخ" },
+          { "arabic": "هِيَ", "english": "she", "example": "هِيَ أُخْت" },
+          { "arabic": "هُمَا", "english": "they (dual)", "example": "هُمَا أَخَوَانِ / أُخْتَانِ" },
+          { "arabic": "هُمْ", "english": "they (male)", "example": "هُمْ إِخْوَة" },
+          { "arabic": "هُنَّ", "english": "they (female)", "example": "هُنَّ أُخَوَات" }
+        ]
+      }
+    },
+    {
+      "type": "expressions",
+      "title": "Essential Expressions — العبارات الأساسية",
+      "content": {
+        "expressions": [
+          { "arabic": "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ", "english": "Peace be upon you and Allah's mercy" },
+          { "arabic": "وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ", "english": "And upon you be peace and Allah's mercy and blessings" },
+          { "arabic": "كَيْفَ حَالُكَ؟", "english": "How are you? (male)" },
+          { "arabic": "كَيْفَ حَالُكِ؟", "english": "How are you? (female)" },
+          { "arabic": "يَا أَخِي", "english": "Oh! My brother" },
+          { "arabic": "يَا أُخْتِي", "english": "Oh! My sister" },
+          { "arabic": "اَلْحَمْدُ لِلَّهِ", "english": "All praise be to Allah" },
+          { "arabic": "أَنَا بِخَيْرٍ، شُكْرًا", "english": "I am fine, thank you" },
+          { "arabic": "أَنَا بِخَيْرٍ أَيْضًا", "english": "I am fine as well" },
+          { "arabic": "مَرْحَبًا بِكَ", "english": "Welcome (male)" },
+          { "arabic": "مَرْحَبًا بِكِ", "english": "Welcome (female)" },
+          { "arabic": "مَا اسْمُكَ؟", "english": "What is your name? (male)" },
+          { "arabic": "مَا اسْمُكِ؟", "english": "What is your name? (female)" },
+          { "arabic": "اسْمِي ...", "english": "My name is ..." },
+          { "arabic": "مِنْ أَيْنَ أَنْتَ؟", "english": "Where are you from?" },
+          { "arabic": "إِلَى اللِّقَاء", "english": "Until next time" }
+        ]
+      }
+    },
+    {
+      "type": "grammar",
+      "title": "Grammar — القواعد",
+      "content": {
+        "topics": [
+          {
+            "name": "Nominative Sentences (الجملة الاسمية)",
+            "description": "A sentence starting with a noun (ism) followed by a predicate (khabar). Common pattern: Pronoun + Noun/Adjective",
+            "examples": [
+              { "arabic": "أَنَا مُسْلِم", "english": "I am a Muslim" },
+              { "arabic": "هُوَ أَخِي", "english": "He is my brother" },
+              { "arabic": "هِيَ أُخْتِي", "english": "She is my sister" },
+              { "arabic": "نَحْنُ مُسْلِمُونَ", "english": "We are Muslims" }
+            ]
+          },
+          {
+            "name": "Gender Agreement in Pronouns",
+            "description": "Arabic pronouns encode gender. The verb/adjective must match the pronoun's gender.",
+            "examples": [
+              { "arabic": "كَيْفَ حَالُكَ؟", "english": "How are you? (to male) — حَالُكَ uses masculine suffix" },
+              { "arabic": "كَيْفَ حَالُكِ؟", "english": "How are you? (to female) — حَالُكِ uses feminine suffix" },
+              { "arabic": "مَرْحَبًا بِكَ", "english": "Welcome (to male)" },
+              { "arabic": "مَرْحَبًا بِكِ", "english": "Welcome (to female)" }
+            ]
+          },
+          {
+            "name": "Number: Singular, Dual, Plural",
+            "description": "Arabic has three numbers: singular (مفرد), dual (ثنائي), and plural (جمع).",
+            "examples": [
+              { "arabic": "أَخ", "english": "brother (singular)" },
+              { "arabic": "أَخَوَانِ / أُخْتَانِ", "english": "two brothers / two sisters (dual)" },
+              { "arabic": "إِخْوَة / أُخَوَات", "english": "brothers (m.pl.) / sisters (f.pl.)" }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "activities": [
+    {
+      "id": 1,
+      "type": "listen-translate",
+      "title": "Read the Dialogue & Translate",
+      "description": "Read the Arabic dialogue, then translate it to English.",
+      "order": 1,
+      "competency_map": {
+        "read_fluently_with_harakat": 0.4,
+        "understand_basic_salutations": 0.3
+      },
+      "max_attempts": 3,
+      "content": {
+        "dialogue": {
+          "scene1": {
+            "label": "Muhammad ↔ Ali",
+            "arabic": "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ — وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ — كَيْفَ حَالُكَ يَا أَخِي؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكَ؟ — اَلْحَمْدُ لِلَّهِ، أَنَا أَيْضًا بِخَيْرٍ. مَرْحَبًا بِكَ فِي مَسْجِدِنَا",
+            "english_expected": "Peace be upon you and Allah's mercy — And upon you be peace and Allah's mercy and blessings — How are you? (my brother) — All praise be to Allah, I am fine, thank you. And how are you? — All praise be to Allah, I am fine as well. Welcome to our mosque."
+          },
+          "scene2": {
+            "label": "Khadija ↔ Aisha",
+            "arabic": "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ — وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ — كَيْفَ حَالُكِ يَا أُخْتِي؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكِ؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ أَيْضًا. مَرْحَبًا بِكِ فِي بَيْتِنَا",
+            "english_expected": "Peace be upon you and Allah's mercy — And upon you be peace and Allah's mercy and blessings — How are you? (my sister) — All praise be to Allah, I am fine, thank you. And how are you? — All praise be to Allah, I am fine as well. Welcome to our house."
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "translate-to-english",
+      "title": "Translate Sentences to English",
+      "description": "Translate the following Arabic sentences into English.",
+      "order": 2,
+      "competency_map": {
+        "understand_basic_salutations": 0.5,
+        "use_pronouns_correctly": 0.5
+      },
+      "max_attempts": 3,
+      "content": {
+        "sentences": [
+          { "arabic": "أَنَا مُسْلِمٌ", "english_expected": "I am a Muslim" },
+          { "arabic": "أَنْتَ مُسْلِمٌ", "english_expected": "You are a Muslim (male)" },
+          { "arabic": "أَنَا عَائِشَةُ، وَأَنَا مُسْلِمَةٌ", "english_expected": "I am Aisha, and I am a Muslim (female)" },
+          { "arabic": "نَحْنُ مُسْلِمُونَ", "english_expected": "We are Muslims" },
+          { "arabic": "هُمْ مُسْلِمُونَ", "english_expected": "They (males) are Muslims" },
+          { "arabic": "هُوَ أَخِي", "english_expected": "He is my brother" },
+          { "arabic": "هِيَ أُخْتِي", "english_expected": "She is my sister" }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "type": "translate-to-arabic",
+      "title": "Translate Sentences to Arabic",
+      "description": "Translate the following English sentences into Arabic with harakat.",
+      "order": 3,
+      "competency_map": {
+        "use_pronouns_correctly": 0.5,
+        "form_nominative_sentences": 0.5
+      },
+      "max_attempts": 3,
+      "content": {
+        "sentences": [
+          { "english": "I am Ahmad, and I am a Muslim", "arabic_expected": "أَنَا أَحْمَد، وَأَنَا مُسْلِم" },
+          { "english": "You (male) are a Muslim", "arabic_expected": "أَنْتَ مُسْلِم" },
+          { "english": "I am Aisha, and I am a Muslim", "arabic_expected": "أَنَا عَائِشَةُ، وَأَنَا مُسْلِمَةٌ" },
+          { "english": "We are Muslims", "arabic_expected": "نَحْنُ مُسْلِمُونَ" },
+          { "english": "They (males) are Muslims", "arabic_expected": "هُمْ مُسْلِمُونَ" },
+          { "english": "You (females) are Muslims", "arabic_expected": "أَنْتُنَّ مُسْلِمَات" },
+          { "english": "You (two) are Muslims", "arabic_expected": "أَنْتُمَا مُسْلِمَان" }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "type": "introduce-characters",
+      "title": "Introduce the Characters",
+      "description": "Introduce these characters to your teacher using proper Arabic sentences.",
+      "order": 4,
+      "competency_map": {
+        "differentiate_pronouns_by_gender": 0.6,
+        "form_nominative_sentences": 0.4
+      },
+      "max_attempts": 3,
+      "content": {
+        "characters": [
+          { "name": "Muhammad", "arabic": "مُحَمَّد", "gender": "male", "sentences": [
+            { "english": "He is Muhammad", "arabic_expected": "هُوَ مُحَمَّد" },
+            { "english": "They are Muhammad and Aisha", "arabic_expected": "هُمَا مُحَمَّدٌ وَعَائِشَةُ" },
+            { "english": "They are Muslims", "arabic_expected": "هُمْ مُسْلِمُونَ" }
+          ]},
+          { "name": "Aisha", "gender": "female", "arabic": "عَائِشَةُ", "sentences": [
+            { "english": "She is Aisha", "arabic_expected": "هِيَ عَائِشَةُ" },
+            { "english": "They (females) are Muslims", "arabic_expected": "هُنَّ مُسْلِمَات" }
+          ]}
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "type": "role-play",
+      "title": "Role-Play: Introduce Yourself",
+      "description": "Role-play with your teacher and introduce yourself using what you've learned.",
+      "order": 5,
+      "competency_map": {
+        "use_pronouns_correctly": 0.3,
+        "differentiate_pronouns_by_gender": 0.3,
+        "understand_basic_salutations": 0.4
+      },
+      "max_attempts": 3,
+      "content": {
+        "scenario": "You meet someone new at the mosque. Exchange greetings, introduce yourself, and ask how they are.",
+        "expected_elements": [
+          "Greeting (السَّلَامُ عَلَيْكُمْ)",
+          "Response (وَعَلَيْكُمُ السَّلَام)",
+          "Self-introduction (أَنَا ...)",
+          "Asking how they are (كَيْفَ حَالُكَ/حَالُكِ؟)",
+          "Response (اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ)"
+        ]
+      }
+    }
+  ]
+}
