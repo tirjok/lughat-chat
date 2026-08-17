@@ -51,7 +51,6 @@ export interface SectionDefinition {
   get items(): SectionItem[]
 }
 
-
 // ─── Section flattening helper ──────────────────────────────────────────
 // Generates backward-compatible IDs: "${lessonId}-${sectionChar}${index}"
 // where sectionChar is derived from SectionType.
@@ -62,7 +61,7 @@ const SECTION_CHARS: Record<string, string> = {
   pronouns: 'p',
   expressions: 'e',
   grammar: 'g',
-  activity: 'a',
+  activity: 'a'
 }
 
 /** Build a backward-compatible ID for a flat section item. */
@@ -80,7 +79,7 @@ function flattenSectionContent(content: SectionContent, lessonId: string): Secti
         id: buildSectionId(lessonId, 'dialogue', index + 1),
         arabic: line.arabic,
         english: line.english,
-        notes: line.notes,
+        notes: line.notes
       }))
     }
     case 'vocabulary': {
@@ -89,7 +88,7 @@ function flattenSectionContent(content: SectionContent, lessonId: string): Secti
         id: buildSectionId(lessonId, 'vocabulary', index + 1),
         arabic: word.arabic,
         english: word.english,
-        notes: word.singular ?? word.plural,
+        notes: word.singular ?? word.plural
       }))
     }
     case 'pronouns': {
@@ -98,7 +97,7 @@ function flattenSectionContent(content: SectionContent, lessonId: string): Secti
         id: buildSectionId(lessonId, 'pronouns', index + 1),
         arabic: p.arabic,
         english: p.english,
-        notes: p.example,
+        notes: p.example
       }))
     }
     case 'expressions': {
@@ -106,17 +105,22 @@ function flattenSectionContent(content: SectionContent, lessonId: string): Secti
       return expr.expressions.map((e, index) => ({
         id: buildSectionId(lessonId, 'expressions', index + 1),
         arabic: e.arabic,
-        english: e.english,
+        english: e.english
       }))
     }
     case 'grammar': {
       const gram = content as { type: 'grammar', topics: { name: string, description: string, examples: { arabic: string, english: string }[] }[] }
-      return gram.topics.flatMap(topic => topic.examples.map((ex, index) => ({
-        id: buildSectionId(lessonId, 'grammar', index + 1),
-        arabic: ex.arabic,
-        english: ex.english,
-        notes: topic.description,
-      }))).flat()
+      let globalIndex = 0
+      return gram.topics.flatMap(topic => topic.examples.map((ex) => {
+        const id = buildSectionId(lessonId, 'grammar', globalIndex + 1)
+        globalIndex++
+        return {
+          id,
+          arabic: ex.arabic,
+          english: ex.english,
+          notes: topic.description
+        }
+      })).flat()
     }
     default:
       return []
@@ -139,13 +143,13 @@ export interface SectionItem {
   options?: string[]
 }
 
-export type SectionType =
-  | 'dialogue'
-  | 'vocabulary'
-  | 'pronouns'
-  | 'expressions'
-  | 'grammar'
-  | 'activity'
+export type SectionType
+  = | 'dialogue'
+    | 'vocabulary'
+    | 'pronouns'
+    | 'expressions'
+    | 'grammar'
+    | 'activity'
 export interface DialogueLine {
   speaker: string
   arabic: string
@@ -161,22 +165,20 @@ export interface VocabWord {
 }
 
 export type SectionContent
-  =
-  | { type: 'dialogue', scenes: { label: string, lines: DialogueLine[] }[] }
-  | { type: 'vocabulary', categories: { label: string, words: VocabWord[] }[] }
-  | { type: 'pronouns', pronouns: { arabic: string, english: string, example: string }[] }
-  | { type: 'expressions', expressions: { arabic: string, english: string }[] }
-  | { type: 'grammar', topics: { name: string, description: string, examples: { arabic: string, english: string }[] }[] }
+  = | { type: 'dialogue', scenes: { label: string, lines: DialogueLine[] }[] }
+    | { type: 'vocabulary', categories: { label: string, words: VocabWord[] }[] }
+    | { type: 'pronouns', pronouns: { arabic: string, english: string, example: string }[] }
+    | { type: 'expressions', expressions: { arabic: string, english: string }[] }
+    | { type: 'grammar', topics: { name: string, description: string, examples: { arabic: string, english: string }[] }[] }
 
 export type ActivityContent
-  =
-  | { type: 'listen-translate', dialogue: { [sceneKey: string]: { label: string, arabic: string, english_expected: string } } }
-  | { type: 'translate-to-english', sentences: { arabic: string, english_expected: string }[] }
-  | { type: 'translate-to-arabic', sentences: { english: string, arabic_expected: string }[] }
-  | { type: 'introduce-characters', characters: { name: string, arabic: string, gender: string, sentences: { english: string, arabic_expected: string }[] }[] }
-  | { type: 'role-play', scenario: string, expectedElements: string[] }
-  | { type: 'fill-blank', prompt: string, answer: string, options?: string[] }
-  | { type: 'matching', pairs: { source: string, target: string }[] }
+  = | { type: 'listen-translate', dialogue: { [sceneKey: string]: { label: string, arabic: string, english_expected: string } } }
+    | { type: 'translate-to-english', sentences: { arabic: string, english_expected: string }[] }
+    | { type: 'translate-to-arabic', sentences: { english: string, arabic_expected: string }[] }
+    | { type: 'introduce-characters', characters: { name: string, arabic: string, gender: string, sentences: { english: string, arabic_expected: string }[] }[] }
+    | { type: 'role-play', scenario: string, expectedElements: string[] }
+    | { type: 'fill-blank', prompt: string, answer: string, options?: string[] }
+    | { type: 'matching', pairs: { source: string, target: string }[] }
 
 export interface ActivityDefinition {
   id: number
@@ -189,14 +191,13 @@ export interface ActivityDefinition {
   content: ActivityContent
 }
 export type ActivityType
-  =
-  | 'listen-translate'
-  | 'role-play'
-  | 'fill-blank'
-  | 'matching'
-  | 'translate-to-english'
-  | 'translate-to-arabic'
-  | 'introduce-characters'
+  = | 'listen-translate'
+    | 'role-play'
+    | 'fill-blank'
+    | 'matching'
+    | 'translate-to-english'
+    | 'translate-to-arabic'
+    | 'introduce-characters'
 
 // ─── Curricula ──────────────────────────────────────────────────────────
 
@@ -263,13 +264,24 @@ export const curriculum: CurriculumLevel[] = [
             content: {
               type: 'vocabulary',
               categories: [{
-                label: '',
+                label: 'Salutations',
                 words: [
-                  { arabic: 'صَباحَ الخَيْر', english: 'Good morning', singular: 'Ṣabāḥ al-khayr' },
-                  { arabic: 'مَسَاءَ الخَيْر', english: 'Good evening', singular: 'Masāʾ al-khayr' },
-                  { arabic: 'مَعَ السَّلَامَة', english: 'Goodbye', singular: 'Maʿa al-salāmah' },
-                  { arabic: 'نَعَم', english: 'Yes', singular: 'Naʿam' },
-                  { arabic: 'لَا', english: 'No', singular: 'Lā' }
+                  { arabic: 'تَحِيَّة', english: 'salutation/greeting', singular: 'تَحِيَّة', plural: 'تَحِيَاتٌ' },
+                  { arabic: 'سَلَام', english: 'peace', singular: 'سَلَام', plural: 'سُلُومٌ' }
+                ]
+              }, {
+                label: 'Nouns',
+                words: [
+                  { arabic: 'دَرْس', english: 'lesson', singular: 'دَرْس', plural: 'دُرُوسٌ' },
+                  { arabic: 'أَوَّل', english: 'first', singular: 'أَوَّل', plural: 'أَوَّلُونَ' },
+                  { arabic: 'مَسْجِد', english: 'mosque', singular: 'مَسْجِد', plural: 'مَسَاجِد' },
+                  { arabic: 'بَيْت', english: 'house', singular: 'بَيْت', plural: 'بُيُوت' }
+                ]
+              }, {
+                label: 'Key Words',
+                words: [
+                  { arabic: 'كَيْف', english: 'how' },
+                  { arabic: 'فِي', english: 'in' }
                 ]
               }]
             },
@@ -283,10 +295,18 @@ export const curriculum: CurriculumLevel[] = [
             content: {
               type: 'pronouns',
               pronouns: [
-                { arabic: 'أَنَا', english: 'I / me', example: 'Anā' },
-                { arabic: 'أَنْتَ', english: 'you (m.)', example: 'Anta' },
-                { arabic: 'أَنْتِ', english: 'you (f.)', example: 'Anti' },
-                { arabic: 'هُوَ', english: 'he', example: 'Huwa' }
+                { arabic: 'أَنَا', english: 'I', example: 'أَنَا أَخٌ / أُخْت' },
+                { arabic: 'أَنْتَ', english: 'you (male)', example: 'أَنْتَ أَخ' },
+                { arabic: 'أَنْتِ', english: 'you (female)', example: 'أَنْتِ أُخْت' },
+                { arabic: 'نَحْنُ', english: 'we', example: 'نَحْنُ إِخْوَةٌ / أُخَوَات' },
+                { arabic: 'أَنْتُمَا', english: 'you (dual)', example: 'أَنْتُمَا أَخَوَانِ / أُخْتَانِ' },
+                { arabic: 'أَنْتُمْ', english: 'you (male plural)', example: 'أَنْتُمْ إِخْوَة' },
+                { arabic: 'أَنْتُنَّ', english: 'you (female plural)', example: 'أَنْتُنَّ أُخَوَات' },
+                { arabic: 'هُوَ', english: 'he', example: 'هُوَ أَخ' },
+                { arabic: 'هِيَ', english: 'she', example: 'هِيَ أُخْت' },
+                { arabic: 'هُمَا', english: 'they (dual)', example: 'هُمَا أَخَوَانِ / أُخْتَانِ' },
+                { arabic: 'هُمْ', english: 'they (male)', example: 'هُمْ إِخْوَة' },
+                { arabic: 'هُنَّ', english: 'they (female)', example: 'هُنَّ أُخَوَات' }
               ]
             },
             _lessonId: 'a1-01',
@@ -299,8 +319,22 @@ export const curriculum: CurriculumLevel[] = [
             content: {
               type: 'expressions',
               expressions: [
-                { arabic: 'مَا اسْمُكَ؟', english: 'What is your name? (m.)' },
-                { arabic: 'أنا من السعودية', english: 'I am from Saudi Arabia' }
+                { arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ', english: 'Peace be upon you and Allah\'s mercy' },
+                { arabic: 'وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ', english: 'And upon you be peace and Allah\'s mercy and blessings' },
+                { arabic: 'كَيْفَ حَالُكَ؟', english: 'How are you? (male)' },
+                { arabic: 'كَيْفَ حَالُكِ؟', english: 'How are you? (female)' },
+                { arabic: 'يَا أَخِي', english: 'Oh! My brother' },
+                { arabic: 'يَا أُخْتِي', english: 'Oh! My sister' },
+                { arabic: 'اَلْحَمْدُ لِلَّهِ', english: 'All praise be to Allah' },
+                { arabic: 'أَنَا بِخَيْرٍ، شُكْرًا', english: 'I am fine, thank you' },
+                { arabic: 'أَنَا بِخَيْرٍ أَيْضًا', english: 'I am fine as well' },
+                { arabic: 'مَرْحَبًا بِكَ', english: 'Welcome (male)' },
+                { arabic: 'مَرْحَبًا بِكِ', english: 'Welcome (female)' },
+                { arabic: 'مَا اسْمُكَ؟', english: 'What is your name? (male)' },
+                { arabic: 'مَا اسْمُكِ؟', english: 'What is your name? (female)' },
+                { arabic: 'اسْمِي ...', english: 'My name is ...' },
+                { arabic: 'مِنْ أَيْنَ أَنْتَ؟', english: 'Where are you from?' },
+                { arabic: 'إِلَى اللِّقَاء', english: 'Until next time' }
               ]
             },
             _lessonId: 'a1-01',
@@ -312,14 +346,37 @@ export const curriculum: CurriculumLevel[] = [
             title: 'Grammar',
             content: {
               type: 'grammar',
-              topics: [{
-                name: '',
-                description: '',
-                examples: [
-                  { arabic: 'أنا طالب', english: 'I am a student' },
-                  { arabic: 'هذه كتاب', english: 'This is a book' }
-                ]
-              }]
+              topics: [
+                {
+                  name: 'Nominative Sentences (الجملة الاسمية)',
+                  description: 'A sentence starting with a noun (ism) followed by a predicate (khabar). Common pattern: Pronoun + Noun/Adjective',
+                  examples: [
+                    { arabic: 'أَنَا مُسْلِم', english: 'I am a Muslim' },
+                    { arabic: 'هُوَ أَخِي', english: 'He is my brother' },
+                    { arabic: 'هِيَ أُخْتِي', english: 'She is my sister' },
+                    { arabic: 'نَحْنُ مُسْلِمُونَ', english: 'We are Muslims' }
+                  ]
+                },
+                {
+                  name: 'Gender Agreement in Pronouns',
+                  description: 'Arabic pronouns encode gender. The verb/adjective must match the pronoun\'s gender.',
+                  examples: [
+                    { arabic: 'كَيْفَ حَالُكَ؟', english: 'How are you? (to male) — حَالُكَ uses masculine suffix' },
+                    { arabic: 'كَيْفَ حَالُكِ؟', english: 'How are you? (to female) — حَالُكِ uses feminine suffix' },
+                    { arabic: 'مَرْحَبًا بِكَ', english: 'Welcome (to male)' },
+                    { arabic: 'مَرْحَبًا بِكِ', english: 'Welcome (to female)' }
+                  ]
+                },
+                {
+                  name: 'Number: Singular, Dual, Plural',
+                  description: 'Arabic has three numbers: singular (مفرد), dual (ثنائي), and plural (جمع).',
+                  examples: [
+                    { arabic: 'أَخ', english: 'brother (singular)' },
+                    { arabic: 'أَخَوَانِ / أُخْتَانِ', english: 'two brothers / two sisters (dual)' },
+                    { arabic: 'إِخْوَة / أُخَوَات', english: 'brothers (m.pl.) / sisters (f.pl.)' }
+                  ]
+                }
+              ]
             },
             _lessonId: 'a1-01',
             get items(): SectionItem[] { return flattenSectionContent(this.content, this._lessonId) }
@@ -341,12 +398,132 @@ export const curriculum: CurriculumLevel[] = [
           'Grasps the method of forming nominative sentences with pronouns + nouns'
         ],
         sequence: 1,
-        activities: [],
+        activities: [
+          {
+            id: 1,
+            type: 'listen-translate',
+            title: 'Read the Dialogue & Translate',
+            description: 'Read the Arabic dialogue, then translate it to English.',
+            order: 1,
+            competencyMap: {
+              read_fluently_with_harakat: 0.4,
+              understand_basic_salutations: 0.3
+            },
+            maxAttempts: 3,
+            content: {
+              dialogue: {
+                scene1: {
+                  label: 'Muhammad ↔ Ali',
+                  arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ — وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ — كَيْفَ حَالُكَ يَا أَخِي؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكَ؟ — اَلْحَمْدُ لِلَّهِ، أَنَا أَيْضًا بِخَيْرٍ. مَرْحَبًا بِكَ فِي مَسْجِدِنَا',
+                  english_expected: 'Peace be upon you and Allah\'s mercy — And upon you be peace and Allah\'s mercy and blessings — How are you? (my brother) — All praise be to Allah, I am fine, thank you. And how are you? — All praise be to Allah, I am fine as well. Welcome to our mosque.'
+                },
+                scene2: {
+                  label: 'Khadija ↔ Aisha',
+                  arabic: 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ — وَعَلَيْكُمُ السَّلَامُ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ — كَيْفَ حَالُكِ يَا أُخْتِي؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ، شُكْرًا. وَكَيْفَ حَالُكِ؟ — اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ أَيْضًا. مَرْحَبًا بِكِ فِي بَيْتِنَا',
+                  english_expected: 'Peace be upon you and Allah\'s mercy — And upon you be peace and Allah\'s mercy and blessings — How are you? (my sister) — All praise be to Allah, I am fine, thank you. And how are you? — All praise be to Allah, I am fine as well. Welcome to our house.'
+                }
+              }
+            }
+          },
+          {
+            id: 2,
+            type: 'translate-to-english',
+            title: 'Translate Sentences to English',
+            description: 'Translate the following Arabic sentences into English.',
+            order: 2,
+            competencyMap: {
+              understand_basic_salutations: 0.5,
+              use_pronouns_correctly: 0.5
+            },
+            maxAttempts: 3,
+            content: {
+              sentences: [
+                { arabic: 'أَنَا مُسْلِمٌ', english_expected: 'I am a Muslim' },
+                { arabic: 'أَنْتَ مُسْلِمٌ', english_expected: 'You are a Muslim (male)' },
+                { arabic: 'أَنَا عَائِشَةُ، وَأَنَا مُسْلِمَةٌ', english_expected: 'I am Aisha, and I am a Muslim (female)' },
+                { arabic: 'نَحْنُ مُسْلِمُونَ', english_expected: 'We are Muslims' },
+                { arabic: 'هُمْ مُسْلِمُونَ', english_expected: 'They (males) are Muslims' },
+                { arabic: 'هُوَ أَخِي', english_expected: 'He is my brother' },
+                { arabic: 'هِيَ أُخْتِي', english_expected: 'She is my sister' }
+              ]
+            }
+          },
+          {
+            id: 3,
+            type: 'translate-to-arabic',
+            title: 'Translate Sentences to Arabic',
+            description: 'Translate the following English sentences into Arabic with harakat.',
+            order: 3,
+            competencyMap: {
+              use_pronouns_correctly: 0.5,
+              form_nominative_sentences: 0.5
+            },
+            maxAttempts: 3,
+            content: {
+              sentences: [
+                { english: 'I am Ahmad, and I am a Muslim', arabic_expected: 'أَنَا أَحْمَد، وَأَنَا مُسْلِم' },
+                { english: 'You (male) are a Muslim', arabic_expected: 'أَنْتَ مُسْلِم' },
+                { english: 'I am Aisha, and I am a Muslim', arabic_expected: 'أَنَا عَائِشَةُ، وَأَنَا مُسْلِمَةٌ' },
+                { english: 'We are Muslims', arabic_expected: 'نَحْنُ مُسْلِمُونَ' },
+                { english: 'They (males) are Muslims', arabic_expected: 'هُمْ مُسْلِمُونَ' },
+                { english: 'You (females) are Muslims', arabic_expected: 'أَنْتُنَّ مُسْلِمَات' },
+                { english: 'You (two) are Muslims', arabic_expected: 'أَنْتُمَا مُسْلِمَان' }
+              ]
+            }
+          },
+          {
+            id: 4,
+            type: 'introduce-characters',
+            title: 'Introduce the Characters',
+            description: 'Introduce these characters to your teacher using proper Arabic sentences.',
+            order: 4,
+            competencyMap: {
+              differentiate_pronouns_by_gender: 0.6,
+              form_nominative_sentences: 0.4
+            },
+            maxAttempts: 3,
+            content: {
+              characters: [
+                { name: 'Muhammad', arabic: 'مُحَمَّد', gender: 'male', sentences: [
+                  { english: 'He is Muhammad', arabic_expected: 'هُوَ مُحَمَّد' },
+                  { english: 'They are Muhammad and Aisha', arabic_expected: 'هُمَا مُحَمَّدٌ وَعَائِشَةُ' },
+                  { english: 'They are Muslims', arabic_expected: 'هُمْ مُسْلِمُونَ' }
+                ] },
+                { name: 'Aisha', gender: 'female', arabic: 'عَائِشَةُ', sentences: [
+                  { english: 'She is Aisha', arabic_expected: 'هِيَ عَائِشَةُ' },
+                  { english: 'They (females) are Muslims', arabic_expected: 'هُنَّ مُسْلِمَات' }
+                ] }
+              ]
+            }
+          },
+          {
+            id: 5,
+            type: 'role-play',
+            title: 'Role-Play: Introduce Yourself',
+            description: 'Role-play with your teacher and introduce yourself using what you\'ve learned.',
+            order: 5,
+            competencyMap: {
+              use_pronouns_correctly: 0.3,
+              differentiate_pronouns_by_gender: 0.3,
+              understand_basic_salutations: 0.4
+            },
+            maxAttempts: 3,
+            content: {
+              scenario: 'You meet someone new at the mosque. Exchange greetings, introduce yourself, and ask how they are.',
+              expected_elements: [
+                'Greeting (السَّلَامُ عَلَيْكُمْ)',
+                'Response (وَعَلَيْكُمُ السَّلَام)',
+                'Self-introduction (أَنَا ...)',
+                'Asking how they are (كَيْفَ حَالُكَ/حَالُكِ؟)',
+                'Response (اَلْحَمْدُ لِلَّهِ، أَنَا بِخَيْرٍ)'
+              ]
+            }
+          }
+        ]
       },
       {
         id: 'a1-02',
         title: 'Numbers & Personal Info',
-        arabicTitle: 'الأرقام والمعلومات الشخصية',
         description: 'Counting, stating your age, nationality, and basic personal details.',
         sections: [
           {
@@ -471,7 +648,7 @@ export const curriculum: CurriculumLevel[] = [
               scenes: [{
                 label: '',
                 lines: [
-                  { speaker: '', arabic: 'أَصْحُو سَادِسَ الصَّبَاح', english: "I wake up at six o'clock.", notes: 'Uses the accusative case for time' },
+                  { speaker: '', arabic: 'أَصْحُو سَادِسَ الصَّبَاح', english: 'I wake up at six o\'clock.', notes: 'Uses the accusative case for time' },
                   { speaker: '', arabic: 'أَذْهَبُ إِلَى الْمَدْرَسَةِ', english: 'I go to school.' }
                 ]
               }]

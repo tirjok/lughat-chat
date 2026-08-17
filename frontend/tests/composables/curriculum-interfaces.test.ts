@@ -168,42 +168,43 @@ describe('curriculum.ts — Issue 3: Flat items accessor', () => {
       expect(items.length).toBe(10)
       expect(items.map(i => i.id)).toEqual(['a1-01-d1', 'a1-01-d2', 'a1-01-d3', 'a1-01-d4', 'a1-01-d5', 'a1-01-d6', 'a1-01-d7', 'a1-01-d8', 'a1-01-d9', 'a1-01-d10'])
     })
-    it('a1-01 vocabulary items have IDs matching current flat format (a1-01-v1 through a1-01-v5)', () => {
+    it('a1-01 vocabulary items have IDs matching current flat format (a1-01-v1 through a1-01-v8)', () => {
       const lesson = getLessonById('a1-01')
       const vocabSection = lesson!.sections.find(s => s.name === 'Vocabulary')
       expect(vocabSection).toBeDefined()
       const items = vocabSection!.items
-      expect(items.length).toBe(5)
-      expect(items.map(i => i.id)).toEqual(['a1-01-v1', 'a1-01-v2', 'a1-01-v3', 'a1-01-v4', 'a1-01-v5'])
+      expect(items.length).toBe(8)
+      expect(items.map(i => i.id)).toEqual(['a1-01-v1', 'a1-01-v2', 'a1-01-v3', 'a1-01-v4', 'a1-01-v5', 'a1-01-v6', 'a1-01-v7', 'a1-01-v8'])
     })
 
-    it('a1-01 pronouns items have IDs matching current flat format (a1-01-p1 through a1-01-p4)', () => {
+    it('a1-01 pronouns items have IDs matching current flat format (a1-01-p1 through a1-01-p12)', () => {
       const lesson = getLessonById('a1-01')
       const pronounsSection = lesson!.sections.find(s => s.name === 'Pronouns')
       expect(pronounsSection).toBeDefined()
       const items = pronounsSection!.items
-      expect(items.length).toBe(4)
-      expect(items.map(i => i.id)).toEqual(['a1-01-p1', 'a1-01-p2', 'a1-01-p3', 'a1-01-p4'])
+      expect(items.length).toBe(12)
+      expect(items.map(i => i.id)).toEqual(['a1-01-p1', 'a1-01-p2', 'a1-01-p3', 'a1-01-p4', 'a1-01-p5', 'a1-01-p6', 'a1-01-p7', 'a1-01-p8', 'a1-01-p9', 'a1-01-p10', 'a1-01-p11', 'a1-01-p12'])
     })
 
-    it('a1-01 expressions items have IDs matching current flat format (a1-01-e1 through a1-01-e2)', () => {
+    it('a1-01 expressions items have IDs matching current flat format (a1-01-e1 through a1-01-e16)', () => {
       const lesson = getLessonById('a1-01')
       const expressionsSection = lesson!.sections.find(s => s.name === 'Expressions')
       expect(expressionsSection).toBeDefined()
       const items = expressionsSection!.items
-      expect(items.length).toBe(2)
-      expect(items.map(i => i.id)).toEqual(['a1-01-e1', 'a1-01-e2'])
+      expect(items.length).toBe(16)
+      expect(items.map(i => i.id)).toEqual(['a1-01-e1', 'a1-01-e2', 'a1-01-e3', 'a1-01-e4', 'a1-01-e5', 'a1-01-e6', 'a1-01-e7', 'a1-01-e8', 'a1-01-e9', 'a1-01-e10', 'a1-01-e11', 'a1-01-e12', 'a1-01-e13', 'a1-01-e14', 'a1-01-e15', 'a1-01-e16'])
     })
 
-    it('a1-01 grammar items have IDs matching current flat format (a1-01-g1 through a1-01-g2)', () => {
+    it('a1-01 grammar items have IDs matching current flat format (a1-01-g1 through a1-01-g11)', () => {
       const lesson = getLessonById('a1-01')
       const grammarSection = lesson!.sections.find(s => s.name === 'Grammar')
       expect(grammarSection).toBeDefined()
       const items = grammarSection!.items
-      expect(items.length).toBe(2)
-      expect(items.map(i => i.id)).toEqual(['a1-01-g1', 'a1-01-g2'])
+      expect(items.length).toBe(11)
+      expect(items.map(i => i.id)).toEqual(['a1-01-g1', 'a1-01-g2', 'a1-01-g3', 'a1-01-g4', 'a1-01-g5', 'a1-01-g6', 'a1-01-g7', 'a1-01-g8', 'a1-01-g9', 'a1-01-g10', 'a1-01-g11'])
     })
   })
+
   describe('arabic / english / notes preservation', () => {
     it('dialogue items preserve arabic, english, and notes from nested content', () => {
       const lesson = getLessonById('a1-01')
@@ -222,10 +223,14 @@ describe('curriculum.ts — Issue 3: Flat items accessor', () => {
       const lesson = getLessonById('a1-01')
       const vocabSection = lesson!.sections.find(s => s.name === 'Vocabulary')
       const items = vocabSection!.items
-      expect(items[0].arabic).toBe('صَباحَ الخَيْر')
-      expect(items[0].english).toBe('Good morning')
+      expect(items[0].arabic).toBe('تَحِيَّة')
+      expect(items[0].english).toBe('salutation/greeting')
       // Vocab section: notes comes from singular (no plural field set)
-      expect(items[0].notes).toBe('Ṣabāḥ al-khayr')
+      expect(items[0].notes).toBe('تَحِيَّة')
+      // Last word (8th) — should be from the 3rd category (Key Words)
+      expect(items[7].arabic).toBe('فِي')
+      expect(items[7].english).toBe('in')
+      expect(items[7].notes).toBeUndefined()
     })
 
     it('pronouns items: notes = example from nested pronoun', () => {
@@ -233,169 +238,168 @@ describe('curriculum.ts — Issue 3: Flat items accessor', () => {
       const pronounsSection = lesson!.sections.find(s => s.name === 'Pronouns')
       const items = pronounsSection!.items
       expect(items[0].arabic).toBe('أَنَا')
-      expect(items[0].english).toBe('I / me')
-      expect(items[0].notes).toBe('Anā')
+      expect(items[0].english).toBe('I')
+      expect(items[0].notes).toBe('أَنَا أَخٌ / أُخْت')
+      // Last pronoun (11th)
+      expect(items[11].arabic).toBe('هُنَّ')
+      expect(items[11].english).toBe('they (female)')
+      expect(items[11].notes).toBe('هُنَّ أُخَوَات')
     })
 
     it('grammar items: notes = topic.description from nested topic', () => {
       const lesson = getLessonById('a1-01')
       const grammarSection = lesson!.sections.find(s => s.name === 'Grammar')
       const items = grammarSection!.items
-      expect(items[0].arabic).toBe('أنا طالب')
-      expect(items[0].english).toBe('I am a student')
-      expect(items[0].notes).toBe('')
-      expect(items[1].notes).toBe('')
+      expect(items[0].arabic).toBe('أَنَا مُسْلِم')
+      expect(items[0].english).toBe('I am a Muslim')
+      expect(items[0].notes).toBe('A sentence starting with a noun (ism) followed by a predicate (khabar). Common pattern: Pronoun + Noun/Adjective')
+      // Last grammar item (10th) from topic 3
+      expect(items[10].arabic).toBe('إِخْوَة / أُخَوَات')
+      expect(items[10].english).toBe('brothers (m.pl.) / sisters (f.pl.)')
+      expect(items[10].notes).toBe('Arabic has three numbers: singular (مفرد), dual (ثنائي), and plural (جمع).')
     })
-  })
+    describe('curriculum.ts — Issue 5: Migrate 7 remaining lessons', () => {
+      describe('cross-lesson ID format consistency', () => {
+        it('a1-02 dialogue IDs follow lesson-prefix format (a1-02-d1, a1-02-d2)', () => {
+          const lesson = getLessonById('a1-02')
+          expect(lesson).toBeDefined()
+          const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
+          const items = dialogueSection!.items
+          expect(items.length).toBe(2)
+          expect(items.map(i => i.id)).toEqual(['a1-02-d1', 'a1-02-d2'])
+        })
 
-  describe('cross-lesson ID format consistency', () => {
-    it('a1-02 dialogue IDs follow lesson-prefix format (a1-02-d1, a1-02-d2)', () => {
-      const lesson = getLessonById('a1-02')
-      expect(lesson).toBeDefined()
-      const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
-      const items = dialogueSection!.items
-      expect(items.length).toBe(2)
-      expect(items.map(i => i.id)).toEqual(['a1-02-d1', 'a1-02-d2'])
-    })
+        it('a1-02 vocabulary IDs follow lesson-prefix format (a1-02-v1 through a1-02-v5)', () => {
+          const lesson = getLessonById('a1-02')
+          const vocabSection = lesson!.sections.find(s => s.name === 'Vocabulary')
+          const items = vocabSection!.items
+          expect(items.length).toBe(5)
+          expect(items.map(i => i.id)).toEqual(['a1-02-v1', 'a1-02-v2', 'a1-02-v3', 'a1-02-v4', 'a1-02-v5'])
+        })
 
-    it('a1-02 vocabulary IDs follow lesson-prefix format (a1-02-v1 through a1-02-v5)', () => {
-      const lesson = getLessonById('a1-02')
-      const vocabSection = lesson!.sections.find(s => s.name === 'Vocabulary')
-      const items = vocabSection!.items
-      expect(items.length).toBe(5)
-      expect(items.map(i => i.id)).toEqual(['a1-02-v1', 'a1-02-v2', 'a1-02-v3', 'a1-02-v4', 'a1-02-v5'])
-    })
+        it('a2-01 dialogue IDs follow lesson-prefix format (a2-01-d1, a2-01-d2)', () => {
+          const lesson = getLessonById('a2-01')
+          expect(lesson).toBeDefined()
+          const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
+          const items = dialogueSection!.items
+          expect(items.length).toBe(2)
+          expect(items.map(i => i.id)).toEqual(['a2-01-d1', 'a2-01-d2'])
+        })
+      })
 
-    it('a2-01 dialogue IDs follow lesson-prefix format (a2-01-d1, a2-01-d2)', () => {
-      const lesson = getLessonById('a2-01')
-      expect(lesson).toBeDefined()
-      const dialogueSection = lesson!.sections.find(s => s.name === 'Dialogue')
-      const items = dialogueSection!.items
-      expect(items.length).toBe(2)
-      expect(items.map(i => i.id)).toEqual(['a2-01-d1', 'a2-01-d2'])
-    })
-  })
+      describe('transliteration and audioUrl are undefined', () => {
+        it('flat accessor does not produce transliteration (undefined for all items)', () => {
+          const lesson = getLessonById('a1-01')
+          lesson!.sections.forEach((section) => {
+            section.items.forEach((item) => {
+              expect(item.transliteration).toBeUndefined()
+            })
+          })
+        })
 
-  describe('transliteration and audioUrl are undefined', () => {
-    it('flat accessor does not produce transliteration (undefined for all items)', () => {
-      const lesson = getLessonById('a1-01')
-      lesson!.sections.forEach(section => {
-        section.items.forEach(item => {
-          expect(item.transliteration).toBeUndefined()
+        it('flat accessor does not produce audioUrl (undefined for all items)', () => {
+          const lesson = getLessonById('a1-01')
+          lesson!.sections.forEach((section) => {
+            section.items.forEach((item) => {
+              expect(item.audioUrl).toBeUndefined()
+            })
+          })
         })
       })
     })
+    const nonA101Lessons = [
+      'a1-02', 'a2-01', 'a2-02', 'b1-01', 'b2-01', 'c1-01', 'c2-01'
+    ]
 
-    it('flat accessor does not produce audioUrl (undefined for all items)', () => {
-      const lesson = getLessonById('a1-01')
-      lesson!.sections.forEach(section => {
-        section.items.forEach(item => {
-          expect(item.audioUrl).toBeUndefined()
+    describe('TC-competencies-undefined: non-a1-01 lessons have no competencies field', () => {
+      for (const lessonId of nonA101Lessons) {
+        it(`getLessonById('${lessonId}')?.competencies is undefined (not [] or null)`, () => {
+          const lesson = getLessonById(lessonId)
+          expect(lesson).toBeDefined()
+          const l = lesson!
+          expect(l.competencies).toBeUndefined()
         })
-      })
+      }
     })
-  })
-})
-// ─── Issue 5: Migrate Remaining 7 Lessons to Nested Structure ────────
-// These tests verify that the 7 non-a1-01 lessons have:
-// - No `competencies` field (undefined, not [] or null)
-// - No `sequence` field (undefined, not 0 or null)
-// - Empty `activities: []`
-// - Working flat `items` accessor on every section
 
-describe('curriculum.ts — Issue 5: Migrate 7 remaining lessons', () => {
-  const nonA101Lessons = [
-    'a1-02', 'a2-01', 'a2-02', 'b1-01', 'b2-01', 'c1-01', 'c2-01'
-  ]
+    describe('TC-sequence-undefined: non-a1-01 lessons have no sequence field', () => {
+      for (const lessonId of nonA101Lessons) {
+        it(`getLessonById('${lessonId}')?.sequence is undefined (not 0 or null)`, () => {
+          const lesson = getLessonById(lessonId)
+          expect(lesson).toBeDefined()
+          const l = lesson!
+          expect(l.sequence).toBeUndefined()
+        })
+      }
+    })
 
-  describe('TC-competencies-undefined: non-a1-01 lessons have no competencies field', () => {
-    for (const lessonId of nonA101Lessons) {
-      it(`getLessonById('${lessonId}')?.competencies is undefined (not [] or null)`, () => {
-        const lesson = getLessonById(lessonId)
-        expect(lesson).toBeDefined()
-        const l = lesson!
-        expect(l.competencies).toBeUndefined()
-      })
-    }
-  })
+    describe('TC-empty-activities: non-a1-01 lessons have empty activities array', () => {
+      for (const lessonId of nonA101Lessons) {
+        it(`getLessonById('${lessonId}').activities is []`, () => {
+          const lesson = getLessonById(lessonId)
+          expect(lesson).toBeDefined()
+          const l = lesson!
+          expect(l.activities).toEqual([])
+        })
+      }
+    })
 
-  describe('TC-sequence-undefined: non-a1-01 lessons have no sequence field', () => {
-    for (const lessonId of nonA101Lessons) {
-      it(`getLessonById('${lessonId}')?.sequence is undefined (not 0 or null)`, () => {
-        const lesson = getLessonById(lessonId)
-        expect(lesson).toBeDefined()
-        const l = lesson!
-        expect(l.sequence).toBeUndefined()
-      })
-    }
-  })
+    describe('TC-items-accessor: flat items accessor works for all sections of all 7 lessons', () => {
+      for (const lessonId of nonA101Lessons) {
+        it(`getLessonById('${lessonId}') sections.items produces valid SectionItem[] for every section`, () => {
+          const lesson = getLessonById(lessonId)
+          expect(lesson).toBeDefined()
+          const l = lesson!
 
-  describe('TC-empty-activities: non-a1-01 lessons have empty activities array', () => {
-    for (const lessonId of nonA101Lessons) {
-      it(`getLessonById('${lessonId}').activities is []`, () => {
-        const lesson = getLessonById(lessonId)
-        expect(lesson).toBeDefined()
-        const l = lesson!
-        expect(l.activities).toEqual([])
-      })
-    }
-  })
-
-  describe('TC-items-accessor: flat items accessor works for all sections of all 7 lessons', () => {
-    for (const lessonId of nonA101Lessons) {
-      it(`getLessonById('${lessonId}') sections.items produces valid SectionItem[] for every section`, () => {
-        const lesson = getLessonById(lessonId)
-        expect(lesson).toBeDefined()
-        const l = lesson!
-
-        for (const section of l.sections) {
-          const items = section.items
-          expect(Array.isArray(items)).toBe(true)
-          // Every item must have a valid ID matching the backward-compatible format
-          for (const item of items) {
-            expect(typeof item.id).toBe('string')
-            expect(item.id).toMatch(new RegExp(`^${lessonId}-[a-z]\\d+$`))
-            expect(typeof item.arabic).toBe('string')
-            expect(item.arabic.length).toBeGreaterThan(0)
+          for (const section of l.sections) {
+            const items = section.items
+            expect(Array.isArray(items)).toBe(true)
+            // Every item must have a valid ID matching the backward-compatible format
+            for (const item of items) {
+              expect(typeof item.id).toBe('string')
+              expect(item.id).toMatch(new RegExp(`^${lessonId}-[a-z]\\d+$`))
+              expect(typeof item.arabic).toBe('string')
+              expect(item.arabic.length).toBeGreaterThan(0)
+            }
           }
-        }
-      })
-    }
-  })
+        })
+      }
+    })
 
-  describe('TC-competencies-a101-still-present: a1-01 competencies unchanged', () => {
-    it('getLessonById("a1-01")?.competencies is defined with 5 strings', () => {
-      const lesson = getLessonById('a1-01')
-      expect(lesson).toBeDefined()
-      const l = lesson!
-      expect(Array.isArray(l.competencies)).toBe(true)
-      expect(l.competencies!.length).toBe(5)
+    describe('TC-competencies-a101-still-present: a1-01 competencies unchanged', () => {
+      it('getLessonById("a1-01")?.competencies is defined with 5 strings', () => {
+        const lesson = getLessonById('a1-01')
+        expect(lesson).toBeDefined()
+        const l = lesson!
+        expect(Array.isArray(l.competencies)).toBe(true)
+        expect(l.competencies!.length).toBe(5)
+      })
     })
   })
-})
 
-// ─── Issue 6: getActivitiesByLesson Helper ────────────────────────────
-// These tests verify the new `getActivitiesByLesson` helper function:
-// - Returns 5 ActivityDefinition[] for 'a1-01' (TC-02)
-// - Returns [] for all other lessons (TC-03)
+  // ─── Issue 6: getActivitiesByLesson Helper ────────────────────────────
+  // These tests verify the new `getActivitiesByLesson` helper function:
+  // - Returns 5 ActivityDefinition[] for 'a1-01' (TC-02)
+  // - Returns [] for all other lessons (TC-03)
 
-describe('curriculum.ts — Issue 6: getActivitiesByLesson helper', () => {
-  it("TC-02: returns 5 ActivityDefinition objects for 'a1-01'", () => {
-    const activities = getActivitiesByLesson('a1-01')
-    expect(activities.length).toBe(5)
-    expect(activities).toHaveLength(5)
-  })
+  describe('curriculum.ts — Issue 6: getActivitiesByLesson helper', () => {
+    it('TC-02: returns 5 ActivityDefinition objects for \'a1-01\'', () => {
+      const activities = getActivitiesByLesson('a1-01')
+      expect(activities.length).toBe(5)
+      expect(activities).toHaveLength(5)
+    })
 
-  const nonA101Lessons = [
-    'a1-02', 'a2-01', 'a2-02', 'b1-01', 'b2-01', 'c1-01', 'c2-01'
-  ]
+    const nonA101Lessons = [
+      'a1-02', 'a2-01', 'a2-02', 'b1-01', 'b2-01', 'c1-01', 'c2-01'
+    ]
 
-  describe('TC-03: other lessons return empty array', () => {
-    for (const lessonId of nonA101Lessons) {
-      it(`returns [] for '${lessonId}'`, () => {
-        const activities = getActivitiesByLesson(lessonId)
-        expect(activities).toEqual([])
-      })
-    }
+    describe('TC-03: other lessons return empty array', () => {
+      for (const lessonId of nonA101Lessons) {
+        it(`returns [] for '${lessonId}'`, () => {
+          const activities = getActivitiesByLesson(lessonId)
+          expect(activities).toEqual([])
+        })
+      }
+    })
   })
 })
