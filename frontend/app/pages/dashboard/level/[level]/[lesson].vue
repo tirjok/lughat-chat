@@ -162,31 +162,51 @@ if (typeof onBeforeRouteLeave === 'function') {
                 : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
             ]"
             @click="activeSection = tab"
-          >{{ tab }}</button>
+          >
+            {{ tab }}
+          </button>
         </div>
-        <div v-if="currentSectionItems.length > 0" class="space-y-4">
+        <div
+          v-if="currentSectionItems.length > 0"
+          class="space-y-4"
+        >
           <div
             v-for="item in currentSectionItems"
             :key="item.id"
             class="card"
           >
             <div class="flex flex-col gap-2">
-              <p class="text-lg font-arabic text-stone-800 dark:text-stone-100 text-right" dir="rtl">
+              <p
+                class="text-lg font-arabic text-stone-800 dark:text-stone-100 text-right"
+                dir="rtl"
+              >
                 {{ item.arabic }}
               </p>
-              <p v-if="item.transliteration" class="text-sm text-stone-500 dark:text-stone-400 italic">
+              <p
+                v-if="item.transliteration"
+                class="text-sm text-stone-500 dark:text-stone-400 italic"
+              >
                 {{ item.transliteration }}
               </p>
-              <p v-if="item.english" class="text-sm text-stone-600 dark:text-stone-300">
+              <p
+                v-if="item.english"
+                class="text-sm text-stone-600 dark:text-stone-300"
+              >
                 {{ item.english }}
               </p>
-              <p v-if="item.notes" class="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 rounded p-2">
+              <p
+                v-if="item.notes"
+                class="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 rounded p-2"
+              >
                 {{ item.notes }}
               </p>
             </div>
           </div>
         </div>
-        <div v-else class="card">
+        <div
+          v-else
+          class="card"
+        >
           <p class="text-stone-500 dark:text-stone-400">
             Content for "{{ activeSection }}" section coming soon.
           </p>

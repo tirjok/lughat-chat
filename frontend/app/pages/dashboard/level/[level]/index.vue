@@ -5,8 +5,7 @@ import { getLevelByCode, type LessonDefinition } from '~/data/curriculum'
 function safeRoute() {
   try {
     return useRoute()
-  }
-  catch {
+  } catch {
     return {} as unknown as ReturnType<typeof useRoute>
   }
 }
@@ -39,8 +38,7 @@ function extractLearningTags(lesson: LessonDefinition): string[] {
       // Prefer notes (learning context), fall back to arabic + english
       if (firstItem.notes) {
         tags.push(firstItem.notes)
-      }
-      else if (firstItem.english) {
+      } else if (firstItem.english) {
         tags.push(firstItem.english)
       }
     }
@@ -68,8 +66,16 @@ function extractLearningTags(lesson: LessonDefinition): string[] {
                 {{ overallProgress }}%
               </span>
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100" data-testid="level-heading">Level {{ currentLevel }}: {{ info.title }} — {{ info.arabic }}</h1>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-2" data-testid="level-description">
+            <h1
+              class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100"
+              data-testid="level-heading"
+            >
+              Level {{ currentLevel }}: {{ info.title }} — {{ info.arabic }}
+            </h1>
+            <p
+              class="text-sm text-stone-500 dark:text-stone-400 mt-2"
+              data-testid="level-description"
+            >
               {{ level?.description ?? '' }}
             </p>
           </div>
