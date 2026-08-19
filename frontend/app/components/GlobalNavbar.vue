@@ -2,17 +2,12 @@
 import { computed, ref, useTemplateRef } from 'vue'
 import { useHealthPoll } from '../composables/useHealthPoll'
 
-// ─── Route path: received from app.vue parent as a prop ─────────────────
-// GlobalNavbar lives in app.vue (outside <router_view>), so useRoute()
-// throws. The parent passes the reactive path via prop.
-
 interface Props {
   currentPath: string
 }
 
 const props = defineProps<Props>()
 const _props = () => props.currentPath
-// ─── Navigation definition (single source of truth) ──────────────────────
 
 interface NavItem {
   to: string
@@ -36,19 +31,12 @@ const navItems: NavItem[] = [
   }
 ]
 
-// ─── Progress fill: 0% on / and /dashboard, partial on lesson pages
 const progressWidth = computed(() => '0%')
-
-// ─── Active-state helper ──────────────────────────────────────────────────
-// "Dashboard" should highlight on /dashboard AND any /dashboard/* sub-route.
-// "Home" highlights only on exact '/'.
 
 function isActive(item: NavItem): boolean {
   if (item.to === '/dashboard') return props.currentPath.startsWith('/dashboard')
   return props.currentPath === item.to
 }
-
-// ─── Mobile state ─────────────────────────────────────────────────────────
 
 const isMobile = ref(false)
 const menuOpen = ref(false)
@@ -68,13 +56,11 @@ function closeMenu(): void {
   menuOpen.value = false
 }
 
-// React to viewport changes (client-side only)
 if (typeof window !== 'undefined') {
   checkMobile()
   window.addEventListener('resize', checkMobile)
 }
 
-// ─── Health status (in GlobalNavbar) ──────────────────────────────────────
 const { status, modelLoaded } = useHealthPoll()
 </script>
 
