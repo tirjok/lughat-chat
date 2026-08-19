@@ -107,6 +107,14 @@ Each content component (except `LessonGrammar`, which is informational) emits a 
 3. **Component naming consistency** — Seven components starting with `Lesson` (`LessonCompetencies`, `LessonDialogue`, etc.) creates a naming cluster. Future developers might wonder whether `LessonCompetencies` and `LessonDialogue` share an interface or can be swapped. **Mitigation**: Document the component contract (props/emits) in a shared interface file or a README within `app/components/lesson/`.
 
 4. **Testing overhead** — Each component needs a component test. With seven new components, that's seven new test files. If the project's test budget is tight, some components may ship without tests, increasing regression risk. **Mitigation**: Prioritize tests for high-complexity components (`LessonDialogue`, `LessonActivities`) and use visual regression for low-complexity ones (`LessonExpressions`, `LessonGrammar`).
+5. **`useLessonAudio()` composable deferred** — ADR-008 (line 105) identifies
+   a `useLessonAudio()` composable as the mitigation for "audio API coupling"
+   (five components directly emit play events). Issue #009 wires TTS handoff
+   directly in the page without extracting this composable. This is an
+   **accepted Phase 1 technical debt**: the coupling is manageable with six
+   content components, and the composable extraction is a straightforward
+   refactor when the component count grows. Track as Phase 2 technical debt;
+   no Phase 1 issue required.
 
 ### Alternative considered: Monolithic `LessonContent.vue`
 
