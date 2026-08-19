@@ -1,5 +1,8 @@
 <script setup lang="ts">
+defineOptions({ name: 'Dashboard' })
+// eslint-disable-next-line import/first
 import { computed } from 'vue'
+// eslint-disable-next-line import/first
 import { curriculum, getTotalLessonCount } from '~/data/curriculum'
 
 const levels = curriculum

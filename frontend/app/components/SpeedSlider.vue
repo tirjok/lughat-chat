@@ -17,9 +17,11 @@ const clampedValue = computed(() =>
   Math.max(0.5, Math.min(2.0, props.modelValue))
 )
 
-const sliderValue = computed(() =>
-  ((clampedValue.value - 0.5) / 1.5) * 100
-)
+const sliderValue = computed(() => {
+  const v = clampedValue.value
+  if (typeof v !== 'number' || isNaN(v)) return 33.33 // default to 1.0 position
+  return ((v - 0.5) / 1.5) * 100
+})
 
 const sliderRef = ref<HTMLDivElement | null>(null)
 
@@ -27,6 +29,8 @@ function handleTrackClick(event: MouseEvent) {
   const el = sliderRef.value
   if (!el) return
   const rect = el.getBoundingClientRect()
+  // jsdom returns width=0; skip ratio calculation to avoid NaN → calc(NaN%)
+  if (rect.width === 0) return
   const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
   const value = 0.5 + ratio * 1.5
   const stepped = Math.round(value / 0.1) * 0.1
@@ -48,6 +52,8 @@ function handleThumbDrag(event: MouseEvent) {
   const el = sliderRef.value
   if (!el) return
   const trackRect = el.getBoundingClientRect()
+  // jsdom returns width=0; skip to avoid NaN
+  if (trackRect.width === 0) return
 
   function onMove(e: MouseEvent) {
     const ratio = Math.max(0, Math.min(1, (e.clientX - trackRect.left) / trackRect.width))

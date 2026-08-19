@@ -262,7 +262,9 @@ describe('Journey 3: Speed slider during playback', () => {
     const speedSlider = wrapper.findComponent({ name: 'SpeedSlider' })
 
     const slider = speedSlider.find('[role="slider"]')
-    await slider.trigger('click')
+    // Stub getBoundingClientRect so jsdom returns a real width (avoiding NaN guard early-return)
+    slider.element.getBoundingClientRect = () => ({ left: 0, width: 200, top: 0, right: 200, bottom: 0, x: 0, y: 0 }) as DOMRect
+    await slider.trigger('click', { clientX: 100 })
     await nextTick()
 
     const emitted = speedSlider.emitted('update:modelValue')
@@ -274,7 +276,9 @@ describe('Journey 3: Speed slider during playback', () => {
     const speedSlider = wrapper.findComponent({ name: 'SpeedSlider' })
 
     const slider = speedSlider.find('[role="slider"]')
-    await slider.trigger('click')
+    // Stub getBoundingClientRect so jsdom returns a real width (avoiding NaN guard early-return)
+    slider.element.getBoundingClientRect = () => ({ left: 0, width: 200, top: 0, right: 200, bottom: 0, x: 0, y: 0 }) as DOMRect
+    await slider.trigger('click', { clientX: 0 })
     await nextTick()
 
     // Should clamp to 0.5
