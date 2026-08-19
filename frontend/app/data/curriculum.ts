@@ -35,6 +35,7 @@ export interface LessonDefinition {
 }
 
 export interface SectionDefinition {
+  name?: string
   type?: SectionType
   title?: string
   content: SectionContent
