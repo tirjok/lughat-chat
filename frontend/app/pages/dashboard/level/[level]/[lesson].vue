@@ -44,13 +44,40 @@ const breadcrumbs = computed(() => [
 ])
 
 const sectionTabs = computed(() => {
-  const lesson = getLessonById(levelParam.value + '-' + lessonParam.value.padStart(2, '0'))
+  const lesson = getLessonById(levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
   return lesson ? lesson.sections.map(s => s.name).filter((n): n is string => n != null) : ['Dialogue', 'Vocabulary', 'Pronouns', 'Expressions', 'Grammar', 'Activities']
 })
 const activeSection = shallowRef<string | undefined>('Dialogue')
 const currentLessonData = computed(() => {
-  const lesson = getLessonById(levelParam.value + '-' + lessonParam.value.padStart(2, '0'))
+  const lesson = getLessonById(levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
   return lesson
+})
+
+// AC-2: Compute estimated time from lesson sections (~5 min per section).
+const estimatedTime = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return ''
+  const sectionCount = lesson.sections.length
+  return `~${sectionCount * 5} mins`
+})
+
+// AC-3: Compute scenes summary from dialogue sections (scenes count + total lines).
+const scenes = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return ''
+  let sceneCount = 0
+  let lineCount = 0
+  for (const section of lesson.sections) {
+    if (section.type === 'dialogue' && 'scenes' in section.content) {
+      const dialogue = section.content as { type: 'dialogue', scenes: { label: string, lines: { arabic: string }[] }[] }
+      sceneCount += dialogue.scenes.length
+      for (const scene of dialogue.scenes) {
+        lineCount += scene.lines.length
+      }
+    }
+  }
+  if (sceneCount === 0 && lineCount === 0) return ''
+  return `${sceneCount} Scenes • ${lineCount} Lines`
 })
 
 const currentSectionItems = computed(() => {
@@ -133,6 +160,10 @@ if (typeof onBeforeRouteLeave === 'function') {
         <LessonHero
           :level="currentLevel"
           :lesson-number="currentLesson"
+          :arabic-title="currentLessonData?.arabicTitle"
+          :estimated-time="estimatedTime"
+          :scenes="scenes"
+          :audio-type="'AI-Generated Audio'"
           :is-ready="true"
         />
       </div>
