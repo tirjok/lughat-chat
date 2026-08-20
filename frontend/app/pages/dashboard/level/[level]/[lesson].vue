@@ -45,7 +45,7 @@ const breadcrumbs = computed(() => [
 
 const sectionTabs = computed(() => {
   const lesson = getLessonById(levelParam.value + '-' + lessonParam.value.padStart(2, '0'))
-  return lesson ? lesson.sections.map(s => s.title).filter((t): t is string => t != null) : ['Dialogue', 'Vocabulary', 'Pronouns', 'Expressions', 'Grammar', 'Activities']
+  return lesson ? lesson.sections.map(s => s.name).filter((n): n is string => n != null) : ['Dialogue', 'Vocabulary', 'Pronouns', 'Expressions', 'Grammar', 'Activities']
 })
 const activeSection = shallowRef<string | undefined>('Dialogue')
 const currentLessonData = computed(() => {
@@ -56,7 +56,7 @@ const currentLessonData = computed(() => {
 const currentSectionItems = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return []
-  const section = lesson.sections.find(s => s.title === activeSection.value)
+  const section = lesson.sections.find(s => s.name === activeSection.value)
   return section ? section.items : []
 })
 
