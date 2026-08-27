@@ -52,12 +52,12 @@ const activeSection = shallowRef<string | undefined>('Dialogue')
 const currentLessonData = computed(() => {
   const lesson = getLessonById(levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
   return lesson
+})
 
 const expressionsSection = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return null
   return lesson.sections.find(s => s.type === 'expressions')
-})
 })
 
 // AC-2: Compute estimated time from lesson sections (~5 min per section).

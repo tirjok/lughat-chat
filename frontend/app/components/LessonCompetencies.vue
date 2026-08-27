@@ -55,7 +55,10 @@ watch(() => _props.competencies, () => {
 </script>
 
 <template>
-  <div dir="rtl" class="rtl">
+  <div
+    dir="rtl"
+    class="rtl"
+  >
     <!-- Collapsible header -->
     <button
       data-testid="competencies-header"
@@ -104,7 +107,7 @@ watch(() => _props.competencies, () => {
           :checked="checkedCompetencies.has(competency)"
           class="mt-1 shrink-0 w-4 h-4 rounded border-stone-300 dark:border-stone-600 text-primary-600 focus:ring-primary-500"
           @change="toggleCompetency(competency)"
-        />
+        >
         <span class="text-sm text-stone-700 dark:text-stone-300">
           {{ competency }}
         </span>

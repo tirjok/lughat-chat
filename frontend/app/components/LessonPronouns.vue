@@ -15,7 +15,7 @@ const emit = defineEmits<{
 const pronounsContent = computed(() => {
   const content = _props.section.content
   if (!content || content.type !== 'pronouns') return null
-  return content as { type: 'pronouns'; pronouns: { arabic: string; english: string; example: string }[] }
+  return content as { type: 'pronouns', pronouns: { arabic: string, english: string, example: string }[] }
 })
 
 const pronounItems = computed(() => pronounsContent.value?.pronouns ?? [])

@@ -51,7 +51,7 @@ describe('LessonPronouns', () => {
     const wrapper = getWrapper()
     const arabicTexts = wrapper.findAll('[data-testid^="pronoun-card-"] [data-testid="pronoun-arabic"]')
     expect(arabicTexts).toHaveLength(3)
-    arabicTexts.forEach(card => {
+    arabicTexts.forEach((card) => {
       expect(card.attributes('dir')).toBe('rtl')
     })
   })
@@ -60,7 +60,7 @@ describe('LessonPronouns', () => {
     const wrapper = getWrapper()
     const examples = wrapper.findAll('[data-testid^="pronoun-card-"] [data-testid="pronoun-example"]')
     expect(examples).toHaveLength(3)
-    examples.forEach(card => {
+    examples.forEach((card) => {
       expect(card.attributes('dir')).toBe('rtl')
     })
   })
@@ -76,7 +76,7 @@ describe('LessonPronouns', () => {
   it('emits the correct index for each pronoun card', () => {
     const wrapper = getWrapper()
     const buttons = wrapper.findAll('[data-testid^="play-pronoun-"]')
-    buttons.forEach(button => {
+    buttons.forEach((button) => {
       button.trigger('click')
     })
     const emitted = wrapper.emitted('playPronoun') as unknown[][]

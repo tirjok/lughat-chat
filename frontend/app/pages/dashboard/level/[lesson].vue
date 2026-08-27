@@ -211,13 +211,13 @@ if (typeof onBeforeRouteLeave === 'function') {
         <div v-if="pronounsSection">
           <LessonPronouns
             :section="pronounsSection"
-            @playPronoun="(index: number) => { /* TODO: wire audio */ }"
+            @play-pronoun="(index: number) => { /* TODO: wire audio */ }"
           />
         </div>
         <div v-if="vocabularySection">
           <LessonVocabulary
             :section="vocabularySection"
-            @playWord="(index: number) => { /* TODO: wire audio */ }"
+            @play-word="(index: number) => { /* TODO: wire audio */ }"
           />
         </div>
         <div

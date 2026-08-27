@@ -82,7 +82,7 @@ describe('LessonVocabulary', () => {
   it('renders Arabic text in RTL direction', () => {
     const wrapper = getWrapper()
     const arabicCells = wrapper.findAll('[data-testid="vocab-arabic-cell"]')
-    arabicCells.forEach(cell => {
+    arabicCells.forEach((cell) => {
       expect(cell.attributes('dir')).toBe('rtl')
     })
   })
@@ -122,7 +122,7 @@ describe('LessonVocabulary', () => {
   it('emits the correct index for each word across categories', () => {
     const wrapper = getWrapper()
     const buttons = wrapper.findAll('[data-testid^="play-word-"]')
-    buttons.forEach(button => {
+    buttons.forEach((button) => {
       button.trigger('click')
     })
     const emitted = wrapper.emitted('playWord') as unknown[][]
