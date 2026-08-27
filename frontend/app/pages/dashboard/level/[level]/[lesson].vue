@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { getLessonById } from '~/data/curriculum'
+import LessonExpressions from '~/components/LessonExpressions.vue'
 
 // Route access — deferred inside computed getters to avoid
 // NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).
@@ -51,6 +52,12 @@ const activeSection = shallowRef<string | undefined>('Dialogue')
 const currentLessonData = computed(() => {
   const lesson = getLessonById(levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
   return lesson
+
+const expressionsSection = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return null
+  return lesson.sections.find(s => s.type === 'expressions')
+})
 })
 
 // AC-2: Compute estimated time from lesson sections (~5 min per section).
@@ -195,6 +202,12 @@ if (typeof onBeforeRouteLeave === 'function') {
           >
             {{ tab }}
           </button>
+        </div>
+        <div
+          v-if="activeSection === 'Expressions' && expressionsSection"
+          :key="`expressions-${currentLesson}`"
+        >
+          <LessonExpressions :section="expressionsSection" />
         </div>
         <div
           v-if="currentSectionItems.length > 0"
