@@ -96,6 +96,7 @@ const currentSectionItems = computed(() => {
   const _section = lesson.sections.find(s => s.name === activeSection.value)
   return _section ? _section.items : []
 })
+
 const audioModule = useAudioModule()
 const ttsApi = useTtsApi()
 const audioEl = ref<HTMLAudioElement | null>(null)
@@ -103,29 +104,28 @@ watch(audioEl, (el) => {
   audioModule.audioRef.value = el
 })
 
-let abortController = new AbortController()
 async function _playText(text: string): Promise<void> {
   if (!text || !text.trim()) return
   await audioModule.dispose()
-  const prevController = abortController
-  abortController = new AbortController()
-  prevController.abort()
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30_000)
   try {
     const blob = await ttsApi.synthesize({
       text: text.trim(),
       speaker: '',
       speed: 1.0,
-      signal: abortController.signal
+      signal: controller.signal
     })
+    clearTimeout(timeoutId)
     audioModule.load(blob)
     audioModule.isPlaying.value = true
     await audioModule.play()
   } catch (err: unknown) {
+    clearTimeout(timeoutId)
     if (err instanceof DOMException && err.name === 'AbortError') return
     console.error('TTS synthesis failed:', err)
   }
 }
-
 
 // AC-5: Redirect to dashboard when level param is missing.
 // Guarded against jsdom tests where onBeforeRouteLeave is not available.
@@ -291,8 +291,14 @@ if (typeof onBeforeRouteLeave === 'function') {
     </section>
     <StickyAudioBar
       :active="audioModule.isPlaying.value"
+      :is-paused="audioModule.isPaused.value"
+      :current-time="audioModule.currentTime.value"
+      :duration="audioModule.duration.value"
+      :shortcuts-enabled="true"
       @close="audioModule.dispose(); audioModule.isPlaying.value = false; audioModule.audioUrl.value = null"
       @toggle="audioModule.toggle()"
+      @seek="(ratio: number) => audioModule.seek(ratio)"
+      @speed-change="(speed: number) => { audioModule.isPlaying.value = false; }"
     />
     <audio
       ref="audioEl"

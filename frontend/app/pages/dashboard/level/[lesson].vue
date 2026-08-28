@@ -99,6 +99,36 @@ const currentSectionItems = computed(() => {
   return section ? section.items : []
 })
 
+const audioModule = useAudioModule()
+const ttsApi = useTtsApi()
+const audioEl = ref<HTMLAudioElement | null>(null)
+watch(audioEl, (el) => {
+  audioModule.audioRef.value = el
+})
+
+async function _playText(text: string): Promise<void> {
+  if (!text || !text.trim()) return
+  await audioModule.dispose()
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30_000)
+  try {
+    const blob = await ttsApi.synthesize({
+      text: text.trim(),
+      speaker: '',
+      speed: 1.0,
+      signal: controller.signal
+    })
+    clearTimeout(timeoutId)
+    audioModule.load(blob)
+    audioModule.isPlaying.value = true
+    await audioModule.play()
+  } catch (err: unknown) {
+    clearTimeout(timeoutId)
+    if (err instanceof DOMException && err.name === 'AbortError') return
+    console.error('TTS synthesis failed:', err)
+  }
+}
+
 // AC-5: Redirect to dashboard when level param is missing.
 // Guarded against jsdom tests where onBeforeRouteLeave is not available.
 if (typeof onBeforeRouteLeave === 'function') {
@@ -267,5 +297,22 @@ if (typeof onBeforeRouteLeave === 'function') {
         </div>
       </div>
     </section>
+    <StickyAudioBar
+      :active="audioModule.isPlaying.value"
+      :is-paused="audioModule.isPaused.value"
+      :current-time="audioModule.currentTime.value"
+      :duration="audioModule.duration.value"
+      :shortcuts-enabled="true"
+      @close="audioModule.dispose(); audioModule.isPlaying.value = false; audioModule.audioUrl.value = null"
+      @toggle="audioModule.toggle()"
+      @seek="(ratio: number) => audioModule.seek(ratio)"
+      @speed-change="(speed: number) => { audioModule.isPlaying.value = false; }"
+    />
+    <audio
+      ref="audioEl"
+      data-testid="lesson-audio"
+      preload="none"
+      class="hidden"
+    />
   </div>
 </template>

@@ -78,8 +78,8 @@ function getWrapper(): VueWrapper {
         LessonExpressions: true,
         StickyAudioBar: {
           name: 'StickyAudioBar',
-          props: ['active'],
-          emits: ['close', 'toggle'],
+          props: ['active', 'isPaused', 'currentTime', 'duration', 'shortcutsEnabled'],
+          emits: ['close', 'toggle', 'seek', 'speedChange'],
           template: '<div data-testid="sticky-bar" :class="active ? \'translate-y-0\' : \'translate-y-full\'"><button data-testid="btn-close" @click="$emit(\'close\')">Close</button><button data-testid="btn-toggle" @click="$emit(\'toggle\')">Toggle</button></div>'
         }
       },
@@ -380,6 +380,33 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
         expect(typeof call.text).toBe('string')
         expect(call.text.length).toBeGreaterThan(0)
       }
+    })
+
+    it('playText | 30s timeout fires | aborts stalled request (bar stays inactive)', async () => {
+      vi.useFakeTimers()
+      const wrapper = getWrapper()
+      const { _playText: playText } = wrapper.vm as unknown as { _playText: (text: string) => Promise<void> }
+
+      // Arrange — synthesize returns a never-resolving promise.
+      apiMock.synthesize.mockImplementation(() => new Promise<Blob>(() => {}))
+
+      // Act — fire-and-forget: start the request (timers not yet advanced).
+      void playText('مرحبا')
+      await nextTick()
+
+      // The bar should NOT have been activated yet (30s not elapsed).
+      const bar = wrapper.find('[data-testid="sticky-bar"]')
+      expect(bar.classes()).toContain('translate-y-full')
+
+      // Advance past 30s — the timeout fires, aborting the request.
+      vi.advanceTimersByTime(30_001)
+      await nextTick()
+
+      // Bar stays inactive (stalled → aborted → no play).
+      expect(bar.classes()).toContain('translate-y-full')
+      expect(apiMock.synthesize).toHaveBeenCalledTimes(1)
+
+      vi.useRealTimers()
     })
   })
 })
