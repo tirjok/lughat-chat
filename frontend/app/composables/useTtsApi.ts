@@ -5,6 +5,7 @@ export interface SynthesisRequest {
   speaker?: string
   speed?: number
   seed?: number
+  signal?: AbortSignal
 }
 
 export interface SynthesisResponse {
@@ -40,8 +41,10 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
           speaker: request.speaker,
           speed: request.speed || 1.0,
           seed: request.seed,
-          language: 'ar'
-        })
+          language: 'ar',
+          signal: request.signal
+        }),
+        signal: request.signal
       })
     } catch {
       throw new Error('Unable to connect to the server')

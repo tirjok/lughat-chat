@@ -53,11 +53,18 @@ export const createMockUseAudioModule = (options?: { isGenerating?: boolean }) =
     formattedDuration,
     isGenerating,
     load: vi.fn(),
-    play: vi.fn().mockResolvedValue(undefined),
-    pause: vi.fn(),
+    pause: vi.fn().mockImplementation(() => { isPaused.value = true }),
+    play: vi.fn().mockResolvedValue(undefined).mockImplementation(async () => {
+      isPlaying.value = true
+      isPaused.value = false
+    }),
     seek: vi.fn(),
+    toggle: vi.fn().mockImplementation(async () => {
+      if (isPlaying.value && !isPaused.value) isPaused.value = true
+      isPlaying.value = true
+      isPaused.value = false
+    }),
     download: vi.fn(),
-    toggle: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn()
   }
 }
