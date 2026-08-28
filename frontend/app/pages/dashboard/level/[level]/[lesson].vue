@@ -127,6 +127,91 @@ async function _playText(text: string): Promise<void> {
   }
 }
 
+type RepeatMode = 'off' | 'one' | 'all'
+const repeatedSectionIndex = shallowRef(0)
+let scenePlayTimerId: ReturnType<typeof setTimeout> | null = null
+const currentIndex = shallowRef(0)
+const currentText = ref<string | null>(null)
+const repeatMode = ref<RepeatMode>('off')
+
+async function _handleAudioEnded(): Promise<void> {
+  if (repeatMode.value === 'off') return
+  const items = currentSectionItems.value
+  const idx = currentIndex.value
+  if (repeatMode.value === 'one') {
+    const item = items[idx]
+    if (item?.arabic) {
+      await _playText(item.arabic)
+    }
+  } else {
+    const nextItem = items[idx + 1]
+    if (nextItem?.arabic) {
+      await _playText(nextItem.arabic)
+    }
+  }
+}
+
+async function handleTrackPrev(): Promise<void> {
+  const items = currentSectionItems.value
+  const idx = currentIndex.value
+  const prevItem = items[idx - 1]
+  if (prevItem?.arabic) {
+    await _playText(prevItem.arabic)
+  }
+}
+
+async function handleTrackNext(): Promise<void> {
+  const items = currentSectionItems.value
+  const idx = currentIndex.value
+  const nextItem = items[idx + 1]
+  if (nextItem?.arabic) {
+    await _playText(nextItem.arabic)
+  }
+}
+
+async function _playScene(): Promise<void> {
+  const items = currentSectionItems.value
+  if (scenePlayTimerId) {
+    clearTimeout(scenePlayTimerId)
+    scenePlayTimerId = null
+  }
+  for (let idx = 0; idx < items.length; idx++) {
+    const item = items[idx]
+    if (item?.audioUrl) {
+      scenePlayTimerId = setTimeout(
+        async () => {
+          const nextItem = currentSectionItems.value[idx + 1]
+          if (nextItem?.arabic) {
+            await _playText(nextItem.arabic)
+          }
+        },
+        800
+      )
+      break
+    }
+  }
+}
+
+async function handleSpeedChange(_speed: number): Promise<void> {
+  const items = currentSectionItems.value
+  const idx = currentIndex.value
+  const item = items[idx]
+  if (item?.arabic) {
+    await _playText(item.arabic)
+  }
+}
+
+function handleRepeatChange(mode: RepeatMode): void {
+  repeatMode.value = mode
+}
+
+function _clearSceneTimer(): void {
+  if (scenePlayTimerId) {
+    clearTimeout(scenePlayTimerId)
+    scenePlayTimerId = null
+  }
+}
+
 // AC-5: Redirect to dashboard when level param is missing.
 // Guarded against jsdom tests where onBeforeRouteLeave is not available.
 if (typeof onBeforeRouteLeave === 'function') {
@@ -134,9 +219,12 @@ if (typeof onBeforeRouteLeave === 'function') {
     if (isMissingLevel.value) {
       router.value.push('/dashboard')
       next(false)
-    } else {
-      next()
+      return
     }
+    repeatedSectionIndex.value = currentIndex.value
+    currentText.value = currentSectionItems.value[repeatedSectionIndex.value]?.arabic || null
+    _clearSceneTimer()
+    next()
   })
 }
 </script>
@@ -295,16 +383,23 @@ if (typeof onBeforeRouteLeave === 'function') {
       :current-time="audioModule.currentTime.value"
       :duration="audioModule.duration.value"
       :shortcuts-enabled="true"
-      @close="audioModule.dispose(); audioModule.isPlaying.value = false; audioModule.audioUrl.value = null"
+      :current-text="currentText"
+      :repeat-mode="repeatMode"
+      :repeated-section-index="repeatedSectionIndex"
+      @close="audioModule.dispose(); audioModule.isPlaying.value = false; audioModule.audioUrl.value = null; _clearSceneTimer()"
       @toggle="audioModule.toggle()"
       @seek="(ratio: number) => audioModule.seek(ratio)"
-      @speed-change="(speed: number) => { audioModule.isPlaying.value = false; }"
+      @speed-change="(speed: number) => handleSpeedChange(speed)"
+      @prev-track="handleTrackPrev()"
+      @next-track="handleTrackNext()"
+      @download="audioModule.download()"
+      @repeat-change="(mode: RepeatMode) => handleRepeatChange(mode)"
     />
     <audio
       ref="audioEl"
       data-testid="lesson-audio"
       preload="none"
-      class="hidden"
+      @ended="_handleAudioEnded()"
     />
   </div>
 </template>

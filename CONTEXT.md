@@ -93,6 +93,36 @@ btn-generate (loading state), audio/error/footer, spinner/fade/slide-up animatio
 
 ---
 
+## AI Agent Development Standards (Vue 3 / Nuxt 4)
+
+When acting as an AI Agent developing this frontend, strictly adhere to the canonical, highly optimized standards established by Evan You (Vue) and Anthony Fu (Nuxt Core).
+
+### Reference Architecture
+Mimic the structure, patterns, and type-safety found in the following gold-standard repositories:
+- **Elk (`elk-zone/elk`)**: For large-scale Nuxt app structure, state management, and server routes.
+- **Nuxt UI (`nuxt/ui`)**: For building highly reusable, headless-accessible, strongly typed UI components.
+- **Vitesse (`antfu/vitesse`)**: For `<script setup>` mastery, auto-imports, UnoCSS integration, and Pinia.
+- **VueUse (`vueuse/vueuse`)**: For headless, pure-logic Composition API utilities (composables).
+
+### Strict Constraints
+1. **Structure**: Follow Nuxt 4 conventions explicitly (UI components in `app/components/`, pages in `app/pages/`, and universal utilities in `shared/`).
+2. **Syntax**: Exclusively use `<script setup lang="ts">` with the Composition API. The Options API is strictly forbidden.
+3. **Reactivity**: Default to `ref()` and `computed()`. Only use `reactive()` when grouping heavily related object mutations. Use Nuxt 4's singleton data fetching (defaulting to `shallowRef` for performance).
+4. **Props & Emits**: Always use type-based declarations (`defineProps<{ ... }>()` and `defineEmits<{ ... }>()`).
+5. **Styling**: Use atomic, utility-first styling via UnoCSS (`@apply` or inline utility classes). Avoid heavily scoped `<style>` blocks unless structurally necessary.
+6. **Auto-imports**: Do not manually import Vue APIs (`ref`, `computed`) or Nuxt utilities (`useFetch`) unless enforced by strict linter configurations; Nuxt 4 handles these automatically.
+
+### Component Template Standard
+Structure components following this exact sequential flow:
+1. Imports (only those not auto-imported).
+2. Type definitions (`interface Props`, etc.).
+3. Macros (`defineProps`, `defineEmits`, `defineSlots`).
+4. Composables (`useClipboard`, custom, etc.).
+5. Reactive State & Computed properties.
+6. Methods/Functions.
+
+---
+
 ## Backend (`backend/`)
 
 - `app.py` — FastAPI app: model loading via lifespan, synthesis, health, voices, history.

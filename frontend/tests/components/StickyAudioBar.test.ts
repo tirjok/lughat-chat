@@ -472,7 +472,7 @@ describe('StickyAudioBar', () => {
       expect(wrapper.emitted('seek')).toHaveLength(1)
     })
 
-    it('StickyAudioBar | when Ctrl+Enter pressed | does NOT emit toggle', async () => {
+    it('StickyAudioBar | when Ctrl+Enter pressed | emits toggle event', async () => {
       // Arrange
       const wrapper = mountBar({ active: true, shortcutsEnabled: true })
       await nextTick()
@@ -481,7 +481,7 @@ describe('StickyAudioBar', () => {
       window.dispatchEvent(makeKey('Enter', { ctrlKey: true }))
 
       // Assert
-      expect(wrapper.emitted('toggle')).toBeUndefined()
+      expect(wrapper.emitted('toggle')).toHaveLength(1)
     })
 
     it('StickyAudioBar | when Escape pressed | emits close event', async () => {

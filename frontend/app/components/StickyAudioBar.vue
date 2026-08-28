@@ -14,7 +14,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'close' | 'toggle' | 'prevTrack' | 'nextTrack'): void
+  (e: 'close' | 'toggle' | 'prevTrack' | 'nextTrack' | 'download'): void
   (e: 'seek' | 'speedChange', value: number): void
   (e: 'repeatChange', mode: 'off' | 'one' | 'all'): void
 }
@@ -76,8 +76,15 @@ const isPlaying = computed(() => props.isPlaying && !props.isPaused)
 
 // Keyboard shortcuts (AC-7)
 const handleKeydown = (e: KeyboardEvent) => {
-  // Ignore if Ctrl/Meta/Shift modifier is held (no conflict with Ctrl+Enter)
-  if (e.ctrlKey || e.metaKey || e.shiftKey) return
+  if (e.ctrlKey || e.metaKey || e.shiftKey) {
+    // Allow Ctrl/Cmd+Enter as a toggle shortcut even with modifiers
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      emit('toggle')
+      return
+    }
+    return
+  }
 
   switch (e.key) {
     case ' ':
@@ -288,6 +295,19 @@ defineExpose({
         >
           ∞
         </span>
+      </button>
+
+      <!-- Download -->
+      <button
+        data-testid="download-button"
+        aria-label="Download"
+        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+        @click="emit('download')"
+      >
+        <span
+          class="ph-fill ph-download text-lg"
+          aria-hidden="true"
+        />
       </button>
 
       <!-- Close -->
