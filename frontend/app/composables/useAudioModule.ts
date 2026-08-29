@@ -164,7 +164,7 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     // State
     isPlaying, isPaused, currentTime, duration,
     audioUrl,
-
+    error,
     // Template binding
     audioRef,
 

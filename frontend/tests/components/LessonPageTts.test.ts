@@ -409,4 +409,42 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
       vi.useRealTimers()
     })
   })
+
+  describe('playText error handling', () => {
+    const errorMessages = [
+      'Model is still loading',
+      'Validation error',
+      'Speaker WAV file not found: speaker.wav',
+      'Failed to generate audio',
+      'Unable to connect to the server'
+    ]
+    for (const message of errorMessages) {
+      it(`sets audioModule.error to ${JSON.stringify(message)} and hides the bar`, async () => {
+        const wrapper = getWrapper()
+        const { _playText: playText } = wrapper.vm as unknown as { _playText: (text: string) => Promise<void> }
+        apiMock.synthesize.mockRejectedValue(new Error(message))
+        await playText('marhaba')
+        await nextTick()
+        expect(mockAudio.error.value).toBe(message)
+        const bar = wrapper.find('[data-testid="sticky-bar"]')
+        expect(bar.classes()).toContain('translate-y-full')
+        expect(mockAudio.load).not.toHaveBeenCalled()
+      })
+    }
+
+    it('discards AbortError silently', async () => {
+      const wrapper = getWrapper()
+      const { _playText: playText } = wrapper.vm as unknown as { _playText: (text: string) => Promise<void> }
+      apiMock.synthesize.mockResolvedValue(new Blob(['dummy'], { type: 'audio/mpeg' }))
+      await playText('marhaba')
+      await nextTick()
+      expect(mockAudio.error.value).toBeNull()
+      expect(mockAudio.load).toHaveBeenCalledTimes(1)
+      apiMock.synthesize.mockResolvedValue(new Blob(['dummy'], { type: 'audio/mpeg' }))
+      await playText('ahlan')
+      await nextTick()
+      expect(mockAudio.error.value).toBeNull()
+      expect(mockAudio.load).toHaveBeenCalledTimes(2)
+    })
+  })
 })

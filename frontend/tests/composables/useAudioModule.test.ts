@@ -388,4 +388,63 @@ describe('useAudioModule', () => {
       expect(module.isPlaying.value).toBe(false)
     })
   })
+
+  describe('error exposure', () => {
+    it('exposes an error ref that defaults to null', () => {
+      const module = useAudioModule()
+      expect('error' in module).toBe(true)
+      expect(module.error.value).toBeNull()
+    })
+
+    it('sets error ref when play() throws', async () => {
+      const mockAudio = {
+        play: vi.fn(() => Promise.reject(new DOMException('NotAllowedError'))),
+        pause: vi.fn(),
+        addEventListener: vi.fn()
+      } as unknown as HTMLAudioElement
+      const module = useAudioModule()
+      module.audioRef.value = mockAudio
+      await module.play()
+      expect(module.error.value).toContain('Unable to play audio')
+    })
+
+    it('clears error when a new blob is loaded', async () => {
+      const mockAudio = {
+        play: vi.fn(() => Promise.reject(new Error('blocked'))),
+        pause: vi.fn(),
+        addEventListener: vi.fn(),
+        set src(_: string) {},
+        get src() { return '' }
+      } as unknown as HTMLAudioElement
+      const module = useAudioModule()
+      module.audioRef.value = mockAudio
+      await module.play()
+      expect(module.error.value).not.toBeNull()
+      module.load(new Blob(['x'], { type: 'audio/mpeg' }))
+      expect(module.error.value).toBeNull()
+    })
+
+    it('sets error string when audio element emits an error event', async () => {
+      vi.useFakeTimers()
+      const addEventSpy = vi.fn()
+      const mockAudio = {
+        play: vi.fn(() => Promise.resolve()),
+        pause: vi.fn(),
+        addEventListener: addEventSpy as unknown as HTMLAudioElement['addEventListener'],
+        set src(_: string) {},
+        get src() { return '' },
+        duration: 0,
+        currentTime: 0
+      } as unknown as HTMLAudioElement
+      const module = useAudioModule()
+      module.audioRef.value = mockAudio
+      await vi.runAllTimersAsync()
+      const call = addEventSpy.mock.calls.find(c => c[0] === 'error')
+      expect(call).toBeDefined()
+      const errorCb = call![1] as () => void
+      errorCb()
+      expect(module.error.value).toBe('Failed to load audio')
+      vi.useRealTimers()
+    })
+  })
 })

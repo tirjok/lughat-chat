@@ -53,8 +53,9 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
     if (!response.ok) {
       const errorMessages: Record<number, string> = {
         400: 'Invalid text for synthesis',
-        503: 'Server is currently unavailable',
-        500: 'An error occurred on the server'
+        422: 'Validation error',
+        503: 'Model is still loading',
+        500: 'Failed to generate audio'
       }
 
       const errorData = await response.json().catch(() => ({}))
@@ -66,7 +67,7 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
 
       const detail = errorData?.detail
       if (detail) {
-        throw new Error(`Server error: ${detail}`)
+        throw new Error(detail)
       }
 
       throw new Error('An error occurred on the server')

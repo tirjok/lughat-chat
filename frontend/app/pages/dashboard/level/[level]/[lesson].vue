@@ -118,11 +118,11 @@ async function _playText(text: string): Promise<void> {
     })
     clearTimeout(timeoutId)
     audioModule.load(blob)
-    audioModule.isPlaying.value = true
     await audioModule.play()
   } catch (err: unknown) {
     clearTimeout(timeoutId)
     if (err instanceof DOMException && err.name === 'AbortError') return
+    audioModule.error.value = err instanceof Error ? err.message : 'Unknown error'
     console.error('TTS synthesis failed:', err)
   }
 }
