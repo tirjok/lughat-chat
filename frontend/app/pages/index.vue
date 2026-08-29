@@ -1,9 +1,5 @@
 <script setup lang="ts">
 // Index: Thin composition surface for the main TTS page.
-// Owns all state and business logic; delegates UI to child components.
-// Two-panel layout: Mobile (split-screen) | Desktop (side-by-side).
-
-// TODO: migrated from studio-900/sunrise-orange (see ISSUE-014)
 import { computed, nextTick, onUnmounted, shallowRef } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { usePanelToggle } from '../composables/usePanelToggle'

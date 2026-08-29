@@ -1,7 +1,5 @@
 <script setup lang="ts">
-// CleanupDialog: Confirmation dialog for in-flight synthesis cleanup.
-// TODO: migrated from studio-800/sunrise-magenta (see ISSUE-014)
-// Emits 'cleanup' (clean & leave) or 'stay' (cancel navigation).
+import { useTemplateRef } from 'vue'
 
 interface Props {
   visible: boolean

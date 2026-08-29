@@ -17,33 +17,30 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   // ── Internal refs ────────────────────────────────
   const blobRef = ref<Blob | null>(null)
   let currentObjectUrl: string | null = null
+  let downloadUrlRef: string | null = null
   const audioRef = ref<HTMLAudioElement | null>(null) as Ref<HTMLAudioElement | null>
 
-  // ── Internal: track all created object URLs ─────
-  const objectUrls = new Set<string>()
-
-  // ── Internal: revoke all tracked object URLs ────
-  function revokeAll() {
-    for (const url of objectUrls) {
-      URL.revokeObjectURL(url)
+  // ── Internal: revoke previous object URL ─────────
+  function revokePrevious() {
+    if (currentObjectUrl) {
+      URL.revokeObjectURL(currentObjectUrl)
+      currentObjectUrl = null
     }
-    objectUrls.clear()
-    currentObjectUrl = null
     blobRef.value = null
   }
 
   // ── Load: blob → objectURL → wire element ────────
   function load(blob: Blob) {
-    revokeAll()
-    currentObjectUrl = URL.createObjectURL(blob)
-    objectUrls.add(currentObjectUrl)
+    revokePrevious()
     blobRef.value = blob
-    audioUrl.value = currentObjectUrl
+    const url = URL.createObjectURL(blob)
+    currentObjectUrl = url
+    audioUrl.value = url
     isLoading.value = true
     error.value = null
 
     if (audioRef.value) {
-      audioRef.value.src = currentObjectUrl
+      audioRef.value.src = url
     }
   }
 
@@ -86,17 +83,14 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   function download(filename?: string) {
     if (!blobRef.value) return
     const url = URL.createObjectURL(blobRef.value)
-    objectUrls.add(url)
+    downloadUrlRef = url
     const link = document.createElement('a')
     link.href = url
     link.download = filename || `tts_output_${Date.now()}.mp3`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    setTimeout(() => {
-      objectUrls.delete(url)
-      URL.revokeObjectURL(url)
-    }, 100)
+    setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
   // ── Wire event listeners ─────────────────────────
@@ -153,7 +147,11 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
 
   // ── Dispose: safety net (caller may or may not use)
   function dispose() {
-    revokeAll()
+    revokePrevious()
+    if (downloadUrlRef) {
+      URL.revokeObjectURL(downloadUrlRef)
+      downloadUrlRef = null
+    }
     if (audioRef.value) {
       audioRef.value.src = ''
     }
@@ -163,8 +161,8 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   return {
     // State
     isPlaying, isPaused, currentTime, duration,
-    audioUrl,
-    error,
+    audioUrl, error,
+
     // Template binding
     audioRef,
 

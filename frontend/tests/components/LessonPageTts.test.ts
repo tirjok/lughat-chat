@@ -21,6 +21,22 @@ vi.mock('vue-router', () => ({
     replace: vi.fn()
   })
 }))
+vi.mock('#imports', () => ({
+  useRoute: () => ({
+    path: '/dashboard/level/a1/1',
+    fullPath: '/dashboard/level/a1/1',
+    params: { level: 'a1', lesson: '1' },
+    query: {},
+    hash: '',
+    name: undefined,
+    matched: [],
+    meta: {}
+  }),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn()
+  })
+}))
 // eslint-disable-next-line import/first
 import LessonPage from '~/pages/dashboard/level/[level]/[lesson].vue'
 
@@ -97,7 +113,6 @@ function getWrapper(): VueWrapper {
 function findStickyBar(wrapper: VueWrapper) {
   return wrapper.find('[data-testid="sticky-bar"]')
 }
-
 describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () => {
   beforeEach(() => {
     // clearAllMocks strips mockImplementation, so re-apply it
@@ -126,7 +141,6 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
     apiMock.synthesize.mockReset()
     apiMock.healthCheck.mockReset()
   })
-
   describe('Sticky audio bar + audio element mount', () => {
     it('LessonPage | when mounted | mounts the sticky audio bar', () => {
       const wrapper = getWrapper()
@@ -150,7 +164,6 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
       expect(content).toContain('useAudioModule')
     })
   })
-
   describe('playText happy path (synthesize 200)', () => {
     it('playText | on 200 | loads the blob, plays, and activates the bar', async () => {
       const wrapper = getWrapper()
@@ -179,7 +192,6 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
       expect(bar.classes()).not.toContain('translate-y-full')
     })
   })
-
   describe('playText empty/whitespace guard', () => {
     it('playText | on empty string | does NOT call synthesize, does NOT activate bar', async () => {
       const wrapper = getWrapper()
@@ -212,7 +224,6 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
       expect(apiMock.synthesize).not.toHaveBeenCalled()
     })
   })
-
   describe('playText abort previous', () => {
     it('playText | second call aborts first in-flight request', async () => {
       const wrapper = getWrapper()
@@ -278,7 +289,6 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
       expect(bar.classes()).not.toContain('translate-y-full')
     })
   })
-
   describe('playText 30s timeout', () => {
     it('playText | stalled request | aborted after timeout (does NOT activate bar)', async () => {
       const wrapper = getWrapper()
@@ -315,7 +325,6 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
       expect(mockAudio.load).toHaveBeenCalledTimes(1)
     })
   })
-
   describe('bar handlers + per-row play button', () => {
     it('bar | close handler | aborts playback and hides bar', async () => {
       const wrapper = getWrapper()
@@ -409,7 +418,6 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
       vi.useRealTimers()
     })
   })
-
   describe('playText error handling', () => {
     const errorMessages = [
       'Model is still loading',
@@ -445,6 +453,14 @@ describe('dashboard/level/[level]/[lesson].vue — Issue-009 TTS handoff', () =>
       await nextTick()
       expect(mockAudio.error.value).toBeNull()
       expect(mockAudio.load).toHaveBeenCalledTimes(2)
+    })
+  })
+  describe('progress tracking on audio ended', () => {
+    it('audio element has data-testid on mount', async () => {
+      const wrapper = getWrapper()
+      await nextTick()
+      const audioEl = wrapper.find('audio[data-testid="lesson-audio"]')
+      expect(audioEl.exists()).toBe(true)
     })
   })
 })

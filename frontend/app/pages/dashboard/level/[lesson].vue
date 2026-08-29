@@ -1,55 +1,59 @@
 <script setup lang="ts">
 import { getLessonById } from '~/data/curriculum'
+import { onUnmounted, ref, watch, computed } from 'vue'
+import { useLessonProgress } from '~/composables/useLessonProgress'
+import { useLessonOrchestrator } from '~/composables/useLessonOrchestrator'
 
 import LessonPronouns from '~/components/LessonPronouns.vue'
 import LessonVocabulary from '~/components/LessonVocabulary.vue'
-// Route access — deferred inside computed getters to avoid
-// NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).
+
+const lessonProgress = useLessonProgress()
+const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
+const totalLines = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return 0
+  return lesson.sections.flatMap(s => s.items).length
+})
+
+let completedLines = 0
+
 function safeRoute() {
-  /* eslint-disable @stylistic/brace-style */
   try {
     return useRoute()
-  }
-  catch {
-    return {} as unknown as ReturnType<typeof useRoute>
-  }
-}
-function safeRouter() {
-  try {
-    return useRouter()
-  }
-  catch {
-    return {} as unknown as ReturnType<typeof useRouter>
+  } catch {
+    return {} as ReturnType<typeof useRoute>
   }
 }
 const route = computed(() => safeRoute())
-const router = computed(() => safeRouter())
 const levelParam = computed(() => (route.value.params?.level as string) || '')
 const lessonParam = computed(() => (route.value.params?.lesson as string) || '')
-// AC-5: Redirect when /dashboard/level/ has no level param
-const isMissingLevel = computed(() => {
-  return (
-    route.value.path.startsWith('/dashboard/level/')
-    && !levelParam.value
-  )
-})
-
 const currentLevel = computed(() => levelParam.value || 'A1')
 const levelRoute = computed(() => `/dashboard/level/${currentLevel.value.toLowerCase()}`)
 const currentLesson = computed(() => lessonParam.value || '1')
 
-// Breadcrumb trail: Dashboard → Level {level} → Lesson {id}
 const breadcrumbs = computed(() => [
   { label: 'Dashboard', to: '/dashboard' },
   { label: `Level ${currentLevel.value}`, to: levelRoute.value },
   { label: `Lesson ${currentLesson.value}`, to: undefined }
 ])
 
-const sectionTabs = computed(() => {
+const lessonTabs = computed(() => {
   const lesson = getLessonById(levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
   return lesson ? lesson.sections.map(s => s.name).filter((n): n is string => n != null) : ['Dialogue', 'Vocabulary', 'Pronouns', 'Expressions', 'Grammar', 'Activities']
 })
-const activeSection = shallowRef<string | undefined>('Dialogue')
+
+const { activeSection, navigateToSection, handleArrowKey } = useLessonOrchestrator({
+  sectionTabs: lessonTabs.value
+})
+
+// Page-level arrow key handler for section navigation
+function _handlePageKeydown(e: KeyboardEvent): void {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault()
+    handleArrowKey(e.key as 'ArrowLeft' | 'ArrowRight')
+  }
+}
+
 const currentLessonData = computed(() => {
   const lesson = getLessonById(levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
   return lesson
@@ -65,7 +69,6 @@ const vocabularySection = computed(() => {
   return lesson ? lesson.sections.find(s => s.name === 'Vocabulary') : null
 })
 
-// AC-2: Compute estimated time from lesson sections (~5 min per section).
 const estimatedTime = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return ''
@@ -73,7 +76,6 @@ const estimatedTime = computed(() => {
   return `~${sectionCount * 5} mins`
 })
 
-// AC-3: Compute scenes summary from dialogue sections (scenes count + total lines).
 const scenes = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return ''
@@ -109,38 +111,78 @@ watch(audioEl, (el) => {
 async function _playText(text: string): Promise<void> {
   if (!text || !text.trim()) return
   await audioModule.dispose()
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 30_000)
+  // Reuse module-scope controller so abortAndCleanup can abort it.
+  fetchController = new AbortController()
+  fetchTimeoutId = setTimeout(() => fetchController!.abort(), 30_000)
   try {
     const blob = await ttsApi.synthesize({
       text: text.trim(),
       speaker: '',
-      speed: 1.0,
-      signal: controller.signal
+      signal: fetchController!.signal
     })
-    clearTimeout(timeoutId)
+    clearTimeout(fetchTimeoutId ?? undefined)
+    fetchTimeoutId = null
     audioModule.load(blob)
     audioModule.isPlaying.value = true
     await audioModule.play()
   } catch (err: unknown) {
-    clearTimeout(timeoutId)
+    clearTimeout(fetchTimeoutId ?? undefined)
+    fetchTimeoutId = null
     if (err instanceof DOMException && err.name === 'AbortError') return
     console.error('TTS synthesis failed:', err)
   }
 }
 
-// AC-5: Redirect to dashboard when level param is missing.
-// Guarded against jsdom tests where onBeforeRouteLeave is not available.
+// -- Module-scope abort state for cleanup -----------------------------------
+let fetchController: AbortController | null = null
+let fetchTimeoutId: ReturnType<typeof setTimeout> | null = null
+let cleanedUp = false
+
+// -- Cleanup: aborts in-flight fetch, pauses/disposes audio, hides bar,
+//    clears progress — all idempotent.
+function abortAndCleanup(): void {
+  if (cleanedUp) return
+  cleanedUp = true
+
+  // 1. Abort in-flight TTS fetch
+  fetchController?.abort()
+  clearTimeout(fetchTimeoutId ?? undefined)
+  fetchController = null
+  fetchTimeoutId = null
+
+  // 2. Stop playback
+  audioModule.pause()
+  audioModule.dispose()
+  audioModule.isPlaying.value = false
+
+  lessonProgress.clearLessonProgress(lessonId.value)
+  // 4. Reset the AbortController for the next _playText call.
+  fetchController = null
+  fetchTimeoutId = null
+}
+
+async function _handleAudioEnded(): Promise<void> {
+  const total = totalLines.value
+  if (total > 0) {
+    const newCompleted = Math.min(1, total)
+    if (newCompleted > completedLines) {
+      completedLines = newCompleted
+      const pct = (completedLines / totalLines.value) * 100
+      lessonProgress.setLessonProgress(lessonId.value, pct, totalLines.value)
+    }
+  }
+}
+
 if (typeof onBeforeRouteLeave === 'function') {
   onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
-    if (isMissingLevel.value) {
-      router.value.push('/dashboard')
-      next(false)
-    } else {
-      next()
-    }
+    abortAndCleanup()
+    next()
   })
 }
+
+onUnmounted(() => {
+  abortAndCleanup()
+})
 </script>
 
 <template>
@@ -214,6 +256,7 @@ if (typeof onBeforeRouteLeave === 'function') {
     <section
       class="px-4 md:px-6 pb-4"
       data-testid="section-tabs"
+      @keydown="_handlePageKeydown"
     >
       <div class="max-w-7xl mx-auto">
         <div
@@ -221,7 +264,7 @@ if (typeof onBeforeRouteLeave === 'function') {
           role="tablist"
         >
           <button
-            v-for="tab in sectionTabs"
+            v-for="tab in lessonTabs"
             :id="`tab-${tab}`"
             :key="tab"
             role="tab"
@@ -233,18 +276,18 @@ if (typeof onBeforeRouteLeave === 'function') {
                 ? 'bg-white dark:bg-stone-700 text-primary-700 dark:text-primary-400 shadow-sm'
                 : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
             ]"
-            @click="activeSection = tab"
+            @click="navigateToSection(tab)"
           >
             {{ tab }}
           </button>
         </div>
-        <div v-if="pronounsSection">
+        <div v-if="pronounsSection && activeSection === 'Pronouns'">
           <LessonPronouns
             :section="pronounsSection"
             @play-pronoun="(index: number) => { /* TODO: wire audio */ }"
           />
         </div>
-        <div v-if="vocabularySection">
+        <div v-if="vocabularySection && activeSection === 'Vocabulary'">
           <LessonVocabulary
             :section="vocabularySection"
             @play-word="(index: number) => { /* TODO: wire audio */ }"
@@ -313,6 +356,7 @@ if (typeof onBeforeRouteLeave === 'function') {
       data-testid="lesson-audio"
       preload="none"
       class="hidden"
+      @ended="_handleAudioEnded()"
     />
   </div>
 </template>

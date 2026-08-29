@@ -3,32 +3,36 @@ import { ref, watch } from 'vue'
 import { useAudioModule } from '~/composables/useAudioModule'
 import { useTtsApi } from '~/composables/useTtsApi'
 import { getLessonById } from '~/data/curriculum'
-import LessonExpressions from '~/components/LessonExpressions.vue'
+import { useLessonProgress } from '~/composables/useLessonProgress'
 
-// Route access — deferred inside computed getters to avoid
-// NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).
+
+const lessonProgress = useLessonProgress()
+const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
+const totalLines = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return 0
+  return lesson.sections.flatMap(s => s.items).length
+})
+
+let completedLines = 0
 function safeRoute() {
-  /* eslint-disable @stylistic/brace-style */
   try {
     return useRoute()
-  }
-  catch {
-    return {} as unknown as ReturnType<typeof useRoute>
+  } catch {
+    return {} as ReturnType<typeof useRoute>
   }
 }
 function safeRouter() {
   try {
     return useRouter()
-  }
-  catch {
-    return {} as unknown as ReturnType<typeof useRouter>
+  } catch {
+    return {} as ReturnType<typeof useRouter>
   }
 }
 const route = computed(() => safeRoute())
 const router = computed(() => safeRouter())
 const levelParam = computed(() => (route.value.params?.level as string) || '')
 const lessonParam = computed(() => (route.value.params?.lesson as string) || '')
-// AC-5: Redirect when /dashboard/level/ has no level param
 const isMissingLevel = computed(() => {
   return (
     route.value.path.startsWith('/dashboard/level/')
@@ -40,7 +44,6 @@ const currentLevel = computed(() => levelParam.value || 'A1')
 const levelRoute = computed(() => `/dashboard/level/${currentLevel.value.toLowerCase()}`)
 const currentLesson = computed(() => lessonParam.value || '1')
 
-// Breadcrumb trail: Dashboard → Level {level} → Lesson {id}
 const breadcrumbs = computed(() => [
   { label: 'Dashboard', to: '/dashboard' },
   { label: `Level ${currentLevel.value}`, to: levelRoute.value },
@@ -63,7 +66,6 @@ const expressionsSection = computed(() => {
   return lesson.sections.find(s => s.type === 'expressions')
 })
 
-// AC-2: Compute estimated time from lesson sections (~5 min per section).
 const estimatedTime = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return ''
@@ -71,7 +73,6 @@ const estimatedTime = computed(() => {
   return `~${sectionCount * 5} mins`
 })
 
-// AC-3: Compute scenes summary from dialogue sections (scenes count + total lines).
 const scenes = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return ''
@@ -129,22 +130,34 @@ async function _playText(text: string): Promise<void> {
 
 type RepeatMode = 'off' | 'one' | 'all'
 const repeatedSectionIndex = shallowRef(0)
-let scenePlayTimerId: ReturnType<typeof setTimeout> | null = null
+const currentText = shallowRef<string | null>(null)
 const currentIndex = shallowRef(0)
-const currentText = ref<string | null>(null)
 const repeatMode = ref<RepeatMode>('off')
-
+let scenePlayTimerId: ReturnType<typeof setTimeout> | null = null
 async function _handleAudioEnded(): Promise<void> {
+  // Track progress: mark current line as completed.
+  const total = totalLines.value
+  if (total > 0) {
+    // Track unique completed lines (use completedLines counter).
+    // We increment only if this index hasn't been counted yet.
+    const newCompleted = Math.min(1, total)
+    if (newCompleted > completedLines) {
+      completedLines = newCompleted
+      const pct = (completedLines / totalLines.value) * 100
+      lessonProgress.setLessonProgress(lessonId.value, pct, totalLines.value)
+    }
+  }
+
   if (repeatMode.value === 'off') return
-  const items = currentSectionItems.value
+  const items2 = currentSectionItems.value
   const idx = currentIndex.value
   if (repeatMode.value === 'one') {
-    const item = items[idx]
+    const item = items2[idx]
     if (item?.arabic) {
       await _playText(item.arabic)
     }
   } else {
-    const nextItem = items[idx + 1]
+    const nextItem = items2[idx + 1]
     if (nextItem?.arabic) {
       await _playText(nextItem.arabic)
     }
@@ -212,8 +225,6 @@ function _clearSceneTimer(): void {
   }
 }
 
-// AC-5: Redirect to dashboard when level param is missing.
-// Guarded against jsdom tests where onBeforeRouteLeave is not available.
 if (typeof onBeforeRouteLeave === 'function') {
   onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
     if (isMissingLevel.value) {

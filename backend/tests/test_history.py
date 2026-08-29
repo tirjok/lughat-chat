@@ -72,35 +72,37 @@ def test_history_cleanup_endpoint_removes_old_files(tmp_path):
         main_app.AUDIO_DIR = original_dir
 
 
-def test_history_cleanup_preserves_recent_files(tmp_path):
+def test_history_cleanup_preserves_recent_files(tmp_path, monkeypatch):
     """POST /api/cleanup does not remove files younger than 24 hours."""
     import os as _os
     import time as _time
 
-    from fastapi.testclient import TestClient
-
     fake_dir = tmp_path / "fake_audio2"
     fake_dir.mkdir()
+
+    # Create a file with mtime 12 hours ago (should NOT be removed)
+    recent_file = fake_dir / "ar_male_ghi789.wav"
+    recent_file.touch()
+    recent_time = _time.time() - 12 * 3600  # 12 hours ago
+    _os.utime(recent_file, (recent_time, recent_time))
+
+    # Patch AUDIO_DIR at import time so TestClient picks up the test directory.
+    # TestClient re-imports the app module, resetting module-level globals,
+    # so we must monkeypatch the module before the client is created.
+    from importlib import reload
     import app as main_app
+    monkeypatch.setattr(main_app, "AUDIO_DIR", str(fake_dir))
+    reload(main_app)
 
-    original_dir = main_app.AUDIO_DIR
+    from fastapi.testclient import TestClient
 
-    try:
-        # Create a file with mtime 12 hours ago
-        recent_file = fake_dir / "ar_male_ghi789.wav"
-        recent_file.touch()
-        recent_time = _time.time() - 12 * 3600  # 12 hours ago
-        _os.utime(recent_file, (recent_time, recent_time))
+    client = TestClient(main_app.app)
+    response = client.post("/api/cleanup")
 
-        client = TestClient(app)
-        response = client.post("/api/cleanup")
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["removed_count"] == 0
-        assert recent_file.exists()  # Recent file should remain
-    finally:
-        main_app.AUDIO_DIR = original_dir
+    assert response.status_code == 200
+    data = response.json()
+    assert data["removed_count"] == 0
+    assert recent_file.exists()  # Recent file should remain
 
 
 def test_history_cleanup_with_cleanup_true_triggers_cleanup(tmp_path):

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useToast } from '../composables/useToast'
 import type { ToastType } from '../composables/useToast'
-// TODO: migrated from studio-800/studio-700 (see ISSUE-014)
 
 const toasts = useToast()
 

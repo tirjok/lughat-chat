@@ -1,15 +1,8 @@
-// Composable: Drag-resize for mobile split-screen panels.
-// Manages canvas ratio, drag state, and document-level event listeners.
-// Returns reactive refs and handler functions for touch/mouse drag.
-
 import { onMounted, onUnmounted, shallowRef } from 'vue'
 
 interface UseDragResizeOptions {
-  /** Initial canvas ratio (0.0–1.0) */
   initialRatio?: number
-  /** Minimum canvas ratio */
   minRatio?: number
-  /** Maximum canvas ratio */
   maxRatio?: number
 }
 
@@ -24,7 +17,6 @@ export function useDragResize(options: UseDragResizeOptions = {}) {
   const isDragging = shallowRef(false)
 
   // Non-reactive drag state — only accessed during drag lifecycle.
-  // Reset on drag end so a re-render doesn't corrupt it.
   let startY = 0
   let startRatio = 0
 
@@ -54,7 +46,6 @@ export function useDragResize(options: UseDragResizeOptions = {}) {
     document.body.classList.remove('dragging')
   }
 
-  // Reset drag state on window resize (prevents stale state after orientation change)
   function onResize() {
     if (isDragging.value) {
       onDragEnd()

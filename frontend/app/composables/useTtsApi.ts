@@ -73,7 +73,6 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
       throw new Error('An error occurred on the server')
     }
 
-    // Get audio blob from response
     const blob = await response.blob()
     return blob
   }

@@ -1,25 +1,25 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
-import json
 import os
-import time
 import uuid
+import shutil
 import subprocess
 import threading
 import wave
 from typing import Optional
 
-# Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
-# This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
 import os as _os
 
 _torchcodec_env = "0"
 for _env_key in ["TORCHAUDIO_USE_TORCHCODEC", "TORCHCODEC_ENABLED"]:
     _os.environ.setdefault(_env_key, _torchcodec_env)
+
+# Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
+# This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
 
 # Minimum reference audio duration for XTTS-v2 voice cloning (seconds)
 XTTS_MIN_REFERENCE_DURATION = 0.33
@@ -50,8 +50,6 @@ def _validate_speaker_wav(wav_path: str) -> None:
         )
 
 
-# Compatibility shim: isin_mps_friendly was removed in newer transformers
-# Lazy import so tests can run without torch installed.
 _torch_loaded = False
 
 
@@ -104,7 +102,6 @@ try:
     from TTS.api import TTS
 except ImportError:
     TTS = None  # type: ignore[misc, assignment]
-
 # Configuration
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
 MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
@@ -129,90 +126,48 @@ def discover_voices(directory: str) -> list[dict]:
     return voices
 
 
-# Create directories if writable (skip on read-only filesystems like Docker host mounts)
 for dir_path in [AUDIO_DIR, MODEL_CACHE_DIR]:
     try:
         os.makedirs(dir_path, exist_ok=True)
-    except OSError:
         pass  # Read-only filesystem — acceptable in test/local environments
-
-# Global TTS model instance and state (protected by _model_lock for atomicity)
-_model_lock = threading.Lock()
+# Global TTS model instance and state
 tts_model = None
-model_load_thread: Optional[threading.Thread] = (
-    None  # Track initial load thread for reload safety
-)
+model_load_status = "loading"  # loading | ready | error
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load TTS model in background so server starts immediately."""
-    global tts_model, model_load_status, model_load_thread
-    import time as _time
-
-    load_start_time = _time.monotonic()
-
-    MAX_LOAD_RETRIES = 3
-    LOAD_RETRY_DELAYS = [2.0, 4.0, 8.0]  # exponential backoff
-    LOAD_HARD_TIMEOUT = 300  # 5 minutes hard timeout
+    global tts_model, model_load_status
 
     def load_model():
-        """Load TTS model with retry logic, exponential backoff, and hard timeout."""
+        """Load TTS model in a background thread."""
         global tts_model, model_load_status
         print("Loading XTTS-v2 model...")
-
-        for attempt in range(MAX_LOAD_RETRIES):
-            # Check hard timeout
-            if _time.monotonic() - load_start_time >= LOAD_HARD_TIMEOUT:
-                with _model_lock:
-                    model_load_status = "error"
-                print(
-                    f"Model loading abandoned: hard timeout ({LOAD_HARD_TIMEOUT}s) exceeded"
-                )
+        try:
+            # Skip loading if already mocked (e.g. in tests)
+            if tts_model is not None:
+                print("TTS model already loaded — skipping")
                 return
-
-            try:
-                # Skip loading if already mocked (e.g. in tests)
-                with _model_lock:
-                    if tts_model is not None:
-                        print("TTS model already loaded — skipping")
-                        return
-                if TTS is None:
-                    print(
-                        "TTS library not available (torch not installed) — skipping model load"
-                    )
-                    with _model_lock:
-                        model_load_status = "error"
-                        tts_model = None
-                    return
-                os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-                loaded_model = TTS("tts_models/multilingual/xtts_v2")
-                with _model_lock:
-                    tts_model = loaded_model
-                    model_load_status = "ready"
-                print("XTTS-v2 model loaded successfully!")
-                return
-            except Exception as e:
-                with _model_lock:
-                    model_load_status = "error"
-                    tts_model = None
+            if TTS is None:
                 print(
-                    f"Error loading TTS model (attempt {attempt + 1}/{MAX_LOAD_RETRIES}): {e}"
+                    "TTS library not available (torch not installed) — skipping model load"
                 )
-                if attempt < MAX_LOAD_RETRIES - 1:
-                    delay = LOAD_RETRY_DELAYS[attempt]
-                    print(f"Retrying in {delay}s...")
-                    _time.sleep(delay)
-
-        # All retries exhausted
-        print(f"Model loading failed after {MAX_LOAD_RETRIES} attempts")
+                model_load_status = "error"
+                tts_model = None
+                return
+            os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
+            tts_model = TTS("tts_models/multilingual/xtts_v2")
+            model_load_status = "ready"
+            print("XTTS-v2 model loaded successfully!")
+        except Exception as e:
+            model_load_status = "error"
+            print(f"Error loading TTS model: {e}")
+            tts_model = None
 
     # Start model loading in background thread
-    global model_load_thread
     load_thread = threading.Thread(target=load_model, daemon=True)
-    model_load_thread = load_thread
     load_thread.start()
-
     yield
 
     print("Shutting down TTS backend...")
@@ -270,67 +225,12 @@ class HealthResponse(BaseModel):
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health(reload: Optional[str] = Query(None)):
-    """Health check endpoint - returns model load status.
-
-    Accepts ?reload=1 to trigger a model reload attempt (when status is 'error').
-    """
-    global tts_model, model_load_status, model_load_thread
-
-    if reload == "1":
-        with _model_lock:
-            if model_load_status == "error":
-                model_load_status = "loading"
-                tts_model = None
-                # Thread finished (or never existed) — fall through to spawn a new one.
-            else:
-                # An existing load thread is still running — don't spawn another.
-                # model_load_thread is None when no reload has ever been triggered,
-                # or when the previous thread has finished (status is "ready" or "error").
-                if model_load_thread is not None and model_load_thread.is_alive():
-                    return {
-                        "status": model_load_status,
-                        "model_loaded": tts_model is not None
-                        and model_load_status == "ready",
-                    }
-        # Start a new background thread to reload
-        import time as _reload_time
-
-        _reload_start = _reload_time.monotonic()
-        print("Model reload requested via ?reload=1")
-
-        def reload_model():
-            global tts_model, model_load_status
-            print("Reloading XTTS-v2 model...")
-            try:
-                if TTS is None:
-                    print(
-                        "TTS library not available (torch not installed) — skipping model load"
-                    )
-                    with _model_lock:
-                        model_load_status = "error"
-                    return
-                os.environ["COQUI_TTS_CACHE"] = MODEL_CACHE_DIR
-                loaded_model = TTS("tts_models/multilingual/xtts_v2")
-                with _model_lock:
-                    tts_model = loaded_model
-                    model_load_status = "ready"
-                print("XTTS-v2 model reloaded successfully!")
-            except Exception as e:
-                with _model_lock:
-                    model_load_status = "error"
-                    tts_model = None
-                print(f"Error reloading TTS model: {e}")
-
-        model_load_thread = threading.Thread(target=reload_model, daemon=True)
-        # Brief pause to let the thread start before responding
-        _reload_time.sleep(0.1)
-
-    with _model_lock:
-        return {
-            "status": model_load_status,
-            "model_loaded": tts_model is not None and model_load_status == "ready",
-        }
+async def health():
+    """Health check endpoint - returns model load status."""
+    return {
+        "status": model_load_status,
+        "model_loaded": tts_model is not None and model_load_status == "ready",
+    }
 
 
 @app.get("/api/voices")
@@ -342,10 +242,7 @@ async def list_voices():
 @app.post("/api/generate")
 async def generate_speech(request: SynthesisRequest):
     """Generate speech from text and return MP3 audio blob."""
-    with _model_lock:
-        model = tts_model
-        status = model_load_status
-    if model is None or status != "ready":
+    if tts_model is None or model_load_status != "ready":
         raise HTTPException(status_code=503, detail="TTS model not ready")
 
     try:
@@ -360,142 +257,76 @@ async def generate_speech(request: SynthesisRequest):
         wav_path = os.path.join(AUDIO_DIR, f"{lang_code}_{voice}_{timestamp}.wav")
         mp3_path = os.path.join(AUDIO_DIR, filename)
 
-        # Track files created for cleanup on failure (intermediate files + final output)
-        intermediate_files: list[str] = []
-        _response_delivered = False
+        # Generate WAV first (XTTS native format)
+        print(f"Generating speech: {request.text[:50]}...")
 
+        # Use the voice ID directly as the WAV filename
+        speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
+
+        if not os.path.exists(speaker_wav):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Speaker WAV file not found for voice '{voice}' (expected at '{speaker_wav}'). Add it to speaker_wavs/.",
+            )
+
+        # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
+        _validate_speaker_wav(speaker_wav)
+
+        # Generate audio with speaker reference for voice cloning
+        # Use deterministic seed if provided
+        seed = request.seed if request.seed is not None else 42
+
+        # Set PyTorch random seed for deterministic XTTS generation.
+        # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
+        # seeding must be done at the PyTorch level before inference.
         try:
-            # Generate WAV first (XTTS native format)
-            print(f"Generating speech: {request.text[:50]}...")
+            import torch
 
-            # Use the voice ID directly as the WAV filename
-            speaker_wav = os.path.join(SPEAKER_WAV_DIR, f"{voice}.wav")
+            torch.manual_seed(seed)
+        except ImportError:
+            pass  # torch not available (e.g. in tests) — skip seeding
 
-            if not os.path.exists(speaker_wav):
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Speaker WAV file not found for voice '{voice}' (expected at '{speaker_wav}'). Add it to speaker_wavs/.",
-                )
+        tts_model.tts_to_file(
+            text=request.text,
+            speaker_wav=speaker_wav,
+            language=request.language,
+            file_path=wav_path,
+            temperature=0.4,  # Low temperature for consistent, deterministic voice output
+        )
 
-            # Validate speaker WAV duration (XTTS-v2 requires >= 0.33s reference audio)
-            _validate_speaker_wav(speaker_wav)
+        if not os.path.exists(wav_path):
+            raise HTTPException(status_code=500, detail="Failed to generate audio")
 
-            # Generate audio with speaker reference for voice cloning
-            # Use deterministic seed if provided
-            seed = request.seed if request.seed is not None else 42
-
-            # Set PyTorch random seed for deterministic XTTS generation.
-            # Coqui TTS v0.22+ XTTS does not accept a `seed` kwarg directly;
-            # seeding must be done at the PyTorch level before inference.
-            try:
-                import torch
-
-                torch.manual_seed(seed)
-            except ImportError:
-                pass  # torch not available (e.g. in tests) — skip seeding
-
-            model.tts_to_file(
-                text=request.text,
-                speaker_wav=speaker_wav,
-                language=request.language,
-                file_path=wav_path,
-                temperature=0.4,  # Low temperature for consistent, deterministic voice output
+        # Convert WAV to MP3 using ffmpeg
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    wav_path,
+                    "-filter:a",
+                    f"atempo={request.speed}",
+                    "-b:a",
+                    "192k",
+                    mp3_path,
+                ],
+                check=True,
+                capture_output=True,
             )
+        except subprocess.CalledProcessError as e:
+            print(f"FFmpeg error: {e.stderr}")
+            # Fallback: just use WAV if MP3 conversion fails
+            shutil.copy2(wav_path, mp3_path)
 
-            if not os.path.exists(wav_path):
-                raise HTTPException(status_code=500, detail="Failed to generate audio")
+        # Clean up intermediate WAV file — it's 5–10× larger than the MP3
+        try:
+            os.remove(wav_path)
+        except OSError:
+            pass  # Already gone (e.g. race condition) — ignore
 
-            intermediate_files.append(wav_path)
-
-            # Convert WAV to MP3 using ffmpeg
-            try:
-                subprocess.run(
-                    [
-                        "ffmpeg",
-                        "-y",
-                        "-i",
-                        wav_path,
-                        "-filter:a",
-                        f"atempo={request.speed}",
-                        "-b:a",
-                        "192k",
-                        mp3_path,
-                    ],
-                    check=True,
-                    capture_output=True,
-                )
-            except subprocess.CalledProcessError as e:
-                # Do NOT fall back to serving WAV as MP3 — browsers' <audio>
-                # elements refuse to play PCM WAV data labeled as audio/mpeg.
-                # Fail the request so the client knows something went wrong.
-                print(f"FFmpeg error: {e.stderr}")
-                raise HTTPException(
-                    status_code=500,
-                    detail="Failed to encode audio — FFmpeg conversion error",
-                )
-
-            # Clean up intermediate WAV file — it's 5–10× larger than the MP3
-            try:
-                os.remove(wav_path)
-            except OSError:
-                pass  # Already gone (e.g. race condition) — ignore
-
-            # Write metadata sidecar for history browsing
-            meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
-            try:
-                with open(meta_path, "w") as f:
-                    json.dump(
-                        {
-                            "text": request.text,
-                            "language": request.language,
-                            "voice": voice,
-                            "speed": request.speed,
-                            "pitch": request.pitch,
-                            "seed": seed,
-                            "created_at": str(int(time.time())),
-                        },
-                        f,
-                    )
-            except OSError:
-                pass  # Non-fatal: history will still work with filename parsing
-
-            # Track final output files for cleanup on client disconnect.
-            # If the FileResponse is never delivered (e.g. client disconnects
-            # during streaming), these files become orphans — clean them up.
-            intermediate_files.append(mp3_path)
-            intermediate_files.append(meta_path)
-
-            # Return MP3 file as binary response
-            # Mark that the response was successfully delivered. The finally
-            # block will skip cleaning up MP3 and .json when this is True.
-            _response_delivered = True
-            return FileResponse(
-                path=mp3_path, media_type="audio/mpeg", filename=filename
-            )
-
-        finally:
-            # Rollback: clean up any intermediate files that weren't successfully consumed
-            for fpath in intermediate_files:
-                # Only clean up MP3 and .json if the response was never delivered
-                # (e.g. client disconnected during streaming). Successful responses
-                # should leave the final output files on disk.
-                if fpath.endswith((".mp3", ".json")) and not _response_delivered:
-                    try:
-                        if os.path.exists(fpath):
-                            os.remove(fpath)
-                            print(f"Cleaned up orphaned file: {fpath}")
-                    except OSError:
-                        pass  # Best effort cleanup
-                    continue
-                # Skip MP3 and .json on successful responses — they are the final output
-                if fpath.endswith((".mp3", ".json")):
-                    continue
-                try:
-                    if os.path.exists(fpath):
-                        os.remove(fpath)
-                        print(f"Cleaned up intermediate file: {fpath}")
-                except OSError:
-                    pass  # Best effort cleanup
+        # Return MP3 file as binary response
+        return FileResponse(path=mp3_path, media_type="audio/mpeg", filename=filename)
 
     except HTTPException:
         raise
@@ -505,12 +336,8 @@ async def generate_speech(request: SynthesisRequest):
 
 
 @app.get("/api/history")
-async def get_history(cleanup: Optional[str] = Query(None)):
-    """Get list of previously generated audio files.
-
-    Accepts ?cleanup=true to trigger cleanup of files older than 24 hours.
-    Cleanup errors are logged but don't affect the response.
-    """
+async def get_history():
+    """Get list of previously generated audio files."""
     try:
         items = []
         for filename in sorted(os.listdir(AUDIO_DIR), reverse=True):
@@ -518,30 +345,7 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                 filepath = os.path.join(AUDIO_DIR, filename)
                 stat = os.stat(filepath)
 
-                # Try to read metadata from sidecar JSON first
-                meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
-                if os.path.exists(meta_path):
-                    try:
-                        with open(meta_path) as f:
-                            meta = json.load(f)
-                        items.append(
-                            {
-                                "filename": filename,
-                                "text": meta.get("text", ""),
-                                "language": meta.get("language", "unknown"),
-                                "voice": meta.get("voice", "default"),
-                                "speed": meta.get("speed", 1.0),
-                                "pitch": meta.get("pitch", 0.0),
-                                "created_at": meta.get(
-                                    "created_at", str(int(stat.st_mtime))
-                                ),
-                            }
-                        )
-                        continue
-                    except (json.JSONDecodeError, OSError):
-                        pass  # Fall through to filename parsing
-
-                # Fallback: parse metadata from filename
+                # Parse metadata from filename if possible
                 parts = filename.split("_")
                 language = parts[0] if len(parts) > 0 else "unknown"
                 voice = parts[1] if len(parts) > 1 else "default"
@@ -549,7 +353,7 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                 items.append(
                     {
                         "filename": filename,
-                        "text": "",
+                        "text": "",  # We don't store the original text in this simple version
                         "language": language,
                         "voice": voice,
                         "speed": 1.0,
@@ -558,68 +362,7 @@ async def get_history(cleanup: Optional[str] = Query(None)):
                     }
                 )
 
-        # Trigger cleanup if requested (non-blocking, errors don't affect response)
-        if cleanup == "true":
-            now = time.time()
-            twenty_four_hours = 24 * 60 * 60
-            try:
-                for filename in os.listdir(AUDIO_DIR):
-                    if filename.endswith((".mp3", ".wav")):
-                        filepath = os.path.join(AUDIO_DIR, filename)
-                        try:
-                            stat = os.stat(filepath)
-                            if now - stat.st_mtime > twenty_four_hours:
-                                os.remove(filepath)
-                                # Also remove the sidecar JSON if it exists
-                                meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
-                                if os.path.exists(meta_path):
-                                    os.remove(meta_path)
-                                print(
-                                    f"Cleanup (history): removed old file: {filename}"
-                                )
-                        except OSError:
-                            pass
-            except Exception as e:
-                print(f"Cleanup (history) error: {e}")
-
         return items
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/cleanup")
-async def cleanup_old_files():
-    """Remove generated audio files older than 24 hours.
-
-    Cleans up both .mp3 (generated) and .wav (orphaned intermediate) files,
-    plus any associated .json metadata sidecars.
-    Errors during cleanup are logged but don't fail the endpoint.
-    """
-    now = time.time()
-    twenty_four_hours = 24 * 60 * 60  # 86400 seconds
-    removed_count = 0
-
-    try:
-        for filename in os.listdir(AUDIO_DIR):
-            if filename.endswith((".mp3", ".wav")):
-                filepath = os.path.join(AUDIO_DIR, filename)
-                try:
-                    stat = os.stat(filepath)
-                    age = now - stat.st_mtime
-                    if age > twenty_four_hours:
-                        os.remove(filepath)
-                        removed_count += 1
-                        # Also remove the sidecar JSON if it exists
-                        meta_path = os.path.join(AUDIO_DIR, f"{filename}.json")
-                        if os.path.exists(meta_path):
-                            os.remove(meta_path)
-                        print(
-                            f"Cleaned up old file: {filename} (age: {age / 3600:.1f}h)"
-                        )
-                except OSError:
-                    pass  # File was removed by another process — ignore
-    except Exception as e:
-        print(f"Error during cleanup: {e}")
-
-    return {"removed_count": removed_count}

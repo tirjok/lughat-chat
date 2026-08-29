@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import { useHealthPoll } from '../composables/useHealthPoll'
+import { useLessonProgress } from '../composables/useLessonProgress'
 
 interface Props {
   currentPath: string
 }
 
 const props = defineProps<Props>()
-const _props = () => props.currentPath
 
 interface NavItem {
   to: string
@@ -31,7 +31,19 @@ const navItems: NavItem[] = [
   }
 ]
 
-const progressWidth = computed(() => '0%')
+const { getLessonProgress } = useLessonProgress()
+
+const progressWidth = computed(() => {
+  // Only show progress on lesson routes; return '0%' elsewhere
+  if (!props.currentPath.startsWith('/dashboard/level/')) return '0%'
+  // Extract lessonId from route: /dashboard/level/{level}/{lesson}
+  const parts = props.currentPath.split('/')
+  const level = parts[3] || ''
+  const lesson = parts[4] || ''
+  const lessonId = level.toLowerCase() + '-' + lesson.padStart(2, '0')
+  const pct = getLessonProgress(lessonId)
+  return `${pct}%`
+})
 
 function isActive(item: NavItem): boolean {
   if (item.to === '/dashboard') return props.currentPath.startsWith('/dashboard')
@@ -66,7 +78,6 @@ const { status, modelLoaded } = useHealthPoll()
 
 <template>
   <header>
-    <!-- ── Desktop: compact bar ──────────────────────────────────────────── -->
     <div
       class="hidden md:flex h-14 items-center justify-between px-4 md:px-6 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md border-b border-stone-200/80 dark:border-stone-700/80"
     >
@@ -169,7 +180,6 @@ const { status, modelLoaded } = useHealthPoll()
       </div>
     </div>
 
-    <!-- ── Mobile: Floating Glass Pill ───────────────────────────────────── -->
     <div
       v-if="isMobile"
       class="md:hidden"
@@ -303,7 +313,6 @@ const { status, modelLoaded } = useHealthPoll()
       </div>
     </div>
 
-    <!-- ── Progress bar (4px, hidden on mobile) ─────────────────────────── -->
     <div
       class="hidden md:block h-1 bg-stone-100 dark:bg-stone-700"
       aria-hidden="true"

@@ -8,7 +8,6 @@ const props = defineProps<{
   duration: number
 }>()
 
-// TODO: migrated from sunrise-orange/magenta gradient (see ISSUE-014)
 const emit = defineEmits<{ (e: 'seek', ratio: number): void }>()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
