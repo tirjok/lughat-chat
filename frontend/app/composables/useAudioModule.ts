@@ -1,17 +1,17 @@
-import { ref, watch, type Ref } from 'vue'
+import { ref, watch, shallowRef, type Ref } from 'vue'
 
 export interface AudioModuleOptions {
   onPlaybackEnd?: () => void
 }
 
 export function useAudioModule(options: AudioModuleOptions = {}) {
-  const isPlaying = ref(false)
-  const isPaused = ref(false)
-  const currentTime = ref(0)
-  const duration = ref(0)
+  const isPlaying = shallowRef(false)
+  const isPaused = shallowRef(false)
+  const currentTime = shallowRef(0)
+  const duration = shallowRef(0)
   const error = ref<string | null>(null)
-  const isLoading = ref(false)
-  const audioUrl = ref<string | null>(null)
+  const isLoading = shallowRef(false)
+  const audioUrl = shallowRef<string | null>(null)
 
   // ── Internal refs ────────────────────────────────
   const blobRef = ref<Blob | null>(null)
@@ -35,10 +35,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     audioUrl.value = url
     isLoading.value = true
     error.value = null
-
-    if (audioRef.value) {
-      audioRef.value.src = url
-    }
   }
 
   async function play() {
@@ -129,8 +125,9 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   watch(audioRef, (el) => {
     if (el) {
       wireEvents()
-      if (audioUrl.value) {
-        el.src = audioUrl.value
+      const url = audioUrl.value
+      if (url) {
+        el.src = url
       }
     }
   })

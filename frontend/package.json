@@ -23,6 +23,7 @@
     "@iconify-json/simple-icons": "catalog:",
     "@unocss/nuxt": "catalog:",
     "@vueuse/core": "catalog:",
+    "@vueuse/nuxt": "catalog:",
     "nuxt": "catalog:",
     "unocss": "catalog:"
   },

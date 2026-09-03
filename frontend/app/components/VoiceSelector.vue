@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Voice } from '../composables/useVoices'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import { showToast } from '../composables/useToast'
 
 interface Props {
@@ -56,15 +57,12 @@ function previewVoice(voice: Voice) {
   showToast(`Playing 1-second preview of ${voice.name}...`, 'info')
 }
 
-function handleOutsideMousedown(e: MouseEvent) {
-  if (!isOpen.value) return
-  const target = e.target as Node
-  const insideTrigger = dropdownRef.value && dropdownRef.value.contains(target)
-  const insideMenu = menuRef.value && menuRef.value.contains(target)
-  if (!insideTrigger && !insideMenu) {
+// Click-outside detection via VueUse
+onClickOutside(dropdownRef, () => {
+  if (isOpen.value) {
     isOpen.value = false
   }
-}
+}, { ignore: [triggerRef, menuRef] })
 
 // Reactive style ref updated on scroll/resize for Teleport repositioning
 const menuStyle = ref<Record<string, string>>({})
@@ -96,13 +94,12 @@ function updateMenuPosition() {
 }
 
 onMounted(() => {
-  document.addEventListener('mousedown', handleOutsideMousedown)
   window.addEventListener('scroll', updateMenuPosition, true)
   window.addEventListener('resize', updateMenuPosition)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('mousedown', handleOutsideMousedown)
+  stop()
   window.removeEventListener('scroll', updateMenuPosition, true)
   window.removeEventListener('resize', updateMenuPosition)
 })

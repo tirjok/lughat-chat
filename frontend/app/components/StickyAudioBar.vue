@@ -105,7 +105,6 @@ const handleKeydown = (e: KeyboardEvent) => {
       break
   }
 }
-
 onMounted(() => {
   if (props.shortcutsEnabled) {
     window.addEventListener('keydown', handleKeydown)

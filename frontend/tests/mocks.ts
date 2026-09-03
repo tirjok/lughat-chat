@@ -1,6 +1,5 @@
 import { vi } from 'vitest'
 import { ref, computed, type Ref } from 'vue'
-
 // ─── Breakpoint Simulation Helper ─────────────────────────────────────
 // Sets window.innerWidth and matchMedia to simulate a specific device breakpoint.
 // Call this before mounting components or calling composables that depend on responsive state.
@@ -9,18 +8,34 @@ import { ref, computed, type Ref } from 'vue'
 export function setBreakpoint(width: number): void {
   Object.defineProperty(window, 'innerWidth', { value: width, writable: true })
   Object.defineProperty(window, 'innerHeight', { value: Math.max(600, width * 0.6), writable: true })
-  // Also update matchMedia so VueUse's useMediaQuery works in tests
+  const listeners = new Map<string, Set<EventListener>>()
+  function fireChange() {
+    for (const [_type, cbs] of listeners) {
+      for (const cb of cbs) {
+        cb({} as Event)
+      }
+    }
+  }
   Object.defineProperty(window, 'matchMedia', {
     value: (query: string) => {
       const widthMatch = query.match(/\(max-width:\s*(\d+)px\)/)
-      if (widthMatch) {
-        const breakpoint = parseInt(widthMatch[1], 10)
-        return { matches: width <= breakpoint, media: query } as MediaQueryList
-      }
-      return { matches: false, media: query } as MediaQueryList
+      const matches = widthMatch ? width <= parseInt(widthMatch[1], 10) : false
+      return {
+        matches,
+        media: query,
+        addEventListener: (type: string, cb: EventListener) => {
+          if (!listeners.has(type)) listeners.set(type, new Set())
+          listeners.get(type)!.add(cb)
+        },
+        removeEventListener: (type: string, cb: EventListener) => {
+          listeners.get(type)?.delete(cb)
+        }
+      } as MediaQueryList
     },
-    writable: true
+    writable: true,
+    configurable: true
   })
+  fireChange()
 }
 
 // ─── Audio Module Mock Factory ───────────────────────────────────────

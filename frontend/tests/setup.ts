@@ -29,7 +29,7 @@ global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob') as unknown as t
 global.URL.revokeObjectURL = vi.fn()
 
 // matchMedia mock for useScrollReveal (prefers-reduced-motion check)
-global.window.matchMedia = vi.fn(() => ({ matches: false, media: '' })) as unknown as typeof global.window.matchMedia
+global.window.matchMedia = vi.fn((query: string) => ({ matches: false, media: query, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof global.window.matchMedia
 
 // IntersectionObserver mock for useScrollReveal
 const mockIntersectionObserver = vi.fn()

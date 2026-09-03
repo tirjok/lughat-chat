@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
 
 const props = defineProps<{
   visible: boolean
@@ -12,6 +13,7 @@ const emit = defineEmits<{ (e: 'seek', ratio: number): void }>()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationFrameId: ReturnType<typeof requestAnimationFrame> | null = null
+let resizeObserverStop: (() => void) | null = null
 const numBars = 60
 interface Bar {
   targetHeight: number
@@ -127,14 +129,15 @@ function handleCanvasClick(e: MouseEvent) {
 
 onMounted(async () => {
   await ensureCanvasReady()
-  window.addEventListener('resize', resizeCanvas)
+  const { stop } = useResizeObserver(canvasRef, () => resizeCanvas())
+  resizeObserverStop = stop
   setTimeout(() => {
     drawWaveform()
   }, 100)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeCanvas)
+  resizeObserverStop?.()
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId)
   }

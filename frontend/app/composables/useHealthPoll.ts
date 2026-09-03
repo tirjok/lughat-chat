@@ -1,3 +1,6 @@
+import { ref, computed } from 'vue'
+import { useTimeoutPoll } from '@vueuse/core'
+
 export interface UseHealthPollOptions {
   baseUrl?: string
   maxRetries?: number
@@ -9,7 +12,6 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
 
   const baseUrl = options.baseUrl || ''
   const maxRetries = options.maxRetries ?? 10
-  let intervalId: ReturnType<typeof setInterval> | null = null
   let retryCount = 0
 
   async function checkHealth() {
@@ -19,10 +21,6 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
       if (!response.ok) {
         status.value = 'error'
         retryCount = maxRetries
-        if (intervalId !== null) {
-          clearInterval(intervalId)
-          intervalId = null
-        }
         return
       }
 
@@ -31,27 +29,19 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
 
       if (status.value === 'ready') {
         retryCount = maxRetries
-        if (intervalId !== null) {
-          clearInterval(intervalId)
-          intervalId = null
-        }
+        pause()
       }
     } catch {
       retryCount++
       if (retryCount >= maxRetries) {
         status.value = 'error'
-        if (intervalId !== null) {
-          clearInterval(intervalId)
-          intervalId = null
-        }
+        pause()
       }
     }
   }
 
-  onMounted(() => {
-    intervalId = setInterval(checkHealth, 2000)
-    void checkHealth()
-  })
+  const { pause, resume } = useTimeoutPoll(checkHealth, 2000)
+  resume()
 
   return {
     status,

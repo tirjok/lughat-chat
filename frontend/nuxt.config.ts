@@ -2,7 +2,8 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/test-utils/module',
-    '@unocss/nuxt'
+    '@unocss/nuxt',
+    '@vueuse/nuxt'
   ],
   devtools: {
     enabled: true
