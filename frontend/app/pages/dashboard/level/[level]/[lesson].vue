@@ -5,6 +5,7 @@ import { useTtsApi } from '~/composables/useTtsApi'
 import { getLessonById } from '~/data/curriculum'
 import { useLessonProgress } from '~/composables/useLessonProgress'
 
+import LessonActivities from '~/components/LessonActivities.vue'
 
 const lessonProgress = useLessonProgress()
 const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
@@ -15,33 +16,16 @@ const totalLines = computed(() => {
 })
 
 let completedLines = 0
-function safeRoute() {
-  try {
-    return useRoute()
-  } catch {
-    return {} as ReturnType<typeof useRoute>
-  }
-}
-function safeRouter() {
-  try {
-    return useRouter()
-  } catch {
-    return {} as ReturnType<typeof useRouter>
-  }
-}
-const route = computed(() => safeRoute())
-const router = computed(() => safeRouter())
-const levelParam = computed(() => (route.value.params?.level as string) || '')
-const lessonParam = computed(() => (route.value.params?.lesson as string) || '')
+const route = useRoute()
+const router = useRouter()
 const isMissingLevel = computed(() => {
   return (
     route.value.path.startsWith('/dashboard/level/')
     && !levelParam.value
   )
 })
-
-const currentLevel = computed(() => levelParam.value || 'A1')
 const levelRoute = computed(() => `/dashboard/level/${currentLevel.value.toLowerCase()}`)
+const currentLevel = computed(() => levelParam.value || 'A1')
 const currentLesson = computed(() => lessonParam.value || '1')
 
 const breadcrumbs = computed(() => [
@@ -51,7 +35,7 @@ const breadcrumbs = computed(() => [
 ])
 
 const sectionTabs = computed(() => {
-  const lesson = getLessonById(levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
+  const lesson = currentLessonData.value
   return lesson ? lesson.sections.map(s => s.name).filter((n): n is string => n != null) : ['Dialogue', 'Vocabulary', 'Pronouns', 'Expressions', 'Grammar', 'Activities']
 })
 const activeSection = shallowRef<string | undefined>('Dialogue')
@@ -60,11 +44,16 @@ const currentLessonData = computed(() => {
   return lesson
 })
 
-
 const expressionsSection = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return null
   return lesson.sections.find(s => s.type === 'expressions')
+})
+
+const activitySection = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return null
+  return lesson.sections.find(s => s.type === 'activity')
 })
 
 const estimatedTime = computed(() => {
@@ -134,13 +123,9 @@ const repeatedSectionIndex = shallowRef(0)
 const currentText = shallowRef<string | null>(null)
 const currentIndex = shallowRef(0)
 const repeatMode = ref<RepeatMode>('off')
-let scenePlayTimerId: ReturnType<typeof setTimeout> | null = null
 async function _handleAudioEnded(): Promise<void> {
-  // Track progress: mark current line as completed.
   const total = totalLines.value
   if (total > 0) {
-    // Track unique completed lines (use completedLines counter).
-    // We increment only if this index hasn't been counted yet.
     const newCompleted = Math.min(1, total)
     if (newCompleted > completedLines) {
       completedLines = newCompleted
@@ -183,29 +168,6 @@ async function handleTrackNext(): Promise<void> {
   }
 }
 
-async function _playScene(): Promise<void> {
-  const items = currentSectionItems.value
-  if (scenePlayTimerId) {
-    clearTimeout(scenePlayTimerId)
-    scenePlayTimerId = null
-  }
-  for (let idx = 0; idx < items.length; idx++) {
-    const item = items[idx]
-    if (item?.audioUrl) {
-      scenePlayTimerId = setTimeout(
-        async () => {
-          const nextItem = currentSectionItems.value[idx + 1]
-          if (nextItem?.arabic) {
-            await _playText(nextItem.arabic)
-          }
-        },
-        800
-      )
-      break
-    }
-  }
-}
-
 async function handleSpeedChange(_speed: number): Promise<void> {
   const items = currentSectionItems.value
   const idx = currentIndex.value
@@ -219,26 +181,16 @@ function handleRepeatChange(mode: RepeatMode): void {
   repeatMode.value = mode
 }
 
-function _clearSceneTimer(): void {
-  if (scenePlayTimerId) {
-    clearTimeout(scenePlayTimerId)
-    scenePlayTimerId = null
+onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
+  if (isMissingLevel.value) {
+    router.value.push('/dashboard')
+    next(false)
+    return
   }
-}
-
-if (typeof onBeforeRouteLeave === 'function') {
-  onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
-    if (isMissingLevel.value) {
-      router.value.push('/dashboard')
-      next(false)
-      return
-    }
-    repeatedSectionIndex.value = currentIndex.value
-    currentText.value = currentSectionItems.value[repeatedSectionIndex.value]?.arabic || null
-    _clearSceneTimer()
-    next()
-  })
-}
+  repeatedSectionIndex.value = currentIndex.value
+  currentText.value = currentSectionItems.value[repeatedSectionIndex.value]?.arabic || null
+  next()
+})
 </script>
 
 <template>
@@ -343,6 +295,12 @@ if (typeof onBeforeRouteLeave === 'function') {
           <LessonExpressions :section="expressionsSection" />
         </div>
         <div
+          v-if="activeSection === 'Activities' && activitySection"
+          :key="`activities-${currentLesson}`"
+        >
+          <LessonActivities :section="activitySection" />
+        </div>
+        <div
           v-if="currentSectionItems.length > 0"
           class="space-y-4"
         >
@@ -398,7 +356,7 @@ if (typeof onBeforeRouteLeave === 'function') {
       :current-text="currentText"
       :repeat-mode="repeatMode"
       :repeated-section-index="repeatedSectionIndex"
-      @close="audioModule.dispose(); audioModule.isPlaying.value = false; audioModule.audioUrl.value = null; _clearSceneTimer()"
+      @close="audioModule.dispose(); audioModule.isPlaying.value = false; audioModule.audioUrl.value = null"
       @toggle="audioModule.toggle()"
       @seek="(ratio: number) => audioModule.seek(ratio)"
       @speed-change="(speed: number) => handleSpeedChange(speed)"
