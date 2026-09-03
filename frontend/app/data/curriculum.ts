@@ -1,12 +1,4 @@
-// ─── Curriculum Data Source ──────────────────────────────────────────────
-// Centralized curriculum data shared across Dashboard, Level Index, and
-// Lesson pages. This file is the single source of truth for CEFR levels,
-// lessons, and section content.
-//
-// When backend endpoints exist (GET /api/levels, GET /api/lessons), this
-// file can be replaced with a composable that fetches from the API.
 
-// ─── Level definitions ──────────────────────────────────────────────────
 
 export interface CurriculumLevel {
   code: string
@@ -180,7 +172,6 @@ export type ActivityType
     | 'translate-to-arabic'
     | 'introduce-characters'
 
-// ─── Curricula ──────────────────────────────────────────────────────────
 
 export const curriculum: CurriculumLevel[] = [
   {

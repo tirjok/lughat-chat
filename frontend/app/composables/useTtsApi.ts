@@ -22,12 +22,10 @@ export interface UseTtsApiOptions {
   baseUrl?: string
 }
 
-// Composable for TTS API calls
 export const useTtsApi = (options: UseTtsApiOptions = {}) => {
   // All API calls are relative - Nginx proxies them to backend
   const baseUrl = options.baseUrl || ''
 
-  // Synthesize text to speech
   async function synthesize(request: SynthesisRequest): Promise<Blob> {
     let response
     try {
@@ -77,7 +75,6 @@ export const useTtsApi = (options: UseTtsApiOptions = {}) => {
     return blob
   }
 
-  // Health check - returns model load status
   async function healthCheck(): Promise<HealthResponse> {
     try {
       const response = await fetch('/health')

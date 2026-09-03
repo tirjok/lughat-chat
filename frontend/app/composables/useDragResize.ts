@@ -16,7 +16,6 @@ export function useDragResize(options: UseDragResizeOptions = {}) {
   const canvasRatio = shallowRef(initialRatio)
   const isDragging = shallowRef(false)
 
-  // Non-reactive drag state — only accessed during drag lifecycle.
   let startY = 0
   let startRatio = 0
 

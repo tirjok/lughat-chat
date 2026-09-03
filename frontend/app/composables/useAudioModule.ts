@@ -5,7 +5,6 @@ export interface AudioModuleOptions {
 }
 
 export function useAudioModule(options: AudioModuleOptions = {}) {
-  // ── State (exposed to callers) ────────────────────
   const isPlaying = ref(false)
   const isPaused = ref(false)
   const currentTime = ref(0)
@@ -20,7 +19,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   let downloadUrlRef: string | null = null
   const audioRef = ref<HTMLAudioElement | null>(null) as Ref<HTMLAudioElement | null>
 
-  // ── Internal: revoke previous object URL ─────────
   function revokePrevious() {
     if (currentObjectUrl) {
       URL.revokeObjectURL(currentObjectUrl)
@@ -29,7 +27,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     blobRef.value = null
   }
 
-  // ── Load: blob → objectURL → wire element ────────
   function load(blob: Blob) {
     revokePrevious()
     blobRef.value = blob
@@ -44,7 +41,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Play (nextTick handled internally) ───────────
   async function play() {
     if (!audioRef.value) return
     try {
@@ -55,7 +51,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Pause ────────────────────────────────────────
   function pause() {
     if (audioRef.value) {
       audioRef.value.pause()
@@ -63,7 +58,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Toggle play/pause ────────────────────────────
   async function toggle() {
     if (!audioRef.value) return
     if (isPlaying.value && !isPaused.value) {
@@ -73,13 +67,11 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Seek ─────────────────────────────────────────
   function seek(ratio: number) {
     if (!audioRef.value || !duration.value) return
     audioRef.value.currentTime = ratio * duration.value
   }
 
-  // ── Download ─────────────────────────────────────
   function download(filename?: string) {
     if (!blobRef.value) return
     const url = URL.createObjectURL(blobRef.value)
@@ -93,7 +85,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
-  // ── Wire event listeners ─────────────────────────
   function wireEvents() {
     const audio = audioRef.value
     if (!audio) return
@@ -135,7 +126,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     })
   }
 
-  // ── Watch for audio element attachment ───────────
   watch(audioRef, (el) => {
     if (el) {
       wireEvents()
@@ -145,7 +135,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   })
 
-  // ── Dispose: safety net (caller may or may not use)
   function dispose() {
     revokePrevious()
     if (downloadUrlRef) {
@@ -157,7 +146,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     }
   }
 
-  // ── Expose ───────────────────────────────────────
   return {
     // State
     isPlaying, isPaused, currentTime, duration,

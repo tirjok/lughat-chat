@@ -59,7 +59,5 @@ export const useHealthPoll = (options: UseHealthPollOptions = {}) => {
   }
 }
 
-export function resetHealthPoll() {
-  // Per-instance state is garbage-collected when the composable instance is discarded.
-  // No module-level shared state remains to reset.
-}
+
+export function resetHealthPoll() {}

@@ -60,6 +60,7 @@ const currentLessonData = computed(() => {
   return lesson
 })
 
+
 const expressionsSection = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return null

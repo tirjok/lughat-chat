@@ -18,7 +18,6 @@ _torchcodec_env = "0"
 for _env_key in ["TORCHAUDIO_USE_TORCHCODEC", "TORCHCODEC_ENABLED"]:
     _os.environ.setdefault(_env_key, _torchcodec_env)
 
-# Disable torchcodec in torchaudio so it doesn't try to load libtorchcodec
 # This is the cleanest fix for CPU-only servers — torchaudio falls back to soundfile
 
 # Minimum reference audio duration for XTTS-v2 voice cloning (seconds)
@@ -90,19 +89,17 @@ def _ensure_torch():
     _torch_loaded = True
 
 
-# Ensure torch is loaded and patched (lazy import for test compatibility)
-# Silently skip if torch isn't installed (e.g., in CI test environments).
 try:
     _ensure_torch()
 except ImportError:
     pass  # torch not available — acceptable in test environments
 
-# Coqui TTS imports (lazy — skip if torch not available, e.g. in CI tests)
 try:
     from TTS.api import TTS
 except ImportError:
     TTS = None  # type: ignore[misc, assignment]
 # Configuration
+
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
 MODEL_CACHE_DIR = os.environ.get("TTS_MODEL_CACHE", "/app/.cache/tts")
 SPEAKER_WAV_DIR = os.path.join(
