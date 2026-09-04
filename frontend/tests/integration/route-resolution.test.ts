@@ -11,13 +11,28 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
-import { shallowMount } from '@vue/test-utils'
 import LessonPage from '~/pages/dashboard/level/[level]/[lesson].vue'
 import LessonHero from '~/components/lesson/LessonHero.vue'
 import { createMockUseAudioModule } from '~~/tests/mocks'
 import { getLevelByCode, getLessonById, curriculum, getLessonById as realGetLessonById } from '~/data/curriculum'
 
-// ─── Mocks ──────────────────────────────────────────────────────────────
+vi.mock('vue-router', () => ({
+  onBeforeRouteLeave: vi.fn(),
+  useRoute: () => ({
+    path: '/dashboard/level/a1/1',
+    fullPath: '/dashboard/level/a1/1',
+    params: { level: 'a1', lesson: '1' },
+    query: {},
+    hash: '',
+    name: undefined,
+    matched: [],
+    meta: {}
+  }),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn()
+  })
+}))
 
 vi.mock('~/composables/common/useAudioModule', () => ({
   useAudioModule: vi.fn(() => createMockUseAudioModule())

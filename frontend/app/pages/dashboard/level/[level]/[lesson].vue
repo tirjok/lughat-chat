@@ -1,10 +1,8 @@
-<script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onUnmounted, computed, shallowRef } from 'vue'
 import { useAudioModule } from '~/composables/common/useAudioModule'
 import { useTtsApi } from '~/composables/common/useTtsApi'
 import { getLessonById } from '~/data/curriculum'
 import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
-
 import LessonActivities from '~/components/lesson/LessonActivities.vue'
 
 const lessonProgress = useLessonProgress()
@@ -97,25 +95,55 @@ watch(audioEl, (el) => {
   audioModule.audioRef.value = el
 })
 
+// -- Module-scope abort state for cleanup -----------------------------------
+let fetchController: AbortController | null = null
+let fetchTimeoutId: ReturnType<typeof setTimeout> | null = null
+let cleanedUp = false
+
+// -- Cleanup: aborts in-flight fetch, pauses/disposes audio, hides bar,
+//    clears progress — all idempotent.
+function abortAndCleanup(): void {
+  if (cleanedUp) return
+  cleanedUp = true
+
+  // 1. Abort in-flight TTS fetch
+  fetchController?.abort()
+  clearTimeout(fetchTimeoutId ?? undefined)
+  fetchController = null
+  fetchTimeoutId = null
+
+  // 2. Stop playback
+  audioModule.pause()
+  audioModule.dispose()
+  audioModule.isPlaying.value = false
+
+  lessonProgress.clearLessonProgress(lessonId.value)
+  // 4. Reset the AbortController for the next _playText call.
+  fetchController = null
+  fetchTimeoutId = null
+}
+
 async function _playText(text: string): Promise<void> {
   if (!text || !text.trim()) return
   await audioModule.dispose()
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 30_000)
+  // Reuse module-scope controller so abortAndCleanup can abort it.
+  fetchController = new AbortController()
+  fetchTimeoutId = setTimeout(() => fetchController!.abort(), 30_000)
   try {
     const blob = await ttsApi.synthesize({
       text: text.trim(),
       speaker: '',
-      speed: 1.0,
-      signal: controller.signal
+      signal: fetchController!.signal
     })
-    clearTimeout(timeoutId)
+    clearTimeout(fetchTimeoutId ?? undefined)
+    fetchTimeoutId = null
     audioModule.load(blob)
+    audioModule.isPlaying.value = true
     await audioModule.play()
   } catch (err: unknown) {
-    clearTimeout(timeoutId)
+    clearTimeout(fetchTimeoutId ?? undefined)
+    fetchTimeoutId = null
     if (err instanceof DOMException && err.name === 'AbortError') return
-    audioModule.error.value = err instanceof Error ? err.message : 'Unknown error'
     console.error('TTS synthesis failed:', err)
   }
 }
@@ -162,7 +190,6 @@ async function handleTrackPrev(): Promise<void> {
 }
 
 async function handleTrackNext(): Promise<void> {
-  const items = currentSectionItems.value
   const idx = currentIndex.value
   const nextItem = items[idx + 1]
   if (nextItem?.arabic) {
@@ -184,6 +211,7 @@ function handleRepeatChange(mode: RepeatMode): void {
 }
 
 onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
+  abortAndCleanup()
   if (isMissingLevel.value) {
     router.push('/dashboard')
     next(false)
@@ -192,6 +220,10 @@ onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) 
   repeatedSectionIndex.value = currentIndex.value
   currentText.value = currentSectionItems.value[repeatedSectionIndex.value]?.arabic || null
   next()
+})
+
+onUnmounted(() => {
+  abortAndCleanup()
 })
 </script>
 

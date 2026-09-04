@@ -30,7 +30,7 @@ vi.mock('vue-router', () => ({
 import LessonPage from '~/pages/dashboard/level/[level]/[lesson].vue'
 
 // Captured mock instances — lets tests assert on the audio module's and TTS
-const lessonPagePath = resolve(__dirname, '../../app/pages/dashboard/level/[lesson].vue')
+const lessonPagePath = resolve(__dirname, '../../app/pages/dashboard/level/[level]/[lesson].vue')
 const mockAudio = createMockUseAudioModule()
 
 // Mock the TTS-facing composables (external API + audio plumbing).

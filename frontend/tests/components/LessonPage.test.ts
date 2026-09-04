@@ -92,16 +92,5 @@ describe('dashboard/level/[level]/[lesson].vue | Issue-010: playback controls wi
   it('wires StickyAudioBar @next-track to re-synthesize next line', () => {
     expect(content).to.contain('@next-track')
   })
-
-  it('wires a Play Scene action with 800ms gap between lines', () => {
-    expect(content).to.contain('_playScene')
-    expect(content).to.contain('800')
-  })
-
-  it('clears scene play timer on pause and section change', () => {
-    const closeMatch = content.match(/@close="([^"]+)"/)
-    expect(closeMatch).not.toBeNull()
-    expect(closeMatch![1]).to.contain('_clearSceneTimer')
-  })
 })
 

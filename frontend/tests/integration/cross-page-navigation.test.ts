@@ -15,7 +15,6 @@
 // behavior at the seams (GlobalNavbar highlighting, page rendering,
 // health poll non-blocking behavior).
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { shallowMount, mount } from '@vue/test-utils'
 import Dashboard from '~/pages/dashboard/index.vue'
@@ -44,7 +43,23 @@ vi.mock('~/composables/common/useTtsApi', () => ({
 vi.mock('~/composables/studio/useVoices', () => ({
   useVoices: vi.fn(() => createMockUseVoices())
 }))
-
+vi.mock('vue-router', () => ({
+  onBeforeRouteLeave: vi.fn(),
+  useRoute: () => ({
+    path: '/dashboard/level/a1/1',
+    fullPath: '/dashboard/level/a1/1',
+    params: { level: 'a1', lesson: '1' },
+    query: {},
+    hash: '',
+    name: undefined,
+    matched: [],
+    meta: {}
+  }),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn()
+  })
+}))
 vi.mock('~/composables/studio/useHealthPoll', async () => {
   const actual = await vi.importActual('~/composables/studio/useHealthPoll')
   return {

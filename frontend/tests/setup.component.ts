@@ -58,6 +58,7 @@ if (typeof (globalThis as unknown as Record<string, unknown>).IntersectionObserv
   }
 })
 // onBeforeRouteLeave is a Nuxt auto-import (not from 'vue'). No-op in tests.
+;(globalThis as Record<string, unknown>).onBeforeRouteLeave = vi.fn()
 ;(globalThis as Record<string, unknown>).useRoute = () => ({
   params: { level: 'a1', lesson: '1' },
   path: '/dashboard/level/a1/1',
