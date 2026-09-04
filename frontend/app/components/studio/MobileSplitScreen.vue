@@ -1,14 +1,14 @@
 <script setup lang="ts">
 // MobileSplitScreen: Mobile split-screen layout with draggable divider.
 import { computed, useTemplateRef, watch } from 'vue'
-import { useDragResize } from '../composables/useDragResize'
-import { formatTime } from '../utils/formatTime'
+import { useDragResize } from '../../composables/studio/useDragResize'
+import { formatTime } from '../../utils/formatTime'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
 import SpeedSlider from './SpeedSlider.vue'
 import GenerateButton from './GenerateButton.vue'
 import WaveformCanvas from './WaveformCanvas.vue'
-import type { Voice } from '../composables/useVoices'
+import type { Voice } from '../../composables/studio/useVoices'
 
 interface Props {
   textInput: string

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
-import StickyAudioBar from '~/components/StickyAudioBar.vue'
+import StickyAudioBar from '~/components/common/StickyAudioBar.vue'
 
 const lessonPagePath = resolve(__dirname, '../../app/pages/dashboard/level/[level]/[lesson].vue')
 

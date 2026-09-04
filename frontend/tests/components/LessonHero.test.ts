@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 
-import LessonHero from '~/components/LessonHero.vue'
+import LessonHero from '~/components/lesson/LessonHero.vue'
 
 // Suppress Vue warnings about unresolved components in component tests.
 const originalWarn = console.warn

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import GenerateButton from '~/components/GenerateButton.vue'
+import GenerateButton from '~/components/studio/GenerateButton.vue'
 
 describe('GenerateButton', () => {
   it('applies is-disabled class when disabled prop is true', () => {

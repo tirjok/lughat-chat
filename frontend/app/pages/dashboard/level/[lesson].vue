@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { getLessonById } from '~/data/curriculum'
 import { onUnmounted, ref, watch, computed } from 'vue'
-import { useLessonProgress } from '~/composables/useLessonProgress'
-import { useLessonOrchestrator } from '~/composables/useLessonOrchestrator'
+import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
+import { useLessonOrchestrator } from '~/composables/lesson/useLessonOrchestrator'
 
-import LessonPronouns from '~/components/LessonPronouns.vue'
-import LessonVocabulary from '~/components/LessonVocabulary.vue'
+import LessonPronouns from '~/components/lesson/LessonPronouns.vue'
+import LessonVocabulary from '~/components/lesson/LessonVocabulary.vue'
 
 const lessonProgress = useLessonProgress()
 const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))

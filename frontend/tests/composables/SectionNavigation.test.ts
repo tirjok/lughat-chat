@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { useLessonOrchestrator } from '~/composables/useLessonOrchestrator'
+import { useLessonOrchestrator } from '~/composables/lesson/useLessonOrchestrator'
 
 describe('useLessonOrchestrator | Issue-014', () => {
   describe('default activeSection value', () => {

@@ -46,10 +46,10 @@ const mockAudio = createMockUseAudioModule()
 let apiMock = createMockUseTtsApi()
 
 // Mock the TTS-facing composables (external API + audio plumbing).
-vi.mock('~/composables/useAudioModule', () => ({
+vi.mock('~/composables/common/useAudioModule', () => ({
   useAudioModule: () => mockAudio
 }))
-vi.mock('~/composables/useTtsApi', () => ({
+vi.mock('~/composables/common/useTtsApi', () => ({
   useTtsApi: () => (apiMock = createMockUseTtsApi())
 }))
 

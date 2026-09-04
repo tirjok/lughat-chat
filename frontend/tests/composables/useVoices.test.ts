@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useVoices } from '~/composables/useVoices'
+import { useVoices } from '~/composables/studio/useVoices'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
 const testMountedCallbacks: (() => void)[] = []

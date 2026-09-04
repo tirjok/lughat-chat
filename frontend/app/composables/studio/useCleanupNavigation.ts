@@ -1,5 +1,5 @@
 import { shallowRef, type Ref } from 'vue'
-import { showToast } from './useToast'
+import { showToast } from '../common/useToast'
 
 export function useCleanupNavigation(audioModule: { dispose: () => void }) {
   const dialogVisible: Ref<boolean> = shallowRef(false)

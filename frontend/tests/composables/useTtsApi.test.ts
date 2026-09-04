@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useTtsApi } from '~/composables/useTtsApi'
+import { useTtsApi } from '~/composables/common/useTtsApi'
 
 const audioBlob = new Blob(['dummy'], { type: 'audio/mpeg' })
 

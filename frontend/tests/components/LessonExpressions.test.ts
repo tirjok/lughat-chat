@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import LessonExpressions from '~/components/LessonExpressions.vue'
+import LessonExpressions from '~/components/lesson/LessonExpressions.vue'
 import type { SectionDefinition } from '~/data/curriculum'
 
 function makeExpressionSection(): SectionDefinition {

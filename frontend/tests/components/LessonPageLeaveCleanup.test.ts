@@ -34,10 +34,10 @@ const lessonPagePath = resolve(__dirname, '../../app/pages/dashboard/level/[less
 const mockAudio = createMockUseAudioModule()
 
 // Mock the TTS-facing composables (external API + audio plumbing).
-vi.mock('~/composables/useAudioModule', () => ({
+vi.mock('~/composables/common/useAudioModule', () => ({
   useAudioModule: () => mockAudio
 }))
-vi.mock('~/composables/useTtsApi', () => ({
+vi.mock('~/composables/common/useTtsApi', () => ({
   useTtsApi: () => createMockUseTtsApi()
 }))
 

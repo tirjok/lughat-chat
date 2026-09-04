@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useLessonProgress, resetLessonProgress } from '~/composables/useLessonProgress'
+import { useLessonProgress, resetLessonProgress } from '~/composables/lesson/useLessonProgress'
 
 describe('useLessonProgress', () => {
   beforeEach(() => {

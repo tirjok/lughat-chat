@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import LessonDialogue from '~/components/LessonDialogue.vue'
+import LessonDialogue from '~/components/lesson/LessonDialogue.vue'
 import type { SectionDefinition } from '~/data/curriculum'
 
 const DIALOGUE_SECTION: SectionDefinition = {

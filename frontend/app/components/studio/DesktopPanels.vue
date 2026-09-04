@@ -1,13 +1,13 @@
 <script setup lang="ts">
 // DesktopPanels: Desktop side-by-side layout.
 import { computed, useTemplateRef, watch } from 'vue'
-import { useScrollReveal } from '../composables/useScrollReveal'
+import { useScrollReveal } from '../../composables/common/useScrollReveal'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
 import SpeedSlider from './SpeedSlider.vue'
 import GenerateButton from './GenerateButton.vue'
-import StickyAudioBar from './StickyAudioBar.vue'
-import type { Voice } from '../composables/useVoices'
+import StickyAudioBar from '../common/StickyAudioBar.vue'
+import type { Voice } from '../../composables/studio/useVoices'
 
 interface Props {
   textInput: string

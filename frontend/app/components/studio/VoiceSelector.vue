@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Voice } from '../composables/useVoices'
+import type { Voice } from '../../composables/studio/useVoices'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
-import { showToast } from '../composables/useToast'
+import { showToast } from '../../composables/common/useToast'
 
 interface Props {
   voices: Voice[]

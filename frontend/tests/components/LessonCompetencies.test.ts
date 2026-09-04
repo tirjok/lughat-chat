@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
-import LessonCompetencies from '~/components/LessonCompetencies.vue'
+import LessonCompetencies from '~/components/lesson/LessonCompetencies.vue'
 
 const COMPETENCIES = [
   'Can read fluently short paragraphs with harakat',

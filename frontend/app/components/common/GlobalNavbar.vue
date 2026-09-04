@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
-import { useHealthPoll } from '../composables/useHealthPoll'
-import { useLessonProgress } from '../composables/useLessonProgress'
+import { useHealthPoll } from '../../composables/studio/useHealthPoll'
+import { useLessonProgress } from '../../composables/lesson/useLessonProgress'
 
 interface Props {
   currentPath: string

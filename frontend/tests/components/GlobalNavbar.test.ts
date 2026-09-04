@@ -1,4 +1,4 @@
-import GlobalNavbar from '~/components/GlobalNavbar.vue'
+import GlobalNavbar from '~/components/common/GlobalNavbar.vue'
 import { nextTick } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 
@@ -19,13 +19,13 @@ function mountNavbar(path: string) {
 }
 const mockHealthStatus: Ref<'loading' | 'ready' | 'error'> = ref('loading' as const)
 
-vi.mock('~/composables/useHealthPoll', () => ({
+vi.mock('~/composables/studio/useHealthPoll', () => ({
   useHealthPoll: () => ({
     status: mockHealthStatus,
     modelLoaded: computed(() => mockHealthStatus.value === 'ready')
   })
 }))
-vi.mock('~/composables/useLessonProgress', () => ({
+vi.mock('~/composables/lesson/useLessonProgress', () => ({
   useLessonProgress: () => mockProgressApi
 }))
 const mockProgressData: Record<string, number> = {}

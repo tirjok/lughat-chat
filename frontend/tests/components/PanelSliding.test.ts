@@ -5,15 +5,15 @@ import Index from '~/pages/index.vue'
 import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation } from '~~/tests/mocks'
 
 // Mock composables so Index.vue can access them without Nuxt auto-imports.
-vi.mock('~/composables/useAudioModule', () => ({
+vi.mock('~/composables/common/useAudioModule', () => ({
   useAudioModule: vi.fn(() => createMockUseAudioModule())
 }))
 
-vi.mock('~/composables/useTtsApi', () => ({
+vi.mock('~/composables/common/useTtsApi', () => ({
   useTtsApi: vi.fn(() => createMockUseTtsApi())
 }))
 
-vi.mock('~/composables/useVoices', () => ({
+vi.mock('~/composables/studio/useVoices', () => ({
   useVoices: vi.fn(() => ({
     voices: ref([
       { id: 'aisha', name: 'Aisha - Conversational', dialect: 'Egyptian Arabic [AR-EG]', tag: 'AR-EG', icon: 'waveform', speaker_wav: 'female.wav' },
@@ -23,26 +23,26 @@ vi.mock('~/composables/useVoices', () => ({
   }))
 }))
 
-vi.mock('~/composables/useHealthPoll', () => ({
+vi.mock('~/composables/studio/useHealthPoll', () => ({
   useHealthPoll: () => createMockUseHealthPoll()
 }))
 
-vi.mock('~/composables/useInputValidation', () => ({
+vi.mock('~/composables/studio/useInputValidation', () => ({
   useInputValidation: () => createMockUseInputValidation()
 }))
 
-vi.mock('~/composables/usePanelToggle', () => ({
+vi.mock('~/composables/studio/usePanelToggle', () => ({
   usePanelToggle: () => ({ activePanel: ref('desktop') })
 }))
 
-vi.mock('~/composables/useScrollReveal', () => ({
+vi.mock('~/composables/common/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
     revealOnScroll: vi.fn(),
     isRevealed: ref(true)
   }))
 }))
 
-vi.mock('~/composables/useToast', () => ({
+vi.mock('~/composables/common/useToast', () => ({
   useToast: () => [],
   showToast: vi.fn()
 }))

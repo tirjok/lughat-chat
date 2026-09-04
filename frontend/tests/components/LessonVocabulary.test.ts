@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import LessonVocabulary from '~/components/LessonVocabulary.vue'
+import LessonVocabulary from '~/components/lesson/LessonVocabulary.vue'
 import type { SectionDefinition } from '~/data/curriculum'
 
 function makeVocabSection(): SectionDefinition {

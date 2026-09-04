@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useAudioModule } from '~/composables/useAudioModule'
-import { useTtsApi } from '~/composables/useTtsApi'
+import { useAudioModule } from '~/composables/common/useAudioModule'
+import { useTtsApi } from '~/composables/common/useTtsApi'
 import { getLessonById } from '~/data/curriculum'
-import { useLessonProgress } from '~/composables/useLessonProgress'
+import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
 
-import LessonActivities from '~/components/LessonActivities.vue'
+import LessonActivities from '~/components/lesson/LessonActivities.vue'
 
 const lessonProgress = useLessonProgress()
 const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
@@ -18,9 +18,11 @@ const totalLines = computed(() => {
 let completedLines = 0
 const route = useRoute()
 const router = useRouter()
+const levelParam = computed(() => (route.params.level as string) || '')
+const lessonParam = computed(() => (route.params.lesson as string) || '')
 const isMissingLevel = computed(() => {
   return (
-    route.value.path.startsWith('/dashboard/level/')
+    route.path.startsWith('/dashboard/level/')
     && !levelParam.value
   )
 })
@@ -183,7 +185,7 @@ function handleRepeatChange(mode: RepeatMode): void {
 
 onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
   if (isMissingLevel.value) {
-    router.value.push('/dashboard')
+    router.push('/dashboard')
     next(false)
     return
   }

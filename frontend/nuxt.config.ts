@@ -5,6 +5,22 @@ export default defineNuxtConfig({
     '@unocss/nuxt',
     '@vueuse/nuxt'
   ],
+
+  // Domain-grouped components. pathPrefix:false keeps names flat
+  // (VoiceSelector, not StudioVoiceSelector) so nested dirs don't rename
+  // auto-imported components - zero template churn.
+  components: [
+    { path: '~/components', pathPrefix: false }
+  ],
+  // Explicit composable dirs (elk pattern) so domain subdirs auto-import.
+  imports: {
+    dirs: [
+      '~/composables',
+      '~/composables/studio',
+      '~/composables/lesson',
+      '~/composables/common'
+    ]
+  },
   devtools: {
     enabled: true
   },
@@ -33,7 +49,6 @@ export default defineNuxtConfig({
     '/dashboard': { prerender: false },
     '/dashboard/level/**': { prerender: false }
   },
-
   compatibilityDate: '2025-01-15',
 
   nitro: {

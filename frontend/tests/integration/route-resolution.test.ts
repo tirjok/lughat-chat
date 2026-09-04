@@ -13,37 +13,37 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import LessonPage from '~/pages/dashboard/level/[level]/[lesson].vue'
-import LessonHero from '~/components/LessonHero.vue'
+import LessonHero from '~/components/lesson/LessonHero.vue'
 import { createMockUseAudioModule } from '~~/tests/mocks'
 import { getLevelByCode, getLessonById, curriculum, getLessonById as realGetLessonById } from '~/data/curriculum'
 
 // ─── Mocks ──────────────────────────────────────────────────────────────
 
-vi.mock('~/composables/useAudioModule', () => ({
+vi.mock('~/composables/common/useAudioModule', () => ({
   useAudioModule: vi.fn(() => createMockUseAudioModule())
 }))
 
-vi.mock('~/composables/useTtsApi', () => ({
+vi.mock('~/composables/common/useTtsApi', () => ({
   useTtsApi: vi.fn(() => ({
     synthesize: vi.fn(() => new Blob(['fake-mp3'], { type: 'audio/mpeg' }))
   }))
 }))
 
-vi.mock('~/composables/useVoices', () => ({
+vi.mock('~/composables/studio/useVoices', () => ({
   useVoices: vi.fn(() => ({
     voices: vi.fn(() => []),
     defaultSpeaker: ''
   }))
 }))
 
-vi.mock('~/composables/useLessonProgress', () => ({
+vi.mock('~/composables/lesson/useLessonProgress', () => ({
   useLessonProgress: vi.fn(() => ({
     setLessonProgress: vi.fn(),
     clearLessonProgress: vi.fn()
   }))
 }))
 
-vi.mock('~/composables/useLessonOrchestrator', () => ({
+vi.mock('~/composables/lesson/useLessonOrchestrator', () => ({
   useLessonOrchestrator: vi.fn(() => ({
     activeSection: ref('Dialogue'),
     navigateToSection: vi.fn(),
@@ -51,13 +51,13 @@ vi.mock('~/composables/useLessonOrchestrator', () => ({
   }))
 }))
 
-vi.mock('~/composables/useHealthPoll', () => ({
+vi.mock('~/composables/studio/useHealthPoll', () => ({
   useHealthPoll: vi.fn(() => ({
     status: ref('ready')
   }))
 }))
 
-vi.mock('~/composables/useScrollReveal', () => ({
+vi.mock('~/composables/common/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
     observe: vi.fn(),
     disconnect: vi.fn(),
@@ -66,17 +66,17 @@ vi.mock('~/composables/useScrollReveal', () => ({
   }))
 }))
 
-vi.mock('~/composables/useCleanupNavigation', () => ({
+vi.mock('~/composables/studio/useCleanupNavigation', () => ({
   useCleanupNavigation: vi.fn(),
   resetCleanupNavigation: vi.fn()
 }))
 
-vi.mock('~/composables/useToast', () => ({
+vi.mock('~/composables/common/useToast', () => ({
   useToast: vi.fn(() => []),
   showToast: vi.fn()
 }))
 
-vi.mock('~/composables/usePanelToggle', () => ({
+vi.mock('~/composables/studio/usePanelToggle', () => ({
   usePanelToggle: vi.fn(() => ({
     activePanel: ref('desktop')
   }))

@@ -2,16 +2,16 @@
 // Index: Thin composition surface for the main TTS page.
 import { computed, nextTick, onUnmounted, shallowRef } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import { usePanelToggle } from '../composables/usePanelToggle'
-import { useAudioModule } from '../composables/useAudioModule'
-import { useTtsApi } from '../composables/useTtsApi'
-import { useHealthPoll } from '../composables/useHealthPoll'
-import { useVoices } from '../composables/useVoices'
-import { useInputValidation } from '../composables/useInputValidation'
-import { showToast } from '../composables/useToast'
-import MobileSplitScreen from '../components/MobileSplitScreen.vue'
-import DesktopPanels from '../components/DesktopPanels.vue'
-import { useCleanupNavigation } from '../composables/useCleanupNavigation'
+import { usePanelToggle } from '../composables/studio/usePanelToggle'
+import { useAudioModule } from '../composables/common/useAudioModule'
+import { useTtsApi } from '../composables/common/useTtsApi'
+import { useHealthPoll } from '../composables/studio/useHealthPoll'
+import { useVoices } from '../composables/studio/useVoices'
+import { useInputValidation } from '../composables/studio/useInputValidation'
+import { showToast } from '../composables/common/useToast'
+import MobileSplitScreen from '../components/studio/MobileSplitScreen.vue'
+import DesktopPanels from '../components/studio/DesktopPanels.vue'
+import { useCleanupNavigation } from '../composables/studio/useCleanupNavigation'
 
 const { activePanel } = usePanelToggle()
 

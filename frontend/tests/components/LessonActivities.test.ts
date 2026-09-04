@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import LessonActivities from '~/components/LessonActivities.vue'
+import LessonActivities from '~/components/lesson/LessonActivities.vue'
 import type { SectionDefinition } from '~/data/curriculum'
 
 function makeActivitySection(): SectionDefinition {
