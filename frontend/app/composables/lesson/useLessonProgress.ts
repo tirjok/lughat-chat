@@ -1,14 +1,16 @@
+import { shallowRef } from 'vue'
+
 interface StoredProgress {
   completedLines: number
   totalLines: number
   pct: number
 }
 
-const sharedProgress: Record<string, StoredProgress> = {}
+const sharedProgress = shallowRef<Record<string, StoredProgress>>({})
 
 export const useLessonProgress = () => {
   function _getLessonProgress(lessonId: string): number {
-    const data = sharedProgress[lessonId]
+    const data = sharedProgress.value?.[lessonId]
     if (!data) return 0
     if (data.totalLines > 0) return Math.round((data.completedLines / data.totalLines) * 100)
     return Math.round(data.pct)
@@ -21,15 +23,15 @@ export const useLessonProgress = () => {
   ): void {
     const clamped = Math.max(0, Math.min(100, pct))
 
-    if (!sharedProgress[lessonId]) {
-      sharedProgress[lessonId] = {
+    if (!sharedProgress.value?.[lessonId]) {
+      sharedProgress.value![lessonId] = {
         completedLines: 0,
         totalLines: totalLines ?? 0,
         pct: clamped
       }
     }
 
-    const entry = sharedProgress[lessonId]
+    const entry = sharedProgress.value![lessonId]
     entry.pct = clamped
     if (entry.totalLines > 0) {
       entry.completedLines = Math.round((clamped / 100) * entry.totalLines)
@@ -43,7 +45,7 @@ export const useLessonProgress = () => {
   }
 
   function _clearLessonProgress(lessonId: string): void {
-    const entry = sharedProgress[lessonId]
+    const entry = sharedProgress.value?.[lessonId]
     if (entry) {
       entry.pct = 0
       entry.completedLines = 0
@@ -53,8 +55,8 @@ export const useLessonProgress = () => {
   return { getLessonProgress: _getLessonProgress, setLessonProgress: _setLessonProgress, clearLessonProgress: _clearLessonProgress }
 }
 export const resetLessonProgress = () => {
-  Object.keys(sharedProgress).forEach((key) => {
-    const entry = sharedProgress[key]
+  Object.keys(sharedProgress.value).forEach((key) => {
+    const entry = sharedProgress.value[key]
     if (entry) {
       entry.pct = 0
       entry.completedLines = 0

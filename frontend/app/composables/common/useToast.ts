@@ -1,4 +1,5 @@
-import { ref, onMounted } from 'vue'
+import { onUnmounted } from 'vue'
+import { useState } from '#app'
 
 export type ToastType = 'success' | 'error' | 'info'
 
@@ -8,15 +9,9 @@ interface ToastEntry {
   type: ToastType
 }
 
-let nextId = 0
-
-const toastState = ref<ToastEntry[]>([])
-
-const dismissTimers: Map<string, ReturnType<typeof setTimeout>> = new Map()
-
 const DISMISS_DELAY = 5000
 
-function dismissToast(id: string) {
+function dismissToast(toastState: Ref<ToastEntry[]>, dismissTimers: Map<string, ReturnType<typeof setTimeout>>, id: string) {
   const idx = toastState.value.findIndex(t => t.id === Number(id))
   if (idx !== -1) {
     toastState.value.splice(idx, 1)
@@ -28,31 +23,37 @@ function dismissToast(id: string) {
   }
 }
 
-function scheduleDismiss(entry: ToastEntry) {
+function scheduleDismiss(toastState: Ref<ToastEntry[]>, dismissTimers: Map<string, ReturnType<typeof setTimeout>>, entry: ToastEntry) {
   const timer = setTimeout(() => {
-    dismissToast(String(entry.id))
+    dismissToast(toastState, dismissTimers, String(entry.id))
   }, DISMISS_DELAY)
   dismissTimers.set(String(entry.id), timer)
 }
 
+let nextId = 0
+
 export function useToast() {
-  onMounted(() => {
-    // Cleanup timers on component unmount
-    for (const timer of dismissTimers.values()) {
+  const toastState = useState<ToastEntry[]>('toasts', () => [])
+  const dismissTimers = useState<Map<string, ReturnType<typeof setTimeout>>>('toast-timers', () => new Map())
+
+  onUnmounted(() => {
+    for (const timer of dismissTimers.value.values()) {
       clearTimeout(timer)
     }
-    dismissTimers.clear()
+    dismissTimers.value.clear()
   })
 
   return toastState
 }
 
 export function showToast(message: string, type: ToastType = 'success') {
+  const toastState = useState<ToastEntry[]>('toasts', () => [])
+  const dismissTimers = useState<Map<string, ReturnType<typeof setTimeout>>>('toast-timers', () => new Map())
   const entry: ToastEntry = {
     id: ++nextId,
     message,
     type
   }
   toastState.value.push(entry)
-  scheduleDismiss(entry)
+  scheduleDismiss(toastState, dismissTimers.value, entry)
 }

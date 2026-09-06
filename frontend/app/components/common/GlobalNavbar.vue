@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
-import { useHealthPoll } from '../../composables/studio/useHealthPoll'
+import { useBackendHealth } from '../../composables/studio/useBackendHealth'
 import { useLessonProgress } from '../../composables/lesson/useLessonProgress'
 
 interface Props {
@@ -73,7 +73,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('resize', checkMobile)
 }
 
-const { status, modelLoaded } = useHealthPoll()
+const { status, modelLoaded } = useBackendHealth()
 </script>
 
 <template>

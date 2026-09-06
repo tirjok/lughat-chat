@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // DesktopPanels: Desktop side-by-side layout.
-import { computed, useTemplateRef, watch } from 'vue'
+import { computed, useTemplateRef, watch, onMounted, onUnmounted } from 'vue'
 import { useScrollReveal } from '../../composables/common/useScrollReveal'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
@@ -40,7 +40,10 @@ const _controlDeckDesktopRef = useTemplateRef<HTMLDivElement | null>('control-de
 const canvasHeaderRef = useTemplateRef<HTMLDivElement | null>('canvas-header-ref')
 
 // Scroll-reveal: observe desktop control deck sections for fade-up
-useScrollReveal(canvasHeaderRef as import('vue').Ref<HTMLElement | null>)
+const { observe, disconnect } = useScrollReveal(canvasHeaderRef as import('vue').Ref<HTMLElement | null>)
+
+onMounted(() => observe())
+onUnmounted(() => disconnect())
 const audioTemplateRef = useTemplateRef<HTMLAudioElement | null>('audio-el')
 
 watch(audioTemplateRef, (el) => {

@@ -4,6 +4,7 @@ import type { SectionDefinition } from '~/data/curriculum'
 
 interface Props {
   section: SectionDefinition
+  isAudioDisabled?: boolean
 }
 
 const _props = defineProps<Props>()
@@ -54,6 +55,7 @@ function playExpression(index: number): void {
         </p>
         <button
           :data-testid="`play-expression-${index}`"
+          :disabled="_props.isAudioDisabled"
           class="mt-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors"
           aria-label="Play audio"
           @click="playExpression(index)"

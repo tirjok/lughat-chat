@@ -1,3 +1,5 @@
+import { useState } from '#app'
+
 export interface Voice {
   id: string
   name: string
@@ -8,32 +10,28 @@ export interface Voice {
 }
 
 export const useVoices = () => {
-  const voices = ref<Voice[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const cachedVoices = useState<Voice[]>('voices', () => [])
+  const cachedLoading = useState<boolean>('voices-loading', () => false)
+  const cachedError = useState<string | null>('voices-error', () => null)
 
   async function loadVoices(): Promise<Voice[]> {
-    loading.value = true
-    error.value = null
+    if (cachedVoices.value.length > 0) return cachedVoices.value
+    cachedLoading.value = true
     try {
       const response = await fetch('/api/voices')
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        throw new Error(`HTTP ${response.status}`)
       }
-      voices.value = await response.json()
-      return voices.value
+      cachedVoices.value = await response.json()
+      return cachedVoices.value
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load voices'
+      cachedError.value = e instanceof Error ? e.message : 'Failed to load voices'
       console.error('Failed to load voices:', e)
       return []
     } finally {
-      loading.value = false
+      cachedLoading.value = false
     }
   }
 
-  onMounted(() => {
-    loadVoices()
-  })
-
-  return { voices, loading, error, loadVoices }
+  return { voices: cachedVoices, loading: cachedLoading, error: cachedError, loadVoices }
 }

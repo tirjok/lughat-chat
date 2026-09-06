@@ -3,7 +3,7 @@ import { useAudioModule } from '~/composables/common/useAudioModule'
 import { useTtsApi } from '~/composables/common/useTtsApi'
 import { getLessonById } from '~/data/curriculum'
 import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
-import { useHealthPoll } from '~/composables/studio/useHealthPoll'
+import { useBackendHealth } from '~/composables/studio/useBackendHealth'
 import LessonActivities from '~/components/lesson/LessonActivities.vue'
 import LessonDialogue from '~/components/lesson/LessonDialogue.vue'
 import LessonVocabulary from '~/components/lesson/LessonVocabulary.vue'
@@ -11,7 +11,7 @@ import LessonPronouns from '~/components/lesson/LessonPronouns.vue'
 import LessonExpressions from '~/components/lesson/LessonExpressions.vue'
 import LessonGrammar from '~/components/lesson/LessonGrammar.vue'
 
-const healthPoll = useHealthPoll()
+const healthPoll = useBackendHealth()
 const isAudioDisabled = computed(() => healthPoll.status.value !== 'ready')
 const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
 const totalLines = computed(() => {
@@ -20,7 +20,7 @@ const totalLines = computed(() => {
   return lesson.sections.flatMap(s => s.items).length
 })
 
-let completedLines = 0
+const completedLines = shallowRef(0)
 const route = useRoute()
 const router = useRouter()
 const levelParam = computed(() => (route.params.level as string) || '')
@@ -103,21 +103,21 @@ watch(audioEl, (el) => {
 })
 
 // -- Module-scope abort state for cleanup -----------------------------------
-let fetchController: AbortController | null = null
-let fetchTimeoutId: ReturnType<typeof setTimeout> | null = null
-let cleanedUp = false
+const fetchController = shallowRef<AbortController | null>(null)
+const fetchTimeoutId = shallowRef<ReturnType<typeof setTimeout> | null>(null)
+const cleanedUp = shallowRef(false)
 
 // -- Cleanup: aborts in-flight fetch, pauses/disposes audio, hides bar,
 //    clears progress — all idempotent.
 function abortAndCleanup(): void {
-  if (cleanedUp) return
-  cleanedUp = true
+  if (cleanedUp.value) return
+  cleanedUp.value = true
 
   // 1. Abort in-flight TTS fetch
-  fetchController?.abort()
-  clearTimeout(fetchTimeoutId ?? undefined)
-  fetchController = null
-  fetchTimeoutId = null
+  fetchController.value?.abort()
+  clearTimeout(fetchTimeoutId.value ?? undefined)
+  fetchController.value = null
+  fetchTimeoutId.value = null
 
   // 2. Stop playback
   audioModule.pause()
@@ -126,30 +126,30 @@ function abortAndCleanup(): void {
 
   lessonProgress.clearLessonProgress(lessonId.value)
   // 4. Reset the AbortController for the next _playText call.
-  fetchController = null
-  fetchTimeoutId = null
+  fetchController.value = null
+  cleanedUp.value = false
 }
 
 async function _playText(text: string): Promise<void> {
   if (!text || !text.trim()) return
   await audioModule.dispose()
   // Reuse module-scope controller so abortAndCleanup can abort it.
-  fetchController = new AbortController()
-  fetchTimeoutId = setTimeout(() => fetchController!.abort(), 30_000)
+  fetchController.value = new AbortController()
+  fetchTimeoutId.value = setTimeout(() => fetchController.value!.abort(), 30_000)
   try {
     const blob = await ttsApi.synthesize({
       text: text.trim(),
       speaker: '',
-      signal: fetchController!.signal
+      signal: fetchController.value!.signal
     })
-    clearTimeout(fetchTimeoutId ?? undefined)
-    fetchTimeoutId = null
+    clearTimeout(fetchTimeoutId.value ?? undefined)
+    fetchTimeoutId.value = null
     audioModule.load(blob)
     audioModule.isPlaying.value = true
     await audioModule.play()
   } catch (err: unknown) {
-    clearTimeout(fetchTimeoutId ?? undefined)
-    fetchTimeoutId = null
+    clearTimeout(fetchTimeoutId.value ?? undefined)
+    fetchTimeoutId.value = null
     if (err instanceof DOMException && err.name === 'AbortError') return
     console.error('TTS synthesis failed:', err)
   }
@@ -164,10 +164,9 @@ async function _handleAudioEnded(): Promise<void> {
   const total = totalLines.value
   if (total > 0) {
     const newCompleted = Math.min(1, total)
-    if (newCompleted > completedLines) {
-      completedLines = newCompleted
-      const pct = (completedLines / totalLines.value) * 100
-      lessonProgress.setLessonProgress(lessonId.value, pct, totalLines.value)
+    if (newCompleted > completedLines.value) {
+      completedLines.value = newCompleted
+      const pct = (completedLines.value / totalLines.value) * 100
     }
   }
 

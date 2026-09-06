@@ -5,7 +5,7 @@ import { onBeforeRouteLeave } from 'vue-router'
 import { usePanelToggle } from '../composables/studio/usePanelToggle'
 import { useAudioModule } from '../composables/common/useAudioModule'
 import { useTtsApi } from '../composables/common/useTtsApi'
-import { useHealthPoll } from '../composables/studio/useHealthPoll'
+import { useBackendHealth } from '../composables/studio/useBackendHealth'
 import { useVoices } from '../composables/studio/useVoices'
 import { useInputValidation } from '../composables/studio/useInputValidation'
 import { showToast } from '../composables/common/useToast'
@@ -32,7 +32,7 @@ const {
 } = audioModule
 
 const { synthesize } = useTtsApi()
-const { status: modelStatus } = useHealthPoll()
+const { status: modelStatus } = useBackendHealth()
 const { voices: speakerVoices } = useVoices()
 
 // ── Form state ──────────────────────────────────────────────────
@@ -48,7 +48,7 @@ const selectedVoiceName = computed(() => {
   return voice ? voice.name : ''
 })
 
-watch(speakerVoices, (v) => {
+watch(speakerVoices, (v: import('~/composables/studio/useVoices').Voice[]) => {
   if (!selectedSpeaker.value && v.length > 0) {
     selectedSpeaker.value = v[0]!.id
   }
@@ -82,7 +82,7 @@ onBeforeRouteLeave(async () => {
   }
 
   // AC-2: Show dialog when isGenerating=true or isStreaming
-  cleanup.dialogVisible.value = true
+  cleanup.showDialog()
 
   // Block navigation until user responds
   return false

@@ -4,6 +4,7 @@ import type { SectionDefinition } from '~/data/curriculum'
 
 interface Props {
   section: SectionDefinition
+  isAudioDisabled?: boolean
 }
 
 const _props = defineProps<Props>()
@@ -119,6 +120,7 @@ function playWord(index: number): void {
             <td class="py-2">
               <button
                 :data-testid="`play-word-${categoryOffsets[catIndex]! + localIndex}`"
+                :disabled="_props.isAudioDisabled"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors"
                 aria-label="Play audio"
                 @click="playWord(categoryOffsets[catIndex]! + localIndex)"

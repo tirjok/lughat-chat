@@ -4,6 +4,7 @@ import type { SectionDefinition } from '~/data/curriculum'
 
 interface Props {
   section: SectionDefinition
+  isAudioDisabled?: boolean
 }
 
 const _props = defineProps<Props>()
@@ -34,7 +35,7 @@ const dialogueContent = computed<EmptyDialogue>(() => {
   if (!content || content.type !== 'dialogue') {
     return { scenes: [] }
   }
-  return content as unknown as EmptyDialogue
+  return content as EmptyDialogue
 })
 
 const sceneLabels = computed(() => dialogueContent.value.scenes.map(s => s.label))
@@ -121,9 +122,11 @@ function getSpeakerGradient(speaker: string): string {
         :data-testid="`line-card-${lineIndex}`"
         :class="[
           'rounded-xl border p-4 md:p-5 transition-all cursor-pointer',
-          lineIndex === currentLineIndex
-            ? 'bg-gradient-to-l from-primary-100 to-primary-50 border-primary-300 dark:from-primary-900/40 dark:to-primary-800/30 dark:border-primary-600'
-            : 'bg-white border-stone-200 dark:bg-stone-900 dark:border-stone-700'
+          _props.isAudioDisabled
+            ? 'opacity-40 cursor-not-allowed'
+            : [lineIndex === currentLineIndex
+              ? 'bg-gradient-to-l from-primary-100 to-primary-50 border-primary-300 dark:from-primary-900/40 dark:to-primary-800/30 dark:border-primary-600'
+              : 'bg-white border-stone-200 dark:bg-stone-900 dark:border-stone-700']
         ]"
         @click="currentLineIndex = lineIndex; playLine(lineIndex)"
       >
@@ -151,7 +154,9 @@ function getSpeakerGradient(speaker: string): string {
         <!-- Play Button -->
         <button
           :data-testid="`play-line-${lineIndex}`"
+          :disabled="_props.isAudioDisabled"
           class="ml-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+          :class="{ 'pointer-events-none': _props.isAudioDisabled }"
           aria-label="Play audio"
           @click.stop="playLine(lineIndex)"
         >
@@ -171,7 +176,7 @@ function getSpeakerGradient(speaker: string): string {
     <button
       v-if="currentScene.lines.length > 0"
       data-testid="play-scene"
-      class="w-full px-4 py-3 rounded-xl bg-primary-700 text-white font-semibold hover:bg-primary-800 transition-colors"
+      :disabled="_props.isAudioDisabled"
       @click="playScene"
     >
       Play Scene

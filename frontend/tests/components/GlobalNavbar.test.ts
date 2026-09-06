@@ -25,6 +25,12 @@ vi.mock('~/composables/studio/useHealthPoll', () => ({
     modelLoaded: computed(() => mockHealthStatus.value === 'ready')
   })
 }))
+vi.mock('~/composables/studio/useBackendHealth', () => ({
+  useBackendHealth: () => ({
+    status: mockHealthStatus,
+    modelLoaded: computed(() => mockHealthStatus.value === 'ready')
+  })
+}))
 vi.mock('~/composables/lesson/useLessonProgress', () => ({
   useLessonProgress: () => mockProgressApi
 }))

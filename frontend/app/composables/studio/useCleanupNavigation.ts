@@ -1,8 +1,9 @@
-import { shallowRef, type Ref } from 'vue'
+import { shallowRef, readonly } from 'vue'
 import { showToast } from '../common/useToast'
 
 export function useCleanupNavigation(audioModule: { dispose: () => void }) {
-  const dialogVisible: Ref<boolean> = shallowRef(false)
+  const _dialogVisible = shallowRef(false)
+  const dialogVisible = readonly(_dialogVisible)
 
   async function handleCleanupAndLeave() {
     audioModule.dispose()
@@ -19,17 +20,18 @@ export function useCleanupNavigation(audioModule: { dispose: () => void }) {
     } catch {
       showToast('Cleanup failed — files will be cleaned by 24h TTL.', 'error')
     } finally {
-      dialogVisible.value = false
+      _dialogVisible.value = false
     }
   }
 
   function handleStay() {
-    dialogVisible.value = false
+    _dialogVisible.value = false
     showToast('Navigation cancelled — synthesis continues.', 'info')
   }
 
   return {
     dialogVisible,
+    showDialog() { _dialogVisible.value = true },
     handleCleanupAndLeave,
     handleStay
   }

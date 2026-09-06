@@ -37,6 +37,8 @@ vi.mock('~/composables/studio/usePanelToggle', () => ({
 
 vi.mock('~/composables/common/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
+    observe: vi.fn(),
+    disconnect: vi.fn(),
     revealOnScroll: vi.fn(),
     isRevealed: ref(true)
   }))
