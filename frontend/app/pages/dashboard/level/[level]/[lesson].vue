@@ -3,9 +3,16 @@ import { useAudioModule } from '~/composables/common/useAudioModule'
 import { useTtsApi } from '~/composables/common/useTtsApi'
 import { getLessonById } from '~/data/curriculum'
 import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
+import { useHealthPoll } from '~/composables/studio/useHealthPoll'
 import LessonActivities from '~/components/lesson/LessonActivities.vue'
+import LessonDialogue from '~/components/lesson/LessonDialogue.vue'
+import LessonVocabulary from '~/components/lesson/LessonVocabulary.vue'
+import LessonPronouns from '~/components/lesson/LessonPronouns.vue'
+import LessonExpressions from '~/components/lesson/LessonExpressions.vue'
+import LessonGrammar from '~/components/lesson/LessonGrammar.vue'
 
-const lessonProgress = useLessonProgress()
+const healthPoll = useHealthPoll()
+const isAudioDisabled = computed(() => healthPoll.status.value !== 'ready')
 const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
 const totalLines = computed(() => {
   const lesson = currentLessonData.value
@@ -323,17 +330,53 @@ onUnmounted(() => {
           </button>
         </div>
         <div
+          v-if="activeSection === 'Dialogue' && currentLessonData?.sections.find(s => s.type === 'dialogue')"
+          :key="`dialogue-${currentLesson}`"
+        >
+          <LessonDialogue
+            :section="currentLessonData.sections.find(s => s.type === 'dialogue')!"
+            :isAudioDisabled="isAudioDisabled"
+          />
+        </div>
+        <div
+          v-if="activeSection === 'Vocabulary' && currentLessonData?.sections.find(s => s.type === 'vocabulary')"
+          :key="`vocabulary-${currentLesson}`"
+        >
+          <LessonVocabulary
+            :section="currentLessonData.sections.find(s => s.type === 'vocabulary')!"
+            :isAudioDisabled="isAudioDisabled"
+          />
+        </div>
+        <div
+          v-if="activeSection === 'Pronouns' && currentLessonData?.sections.find(s => s.type === 'pronouns')"
+          :key="`pronouns-${currentLesson}`"
+        >
+          <LessonPronouns
+            :section="currentLessonData.sections.find(s => s.type === 'pronouns')!"
+            :isAudioDisabled="isAudioDisabled"
+          />
+        </div>
+        <div
+          v-if="activeSection === 'Grammar' && currentLessonData?.sections.find(s => s.type === 'grammar')"
+          :key="`grammar-${currentLesson}`"
+        >
+          <LessonGrammar
+            :section="currentLessonData.sections.find(s => s.type === 'grammar')!"
+          />
+        </div>
+        <div
           v-if="activeSection === 'Expressions' && expressionsSection"
           :key="`expressions-${currentLesson}`"
         >
-          <LessonExpressions :section="expressionsSection" />
+          <LessonExpressions
+            :section="expressionsSection"
+            :isAudioDisabled="isAudioDisabled"
+          />
         </div>
         <div
           v-if="activeSection === 'Activities' && activitySection"
           :key="`activities-${currentLesson}`"
         >
-          <LessonActivities :section="activitySection" />
-        </div>
         <div
           v-if="currentSectionItems.length > 0"
           class="space-y-4"
