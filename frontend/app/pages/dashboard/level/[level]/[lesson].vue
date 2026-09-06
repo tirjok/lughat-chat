@@ -1,10 +1,10 @@
+<script setup lang="ts">
 import { ref, watch, onUnmounted, computed, shallowRef } from 'vue'
 import { useAudioModule } from '~/composables/common/useAudioModule'
 import { useTtsApi } from '~/composables/common/useTtsApi'
 import { getLessonById } from '~/data/curriculum'
 import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
 import { useBackendHealth } from '~/composables/studio/useBackendHealth'
-import LessonActivities from '~/components/lesson/LessonActivities.vue'
 import LessonDialogue from '~/components/lesson/LessonDialogue.vue'
 import LessonVocabulary from '~/components/lesson/LessonVocabulary.vue'
 import LessonPronouns from '~/components/lesson/LessonPronouns.vue'
@@ -124,6 +124,7 @@ function abortAndCleanup(): void {
   audioModule.dispose()
   audioModule.isPlaying.value = false
 
+  const lessonProgress = useLessonProgress()
   lessonProgress.clearLessonProgress(lessonId.value)
   // 4. Reset the AbortController for the next _playText call.
   fetchController.value = null
@@ -166,7 +167,7 @@ async function _handleAudioEnded(): Promise<void> {
     const newCompleted = Math.min(1, total)
     if (newCompleted > completedLines.value) {
       completedLines.value = newCompleted
-      const pct = (completedLines.value / totalLines.value) * 100
+      const _pct = (completedLines.value / totalLines.value) * 100
     }
   }
 
@@ -197,6 +198,7 @@ async function handleTrackPrev(): Promise<void> {
 
 async function handleTrackNext(): Promise<void> {
   const idx = currentIndex.value
+  const items = currentSectionItems.value
   const nextItem = items[idx + 1]
   if (nextItem?.arabic) {
     await _playText(nextItem.arabic)
@@ -334,7 +336,7 @@ onUnmounted(() => {
         >
           <LessonDialogue
             :section="currentLessonData.sections.find(s => s.type === 'dialogue')!"
-            :isAudioDisabled="isAudioDisabled"
+            :is-audio-disabled="isAudioDisabled"
           />
         </div>
         <div
@@ -343,7 +345,7 @@ onUnmounted(() => {
         >
           <LessonVocabulary
             :section="currentLessonData.sections.find(s => s.type === 'vocabulary')!"
-            :isAudioDisabled="isAudioDisabled"
+            :is-audio-disabled="isAudioDisabled"
           />
         </div>
         <div
@@ -352,7 +354,7 @@ onUnmounted(() => {
         >
           <LessonPronouns
             :section="currentLessonData.sections.find(s => s.type === 'pronouns')!"
-            :isAudioDisabled="isAudioDisabled"
+            :is-audio-disabled="isAudioDisabled"
           />
         </div>
         <div
@@ -369,57 +371,58 @@ onUnmounted(() => {
         >
           <LessonExpressions
             :section="expressionsSection"
-            :isAudioDisabled="isAudioDisabled"
+            :is-audio-disabled="isAudioDisabled"
           />
         </div>
         <div
           v-if="activeSection === 'Activities' && activitySection"
           :key="`activities-${currentLesson}`"
         >
-        <div
-          v-if="currentSectionItems.length > 0"
-          class="space-y-4"
-        >
           <div
-            v-for="item in currentSectionItems"
-            :key="item.id"
-            class="card"
+            v-if="currentSectionItems.length > 0"
+            class="space-y-4"
           >
-            <div class="flex flex-col gap-2">
-              <p
-                class="text-lg font-arabic text-stone-800 dark:text-stone-100 text-right"
-                dir="rtl"
-              >
-                {{ item.arabic }}
-              </p>
-              <p
-                v-if="item.transliteration"
-                class="text-sm text-stone-500 dark:text-stone-400 italic"
-              >
-                {{ item.transliteration }}
-              </p>
-              <p
-                v-if="item.english"
-                class="text-sm text-stone-600 dark:text-stone-300"
-              >
-                {{ item.english }}
-              </p>
-              <p
-                v-if="item.notes"
-                class="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 rounded p-2"
-              >
-                {{ item.notes }}
-              </p>
+            <div
+              v-for="item in currentSectionItems"
+              :key="item.id"
+              class="card"
+            >
+              <div class="flex flex-col gap-2">
+                <p
+                  class="text-lg font-arabic text-stone-800 dark:text-stone-100 text-right"
+                  dir="rtl"
+                >
+                  {{ item.arabic }}
+                </p>
+                <p
+                  v-if="item.transliteration"
+                  class="text-sm text-stone-500 dark:text-stone-400 italic"
+                >
+                  {{ item.transliteration }}
+                </p>
+                <p
+                  v-if="item.english"
+                  class="text-sm text-stone-600 dark:text-stone-300"
+                >
+                  {{ item.english }}
+                </p>
+                <p
+                  v-if="item.notes"
+                  class="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 rounded p-2"
+                >
+                  {{ item.notes }}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-        <div
-          v-else
-          class="card"
-        >
-          <p class="text-stone-500 dark:text-stone-400">
-            Content for "{{ activeSection }}" section coming soon.
-          </p>
+          <div
+            v-else
+            class="card"
+          >
+            <p class="text-stone-500 dark:text-stone-400">
+              Content for "{{ activeSection }}" section coming soon.
+            </p>
+          </div>
         </div>
       </div>
     </section>
