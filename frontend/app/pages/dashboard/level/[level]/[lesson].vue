@@ -12,6 +12,7 @@ import LessonExpressions from '~/components/lesson/LessonExpressions.vue'
 import LessonGrammar from '~/components/lesson/LessonGrammar.vue'
 
 const healthPoll = useBackendHealth()
+const lessonProgress = useLessonProgress()
 const isAudioDisabled = computed(() => healthPoll.status.value !== 'ready')
 const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
 const totalLines = computed(() => {
@@ -124,7 +125,6 @@ function abortAndCleanup(): void {
   audioModule.dispose()
   audioModule.isPlaying.value = false
 
-  const lessonProgress = useLessonProgress()
   lessonProgress.clearLessonProgress(lessonId.value)
   // 4. Reset the AbortController for the next _playText call.
   fetchController.value = null
@@ -167,7 +167,7 @@ async function _handleAudioEnded(): Promise<void> {
     const newCompleted = Math.min(1, total)
     if (newCompleted > completedLines.value) {
       completedLines.value = newCompleted
-      const _pct = (completedLines.value / totalLines.value) * 100
+      lessonProgress.setLessonProgress(lessonId.value, (completedLines.value / totalLines.value) * 100, totalLines.value)
     }
   }
 
