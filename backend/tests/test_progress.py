@@ -1,3 +1,5 @@
+"""Tests for the progress endpoint (in-memory store)."""
+
 from app import app
 
 

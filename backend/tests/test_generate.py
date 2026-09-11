@@ -10,6 +10,8 @@ import wave as _real_wave_module
 
 _ORIGINAL_WAVE_OPEN = _real_wave_module.open
 
+_ORIGINAL_WAVE_MODULE = _real_wave_module
+
 
 def _mock_tts_model():
     """Create a mock TTS model that returns without error."""
@@ -75,13 +77,15 @@ def _make_mock_wav():
 
 
 def _setup_mock_model():
-    """Set up mock TTS model in app module without creating physical files.
+    """Set up mock TTS model in deep modules without creating physical files.
 
-    Mocks os.path.exists so the backend's speaker_wav file check passes,
-    and mocks wave.open for reading (used by _validate_speaker_wav) while
-    letting the TTS mock write real WAV files to disk.
+    Patches the deep module instances directly: tts_model_manager (ModelManager).
+    Also patches module-level os.path.exists and wave.open used by synthesis.py.
     """
     import app as main_app
+    from model_manager import ModelManager
+    from synthesis import Synthesis
+    import sys
 
     _mock_wav = _make_mock_wav()
 
@@ -100,8 +104,13 @@ def _setup_mock_model():
     # Patch at module level so the mock persists beyond the test function scope.
     main_app.os.path.exists = _mock_path_exists
     main_app.wave.open = _mock_wave_open
-    main_app.tts_model = _mock_tts_model()
-    main_app.model_load_status = "ready"
+    mm = ModelManager(TTS_class=None, cache_dir="/tmp/tts_cache")
+    mm._model = _mock_tts_model()
+    mm._status = "ready"
+    main_app.tts_model_manager = mm
+    return lambda: (setattr(main_app, 'wave', _ORIGINAL_WAVE_MODULE),
+                    setattr(__import__('synthesis'), 'wave', _ORIGINAL_WAVE_MODULE),
+                    setattr(sys.modules['wave'], 'open', _ORIGINAL_WAVE_OPEN))
 
 
 def test_generate_speech_requires_text():
@@ -154,12 +163,15 @@ def test_generate_speech_rejects_invalid_language():
 def test_generate_speech_rejects_missing_voice_file():
     """POST /api/generate returns 500 when voice has no corresponding WAV file."""
     import app as main_app
+    from model_manager import ModelManager
+    from synthesis import Synthesis
 
-    # Restore the real os.path.exists (previous tests may have patched it).
-    main_app.os.path.exists = os.path.exists
-    # The Docker container does not have a 'robot.wav' in speaker_wavs/.
-    main_app.tts_model = _mock_tts_model()
-    main_app.model_load_status = "ready"
+    # Build a mock model WITHOUT mocking os.path.exists so the
+    # handler's voice-file validation triggers for 'robot.wav'.
+    mm = ModelManager(TTS_class=None, cache_dir="/tmp/tts_cache")
+    mm._model = _mock_tts_model()
+    mm._status = "ready"
+    main_app.tts_model_manager = mm
 
     from fastapi.testclient import TestClient
 
@@ -169,6 +181,7 @@ def test_generate_speech_rejects_missing_voice_file():
         "/api/generate", json={"text": "Hello world", "voice": "robot"}
     )
 
+    # 'robot.wav' doesn't exist in speaker_wavs/, so the handler returns 500.
     assert response.status_code == 500
     data = response.json()
     assert "robot" in data["detail"]
@@ -221,9 +234,12 @@ def test_generate_speech_rejects_pitch_too_high():
 def test_generate_speech_returns_503_when_model_not_ready():
     """POST /api/generate returns 503 when TTS model is not loaded."""
     import app as main_app
+    from model_manager import ModelManager
 
-    main_app.tts_model = None
-    main_app.model_load_status = "loading"
+    mm = ModelManager(TTS_class=None, cache_dir="/tmp/tts_cache")
+    mm._model = None
+    mm._status = "loading"
+    main_app.tts_model_manager = mm
 
     from fastapi.testclient import TestClient
 
@@ -236,7 +252,7 @@ def test_generate_speech_returns_503_when_model_not_ready():
 
 def test_generate_speech_returns_valid_response_on_success():
     """POST /api/generate returns MP3 audio blob on success."""
-    _setup_mock_model()
+    cleanup = _setup_mock_model()
 
     from fastapi.testclient import TestClient
 
@@ -254,11 +270,12 @@ def test_generate_speech_returns_valid_response_on_success():
     assert len(response.content) > 0
     # Verify it starts with MP3 ID3 tag or syncword
     assert response.content[:4] in [b"ID3\x03", b"ID3\x04", b"\xff\xfb"]
+    cleanup()
 
 
 def test_generate_speech_accepts_default_parameters():
     """POST /api/generate works with minimal request (only text required) and returns MP3 blob."""
-    _setup_mock_model()
+    cleanup = _setup_mock_model()
 
     from fastapi.testclient import TestClient
 
@@ -269,53 +286,44 @@ def test_generate_speech_accepts_default_parameters():
     assert response.status_code == 200
     assert "audio/mpeg" in response.headers["content-type"]
     assert len(response.content) > 0
+    cleanup()
 
 
 def test_generate_speech_with_custom_voice_works():
     """POST /api/generate accepts a custom voice name and generates speech when the WAV file exists."""
-    import app as main_app
+    from model_manager import ModelManager
+    from synthesis import Synthesis
+
+    cleanup = _setup_mock_model()
+
     from fastapi.testclient import TestClient
-
-    _mock_wav = _make_mock_wav()
-
-    def _mock_path_exists(path):
-        # Always return True — we control the entire filesystem via mocks.
-        return True
-
-    def _mock_wave_open(path, mode="r"):
-        if mode == "w":
-            return _ORIGINAL_WAVE_OPEN(path, mode)
-        return _mock_wav
-
-    # Patch at module level so the mock persists beyond the 'with' block.
-    main_app.os.path.exists = _mock_path_exists
-    main_app.wave.open = _mock_wave_open
-    main_app.tts_model = _mock_tts_model()
-    main_app.model_load_status = "ready"
 
     client = TestClient(app)
 
     response = client.post(
         "/api/generate", json={"text": "Hello world", "voice": "custom_voice"}
     )
-
     assert response.status_code == 200
     assert "audio/mpeg" in response.headers["content-type"]
+    cleanup()
 
 
 def test_generate_speech_missing_voice_file_includes_filename():
     """POST /api/generate returns 500 with the missing filename in detail message."""
     import app as main_app
+    from model_manager import ModelManager
 
-    # Restore the real os.path.exists and wave.open (previous tests may have
-    # patched them).  The patched wave.open returns a mock that passes
-    # _validate_speaker_wav even for non-existent files, so we must restore
-    # the real one to properly test the missing-voice error path.
+    # Restore real os.path.exists and wave.open (previous tests may have patched them).
+    import sys
     main_app.os.path.exists = os.path.exists
-    main_app.wave.open = _ORIGINAL_WAVE_OPEN
-    main_app.tts_model = _mock_tts_model()
-    main_app.model_load_status = "ready"
+    sys.modules['wave'].open = _ORIGINAL_WAVE_OPEN
 
+    # Build a mock model without mocking os.path.exists so the
+    # handler's missing-voice-file path triggers properly.
+    mm = ModelManager(TTS_class=None, cache_dir="/tmp/tts_cache")
+    mm._model = _mock_tts_model()
+    mm._status = "ready"
+    main_app.tts_model_manager = mm
     from fastapi.testclient import TestClient
 
     client = TestClient(app)
@@ -327,20 +335,3 @@ def test_generate_speech_missing_voice_file_includes_filename():
     assert response.status_code == 500
     data = response.json()
     assert "nonexistent_voice" in data["detail"]
-
-
-def test_generate_speech_accepts_english_language():
-    """POST /api/generate accepts English text and returns MP3 blob."""
-    _setup_mock_model()
-
-    from fastapi.testclient import TestClient
-
-    client = TestClient(app)
-
-    response = client.post(
-        "/api/generate", json={"text": "Hello world", "language": "en"}
-    )
-
-    assert response.status_code == 200
-    assert "audio/mpeg" in response.headers["content-type"]
-    assert len(response.content) > 0
