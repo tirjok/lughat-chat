@@ -33,7 +33,9 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
     const url = URL.createObjectURL(blob)
     currentObjectUrl = url
     audioUrl.value = url
-    isLoading.value = true
+    if (audioRef.value) {
+      audioRef.value.src = url
+    }
     error.value = null
   }
 

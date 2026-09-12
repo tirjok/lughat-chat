@@ -158,7 +158,7 @@ def test_generate_speech_ffmpeg_failure_does_not_serve_wav_as_mp3():
 
         response = client.post(
             "/api/generate",
-            json={"text": "Hello world", "language": "en"},
+            json={"text": "Hello world", "language": "en", "voice": "robot"},
         )
 
         # Must NOT succeed — the old code returned 200 with WAV bytes
@@ -197,7 +197,7 @@ def test_generate_speech_ffmpeg_failure_cleans_up_wav_file():
 
         response = client.post(
             "/api/generate",
-            json={"text": "Hello world", "language": "en"},
+            json={"text": "Hello world", "language": "en", "voice": "robot"},
         )
 
         # The endpoint should fail, and no WAV files should linger

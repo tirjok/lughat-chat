@@ -103,7 +103,7 @@ export const createMockUseTtsApi = (options?: { fail?: boolean }) => {
 }
 
 // ─── Health Poll Mock Factory ────────────────────────────────────────
-// Returns reactive refs matching useHealthPoll's real interface.
+// Returns reactive refs matching useBackendHealth's real interface.
 // modelLoaded derives from status (status === 'ready' → true).
 // Use createMockUseHealthPoll({ status: 'error' }) to test error paths.
 export const createMockUseHealthPoll = (options?: { status?: 'loading' | 'ready' | 'error' }) => {

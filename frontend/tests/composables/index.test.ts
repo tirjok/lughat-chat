@@ -57,11 +57,12 @@ vi.mock('~/composables/common/useTtsApi', () => ({
   })
 }))
 
-vi.mock('~/composables/studio/useHealthPoll', () => ({
-  useHealthPoll: () => ({
+vi.mock('~/composables/studio/useBackendHealth', () => ({
+  useBackendHealth: () => ({
     status: ref('ready' as const),
     modelLoaded: computed(() => true)
-  })
+  }),
+  resetBackendHealth: () => {}
 }))
 
 vi.mock('~/composables/studio/useVoices', () => ({

@@ -19,12 +19,8 @@ function mountNavbar(path: string) {
 }
 const mockHealthStatus: Ref<'loading' | 'ready' | 'error'> = ref('loading' as const)
 
-vi.mock('~/composables/studio/useHealthPoll', () => ({
-  useHealthPoll: () => ({
-    status: mockHealthStatus,
-    modelLoaded: computed(() => mockHealthStatus.value === 'ready')
-  })
-}))
+// useBackendHealth mock — GlobalNavbar.vue imports this composable.
+// mockHealthStatus is a shared Ref that all tests can mutate to simulate state changes.
 vi.mock('~/composables/studio/useBackendHealth', () => ({
   useBackendHealth: () => ({
     status: mockHealthStatus,
@@ -276,7 +272,7 @@ describe('GlobalNavbar', () => {
     })
 
     // GlobalNavbar now contains an inline status indicator that reads from
-    // useHealthPoll. Tests verify observable DOM state (text, classes).
+    // useBackendHealth. Tests verify observable DOM state (text, classes).
 
     beforeEach(() => {
       mockHealthStatus.value = 'loading' as const
