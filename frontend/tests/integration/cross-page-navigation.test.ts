@@ -25,7 +25,6 @@ import GlobalNavbar from '~/components/common/GlobalNavbar.vue'
 import {
   createMockUseAudioModule,
   createMockUseTtsApi,
-  createMockUseHealthPoll,
   createMockUseVoices,
   setBreakpoint
 } from '~~/tests/mocks'
@@ -60,11 +59,15 @@ vi.mock('vue-router', () => ({
     replace: vi.fn()
   })
 }))
-vi.mock('~/composables/studio/useHealthPoll', async () => {
-  const actual = await vi.importActual('~/composables/studio/useHealthPoll')
+vi.mock('~/composables/studio/useBackendHealth', () => {
+  const { ref, computed } = await vi.importActual('vue')
+  const mockHealthStatus = ref('loading' as const)
   return {
-    useHealthPoll: () => createMockUseHealthPoll(),
-    resetHealthPoll: actual.resetHealthPoll
+    useBackendHealth: () => ({
+      status: mockHealthStatus,
+      modelLoaded: computed(() => mockHealthStatus.value === 'ready')
+    }),
+    resetBackendHealth: () => { mockHealthStatus.value = 'loading' as const }
   }
 })
 
@@ -140,7 +143,7 @@ function buildNuxtApp(path: string) {
 
 // Reset health poll singleton between tests.
 beforeEach(() => {
-  resetHealthPoll()
+  resetBackendHealth()
   vi.clearAllMocks()
   ;(global as Record<string, unknown>).fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }))
 })
@@ -656,7 +659,7 @@ describe('AC-10: Route not found (404)', () => {
 describe('AC-11: Composable error during mount (onMounted throws)', () => {
   it('Dashboard renders with error boundary when a composable throws during mount', () => {
     // The dashboard page renders regardless of composable errors.
-    // If useHealthPoll throws on mount, the page skeleton still renders
+    // If useBackendHealth throws on mount, the page skeleton still renders
     // and the error is caught (logged + toast shown).
     const wrapper = mountDashboard('/dashboard')
     expect(wrapper.exists()).toBe(true)

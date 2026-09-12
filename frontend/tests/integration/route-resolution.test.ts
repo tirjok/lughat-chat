@@ -66,10 +66,12 @@ vi.mock('~/composables/lesson/useLessonOrchestrator', () => ({
   }))
 }))
 
-vi.mock('~/composables/studio/useHealthPoll', () => ({
-  useHealthPoll: vi.fn(() => ({
-    status: ref('ready')
-  }))
+vi.mock('~/composables/studio/useBackendHealth', () => ({
+  useBackendHealth: vi.fn(() => ({
+    status: ref('ready' as const),
+    modelLoaded: computed(() => true)
+  })),
+  resetBackendHealth: vi.fn()
 }))
 
 vi.mock('~/composables/common/useScrollReveal', () => ({

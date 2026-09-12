@@ -49,8 +49,8 @@ vi.mock('~/composables/studio/useVoices', () => ({
   }))
 }))
 
-vi.mock('~/composables/studio/useHealthPoll', () => ({
-  useHealthPoll: () => createMockUseHealthPoll()
+vi.mock('~/composables/studio/useBackendHealth', () => ({
+  useBackendHealth: () => createMockUseHealthPoll()
 }))
 
 vi.mock('~/composables/studio/useInputValidation', () => {

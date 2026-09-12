@@ -2,7 +2,7 @@
 import { ref, watch, onUnmounted, computed, shallowRef } from 'vue'
 import { useAudioModule } from '~/composables/common/useAudioModule'
 import { useTtsApi } from '~/composables/common/useTtsApi'
-import { getLessonById } from '~/data/curriculum'
+import { getLessonById, type SectionDefinition } from '~/data/curriculum'
 import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
 import { useBackendHealth } from '~/composables/studio/useBackendHealth'
 import LessonDialogue from '~/components/lesson/LessonDialogue.vue'
@@ -218,6 +218,64 @@ function handleRepeatChange(mode: RepeatMode): void {
   repeatMode.value = mode
 }
 
+// -- Dialogue play handlers ------------------------------------------------
+async function handleDialoguePlayLine(lineIndex: number): Promise<void> {
+  const dialogue = currentLessonData.value?.sections.find(s => s.type === 'dialogue')
+  if (!dialogue) return
+  const content = dialogue.content as { type: 'dialogue', scenes: { label: string, lines: { arabic: string }[] }[] }
+  for (const scene of content.scenes) {
+    if (lineIndex < scene.lines.length) {
+      const arabic = scene.lines?.[lineIndex]?.arabic
+      if (arabic) await _playText(arabic)
+      return
+    }
+    lineIndex -= scene.lines.length
+  }
+}
+
+async function handleDialoguePlayScene(): Promise<void> {
+  const dialogue = currentLessonData.value?.sections.find(s => s.type === 'dialogue')
+  if (!dialogue) return
+  const content = dialogue.content as { type: 'dialogue', scenes: { label: string, lines: { arabic: string }[] }[] }
+  for (const scene of content.scenes) {
+    for (const line of scene.lines) {
+      if (line.arabic) await _playText(line.arabic)
+    }
+  }
+}
+
+// -- Vocabulary play handler -----------------------------------------------
+function handleVocabularyPlayWord(index: number): void {
+  const vocab = currentLessonData.value?.sections.find(s => s.type === 'vocabulary')
+  if (!vocab) return
+  const section = vocab as SectionDefinition
+  const items = section.items
+  if (items[index]?.arabic) {
+    _playText(items[index].arabic)
+  }
+}
+
+// -- Pronouns play handler -------------------------------------------------
+function handlePronounsPlay(index: number): void {
+  const pron = currentLessonData.value?.sections.find(s => s.type === 'pronouns')
+  if (!pron) return
+  const section = pron as SectionDefinition
+  const items = section.items
+  if (items[index]?.arabic) {
+    _playText(items[index].arabic)
+  }
+}
+
+// -- Expressions play handler ----------------------------------------------
+function handleExpressionsPlay(index: number): void {
+  if (!expressionsSection.value) return
+  const section = expressionsSection.value as SectionDefinition
+  const items = section.items
+  if (items[index]?.arabic) {
+    _playText(items[index].arabic)
+  }
+}
+
 onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
   abortAndCleanup()
   if (isMissingLevel.value) {
@@ -337,6 +395,8 @@ onUnmounted(() => {
           <LessonDialogue
             :section="currentLessonData.sections.find(s => s.type === 'dialogue')!"
             :is-audio-disabled="isAudioDisabled"
+            @play-line="handleDialoguePlayLine"
+            @play-scene="handleDialoguePlayScene"
           />
         </div>
         <div
@@ -346,6 +406,7 @@ onUnmounted(() => {
           <LessonVocabulary
             :section="currentLessonData.sections.find(s => s.type === 'vocabulary')!"
             :is-audio-disabled="isAudioDisabled"
+            @play-word="handleVocabularyPlayWord"
           />
         </div>
         <div
@@ -355,6 +416,7 @@ onUnmounted(() => {
           <LessonPronouns
             :section="currentLessonData.sections.find(s => s.type === 'pronouns')!"
             :is-audio-disabled="isAudioDisabled"
+            @play-pronoun="handlePronounsPlay"
           />
         </div>
         <div
@@ -372,6 +434,7 @@ onUnmounted(() => {
           <LessonExpressions
             :section="expressionsSection"
             :is-audio-disabled="isAudioDisabled"
+            @play-expression="handleExpressionsPlay"
           />
         </div>
         <div

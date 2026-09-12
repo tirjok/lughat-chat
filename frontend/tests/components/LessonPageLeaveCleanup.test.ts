@@ -87,7 +87,7 @@ function getWrapper(): VueWrapper {
         }
       },
       mocks: {
-        useHealthPoll: () => createMockUseHealthPoll(),
+        useBackendHealth: () => createMockUseHealthPoll(),
         useInputValidation: () => createMockUseInputValidation()
       }
     }

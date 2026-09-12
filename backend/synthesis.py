@@ -120,8 +120,9 @@ class Synthesis:
         """
         from fastapi.responses import FileResponse
 
-        # Voice resolution: speaker takes precedence, then voice, then "female"
-        resolved_voice = speaker if speaker else (voice or "female")
+        # Voice resolution: speaker takes precedence, then voice, then "KSA Zariyah - Female"
+        resolved_voice = speaker if speaker else (voice or "KSA Zariyah - Female")
+
 
         timestamp = uuid.uuid4().hex[:8]
         lang_code = language
