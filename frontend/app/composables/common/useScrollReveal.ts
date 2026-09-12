@@ -6,6 +6,7 @@
 // Respects prefers-reduced-motion: elements appear instantly without animation.
 
 import { onMounted, onUnmounted, type Ref } from 'vue'
+import { usePreferredReducedMotion } from '@vueuse/core'
 
 export interface UseScrollRevealOptions {
   /** Root margin for IntersectionObserver (e.g., '0px 0px -80px 0px') */
@@ -56,9 +57,7 @@ export function useScrollReveal(
 
   onMounted(() => {
     // Respect prefers-reduced-motion: skip observation, elements stay visible (no animation)
-    const prefersReducedMotion = typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false
+    const prefersReducedMotion = usePreferredReducedMotion().value
 
     if (prefersReducedMotion) {
       // Elements are already visible by default — no class changes needed

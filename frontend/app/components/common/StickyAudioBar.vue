@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, watch } from 'vue'
+import { onKeyStroke } from '@vueuse/core'
 
 interface Props {
   active?: boolean
@@ -74,51 +75,103 @@ const displayText = computed(() => props.textContent || 'Generating...')
 
 const isPlaying = computed(() => props.isPlaying && !props.isPaused)
 
-// Keyboard shortcuts (AC-7)
-const handleKeydown = (e: KeyboardEvent) => {
-  if (e.ctrlKey || e.metaKey || e.shiftKey) {
-    // Allow Ctrl/Cmd+Enter as a toggle shortcut even with modifiers
-    if (e.key === 'Enter') {
+// Keyboard shortcuts via VueUse onKeyStroke (AC-7)
+let stopHandlers: (() => void)[] = []
+
+function registerKeyHandler(key: string, handler: (e: KeyboardEvent) => void): void {
+  stopHandlers.push(onKeyStroke(key, handler, { eventName: 'keydown' }))
+}
+
+function bindShortcuts(): void {
+  registerKeyHandler(' ', (e) => {
+    // Ignore space when modifier keys are held (shortcut passthrough)
+    if (e.ctrlKey || e.metaKey || e.shiftKey) return
+    e.preventDefault()
+    emit('toggle')
+  })
+  registerKeyHandler('Enter', (e) => {
+    // Only trigger toggle for Ctrl+Enter or Cmd+Enter
+    if (!e.ctrlKey && !e.metaKey) return
+    e.preventDefault()
+    emit('toggle')
+  })
+  registerKeyHandler('ArrowLeft', (e) => {
+    e.preventDefault()
+    emit('seek', Math.max(0, (props.currentTime / (props.duration || 1)) - 0.05))
+  })
+  registerKeyHandler('ArrowRight', (e) => {
+    e.preventDefault()
+    emit('seek', Math.min(1, (props.currentTime / (props.duration || 1)) + 0.05))
+  })
+  registerKeyHandler('Escape', (e) => {
+    e.preventDefault()
+    emit('close')
+  })
+}
+
+function unbindShortcuts(): void {
+  stopHandlers.forEach(stop => stop())
+  stopHandlers = []
+}
+
+watch(() => props.shortcutsEnabled, (enabled) => {
+  if (enabled) {
+    bindShortcuts()
+  } else {
+    unbindShortcuts()
+  }
+}, { immediate: true })
+
+// Expose keyboard handler for testing
+function handleKeydown(e: KeyboardEvent): void {
+  // Delegate keyboard events to the registered handlers.
+  // This allows tests to dispatch events directly on the component instance
+  // without relying on window-level event dispatch.
+  const { key, ctrlKey, metaKey, shiftKey } = e
+
+  // Space: toggle (only without modifiers)
+  if (key === ' ') {
+    if (!ctrlKey && !metaKey && !shiftKey) {
       e.preventDefault()
       emit('toggle')
-      return
     }
     return
   }
 
-  switch (e.key) {
-    case ' ':
+  // Enter: Ctrl+Enter or Cmd+Enter → toggle
+  if (key === 'Enter') {
+    if (ctrlKey || metaKey) {
       e.preventDefault()
       emit('toggle')
-      break
-    case 'ArrowLeft':
-      e.preventDefault()
-      emit('seek', Math.max(0, (props.currentTime / (props.duration || 1)) - 0.05))
-      break
-    case 'ArrowRight':
-      e.preventDefault()
-      emit('seek', Math.min(1, (props.currentTime / (props.duration || 1)) + 0.05))
-      break
-    case 'Escape':
-      e.preventDefault()
-      emit('close')
-      break
+    }
+    return
+  }
+
+  // ArrowLeft: seek backward
+  if (key === 'ArrowLeft') {
+    e.preventDefault()
+    emit('seek', Math.max(0, (props.currentTime / (props.duration || 1)) - 0.05))
+    return
+  }
+
+  // ArrowRight: seek forward
+  if (key === 'ArrowRight') {
+    e.preventDefault()
+    emit('seek', Math.min(1, (props.currentTime / (props.duration || 1)) + 0.05))
+    return
+  }
+
+  // Escape: close bar
+  if (key === 'Escape') {
+    e.preventDefault()
+    emit('close')
+    return
   }
 }
-onMounted(() => {
-  if (props.shortcutsEnabled) {
-    window.addEventListener('keydown', handleKeydown)
-  }
-})
 
-onUnmounted(() => {
-  if (props.shortcutsEnabled) {
-    window.removeEventListener('keydown', handleKeydown)
-  }
-})
-
-// Expose keyboard handler for testing
 defineExpose({
+  bindShortcuts,
+  unbindShortcuts,
   handleKeydown
 })
 </script>
