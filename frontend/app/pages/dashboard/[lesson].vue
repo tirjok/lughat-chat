@@ -5,10 +5,9 @@ const route = useRoute()
 
 
 const lessonId = computed(() => {
-  const level = (route.params?.level as string) || ''
   const lesson = (route.params?.lesson as string) || ''
-  if (level && lesson) {
-    return level.toLowerCase() + '-' + lesson.padStart(2, '0')
+  if (lesson) {
+    return lesson
   }
   return ''
 })

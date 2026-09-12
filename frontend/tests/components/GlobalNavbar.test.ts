@@ -125,8 +125,8 @@ describe('GlobalNavbar', () => {
       const classes = firstStub.classes().join(' ')
       expect(classes).toContain('text-primary-600')
     })
-    it('When on /dashboard/level/a1/5 then the Dashboard nav link is highlighted', () => {
-      const wrapper = mountNavbar('/dashboard/level/a1/5')
+    it('When on /dashboard/level/a1/a1-01 then the Dashboard nav link is highlighted', () => {
+      const wrapper = mountNavbar('/dashboard/level/a1/a1-01')
 
       const dashboardStubs = wrapper.findAll('nuxt-link-stub[to="/dashboard"]')
       const firstStub = dashboardStubs[0]
@@ -183,7 +183,7 @@ describe('GlobalNavbar', () => {
     })
 
     it('When on a lesson route then progress bar fill has gradient classes', () => {
-      const wrapper = mountNavbar('/dashboard/level/a1/5')
+      const wrapper = mountNavbar('/dashboard/level/a1/a1-01')
 
       const progressFill = wrapper.find('div.h-1 > div')
 
@@ -204,7 +204,7 @@ describe('GlobalNavbar', () => {
     it('When progress is 50% on a lesson route then progress bar fill shows 50% width', () => {
       mockSetLessonProgress('a1-01', 50)
 
-      const wrapper = mountNavbar('/dashboard/level/a1/01')
+      const wrapper = mountNavbar('/dashboard/level/a1/a1-01')
       const progressFill = wrapper.find('div.h-1 > div')
 
       expect(progressFill.exists()).toBe(true)
@@ -215,7 +215,7 @@ describe('GlobalNavbar', () => {
     it('When progress is 100% on a lesson route then progress bar fill shows 100% width', () => {
       mockSetLessonProgress('a2-03', 100)
 
-      const wrapper = mountNavbar('/dashboard/level/a2/03')
+      const wrapper = mountNavbar('/dashboard/level/a2/a2-03')
       const progressFill = wrapper.find('div.h-1 > div')
 
       expect(progressFill.exists()).toBe(true)

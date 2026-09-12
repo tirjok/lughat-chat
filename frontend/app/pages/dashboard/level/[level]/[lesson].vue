@@ -14,7 +14,7 @@ import LessonGrammar from '~/components/lesson/LessonGrammar.vue'
 const healthPoll = useBackendHealth()
 const lessonProgress = useLessonProgress()
 const isAudioDisabled = computed(() => healthPoll.status.value !== 'ready')
-const lessonId = computed(() => levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
+const lessonId = computed(() => lessonParam.value)
 const totalLines = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return 0
@@ -48,7 +48,7 @@ const sectionTabs = computed(() => {
 })
 const activeSection = shallowRef<string | undefined>('Dialogue')
 const currentLessonData = computed(() => {
-  const lesson = getLessonById(levelParam.value.toLowerCase() + '-' + lessonParam.value.padStart(2, '0'))
+  const lesson = getLessonById(lessonParam.value)
   return lesson
 })
 

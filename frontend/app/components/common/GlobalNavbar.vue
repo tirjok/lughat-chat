@@ -36,11 +36,9 @@ const { getLessonProgress } = useLessonProgress()
 const progressWidth = computed(() => {
   // Only show progress on lesson routes; return '0%' elsewhere
   if (!props.currentPath.startsWith('/dashboard/level/')) return '0%'
-  // Extract lessonId from route: /dashboard/level/{level}/{lesson}
   const parts = props.currentPath.split('/')
-  const level = parts[3] || ''
   const lesson = parts[4] || ''
-  const lessonId = level.toLowerCase() + '-' + lesson.padStart(2, '0')
+  const lessonId = lesson
   const pct = getLessonProgress(lessonId)
   return `${pct}%`
 })
