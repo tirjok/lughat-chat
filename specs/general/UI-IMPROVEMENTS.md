@@ -298,4 +298,359 @@ const completedLessons = computed(() => 0)
 
 ## Notes on Relationship to Existing Reviews
 
-This dashboard review is independent of the Index Page review (already in this document). The dashboard is a separate page (`/dashboard`) with different components and UX concerns. The existing index page issues (RTL, voice selector, generate button, etc.) do not overlap with dashboard-specific issues.
+
+---
+
+# UI/UX Improvements — Lesson Dialogue Component (`LessonDialogue.vue`)
+
+## Summary
+
+
+---
+
+## Critical Issues
+
+### Issue 1: Scene Tabs Lack Keyboard Navigation (Tab Order, Arrows, Enter/Space)
+
+**Current State**: Scene tabs are `<button>` elements inside a `role="tablist"` with `role="tab"` on each, and `:aria-selected` bindings. However, there are NO `tabindex` attributes, NO `@keydown` handlers for arrow keys, and NO `aria-activedescendant` linkage.
+
+Lines 76-97 of `LessonDialogue.vue`:
+```html
+<div class="flex gap-2 overflow-x-auto pb-2" data-testid="scene-tabs" role="tablist">
+  <button v-for="(label, index) in sceneLabels" :key="index" :data-testid="`scene-tab`" :class="[…]" :role="`tab`" :aria-selected="index === currentSceneIndex" @click="selectScene(index)">
+    {{ label }}
+  </button>
+</div>
+```
+
+**Problem**: The ARIA roles are declared but the behavioral contract of ARIA tabs is NOT fulfilled. Per ARIA Authoring Practices for tabs, keyboard users MUST be able to navigate between tabs with Left/Right arrow keys, activate with Enter/Space, and have the active tab tracked with `aria-activedescendant` on the tablist. Without these, keyboard users can only reach tabs via sequential tab-order (which works if buttons are naturally focusable — they are `<button>` elements — but the visual active state and content do NOT update with keyboard navigation since `selectScene(index)` is wired only to `@click`). Arrow key navigation is completely missing. This violates WCAG 2.1 **2.1.1 Keyboard** (Level A) and **4.1.2 Name, Role, Value** (Level A).
+
+**Recommendation**: 
+1. Add `@keydown.arrow.left` / `@keydown.arrow.right` handlers on the `tablist` container to cycle `currentSceneIndex`.
+2. Add `tabindex="0"` to the active tab and `tabindex="-1"` to inactive tabs.
+3. Add `aria-activedescendant` on the `tablist` bound to the active tab's element ID.
+4. Keep `@click` for mouse users (both paths converge).
+
+Example keyboard handler:
+```ts
+function handleTabKeydown(event: KeyboardEvent): void {
+  const key = event.key
+  if (key === 'ArrowRight' || key === 'ArrowLeft') {
+    event.preventDefault()
+    const dir = key === 'ArrowRight' ? 1 : -1
+    const nextIndex = (currentSceneIndex.value + dir + sceneLabels.value.length) % sceneLabels.value.length
+    selectScene(nextIndex)
+  }
+}
+```
+
+**Impact**: Keyboard and screen reader users get full tab navigation matching the WAI-ARIA tab pattern. Current state: keyboard-only users can reach tabs but content never updates — a partial-focus trap.
+
+---
+
+### Issue 2: Play Buttons Are Inside Clickable Cards — Conflicting Interaction Model
+
+**Current State**: Lines 120-170 render a line card `<div>` with `@click="currentLineIndex = lineIndex; playLine(lineIndex)"` that contains an inner `<button>` with `@click.stop="playLine(lineIndex)"`.
+
+**Problem**: The `.stop` modifier prevents event bubbling to the outer card, but clicking the card AND clicking the play button both trigger `playLine(index)`. This is **redundant interaction** that confuses users. More critically, clicking the card to select (set `currentLineIndex`) AND simultaneously play audio is a **conflicting interaction model**: sometimes the user wants to just review a line without playing audio, but clicking the card always triggers playback.
+
+**Recommendation**: Split the two interactions:
+1. **Clicking the card body** (non-button area) should only select/activate the line — set `currentLineIndex` without emitting `playLine`.
+2. **Clicking the play button** should emit `playLine` — unchanged.
+3. Visually highlight the active line (existing behavior) without triggering audio.
+
+**Impact**: Users gain the ability to review lines without triggering audio — essential for a language learning context where learners may want to read/translate before committing to audio.
+
+---
+
+### Issue 3: Comparison Card Is Hardcoded — It Will Be Out of Date When Curriculum Changes
+
+**Current State**: Lines 184-204 render a comparison card with hard-coded text about gender suffixes, verb conjugation, and welcome phrases — all specific to the A1-01 lesson's dialogue between Muhammad↔Ali and Khadija↔Aisha. Uses `!text-base` (inline `!important` override) — a design smell.
+
+**Problem**: This card is **tied to a specific lesson's content**. When the curriculum expands (more lessons with multi-scene dialogues), this card will render identical content regardless of which lesson's dialogue is being viewed. It will show Muhammad/Ali comparison text when the user is viewing an A2 or B1 dialogue — **pedagogically misleading**. The card also has `v-if="dialogueContent.scenes.length > 1"` — so it appears for ANY multi-scene dialogue, but its content is lesson-specific. This is a **data/content mismatch bug** waiting to be discovered.
+
+**Recommendation**: 
+1. **Remove the hardcoded comparison card** entirely. It's lesson-specific content baked into a reusable component.
+2. If comparison content is needed, make it part of the curriculum data model: extend `DialogueLine` with optional `comparison_notes: string[]` or add a `comparison` field to `DialogueScene`.
+3. The component should be **purely presentational** — it renders whatever the data gives it. Hardcoding lesson-specific pedagogy here breaks reusability.
+
+**Impact**: Prevents the card from showing irrelevant comparison content for non-A1-01 dialogues. The component becomes correctly reusable across all lessons.
+
+---
+
+### Issue 4: Empty Speaker Field Produces No Speaker Badge — Inconsistent Layout Between Single- and Multi-Scene Dialogues
+
+**Current State**: Lines 107-117:
+```html
+<div v-if="line.speaker" class="flex items-center gap-2">
+  <span :data-testid="`speaker-badge-${lineIndex}`" :class="`inline-block px-2 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-br ${getSpeakerGradient(line.speaker)}`">
+    {{ line.speaker }}
+  </span>
+</div>
+```
+Curriculum data has lines with `speaker: ''` (empty string) — see `curriculum.ts` lines 514, 527, 627, 640, 721, 734, 831, 844, 941, 954, 1051, 1155. When `speaker` is empty, the `v-if="line.speaker"` evaluates to `false` (empty string is falsy), so **no speaker badge renders**.
+
+**Problem**: For single-scene dialogues (empty label, `speaker: ''`), there's no speaker identity at all — the learner has no visual cue about who is speaking. In multi-scene dialogues, the speaker badge appears with gradient colors. The **inconsistency between single-scene (no identity) and multi-scene (identity + color coding)** is confusing.
+
+**Recommendation**: 
+1. For single-scene dialogues where `speaker` is empty, consider rendering a **neutral placeholder** (e.g., "Narrator" or the dialogue title) if the curriculum data specifies it, OR make it explicit in the component that unspoken lines are narrator text.
+2. Alternatively, add a `speaker` field to the curriculum data model that is **required** (not optional empty string) for dialogues that have speakers.
+
+**Impact**: Eliminates layout inconsistency between single- and multi-scene dialogues; gives learners consistent identity cues.
+
+---
+
+### Issue 5: Play Scene Button Has No Icon and No Visual Distinction from a Body Button
+
+**Current State**: Lines 174-182:
+```html
+<button v-if="currentScene.lines.length > 0" data-testid="play-scene" :disabled="_props.isAudioDisabled" @click="playScene">
+  Play Scene
+</button>
+```
+
+**Problem**: The "Play Scene" button has **no icon**, no distinct styling (no classes at all — just raw text), and sits at the same indentation as the line cards. It reads as an afterthought — visually it blends into the text flow rather than standing out as an actionable control. Compare this to the individual play buttons which are 32×32px circles with a play icon and primary-600 background. When `isAudioDisabled` is true, the button is `disabled` — but there's no tooltip, no `aria-describedby`, and no visible hint about why it's disabled.
+
+**Recommendation**: 
+1. Add a play icon (the same SVG as the line buttons) + a rounded background + primary colors to make it visually consistent with the line play buttons.
+2. Position it as a full-width or right-aligned action button below all line cards.
+3. When disabled, show a subtle visual cue (e.g., a `title` attribute: "Audio is currently disabled").
+
+
+---
+
+## High Priority Improvements
+
+### Issue 6: Current Line Highlighting Lacks Visual Progression — Too Subtle
+
+**Current State**: Lines 122-130:
+```html
+:class="[
+  'rounded-xl border p-4 md:p-5 transition-all cursor-pointer',
+  _props.isAudioDisabled ? 'opacity-40 cursor-not-allowed'
+    : [lineIndex === currentLineIndex ? 'bg-gradient-to-l from-primary-100 to-primary-50 border-primary-300 dark:from-primary-900/40 dark:to-primary-800/30 dark:border-primary-600'
+      : 'bg-white border-stone-200 dark:bg-stone-900 dark:border-stone-700']
+]"
+```
+
+**Problem**: The active line gradient (`from-primary-100 to-primary-50` light, `dark:from-primary-900/40` at 40% opacity dark) is a **low-contrast visual state** — very light against white, and faint in dark mode. Users may not notice which line is "active." There is also **no auto-scroll** when a line becomes active — if the dialogue has many lines, the active line might be off-screen.
+
+**Recommendation**: 
+1. Increase contrast: use a more saturated gradient (`from-primary-200 to-primary-100` light, `dark:from-primary-800/60 dark:to-primary-700/40` dark) or add a left accent bar (`border-l-4 border-primary-500`).
+2. When `currentLineIndex` changes, scroll the active line card into view using `scrollIntoView({ behavior: 'smooth', block: 'center' })`.
+
+**Impact**: Users immediately perceive which line is active — critical for following along during audio playback.
+
+---
+
+### Issue 7: Speaker Gradient Logic Is Fragile — Name Matching vs. Curricular Gender Data
+
+**Current State**: Lines 61-64:
+```ts
+function isMaleSpeaker(speaker: string): boolean {
+  const maleNames = ['muhammad', 'ali', 'abraham', 'ibrahim', 'musa', 'moses', 'isa', 'umar', 'uthman', 'abu', 'ibn']
+  return maleNames.some(name => speaker.toLowerCase().includes(name))
+}
+```
+
+**Problem**: Uses **string matching** to determine gender. Fragile: "Abu" can be a prefix (e.g., "Abu Bakr") and matches inside any string containing "abu." Names not in the 12-name list (e.g., "Abdullah") default to "female" (pink) — incorrect for unknown male names. The list is manually maintained and will drift from curriculum.
+
+**Recommendation**: 
+1. Add a `gender: 'male' | 'female'` field to `DialogueLine` in the curriculum data model.
+2. If not possible, accept a `maleSpeakerPatterns: string[]` prop so curriculum data can override per-lesson.
+3. Add a **fallback neutral gradient** (e.g., `from-stone-600 to-stone-800`) for unmatched names — rather than defaulting to "female" (pink).
+
+**Impact**: Speaker color-coding is robust to new names and doesn't make incorrect gender assumptions.
+
+---
+
+### Issue 8: Missing Audio Feedback State — No "Currently Playing" Indicator
+
+**Current State**: The component emits `playLine(index)` and `playScene()` but has **no concept of playing state**. The `isAudioDisabled` prop controls whether buttons are disabled, but there's no `isPlaying` state or `@playing` event from the parent.
+
+**Problem**: When audio is playing, the user has **no visual indication** of which line is currently being read by the TTS engine. The active line highlight (Issue 6) is too subtle. There's no animation, no icon state change, no word-by-word highlight within the Arabic text. For a language learning app focused on listening comprehension, this is a **critical gap**.
+
+**Recommendation**: 
+1. Add an `@playing` event from the parent with `{ index: number, wordIndex?: number }` to track playback position.
+2. Show a **pulsing animation** on the currently playing line (e.g., a subtle border pulse or background shimmer).
+3. Optionally highlight individual words within the Arabic text as they are being spoken (word-level sync).
+
+**Impact**: Learners can visually follow along with audio playback — essential for listening comprehension exercises.
+
+---
+
+### Issue 9: No Error State or Loading State for Dialogue Content
+
+**Current State**: Lines 32-38:
+```ts
+const dialogueContent = computed<EmptyDialogue>(() => {
+  const content = _props.section.content
+  if (!content || content.type !== 'dialogue') {
+    return { scenes: [] }
+  }
+  return content as EmptyDialogue
+})
+```
+
+**Problem**: When content is not a dialogue type, the component silently renders **nothing** (empty scenes array). There's no error state, no "No dialogue content" message, and no loading skeleton. This is a **silent failure mode** — if the curriculum data ever has a bug or the section type changes, the component just disappears.
+
+**Recommendation**: Add an empty state:
+```html
+<div v-if="dialogueContent.scenes.length === 0" class="text-center py-8 text-stone-400">
+  <p>No dialogue content for this lesson.</p>
+</div>
+```
+
+**Impact**: Transparent failure mode — users and developers know when dialogue content is missing.
+
+---
+
+## Medium Priority Enhancements
+
+### Issue 10: Speaker Badges Inherit Raw Name Case — Inconsistent Display
+
+**Current State**: Line 115: `{{ line.speaker }}`
+
+**Problem**: Speaker names render with whatever case the curriculum data specifies. "Muhammad" (capitalized) vs "ali" (lowercase) vs empty strings. The badge text is **unnormalized** — it shows raw data values. If the curriculum ever uses "ali" (lowercase), it will render as "ali" on a bold white badge, which looks broken.
+
+**Recommendation**: Normalize speaker names for display: `line.speaker.charAt(0).toUpperCase() + line.speaker.slice(1)` or a composable `useSpeakerName(speaker)` that handles normalization.
+
+**Impact**: Speaker names display consistently regardless of curriculum data casing.
+
+---
+
+### Issue 11: Teacher Notes Render Inline Without Distinction from Translation
+
+**Current State**: Lines 146-151:
+```html
+<p v-if="line.notes" class="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg px-3 py-1.5 inline-block">
+  {{ line.notes }}
+</p>
+```
+
+**Problem**: Teacher notes render as a small blue chip/label **below** the English translation text, making them look like an afterthought. Notes are pedagogically valuable (e.g., "Formal Islamic greeting") but are visually buried. If notes contain Arabic text (mixed-direction), the blue chip may not render correctly (no Unicode BIDI handling).
+
+**Recommendation**: 
+1. Move notes to **above** the English translation, or put them in a collapsible "Tip" section.
+2. When notes contain mixed Arabic/English, wrap the Arabic portion in a `<span dir="rtl">`.
+
+**Impact**: Pedagogical notes become more discoverable and readable.
+
+---
+
+### Issue 12: Scene Tab Labels Are Overly Long — Break Layout on Narrow Viewports
+
+**Current State**: Line 96: `{{ label }}` — scene labels like "Scene 1: Muhammad ↔ Ali (Male-to-Male)" and "Scene 2: Khadija ↔ Aisha (Female-to-Female)".
+
+**Problem**: Long text strings with `whitespace-nowrap` on tab buttons. On mobile, tabs overflow (`.overflow-x-auto`), requiring horizontal scroll. The parenthetical "(Male-to-Male)" is redundant since speaker badges inside the scene already communicate this.
+
+**Recommendation**: 
+1. Shorten labels to just "Scene 1" / "Scene 2" — remove the speaker description from tab labels.
+2. Keep the speaker description in the scene tab's `title` attribute or in a tooltip.
+3. Alternatively, render just the speaker pair: "Muhammad ↔ Ali" / "Khadija ↔ Aisha".
+
+**Impact**: Tabs are narrower and fit on mobile viewports without horizontal scroll.
+
+---
+
+### Issue 13: Line Cards Lack Word-Level Click/Highlight for Vocabulary Study
+
+**Current State**: Lines 132-138:
+```html
+<p dir="rtl" class="font-arabic text-lg md:text-xl text-stone-800 dark:text-stone-100 mb-2">
+  {{ line.arabic }}
+</p>
+```
+
+**Problem**: Arabic text is a single `<p>` element. In a language learning app, learners want to **tap individual words** to see definitions, harakat (vowel marks), or root forms. The entire sentence as one block makes this impossible.
+
+**Recommendation**: 
+1. Split the Arabic text into individual words and render each as a `<span>` with hover state (highlight on hover, show meaning in a tooltip or popover).
+2. Consider a "Word Study Mode" toggle that splits text into clickable words.
+
+**Impact**: Enables interactive vocabulary learning within dialogue context — a key feature for Arabic language apps.
+
+---
+
+### Issue 14: No Skip/Forward Controls — Learner Cannot Navigate Forward Through Dialogue
+
+**Current State**: The component only supports playing the current line. There is no "Next line" or "Previous line" button.
+
+**Problem**: Once audio is playing, if a user wants to skip to the next line, they must wait for the current audio to finish, or manually click the next line's play button. There's no **forward/skip button** (like a media player's next-track control).
+
+**Recommendation**: Add "Previous Line" and "Next Line" buttons (keyboard-accessible, possibly as arrow-key shortcuts) that navigate between lines without triggering audio.
+
+**Impact**: Learners have fine-grained control over navigation within a dialogue scene.
+
+---
+
+## Low Priority Suggestions
+
+### Issue 15: Speaker Gradient Colors Have Insufficient Contrast in Dark Mode
+
+**Current State**: Male: `from-teal-700 to-teal-900`, Female: `from-pink-700 to-pink-900`.
+
+**Problem**: In dark mode, `teal-900` (#134e4a) and `pink-900` (#831843) are very dark colors that blend with the `bg-stone-950` page background. The white text has good contrast, but the badge itself may be hard to distinguish from the background in dark mode.
+
+**Recommendation**: Use slightly lighter gradients for dark mode: `teal-600 → teal-800` and `pink-600 → pink-800`, or add a subtle ring/shadow to make badges pop.
+
+**Impact**: Better badge visibility in dark mode.
+
+---
+
+### Issue 16: No Bookmarking or "Save This Line" Feature
+
+**Current State**: Users can play lines and scenes but cannot mark a line as "favorite" or "needs review."
+
+**Problem**: In a language learning context, learners will encounter lines they want to revisit later. There's no mechanism to save or bookmark specific lines for review.
+
+**Recommendation**: Add a "bookmark" icon on each line card that emits a `bookmark` event. The parent can persist bookmarked line indices.
+
+**Impact**: Learners can build a personal "review" list from dialogues.
+
+---
+
+### Issue 17: Font Size for Arabic Text Could Be Larger on Large Screens
+
+**Current State**: `class="font-arabic text-lg md:text-xl"`
+
+**Problem**: `text-lg` (18px) on mobile, `text-xl` (20px) on desktop. For an Arabic language learning app, the Arabic text is the **primary content** and could benefit from larger sizes, especially for early learners (A1/A2).
+
+**Recommendation**: Increase to `text-xl md:text-2xl`.
+
+**Impact**: Better readability for Arabic text, especially for early-level learners.
+
+---
+
+## Positive Observations
+
+1. **Scene tab UI is clean and familiar**: The tab-based navigation for dialogue scenes mirrors a common UI pattern that users understand immediately.
+
+2. **Speaker badge color-coding is intuitive**: Male/female gradient distinction (teal/pink) provides an instant visual cue about speaker identity — helpful for lessons teaching gender-specific Arabic forms.
+
+3. **RTL Arabic rendering is correct**: `dir="rtl"` on Arabic text paragraphs with `font-arabic` (Cairo font) is properly applied, ensuring correct text direction and font rendering.
+
+4. **Dark mode support is comprehensive**: All UI elements have `dark:` variants — the component was built with dark mode from the start.
+
+5. **Teacher notes are a nice pedagogical touch**: Inline notes like "Formal Islamic greeting" provide cultural and linguistic context within the dialogue.
+
+6. **Comparison card concept is excellent**: The idea of comparing gender forms between scenes (male vs. female) is pedagogically valuable — it just needs to be data-driven rather than hardcoded (Issue 3).
+
+7. **Existing test coverage is solid**: The 241-line test file covers scene tabs, scene switching, speaker badges, Arabic RTL, play line/scene emits, and active line highlighting — a good foundation.
+
+---
+
+## Priority Matrix
+
+| Priority | Issues | Estimated Effort |
+|----------|--------|------------------|
+| Critical | 1, 2, 3, 4, 5 | Medium (keyboard nav + interaction split are largest) |
+| High | 6, 7, 8, 9 | Low-Medium (state management + curriculum data wiring) |
+| Medium | 10, 11, 12, 13, 14 | Low (UI polish + new features) |
+| Low | 15, 16, 17 | Low (minor visual tweaks) |
+
+---
+
+## Notes on Relationship to Existing Reviews
+
+This review is independent of the Dashboard Page review (existing in this document). The LessonDialogue component is a child component used within the lesson page (`/dashboard/level/[level]/[lesson].vue`). Its issues are component-level UX/interaction problems, distinct from the dashboard-level data wiring issues previously documented.
