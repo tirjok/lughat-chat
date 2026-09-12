@@ -298,7 +298,7 @@ onUnmounted(() => {
           :estimated-time="estimatedTime"
           :scenes="scenes"
           :audio-type="'AI-Generated Audio'"
-          :is-ready="true"
+          :is-ready="healthPoll.modelLoaded.value"
         />
       </div>
     </div>

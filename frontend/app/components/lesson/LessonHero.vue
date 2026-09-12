@@ -14,7 +14,7 @@ const _props = withDefaults(defineProps<Props>(), {
   estimatedTime: '',
   scenes: '',
   audioType: '',
-  isReady: true
+  isReady: false
 })
 </script>
 

@@ -31,7 +31,7 @@ function getWrapper(props: Record<string, unknown> = {}) {
 
 describe('LessonHero | renders outer card structure', () => {
   it('renders outer container with bg-white, rounded-2xl, border-stone-200', async () => {
-    const wrapper = getWrapper()
+    const wrapper = getWrapper({ isReady: false })
     await nextTick()
 
     const outer = wrapper.find('[class*="rounded-2xl"]')
@@ -48,7 +48,7 @@ describe('LessonHero | renders outer card structure', () => {
 
 describe('LessonHero | gradient banner', () => {
   it('renders inner banner with gradient classes', async () => {
-    const wrapper = getWrapper()
+    const wrapper = getWrapper({ isReady: false })
     await nextTick()
 
     const banner = wrapper.find('[class*="from-primary-700"]')
@@ -65,7 +65,7 @@ describe('LessonHero | gradient banner', () => {
 
 describe('LessonHero | decorative Arabic text overlay', () => {
   it('renders decorative Arabic text at opacity-10', async () => {
-    const wrapper = getWrapper({ arabicTitle: 'التَّحِيَّةُ' })
+    const wrapper = getWrapper({ arabicTitle: 'التَّحِيَّةُ', isReady: false })
     await nextTick()
 
     const overlay = wrapper.find('[class*="opacity-10"]')
@@ -77,7 +77,7 @@ describe('LessonHero | decorative Arabic text overlay', () => {
   })
 
   it('uses provided arabicTitle for top-right decorative text', async () => {
-    const wrapper = getWrapper({ arabicTitle: 'التَّحِيَّةُ' })
+    const wrapper = getWrapper({ arabicTitle: 'التَّحِيَّةُ', isReady: false })
     await nextTick()
 
     const overlay = wrapper.find('[class*="opacity-10"]')
@@ -86,7 +86,7 @@ describe('LessonHero | decorative Arabic text overlay', () => {
   })
 
   it('falls back to السَّلَامُ عَلَيْكُمْ when no arabicTitle', async () => {
-    const wrapper = getWrapper()
+    const wrapper = getWrapper({ isReady: false })
     await nextTick()
 
     const overlay = wrapper.find('[class*="opacity-10"]')
@@ -99,7 +99,7 @@ describe('LessonHero | decorative Arabic text overlay', () => {
 
 describe('LessonHero | status pills', () => {
   it('renders LEVEL pill with correct level value', async () => {
-    const wrapper = getWrapper({ level: 'B1' })
+    const wrapper = getWrapper({ level: 'B1', isReady: false })
     await nextTick()
 
     const pills = wrapper.findAll('[class*="bg-white/20"]')
@@ -108,7 +108,7 @@ describe('LessonHero | status pills', () => {
   })
 
   it('renders LESSON badge with lesson number', async () => {
-    const wrapper = getWrapper({ lessonNumber: '5' })
+    const wrapper = getWrapper({ lessonNumber: '5', isReady: false })
     await nextTick()
 
     const lessonBadge = wrapper.find('[class*="bg-gold-400"]')
@@ -142,7 +142,7 @@ describe('LessonHero | status pills', () => {
 
 describe('LessonHero | title rendering', () => {
   it('renders h2 with no title (page provides its own <h1>)', async () => {
-    const wrapper = getWrapper({})
+    const wrapper = getWrapper({ isReady: false })
     await nextTick()
 
     const heading = wrapper.find('h2')
@@ -150,7 +150,7 @@ describe('LessonHero | title rendering', () => {
   })
 
   it('renders arabic title text in decorative overlay when arabicTitle is provided', async () => {
-    const wrapper = getWrapper({ arabicTitle: 'التَّحِيَاتُ' })
+    const wrapper = getWrapper({ arabicTitle: 'التَّحِيَاتُ', isReady: false })
     await nextTick()
 
     // arabicTitle is now in the decorative overlay (div with font-arabic), not a standalone <p>
@@ -160,7 +160,7 @@ describe('LessonHero | title rendering', () => {
   })
 
   it('renders default Arabic text in decorative overlay when arabicTitle is empty', async () => {
-    const wrapper = getWrapper({ arabicTitle: '' })
+    const wrapper = getWrapper({ arabicTitle: '', isReady: false })
     await nextTick()
 
     const overlayDiv = wrapper.find('.font-arabic.absolute.top-4')
@@ -176,7 +176,8 @@ describe('LessonHero | metadata row', () => {
     const wrapper = getWrapper({
       estimatedTime: '15 min',
       scenes: '3 scenes',
-      audioType: 'Narration'
+      audioType: 'Narration',
+      isReady: false
     })
     await nextTick()
 
@@ -188,7 +189,8 @@ describe('LessonHero | metadata row', () => {
     const wrapper = getWrapper({
       estimatedTime: '',
       scenes: '',
-      audioType: ''
+      audioType: '',
+      isReady: false
     })
     await nextTick()
 
@@ -198,7 +200,7 @@ describe('LessonHero | metadata row', () => {
   })
 
   it('renders estimated time with clock icon', async () => {
-    const wrapper = getWrapper({ estimatedTime: '15 min' })
+    const wrapper = getWrapper({ estimatedTime: '15 min', isReady: false })
     await nextTick()
 
     const metadataRow = wrapper.find('[class*="flex-wrap"]')
@@ -212,7 +214,7 @@ describe('LessonHero | metadata row', () => {
   })
 
   it('renders scenes with microphone icon', async () => {
-    const wrapper = getWrapper({ scenes: '3 scenes' })
+    const wrapper = getWrapper({ scenes: '3 scenes', isReady: false })
     await nextTick()
 
     const metadataRow = wrapper.find('[class*="flex-wrap"]')
@@ -226,7 +228,7 @@ describe('LessonHero | metadata row', () => {
   })
 
   it('renders audio type with music icon', async () => {
-    const wrapper = getWrapper({ audioType: 'Narration' })
+    const wrapper = getWrapper({ audioType: 'Narration', isReady: false })
     await nextTick()
 
     const metadataRow = wrapper.find('[class*="flex-wrap"]')
@@ -274,14 +276,14 @@ describe('LessonHero | props are reflected in rendered output', () => {
   })
 
   it('renders with numeric lessonNumber', async () => {
-    const wrapper = getWrapper({ lessonNumber: 7 })
+    const wrapper = getWrapper({ lessonNumber: 7, isReady: false })
     await nextTick()
 
     expect(wrapper.html()).toContain('LESSON 7')
   })
 
   it('renders with string lessonNumber', async () => {
-    const wrapper = getWrapper({ lessonNumber: '7' })
+    const wrapper = getWrapper({ lessonNumber: '7', isReady: false })
     await nextTick()
 
     expect(wrapper.html()).toContain('LESSON 7')
@@ -292,7 +294,7 @@ describe('LessonHero | props are reflected in rendered output', () => {
 
 describe('LessonHero | dark mode support', () => {
   it('applies dark background and border on dark mode', async () => {
-    const wrapper = getWrapper()
+    const wrapper = getWrapper({ isReady: false })
     await nextTick()
 
     const outer = wrapper.find('[class*="rounded-2xl"]')
