@@ -55,6 +55,28 @@ describe('useAudioModule', () => {
       coSpy.mockRestore()
       roSpy.mockRestore()
     })
+
+    it('When load is called with audioRef set then sets audioRef src to the blob URL', async () => {
+      // Arrange
+      let storedSrc = ''
+      const mockAudio = {
+        play: vi.fn(() => Promise.resolve()),
+        pause: vi.fn(),
+        addEventListener: vi.fn(),
+        set src(val: string) { storedSrc = val },
+        get src() { return storedSrc }
+      } as unknown as HTMLAudioElement
+      const module = useAudioModule()
+      module.audioRef.value = mockAudio
+      const originalCreate = URL.createObjectURL.bind(URL.createObjectURL)
+      URL.createObjectURL = vi.fn(b => originalCreate(b))
+      // Act
+      module.load(new Blob(['audio'], { type: 'audio/mpeg' }))
+      // Assert
+      expect(mockAudio.src).toMatch(/^http:\/\/mock\.url\/blob/)
+      // Cleanup
+      URL.createObjectURL = originalCreate as never
+    })
   })
 
   describe('play', () => {
@@ -359,7 +381,7 @@ describe('useAudioModule', () => {
   })
 
   describe('watch integration', () => {
-    it('When audioUrl changes then sets up audio events and assigns src', async () => {
+    it('When audioRef is set then sets up audio events and assigns src from audioUrl', async () => {
       // Arrange
       const mockAudio = {
         play: vi.fn(() => Promise.resolve()),
