@@ -14,11 +14,16 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from typing import Optional
 from pydantic import BaseModel, Field
-from model_manager import ModelManager
+from model_manager import ModelManager, _ensure_torch
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
 import wave
+from audio_store import AudioStore
+from synthesis import Synthesis
 SPEAKER_WAV_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "speaker_wavs"
+)
+MODEL_CACHE_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), ".cache", "tts"
 )
 # Global deep module instances
 tts_model_manager: ModelManager | None = None
@@ -38,7 +43,8 @@ async def lifespan(app: FastAPI):
         except OSError:
             pass  # Read-only filesystem
 
-    # Initialize model manager — TTS library imported lazily inside it
+    # Patch transformers for MPS/CPU compatibility BEFORE importing TTS
+    _ensure_torch()
     try:
         from TTS.api import TTS as TTS_Class
     except ImportError:
