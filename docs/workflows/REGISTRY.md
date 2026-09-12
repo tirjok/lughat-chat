@@ -1,6 +1,6 @@
 # Workflow Registry — Lughat Chat
 
-> **Generated:** 2026-08-08 (updated from Aug 2)
+> **Generated:** 2026-08-19 (updated from 2026-08-08)
 > **Scope:** Full monorepo (frontend + backend + deployment)
 > **Source:** Discovered from actual code — every route, composable, page, component, script, and config scanned.
 
@@ -28,7 +28,7 @@ These are liabilities: they will be modified without understanding their full sh
 | **RF-13** | **Model Loading Failure Recovery** | **Missing** | `backend/app.py:196-198` (lifespan retries), `frontend/app/composables/useHealthPoll.ts` (150 retries × 2s) | When model loading fails after 3 retries + 5min timeout, the status is `"error"`. No spec covers: what does the frontend show? How long does the frontend poll before giving up (300s)? Can the user manually trigger recovery? |
 | **RF-14** | **Voice Preview (Dead Code)** | **Missing** | `frontend/app/components/VoiceSelector.vue:62-64` (`previewVoice()`) | Calls `showToast()` with "Playing 1-second preview of {name}..." but does NOT actually play audio. This is dead code or an incomplete feature. No spec covers: the intended behavior. |
 | **RF-15** | **Focus Halo Effect** | **Missing** | `frontend/app/components/FocusHaloCanvas.vue` | Radial gradient glow behind active RTL textarea. No spec covers: when does it activate/deactivate? What about multiple textareas? SSR compatibility? What triggers the blur handler (textarea empty vs non-empty)? |
-| **RF-16** | **Panel Focus Management** | **Missing** | `frontend/app/composables/usePanelToggle.ts:24-33` (`focusFirstInteractiveElement`) | Automatically focuses the first interactive element when panel switches. No spec covers: what if no interactive element exists? What is the focus trap behavior? Does it work with SSR? |
+| Lesson Details Page Session | WORKFLOW-lesson-details-page.md | Draft (updated 2026-08-19) | Navigation to /dashboard/level/{level}/{lesson} | Frontend (page orchestrator) | 2026-08-19 |
 | **RF-17** | **Mobile Divider Dragging** | **Missing** | `frontend/app/composables/useDragResize.ts` | Touch/mouse drag on the canvas/control-deck divider resizes panels. No spec covers: touch event handling, boundary constraints (0.25–0.85), `user-select` suppression during drag, `prefers-reduced-motion` interaction, window resize during drag. |
 | **RF-18** | **Generation History + Cleanup** | **Missing** | `backend/app.py:507-625` (`/api/history`, `/api/cleanup`) | Two endpoints, one reads history (with optional inline cleanup), the other explicitly cleans old files. No spec covers: what is the difference between inline cleanup (history) and explicit cleanup? What happens if the JSON sidecar is missing? What is the 24h TTL boundary? |
 | **RF-19** | **Container Startup/Health** | **Missing** | `docker-compose.yml` (health check, depends_on) | Docker health check polls `/health` every 15s with 60 retries and 60s start_period. Frontend container waits for `backend: service_healthy`. No spec covers: what happens if the backend never becomes healthy? What is the frontend timeout? |
@@ -102,15 +102,15 @@ These are liabilities: they will be modified without understanding their full sh
 | TTS Studio (`/`) | `frontend/app/pages/index.vue` (239 lines) | Text Synthesis, Frontend Application Lifecycle, Keyboard Shortcut: Ctrl/Cmd+Enter, In-Flight Synthesis Cleanup, Responsive Layout Toggle, Audio Playback Lifecycle |
 | Dashboard (`/dashboard`) | `frontend/app/pages/dashboard.vue` (73 lines) | Frontend Application Lifecycle, Frontend SPA Routing |
 | Level Index (`/dashboard/level/[level]`) | `frontend/app/pages/dashboard/level/index.vue` (57 lines) | Frontend SPA Routing |
-| Lesson Page (`/dashboard/level/[level]/[id]`) | `frontend/app/pages/dashboard/level/[lesson].vue` (180 lines) | Frontend SPA Routing, Cross-Page Composable Lifecycle |
+| Lesson page (`[lesson].vue`) | `frontend/app/pages/dashboard/level/[level]/[lesson].vue` (197 lines) | Lesson Details Page Session (Draft) |
 
 ### Frontend — Composables
 
 | Composable | File | Workflows it participates in |
 |---|---|---|
 | `useHealthPoll` | `frontend/app/composables/useHealthPoll.ts` | Health Monitoring, Frontend Application Lifecycle, Cross-Page Composable Lifecycle |
-| `useAudioModule` | `frontend/app/composables/useAudioModule.ts` | Audio Playback Lifecycle, Frontend Application Lifecycle |
-| `useTtsApi` | `frontend/app/composables/useTtsApi.ts` | Text Synthesis |
+| Audio Module (`useAudioModule.ts`) | `frontend/app/composables/useAudioModule.ts` | TTS Flow (Draft), Lesson Details Page Session (Draft) |
+| TTS API Client (`useTtsApi.ts`) | `frontend/app/composables/useTtsApi.ts` | TTS Flow (Draft), Lesson Details Page Session (Draft) |
 | `useVoices` | `frontend/app/composables/useVoices.ts` | Voice Discovery, Frontend Application Lifecycle, Cross-Page Composable Lifecycle |
 | `useInputValidation` | `frontend/app/composables/useInputValidation.ts` | Text Synthesis (precondition) |
 | `usePanelToggle` | `frontend/app/composables/usePanelToggle.ts` | Responsive Layout Toggle, Panel Focus Management, Cross-Page Composable Lifecycle |
@@ -123,9 +123,9 @@ These are liabilities: they will be modified without understanding their full sh
 
 | Component | File | Workflows it participates in |
 |---|---|---|
-| `GlobalNavbar.vue` | `frontend/app/components/GlobalNavbar.vue` (185 lines) | Global Navbar Navigation, Frontend SPA Routing |
+| Global Navbar (`GlobalNavbar.vue`) | `frontend/app/components/GlobalNavbar.vue` | Health Monitoring (Approved), Lesson Details Page Session (Draft) |
 | `CleanupDialog.vue` | `frontend/app/components/CleanupDialog.vue` (57 lines) | In-Flight Synthesis Cleanup |
-| `StickyAudioBar.vue` | `frontend/app/components/StickyAudioBar.vue` (337 lines) | Audio Playback Lifecycle |
+| Sticky Audio Bar (`StickyAudioBar.vue`) | `frontend/app/components/StickyAudioBar.vue` | TTS Flow (Draft), Lesson Details Page Session (Draft) |
 | `VoiceSelector.vue` | `frontend/app/components/VoiceSelector.vue` (231 lines) | Voice Discovery, Voice Preview (Dead Code) |
 | `GenerateButton.vue` | `frontend/app/components/GenerateButton.vue` (163 lines) | Text Synthesis (trigger) |
 | `ModelStatusIndicator.vue` | `frontend/app/components/ModelStatusIndicator.vue` (45 lines) | Health Monitoring |
@@ -137,6 +137,7 @@ These are liabilities: they will be modified without understanding their full sh
 | `DesktopPanels.vue` | `frontend/app/components/DesktopPanels.vue` (307 lines) | Responsive Layout Toggle, Scroll Reveal Animation |
 | `MobileSplitScreen.vue` | `frontend/app/components/MobileSplitScreen.vue` (294 lines) | Mobile Divider Dragging, Responsive Layout Toggle |
 | `curriculum.ts` | `frontend/app/data/curriculum.ts` (786 lines) | Lesson Data Model Alignment |
+| Lesson Hero (`LessonHero.vue`) | `frontend/app/components/LessonHero.vue` | Lesson Details Page Session (Draft) |
 ### Infrastructure
 
 | Component | File(s) | Workflows it participates in |
@@ -175,7 +176,7 @@ These are liabilities: they will be modified without understanding their full sh
 | Sees focus glow behind textarea | Focus Halo Effect | Textarea focus/blur |
 | Navigates during synthesis | In-Flight Synthesis Cleanup | `onBeforeRouteLeave` |
 | Navigates between pages | Frontend SPA Routing → Cross-Page Composable Lifecycle | `<NuxtLink>`, URL, back/forward |
-| Browses lesson content | Lesson Data Model Alignment (data layer) → Frontend SPA Routing | `/dashboard/level/{level}/{lesson}` |
+| Opens a lesson and studies it (sections, audio, competencies) | Lesson Details Page Session → Text Synthesis (TTS handoff) → Audio Playback Lifecycle | `/dashboard/level/{level}/{lesson}` |
 
 ### Operator Journeys
 
@@ -252,6 +253,19 @@ These are liabilities: they will be modified without understanding their full sh
 | Halo active | Textarea focus | → not active (blur) | Focus Halo Effect (blur) |
 | Synthesis dialog visible | `onBeforeRouteLeave` detects `isGenerating=true` | → dismissed | In-Flight Synthesis Cleanup (user response: "Clean & Leave" or "Stay") |
 
+### Lesson Page States
+
+| State | Entered by | Exited by | Workflows that can trigger exit |
+|---|---|---|---|
+| Loading | Route resolution start | → Ready \| 404 \| Redirect | Lesson Details Page Session |
+| Ready (shell) | Lesson data resolved | → Section nav \| Audio interaction \| Leave | Lesson Details Page Session |
+| Section active | Tab / keyboard navigation | → Next section \| Leave | Lesson Details Page Session |
+| Audio: fetching | User taps a line | → Loaded \| Error \| Aborted | Lesson Details Page Session |
+| Audio: loaded / playing | TTS 200 received | → Paused \| Idle \| Error \| Cleanup | Lesson Details Page Session |
+| Audio: error | TTS failure (422 / 500 / 503 / network / timeout) | → Retry \| Closed \| Leave | Lesson Details Page Session |
+| Progress: in-memory | Line ended / competency check | → Reset (lesson change or leave) | Lesson Details Page Session |
+| Page leaving | Navigation away | (terminal) | Lesson Details Page Session (ABORT_CLEANUP) |
+
 ---
 
 ## Test Coverage Map
@@ -286,6 +300,7 @@ These are liabilities: they will be modified without understanding their full sh
 | Session Cleanup (24h TTL) | Partial | `test_history.py` (cleanup param) | Only inline cleanup tested, explicit `/api/cleanup` endpoint tested but 24h boundary not tested |
 | Global Navbar Navigation | Partial | `GlobalNavbar.test.ts` | Navigation rendering tested, but route matching edge cases not tested |
 | Multi-Page SPA Routing | Partial | `cross-page-navigation.test.ts`, `journeys.test.ts` | Navigation tested, but SPA fallback and 404 behavior not tested |
+| Lesson Details Page Session | No | - | New spec (2026-08-19); page is a 197-line skeleton, no tests yet (36 test cases planned in spec) |
 
 ---
 
@@ -325,6 +340,7 @@ These workflows exist in the codebase but are no longer actively used or have be
 | A16 | The `seed` default of 42 is **applied in the handler**, not in the Pydantic model | `app.py:385` (`seed = request.seed if request.seed is not None else 42`) | Frontend must explicitly pass `seed: 42` for deterministic output |
 | A17 | The `temperature=0.4` is **hardcoded** in `tts_to_file()` | `app.py:402` | Cannot be adjusted via API — voice consistency is fixed |
 | A18 | The `SynthesisRequest.language` is **constrained** to `"ar" | "en"` via regex | `app.py:253` (`pattern="^(ar|en)$"`) | Other languages rejected at validation layer (422) |
+| A19 | Lesson progress is in-memory only; backend "SQLite: lessons + progress" has no progress API endpoint | Backend `app.py` (no route) | Future persistence work is bigger than spec assumes (new endpoint + API surface) |
 
 ---
 
@@ -365,6 +381,8 @@ These workflows exist in the codebase but are no longer actively used or have be
 17. **`shared/types/` directory** — Empty directory exists at `frontend/app/shared/types/`. Is this a planned but unused feature?
 
 18. **`content/` and `frontend_source/` backend directories** — Empty directories exist at `backend/content/` and `backend/frontend_source/`. Are these placeholders for future features?
+19. **Lesson progress persistence** — Should lesson progress persist, or stay in-memory per session? (2026-08-19)
+20. **"Lesson complete" state** — Is "lesson complete" ever a required state (badge / auto-advance)? (2026-08-19)
 
 ---
 
@@ -379,3 +397,4 @@ These workflows exist in the codebase but are no longer actively used or have be
 | 2026-08-08 | Multiple orphan test files (`PanelSliding`, `ToastShortcut`, `useNavbarLayoutAdaptation`) reference non-existent components. | Flagged in Open Questions #14-16. |
 | 2026-08-08 | `useHealthPoll` singleton behavior across pages not documented. | Flagged as Assumption A10 and Open Question #9. |
 | 2026-08-08 | `app.vue` uses `globalThis.useNuxtApp()` instead of `useRoute()` — workaround for test environments. | Documented in BLUEPRINT.md §9.21. |
+| 2026-08-19 | Lesson Details Page Session spec updated: added 4 findings (F8–F11) from code audit — `SectionDefinition.name?` vs skeleton `s.title` bug, `SectionType` includes `'activity'`, `SectionItem.audioUrl?/options?` unused, `ActivityDefinition.maxAttempts` from data model; 13 assumptions, 36 test cases, 11 findings total |

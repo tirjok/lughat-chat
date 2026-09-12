@@ -14,11 +14,11 @@ vi.mock('vue-router', () => ({
 // ─── Mock composables that index.vue uses directly.
 // These use vi.mock() to intercept the module imports — required now that
 // manual globalThis stubs are removed from setup.component.ts.
-vi.mock('~/composables/usePanelToggle', () => ({
+vi.mock('~/composables/studio/usePanelToggle', () => ({
   usePanelToggle: () => ({ activePanel: ref('desktop') })
 }))
 
-vi.mock('~/composables/useAudioModule', () => ({
+vi.mock('~/composables/common/useAudioModule', () => ({
   useAudioModule: () => ({
     audioRef: ref(null),
     audioUrl: ref(null),
@@ -39,32 +39,32 @@ vi.mock('~/composables/useAudioModule', () => ({
   })
 }))
 
-vi.mock('~/composables/useScrollReveal', () => ({
+vi.mock('~/composables/common/useScrollReveal', () => ({
   useScrollReveal: vi.fn(() => ({
     revealOnScroll: vi.fn(),
     isRevealed: computed(() => true)
   }))
 }))
 
-vi.mock('~/composables/useToast', () => ({
+vi.mock('~/composables/common/useToast', () => ({
   showToast: vi.fn()
 }))
 
 // New composables needed by the refactored index.vue
-vi.mock('~/composables/useTtsApi', () => ({
+vi.mock('~/composables/common/useTtsApi', () => ({
   useTtsApi: () => ({
     synthesize: vi.fn().mockResolvedValue(new Blob())
   })
 }))
 
-vi.mock('~/composables/useHealthPoll', () => ({
+vi.mock('~/composables/studio/useHealthPoll', () => ({
   useHealthPoll: () => ({
     status: ref('ready' as const),
     modelLoaded: computed(() => true)
   })
 }))
 
-vi.mock('~/composables/useVoices', () => ({
+vi.mock('~/composables/studio/useVoices', () => ({
   useVoices: () => ({
     voices: ref([]),
     loading: ref(false),
@@ -73,7 +73,7 @@ vi.mock('~/composables/useVoices', () => ({
   })
 }))
 
-vi.mock('~/composables/useInputValidation', () => ({
+vi.mock('~/composables/studio/useInputValidation', () => ({
   useInputValidation: () => ({
     isValid: true,
     error: null

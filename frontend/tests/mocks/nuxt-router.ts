@@ -17,6 +17,14 @@ export function useLink() {
   return {}
 }
 
-export function onBeforeRouteLeave(_guard: NavigationGuardNext) {
-  // no-op
+// Stores the callback passed to onBeforeRouteLeave so tests can invoke it.
+let _leaveCallback: NavigationGuardNext | null = null
+
+export function onBeforeRouteLeave(guard: NavigationGuardNext) {
+  _leaveCallback = guard
+}
+
+// Tests can retrieve the registered leave handler for functional testing.
+export function getRegisteredLeaveHandler(): NavigationGuardNext | null {
+  return _leaveCallback
 }

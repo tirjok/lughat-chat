@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
-import ToastNotification from '~/components/ToastNotification.vue'
+import ToastNotification from '~/components/common/ToastNotification.vue'
 
 // Re-import the mocked composable for assertions
-import { useToast, showToast } from '~/composables/useToast'
+import { useToast, showToast } from '~/composables/common/useToast'
 
 // Mock useToast and showToast so tests don't depend on Nuxt auto-imports.
-vi.mock('~/composables/useToast', () => {
+vi.mock('~/composables/common/useToast', () => {
   const entries: { id: number, message: string, type: 'success' | 'error' | 'info' }[] = []
   let nextId = 0
   return {

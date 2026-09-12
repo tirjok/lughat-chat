@@ -1,49 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useVoices } from '~/composables/useVoices'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-
-const testMountedCallbacks: (() => void)[] = []
-
-mockNuxtImport('onMounted', () => {
-  return (cb: () => void) => {
-    testMountedCallbacks.push(cb)
-  }
-})
+import { clearUseStateRegistry } from '../setup'
+import { useVoices } from '~/composables/studio/useVoices'
 
 describe('useVoices', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    testMountedCallbacks.length = 0
+    clearUseStateRegistry()
   })
 
   describe('initial state', () => {
     it('returns an empty voices array', () => {
       const { voices } = useVoices()
-
       expect(voices.value).toEqual([])
     })
   })
 
   describe('successful fetch', () => {
-    it('fetches voices from /api/voices on mount and populates the ref', async () => {
+    it('fetches voices from /api/voices and populates the cached array', async () => {
       const mockVoices = [
-        { id: 'female', name: 'Female Voice' },
-        { id: 'male', name: 'Male Voice' }
+        { id: 'female', name: 'Female Voice', dialect: '', tag: '', icon: '', speaker_wav: '' },
+        { id: 'male', name: 'Male Voice', dialect: '', tag: '', icon: '', speaker_wav: '' }
       ]
 
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockVoices)
-      }))
+      })) as unknown as typeof global.fetch
 
-      const { voices } = useVoices()
+      const { voices, loadVoices } = useVoices()
+      await loadVoices()
 
-      // Trigger onMounted to start fetching
-      for (const cb of testMountedCallbacks) {
-        cb()
-      }
-
-      // Wait for the fetch to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(voices.value).toEqual(mockVoices)
@@ -53,16 +39,11 @@ describe('useVoices', () => {
 
   describe('fetch error handling', () => {
     it('returns an empty array when fetch throws a network error', async () => {
-      global.fetch = vi.fn(() => Promise.reject(new Error('Network failure')))
+      global.fetch = vi.fn(() => Promise.reject(new Error('Network failure'))) as unknown as typeof global.fetch
 
-      const { voices } = useVoices()
+      const { voices, loadVoices } = useVoices()
+      await loadVoices()
 
-      // Trigger onMounted
-      for (const cb of testMountedCallbacks) {
-        cb()
-      }
-
-      // Wait for the fetch to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(voices.value).toEqual([])
@@ -72,16 +53,11 @@ describe('useVoices', () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 503
-      }))
+      })) as unknown as typeof global.fetch
 
-      const { voices } = useVoices()
+      const { voices, loadVoices } = useVoices()
+      await loadVoices()
 
-      // Trigger onMounted
-      for (const cb of testMountedCallbacks) {
-        cb()
-      }
-
-      // Wait for the fetch to complete
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(voices.value).toEqual([])

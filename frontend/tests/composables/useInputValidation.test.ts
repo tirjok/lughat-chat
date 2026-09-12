@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { useInputValidation } from '~/composables/useInputValidation'
+import { useInputValidation } from '~/composables/studio/useInputValidation'
 
 describe('useInputValidation', () => {
   describe('empty text validation', () => {

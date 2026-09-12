@@ -151,8 +151,8 @@ describe('dashboard/index.vue', () => {
       const cards = wrapper.findAll('a[href*="/dashboard/level/"]')
 
       const a1Card = cards.find(c => c.attributes('href') === '/dashboard/level/A1')
-      // "Foundation" is the title for A1
-      expect(a1Card!.text()).toContain('Foundation')
+      // "Beginner" is the title for A1
+      expect(a1Card!.text()).toContain('Beginner')
 
       const c2Card = cards.find(c => c.attributes('href') === '/dashboard/level/C2')
       // "Proficiency" is the title for C2

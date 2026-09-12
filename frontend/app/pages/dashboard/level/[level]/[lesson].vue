@@ -1,42 +1,41 @@
 <script setup lang="ts">
+import { ref, watch, onUnmounted, computed, shallowRef } from 'vue'
+import { useAudioModule } from '~/composables/common/useAudioModule'
+import { useTtsApi } from '~/composables/common/useTtsApi'
 import { getLessonById } from '~/data/curriculum'
+import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
+import { useBackendHealth } from '~/composables/studio/useBackendHealth'
+import LessonDialogue from '~/components/lesson/LessonDialogue.vue'
+import LessonVocabulary from '~/components/lesson/LessonVocabulary.vue'
+import LessonPronouns from '~/components/lesson/LessonPronouns.vue'
+import LessonExpressions from '~/components/lesson/LessonExpressions.vue'
+import LessonGrammar from '~/components/lesson/LessonGrammar.vue'
 
-// Route access — deferred inside computed getters to avoid
-// NUXT_E1001 when the component is imported outside Nuxt runtime (jsdom tests).
-function safeRoute() {
-  /* eslint-disable @stylistic/brace-style */
-  try {
-    return useRoute()
-  }
-  catch {
-    return {} as unknown as ReturnType<typeof useRoute>
-  }
-}
-function safeRouter() {
-  try {
-    return useRouter()
-  }
-  catch {
-    return {} as unknown as ReturnType<typeof useRouter>
-  }
-}
-const route = computed(() => safeRoute())
-const router = computed(() => safeRouter())
-const levelParam = computed(() => (route.value.params?.level as string) || '')
-const lessonParam = computed(() => (route.value.params?.lesson as string) || '')
-// AC-5: Redirect when /dashboard/level/ has no level param
+const healthPoll = useBackendHealth()
+const lessonProgress = useLessonProgress()
+const isAudioDisabled = computed(() => healthPoll.status.value !== 'ready')
+const lessonId = computed(() => lessonParam.value)
+const totalLines = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return 0
+  return lesson.sections.flatMap(s => s.items).length
+})
+
+const completedLines = shallowRef(0)
+const route = useRoute()
+const router = useRouter()
+const levelParam = computed(() => (route.params.level as string) || '')
+const lessonParam = computed(() => (route.params.lesson as string) || '')
 const isMissingLevel = computed(() => {
   return (
-    route.value.path.startsWith('/dashboard/level/')
+    route.path.startsWith('/dashboard/level/')
     && !levelParam.value
   )
 })
-
-const currentLevel = computed(() => levelParam.value || 'A1')
 const levelRoute = computed(() => `/dashboard/level/${currentLevel.value.toLowerCase()}`)
+const currentLevel = computed(() => levelParam.value || 'A1')
 const currentLesson = computed(() => lessonParam.value || '1')
 
-// Breadcrumb trail: Dashboard → Level {level} → Lesson {id}
 const breadcrumbs = computed(() => [
   { label: 'Dashboard', to: '/dashboard' },
   { label: `Level ${currentLevel.value}`, to: levelRoute.value },
@@ -44,35 +43,196 @@ const breadcrumbs = computed(() => [
 ])
 
 const sectionTabs = computed(() => {
-  const lesson = getLessonById(levelParam.value + '-' + lessonParam.value.padStart(2, '0'))
-  return lesson ? lesson.sections.map(s => s.name) : ['Dialogue', 'Vocabulary', 'Pronouns', 'Expressions', 'Grammar', 'Activities']
+  const lesson = currentLessonData.value
+  return lesson ? lesson.sections.map(s => s.name).filter((n): n is string => n != null) : ['Dialogue', 'Vocabulary', 'Pronouns', 'Expressions', 'Grammar', 'Activities']
 })
-const activeSection = shallowRef('Dialogue')
-
+const activeSection = shallowRef<string | undefined>('Dialogue')
 const currentLessonData = computed(() => {
-  const lesson = getLessonById(levelParam.value + '-' + lessonParam.value.padStart(2, '0'))
+  const lesson = getLessonById(lessonParam.value)
   return lesson
+})
+
+const expressionsSection = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return null
+  return lesson.sections.find(s => s.type === 'expressions')
+})
+
+const activitySection = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return null
+  return lesson.sections.find(s => s.type === 'activity')
+})
+
+const estimatedTime = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return ''
+  const sectionCount = lesson.sections.length
+  return `~${sectionCount * 5} mins`
+})
+
+const scenes = computed(() => {
+  const lesson = currentLessonData.value
+  if (!lesson) return ''
+  let sceneCount = 0
+  let lineCount = 0
+  for (const section of lesson.sections) {
+    if (section.type === 'dialogue' && 'scenes' in section.content) {
+      const dialogue = section.content as { type: 'dialogue', scenes: { label: string, lines: { arabic: string }[] }[] }
+      sceneCount += dialogue.scenes.length
+      for (const scene of dialogue.scenes) {
+        lineCount += scene.lines.length
+      }
+    }
+  }
+  if (sceneCount === 0 && lineCount === 0) return ''
+  return `${sceneCount} Scenes • ${lineCount} Lines`
 })
 
 const currentSectionItems = computed(() => {
   const lesson = currentLessonData.value
   if (!lesson) return []
-  const section = lesson.sections.find(s => s.name === activeSection.value)
-  return section ? section.items : []
+  const _section = lesson.sections.find(s => s.name === activeSection.value)
+  return _section ? _section.items : []
 })
 
-// AC-5: Redirect to dashboard when level param is missing.
-// Guarded against jsdom tests where onBeforeRouteLeave is not available.
-if (typeof onBeforeRouteLeave === 'function') {
-  onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
-    if (isMissingLevel.value) {
-      router.value.push('/dashboard')
-      next(false)
-    } else {
-      next()
-    }
-  })
+const audioModule = useAudioModule()
+const ttsApi = useTtsApi()
+const audioEl = ref<HTMLAudioElement | null>(null)
+watch(audioEl, (el) => {
+  audioModule.audioRef.value = el
+})
+
+// -- Module-scope abort state for cleanup -----------------------------------
+const fetchController = shallowRef<AbortController | null>(null)
+const fetchTimeoutId = shallowRef<ReturnType<typeof setTimeout> | null>(null)
+const cleanedUp = shallowRef(false)
+
+// -- Cleanup: aborts in-flight fetch, pauses/disposes audio, hides bar,
+//    clears progress — all idempotent.
+function abortAndCleanup(): void {
+  if (cleanedUp.value) return
+  cleanedUp.value = true
+
+  // 1. Abort in-flight TTS fetch
+  fetchController.value?.abort()
+  clearTimeout(fetchTimeoutId.value ?? undefined)
+  fetchController.value = null
+  fetchTimeoutId.value = null
+
+  // 2. Stop playback
+  audioModule.pause()
+  audioModule.dispose()
+  audioModule.isPlaying.value = false
+
+  lessonProgress.clearLessonProgress(lessonId.value)
+  // 4. Reset the AbortController for the next _playText call.
+  fetchController.value = null
+  cleanedUp.value = false
 }
+
+async function _playText(text: string): Promise<void> {
+  if (!text || !text.trim()) return
+  await audioModule.dispose()
+  // Reuse module-scope controller so abortAndCleanup can abort it.
+  fetchController.value = new AbortController()
+  fetchTimeoutId.value = setTimeout(() => fetchController.value!.abort(), 30_000)
+  try {
+    const blob = await ttsApi.synthesize({
+      text: text.trim(),
+      speaker: '',
+      signal: fetchController.value!.signal
+    })
+    clearTimeout(fetchTimeoutId.value ?? undefined)
+    fetchTimeoutId.value = null
+    audioModule.load(blob)
+    audioModule.isPlaying.value = true
+    await audioModule.play()
+  } catch (err: unknown) {
+    clearTimeout(fetchTimeoutId.value ?? undefined)
+    fetchTimeoutId.value = null
+    if (err instanceof DOMException && err.name === 'AbortError') return
+    console.error('TTS synthesis failed:', err)
+  }
+}
+
+type RepeatMode = 'off' | 'one' | 'all'
+const repeatedSectionIndex = shallowRef(0)
+const currentText = shallowRef<string | null>(null)
+const currentIndex = shallowRef(0)
+const repeatMode = ref<RepeatMode>('off')
+async function _handleAudioEnded(): Promise<void> {
+  const total = totalLines.value
+  if (total > 0) {
+    const newCompleted = Math.min(1, total)
+    if (newCompleted > completedLines.value) {
+      completedLines.value = newCompleted
+      lessonProgress.setLessonProgress(lessonId.value, (completedLines.value / totalLines.value) * 100, totalLines.value)
+    }
+  }
+
+  if (repeatMode.value === 'off') return
+  const items2 = currentSectionItems.value
+  const idx = currentIndex.value
+  if (repeatMode.value === 'one') {
+    const item = items2[idx]
+    if (item?.arabic) {
+      await _playText(item.arabic)
+    }
+  } else {
+    const nextItem = items2[idx + 1]
+    if (nextItem?.arabic) {
+      await _playText(nextItem.arabic)
+    }
+  }
+}
+
+async function handleTrackPrev(): Promise<void> {
+  const items = currentSectionItems.value
+  const idx = currentIndex.value
+  const prevItem = items[idx - 1]
+  if (prevItem?.arabic) {
+    await _playText(prevItem.arabic)
+  }
+}
+
+async function handleTrackNext(): Promise<void> {
+  const idx = currentIndex.value
+  const items = currentSectionItems.value
+  const nextItem = items[idx + 1]
+  if (nextItem?.arabic) {
+    await _playText(nextItem.arabic)
+  }
+}
+
+async function handleSpeedChange(_speed: number): Promise<void> {
+  const items = currentSectionItems.value
+  const idx = currentIndex.value
+  const item = items[idx]
+  if (item?.arabic) {
+    await _playText(item.arabic)
+  }
+}
+
+function handleRepeatChange(mode: RepeatMode): void {
+  repeatMode.value = mode
+}
+
+onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
+  abortAndCleanup()
+  if (isMissingLevel.value) {
+    router.push('/dashboard')
+    next(false)
+    return
+  }
+  repeatedSectionIndex.value = currentIndex.value
+  currentText.value = currentSectionItems.value[repeatedSectionIndex.value]?.arabic || null
+  next()
+})
+
+onUnmounted(() => {
+  abortAndCleanup()
+})
 </script>
 
 <template>
@@ -134,6 +294,10 @@ if (typeof onBeforeRouteLeave === 'function') {
         <LessonHero
           :level="currentLevel"
           :lesson-number="currentLesson"
+          :arabic-title="currentLessonData?.arabicTitle"
+          :estimated-time="estimatedTime"
+          :scenes="scenes"
+          :audio-type="'AI-Generated Audio'"
           :is-ready="true"
         />
       </div>
@@ -162,36 +326,129 @@ if (typeof onBeforeRouteLeave === 'function') {
                 : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
             ]"
             @click="activeSection = tab"
-          >{{ tab }}</button>
-        </div>
-        <div v-if="currentSectionItems.length > 0" class="space-y-4">
-          <div
-            v-for="item in currentSectionItems"
-            :key="item.id"
-            class="card"
           >
-            <div class="flex flex-col gap-2">
-              <p class="text-lg font-arabic text-stone-800 dark:text-stone-100 text-right" dir="rtl">
-                {{ item.arabic }}
-              </p>
-              <p v-if="item.transliteration" class="text-sm text-stone-500 dark:text-stone-400 italic">
-                {{ item.transliteration }}
-              </p>
-              <p v-if="item.english" class="text-sm text-stone-600 dark:text-stone-300">
-                {{ item.english }}
-              </p>
-              <p v-if="item.notes" class="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 rounded p-2">
-                {{ item.notes }}
-              </p>
+            {{ tab }}
+          </button>
+        </div>
+        <div
+          v-if="activeSection === 'Dialogue' && currentLessonData?.sections.find(s => s.type === 'dialogue')"
+          :key="`dialogue-${currentLesson}`"
+        >
+          <LessonDialogue
+            :section="currentLessonData.sections.find(s => s.type === 'dialogue')!"
+            :is-audio-disabled="isAudioDisabled"
+          />
+        </div>
+        <div
+          v-if="activeSection === 'Vocabulary' && currentLessonData?.sections.find(s => s.type === 'vocabulary')"
+          :key="`vocabulary-${currentLesson}`"
+        >
+          <LessonVocabulary
+            :section="currentLessonData.sections.find(s => s.type === 'vocabulary')!"
+            :is-audio-disabled="isAudioDisabled"
+          />
+        </div>
+        <div
+          v-if="activeSection === 'Pronouns' && currentLessonData?.sections.find(s => s.type === 'pronouns')"
+          :key="`pronouns-${currentLesson}`"
+        >
+          <LessonPronouns
+            :section="currentLessonData.sections.find(s => s.type === 'pronouns')!"
+            :is-audio-disabled="isAudioDisabled"
+          />
+        </div>
+        <div
+          v-if="activeSection === 'Grammar' && currentLessonData?.sections.find(s => s.type === 'grammar')"
+          :key="`grammar-${currentLesson}`"
+        >
+          <LessonGrammar
+            :section="currentLessonData.sections.find(s => s.type === 'grammar')!"
+          />
+        </div>
+        <div
+          v-if="activeSection === 'Expressions' && expressionsSection"
+          :key="`expressions-${currentLesson}`"
+        >
+          <LessonExpressions
+            :section="expressionsSection"
+            :is-audio-disabled="isAudioDisabled"
+          />
+        </div>
+        <div
+          v-if="activeSection === 'Activities' && activitySection"
+          :key="`activities-${currentLesson}`"
+        >
+          <div
+            v-if="currentSectionItems.length > 0"
+            class="space-y-4"
+          >
+            <div
+              v-for="item in currentSectionItems"
+              :key="item.id"
+              class="card"
+            >
+              <div class="flex flex-col gap-2">
+                <p
+                  class="text-lg font-arabic text-stone-800 dark:text-stone-100 text-right"
+                  dir="rtl"
+                >
+                  {{ item.arabic }}
+                </p>
+                <p
+                  v-if="item.transliteration"
+                  class="text-sm text-stone-500 dark:text-stone-400 italic"
+                >
+                  {{ item.transliteration }}
+                </p>
+                <p
+                  v-if="item.english"
+                  class="text-sm text-stone-600 dark:text-stone-300"
+                >
+                  {{ item.english }}
+                </p>
+                <p
+                  v-if="item.notes"
+                  class="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 rounded p-2"
+                >
+                  {{ item.notes }}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-        <div v-else class="card">
-          <p class="text-stone-500 dark:text-stone-400">
-            Content for "{{ activeSection }}" section coming soon.
-          </p>
+          <div
+            v-else
+            class="card"
+          >
+            <p class="text-stone-500 dark:text-stone-400">
+              Content for "{{ activeSection }}" section coming soon.
+            </p>
+          </div>
         </div>
       </div>
     </section>
+    <StickyAudioBar
+      :active="audioModule.isPlaying.value"
+      :is-paused="audioModule.isPaused.value"
+      :current-time="audioModule.currentTime.value"
+      :duration="audioModule.duration.value"
+      :shortcuts-enabled="true"
+      :current-text="currentText"
+      :repeat-mode="repeatMode"
+      :repeated-section-index="repeatedSectionIndex"
+      @close="audioModule.dispose(); audioModule.isPlaying.value = false; audioModule.audioUrl.value = null"
+      @toggle="audioModule.toggle()"
+      @seek="(ratio: number) => audioModule.seek(ratio)"
+      @speed-change="(speed: number) => handleSpeedChange(speed)"
+      @prev-track="handleTrackPrev()"
+      @next-track="handleTrackNext()"
+      @download="audioModule.download()"
+      @repeat-change="(mode: RepeatMode) => handleRepeatChange(mode)"
+    />
+    <audio
+      ref="audioEl"
+      data-testid="lesson-audio"
+      preload="none"
+      @ended="_handleAudioEnded()"
+    />
   </div>
 </template>

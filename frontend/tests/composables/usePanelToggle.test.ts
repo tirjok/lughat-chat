@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { usePanelToggle } from '~/composables/usePanelToggle'
+import { usePanelToggle } from '~/composables/studio/usePanelToggle'
 import { setBreakpoint } from '~~/tests/mocks'
 
 describe('usePanelToggle composable', () => {

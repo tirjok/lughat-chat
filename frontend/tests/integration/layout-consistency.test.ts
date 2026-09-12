@@ -43,7 +43,7 @@ describe('Layout consistency — dashboard pages', () => {
     expect(content).toContain('text-2xl md:text-3xl lg:text-4xl')
     expect(content).toContain('<h1')
     // LessonHero no longer has an <h2> title section
-    const heroContent = readFileSync(resolve(__dirname, '../../app/components/LessonHero.vue'), 'utf-8')
+    const heroContent = readFileSync(resolve(__dirname, '../../app/components/lesson/LessonHero.vue'), 'utf-8')
     expect(heroContent).not.toContain('<h1')
     expect(heroContent).not.toContain('<h2')
   })

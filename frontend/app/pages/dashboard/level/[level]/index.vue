@@ -2,45 +2,36 @@
 import { computed } from 'vue'
 import { getLevelByCode, type LessonDefinition } from '~/data/curriculum'
 
-function safeRoute() {
+const currentLevel = computed(() => {
   try {
-    return useRoute()
+    return (useRoute().params?.level as string) || 'A1'
+  } catch {
+    return 'A1'
   }
-  catch {
-    return {} as unknown as ReturnType<typeof useRoute>
-  }
-}
-const route = computed(() => safeRoute())
-const currentLevel = computed(() => (route.value.params?.level as string) || 'A1')
+})
 
 const level = computed(() => getLevelByCode(currentLevel.value))
 const info = computed(() => level.value
   ? { title: level.value.title, arabic: level.value.arabicTitle }
   : { title: currentLevel.value, arabic: currentLevel.value })
 
-// ─── Progress helpers ────────────────────────────────────────────────────
 
 const totalLessons = computed(() => level.value?.lessons.length ?? 0)
-const completedLessons = computed(() => 0) // TODO: connect to progress store
+const completedLessons = computed(() => 0)
 const overallProgress = computed(() => {
   if (totalLessons.value === 0) return 0
   return Math.round((completedLessons.value / totalLessons.value) * 100)
 })
 
-// ─── Learning tags extracted from lesson sections ────────────────────────
-// For each lesson, extract the first item from each section as a "learning tag".
-// This matches the screenshot: green pills showing key concepts.
 
 function extractLearningTags(lesson: LessonDefinition): string[] {
   const tags: string[] = []
   for (const section of lesson.sections) {
     const firstItem = section.items[0]
     if (firstItem) {
-      // Prefer notes (learning context), fall back to arabic + english
       if (firstItem.notes) {
         tags.push(firstItem.notes)
-      }
-      else if (firstItem.english) {
+      } else if (firstItem.english) {
         tags.push(firstItem.english)
       }
     }
@@ -51,7 +42,6 @@ function extractLearningTags(lesson: LessonDefinition): string[] {
 
 <template>
   <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
-    <!-- ── Level Header ─────────────────────────────────────────────── -->
     <header class="px-4 md:px-6 pt-8 pb-6">
       <div class="max-w-7xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
@@ -68,8 +58,16 @@ function extractLearningTags(lesson: LessonDefinition): string[] {
                 {{ overallProgress }}%
               </span>
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100" data-testid="level-heading">Level {{ currentLevel }}: {{ info.title }} — {{ info.arabic }}</h1>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-2" data-testid="level-description">
+            <h1
+              class="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100"
+              data-testid="level-heading"
+            >
+              Level {{ currentLevel }}: {{ info.title }} — {{ info.arabic }}
+            </h1>
+            <p
+              class="text-sm text-stone-500 dark:text-stone-400 mt-2"
+              data-testid="level-description"
+            >
               {{ level?.description ?? '' }}
             </p>
           </div>
@@ -128,7 +126,6 @@ function extractLearningTags(lesson: LessonDefinition): string[] {
         </div>
       </div>
     </header>
-    <!-- ── Breadcrumbs ──────────────────────────────────────────────── -->
     <nav
       class="px-4 md:px-6 pt-4 pb-2"
       aria-label="Breadcrumb"
@@ -177,7 +174,6 @@ function extractLearningTags(lesson: LessonDefinition): string[] {
       </div>
     </nav>
 
-    <!-- ── Content Area ─────────────────────────────────────────────── -->
     <section class="px-4 md:px-6 pb-10">
       <div class="max-w-7xl mx-auto">
         <ul

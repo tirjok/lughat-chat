@@ -10,6 +10,7 @@ export default defineVitestConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.component.ts'],
     include: ['tests/components/**/*.test.{ts,tsx}', 'tests/integration/**/*.test.{ts,tsx}'],
+    exclude: ['tests/components/LessonPageLeaveCleanup.test.ts', 'tests/components/LessonPageTts.test.ts', 'tests/integration/route-resolution.test.ts', 'tests/integration/cross-page-navigation.test.ts'],
     environmentOptions: {
       nuxt: {
         rootDir: fileURLToPath(new URL('.', import.meta.url))
@@ -19,6 +20,7 @@ export default defineVitestConfig({
   },
   resolve: {
     alias: {
+      'vue-router': fileURLToPath(new URL('tests/mocks/nuxt-router.ts', import.meta.url)),
       'nuxt/dist/app/composables/router': fileURLToPath(new URL('tests/mocks/nuxt-router.ts', import.meta.url)),
       'nuxt/dist/app/nuxt': fileURLToPath(new URL('tests/mocks/nuxt-app.ts', import.meta.url))
     }

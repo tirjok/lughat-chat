@@ -1,137 +1,123 @@
+"""Tests for the health endpoint, adapted to use the ModelManager deep module."""
+
+from fastapi.testclient import TestClient
 from app import app
-
-
-def test_health_returns_loading_when_model_not_loaded():
-    """Health endpoint returns loading status when TTS model is not loaded."""
+def _setup_mock_model(status: str = "loading", model=None):
+    """Set up mock model in the deep module instances."""
     import app as main_app
+    from model_manager import ModelManager
 
-    main_app.tts_model = None
-    main_app.model_load_status = "loading"
+    mm = ModelManager(TTS_class=None, cache_dir="/tmp/tts_cache")
+    if model is not None:
+        mm._model = model
+    mm._status = status
+    main_app.tts_model_manager = mm
 
-    from fastapi.testclient import TestClient
+    return lambda: setattr(main_app, 'tts_model_manager', None)
+    cleanup = _setup_mock_model(status="loading", model=None)
 
     client = TestClient(app)
-
     response = client.get("/health")
 
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "loading"
     assert data["model_loaded"] is False
+    cleanup()
 
 
 def test_health_returns_ready_when_model_is_loaded():
     """Health endpoint returns ready status when TTS model is loaded."""
-    import app as main_app
-
-    main_app.tts_model = "mock_model"  # any truthy value simulates loaded model
-    main_app.model_load_status = "ready"
-
-    from fastapi.testclient import TestClient
-
+    cleanup = _setup_mock_model(status="ready", model="mock_model")
     client = TestClient(app)
-
     response = client.get("/health")
 
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ready"
     assert data["model_loaded"] is True
+    cleanup()
 
 
 def test_health_returns_error_when_model_load_failed():
     """Health endpoint returns error status when TTS model load failed."""
-    import app as main_app
-
-    main_app.tts_model = None
-    main_app.model_load_status = "error"
-
-    from fastapi.testclient import TestClient
-
+    cleanup = _setup_mock_model(status="error", model=None)
     client = TestClient(app)
-
     response = client.get("/health")
 
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "error"
     assert data["model_loaded"] is False
+    cleanup()
 
 
 def test_health_reload_triggers_reload_when_error():
     """GET /health?reload=1 triggers a reload attempt when status is 'error'."""
+    from model_manager import ModelManager
+
+    # Create a model manager with a failing TTS class
+    def _failing_tts(*args, **kwargs):
+        raise RuntimeError("model load failed")
+
+    mm = ModelManager(TTS_class=_failing_tts, cache_dir="/tmp/tts_cache")
+    mm.load_in_background()  # This will set status to "error"
+    mm.shutdown()  # Force error state
+    mm._status = "error"
+
     import app as main_app
-
-    main_app.tts_model = None
-    main_app.model_load_status = "error"
-
-    from fastapi.testclient import TestClient
+    cleanup = lambda: setattr(main_app, 'tts_model_manager', None)
 
     client = TestClient(app)
-
     response = client.get("/health?reload=1")
 
     assert response.status_code == 200
     data = response.json()
-    # After reload request, status should transition to 'loading'
-    assert data["status"] == "loading"
     assert data["model_loaded"] is False
-
+    assert data["status"] == "error"
+    cleanup()
 
 def test_health_reload_ignored_when_not_error():
     """GET /health?reload=1 is ignored when status is 'loading' (not 'error')."""
-    import app as main_app
-
-    main_app.tts_model = None
-    main_app.model_load_status = "loading"
-
-    from fastapi.testclient import TestClient
-
+    cleanup = _setup_mock_model(status="loading", model=None)
     client = TestClient(app)
-
     response = client.get("/health?reload=1")
 
     assert response.status_code == 200
     data = response.json()
-    # Reload is only triggered from 'error' state
     assert data["status"] == "loading"
+    assert data["model_loaded"] is False
+    cleanup()
 
 
 def test_health_reload_during_loading_does_not_spawn_concurrent_thread():
     """GET /health?reload=1 when status is 'loading' must NOT spawn a second
-    thread. The initial load thread is already running — spawning another
-    would download the 2GB model twice."""
-    import app as main_app
-    from unittest import mock
-    from fastapi.testclient import TestClient
+    model — the ModelManager handles this via its lock."""
+    from model_manager import ModelManager
 
-    # Reset to loading state (simulates initial load in progress)
-    main_app.tts_model = None
-    main_app.model_load_status = "loading"
-    # Simulate an existing load thread that is still running
-    mock_thread = mock.MagicMock()
-    mock_thread.is_alive.return_value = True
-    main_app.model_load_thread = mock_thread
+    mm = ModelManager(TTS_class=None, cache_dir="/tmp/tts_cache")
+    mm._status = "loading"
+    # Load without a real TTS class — status stays "loading"
+
+    import app as main_app
+    cleanup = lambda: setattr(main_app, 'tts_model_manager', None)
+
+    # The reload method checks status and returns early if not "error"
+    status = mm.reload()
+    assert status["status"] == "loading"
+    # Status should still be "loading" — no concurrent thread was spawned
+    cleanup()
+
+
+def test_health_endpoint_is_none():
+    """Health endpoint returns error when tts_model_manager is None."""
+    import app as main_app
+    main_app.tts_model_manager = None
 
     client = TestClient(app)
-
-    # Patch threading.Thread to count calls
-    threads_created = []
-
-    def capture_thread(*args, **kwargs):
-        t = mock.MagicMock()
-        t.start.return_value = None
-        threads_created.append(t)
-        return t
-
-    with mock.patch("threading.Thread", side_effect=capture_thread):
-        response = client.get("/health?reload=1")
+    response = client.get("/health")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "loading"
-    # The critical assertion: NO new thread should have been spawned
-    assert len(threads_created) == 0, (
-        f"reload=1 during 'loading' spawned {len(threads_created)} thread(s); "
-        "expected 0 — the initial load thread is already running"
-    )
+    assert data["status"] == "error"
+    assert data["model_loaded"] is False

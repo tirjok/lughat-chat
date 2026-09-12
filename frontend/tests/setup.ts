@@ -1,5 +1,5 @@
 import { vi, beforeEach } from 'vitest'
-import { type App as VueApp, createApp } from 'vue'
+import { type App as VueApp, createApp, ref } from 'vue'
 
 // ─── Vue Lifecycle Warning Suppression ──────────────────────────────
 // Unit tests call composables that use onMounted/onUnmounted without
@@ -29,7 +29,7 @@ global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob') as unknown as t
 global.URL.revokeObjectURL = vi.fn()
 
 // matchMedia mock for useScrollReveal (prefers-reduced-motion check)
-global.window.matchMedia = vi.fn(() => ({ matches: false, media: '' })) as unknown as typeof global.window.matchMedia
+global.window.matchMedia = vi.fn((query: string) => ({ matches: false, media: query, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof global.window.matchMedia
 
 // IntersectionObserver mock for useScrollReveal
 const mockIntersectionObserver = vi.fn()
@@ -74,6 +74,25 @@ beforeEach(() => {
   mockElements.length = 0
 })
 
+// ─── useState mock for unit tests ──────────────────────────────────
+// useState requires a Nuxt app instance; in unit tests we substitute
+// with a per-key ref registry so composables can be exercised without
+// a mounted Nuxt app.
+const useStateRegistry = new Map<string, ReturnType<typeof ref>>()
+
+vi.mock('#app', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>()
+  return {
+    ...actual,
+    useState<T>(key: string, _default?: () => T): ReturnType<typeof ref<T>> {
+      if (!useStateRegistry.has(key)) {
+        useStateRegistry.set(key, ref<T>(_default?.() as T))
+      }
+      return useStateRegistry.get(key) as ReturnType<typeof ref<T>>
+    }
+  }
+})
+
 // ─── Re-export mock factories for component tests ───────────────────
 export {
   createMockUseAudioPlayer,
@@ -82,3 +101,8 @@ export {
   createMockUseInputValidation,
   createMockUseToast
 } from './mocks'
+
+// ─── Expose useState registry for test cleanup ───────────────────
+export const clearUseStateRegistry = () => {
+  useStateRegistry.clear()
+}

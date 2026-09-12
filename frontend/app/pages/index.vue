@@ -1,21 +1,17 @@
 <script setup lang="ts">
 // Index: Thin composition surface for the main TTS page.
-// Owns all state and business logic; delegates UI to child components.
-// Two-panel layout: Mobile (split-screen) | Desktop (side-by-side).
-
-// TODO: migrated from studio-900/sunrise-orange (see ISSUE-014)
 import { computed, nextTick, onUnmounted, shallowRef } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import { usePanelToggle } from '../composables/usePanelToggle'
-import { useAudioModule } from '../composables/useAudioModule'
-import { useTtsApi } from '../composables/useTtsApi'
-import { useHealthPoll } from '../composables/useHealthPoll'
-import { useVoices } from '../composables/useVoices'
-import { useInputValidation } from '../composables/useInputValidation'
-import { showToast } from '../composables/useToast'
-import MobileSplitScreen from '../components/MobileSplitScreen.vue'
-import DesktopPanels from '../components/DesktopPanels.vue'
-import { useCleanupNavigation } from '../composables/useCleanupNavigation'
+import { usePanelToggle } from '../composables/studio/usePanelToggle'
+import { useAudioModule } from '../composables/common/useAudioModule'
+import { useTtsApi } from '../composables/common/useTtsApi'
+import { useBackendHealth } from '../composables/studio/useBackendHealth'
+import { useVoices } from '../composables/studio/useVoices'
+import { useInputValidation } from '../composables/studio/useInputValidation'
+import { showToast } from '../composables/common/useToast'
+import MobileSplitScreen from '../components/studio/MobileSplitScreen.vue'
+import DesktopPanels from '../components/studio/DesktopPanels.vue'
+import { useCleanupNavigation } from '../composables/studio/useCleanupNavigation'
 
 const { activePanel } = usePanelToggle()
 
@@ -36,7 +32,7 @@ const {
 } = audioModule
 
 const { synthesize } = useTtsApi()
-const { status: modelStatus } = useHealthPoll()
+const { status: modelStatus } = useBackendHealth()
 const { voices: speakerVoices } = useVoices()
 
 // ── Form state ──────────────────────────────────────────────────
@@ -52,7 +48,7 @@ const selectedVoiceName = computed(() => {
   return voice ? voice.name : ''
 })
 
-watch(speakerVoices, (v) => {
+watch(speakerVoices, (v: import('~/composables/studio/useVoices').Voice[]) => {
   if (!selectedSpeaker.value && v.length > 0) {
     selectedSpeaker.value = v[0]!.id
   }
@@ -86,7 +82,7 @@ onBeforeRouteLeave(async () => {
   }
 
   // AC-2: Show dialog when isGenerating=true or isStreaming
-  cleanup.dialogVisible.value = true
+  cleanup.showDialog()
 
   // Block navigation until user responds
   return false
