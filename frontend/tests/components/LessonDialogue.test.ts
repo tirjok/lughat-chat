@@ -158,7 +158,32 @@ describe('LessonDialogue | playLine emit', () => {
     expect(wrapper.emitted('playLine')?.[0]).toEqual([1])
   })
 })
-// ─── Active Line Highlighting ──────────────────────────────────────────────
+describe('LessonDialogue | card body click does NOT emit playLine (Issue #021)', () => {
+  it('does NOT emit playLine when a line card body is clicked', async () => {
+    const wrapper = getWrapper()
+    const lineCards = wrapper.findAll('[data-testid^="line-card-"]')
+    await lineCards[0].trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // Card body click should NOT emit playLine
+    expect(wrapper.emitted('playLine')).toBeUndefined()
+  })
+
+  it('sets currentLineIndex on card body click without emitting playLine', async () => {
+    const wrapper = getWrapper()
+    const lineCards = wrapper.findAll('[data-testid^="line-card-"]')
+
+    // Click card 1 — should update highlight but NOT emit
+    await lineCards[1].trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // Line 1 should have active gradient classes
+    expect(lineCards[1].classes()).toContain('from-primary-100')
+    expect(lineCards[1].classes()).toContain('border-primary-300')
+    // But no playLine emit
+    expect(wrapper.emitted('playLine')).toBeUndefined()
+  })
+})
 
 describe('LessonDialogue | active line highlighting', () => {
   it('applies active styling to the clicked line card', async () => {

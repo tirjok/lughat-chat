@@ -155,7 +155,7 @@ const activeTabId = computed(() => `scene-tab-${currentSceneIndex.value}`)
               ? 'bg-gradient-to-l from-primary-100 to-primary-50 border-primary-300 dark:from-primary-900/40 dark:to-primary-800/30 dark:border-primary-600'
               : 'bg-white border-stone-200 dark:bg-stone-900 dark:border-stone-700']
         ]"
-        @click="currentLineIndex = lineIndex; playLine(lineIndex)"
+        @click="currentLineIndex = lineIndex"
       >
         <!-- Arabic Text (RTL) -->
         <p
