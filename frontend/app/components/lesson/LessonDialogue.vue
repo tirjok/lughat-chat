@@ -68,6 +68,29 @@ function getSpeakerGradient(speaker: string): string {
     ? 'from-teal-700 to-teal-900'
     : 'from-pink-700 to-pink-900'
 }
+
+const tablistRef = ref<HTMLElement | null>(null)
+
+function handleTablistKeydown(event: KeyboardEvent): void {
+  const key = event.key
+  const multi = sceneLabels.value.length
+  if (multi <= 1) return
+
+  if (key === 'ArrowRight') {
+    event.preventDefault()
+    selectScene((currentSceneIndex.value + 1) % multi)
+  } else if (key === 'ArrowLeft') {
+    event.preventDefault()
+    selectScene((currentSceneIndex.value - 1 + multi) % multi)
+  } else if (key === 'Enter' || key === ' ' || key === 'Space') {
+    event.preventDefault()
+    const target = (event.target as HTMLElement).id
+    const match = target.match(/^scene-tab-(\d+)$/)
+    if (match) selectScene(parseInt(match[1]!, 10))
+  }
+}
+
+const activeTabId = computed(() => `scene-tab-${currentSceneIndex.value}`)
 </script>
 
 <template>
@@ -75,14 +98,19 @@ function getSpeakerGradient(speaker: string): string {
     <!-- Scene Tabs -->
     <div
       v-if="sceneLabels.length > 1"
+      ref="tablistRef"
       class="flex gap-2 overflow-x-auto pb-2"
       data-testid="scene-tabs"
       role="tablist"
+      :aria-activedescendant="activeTabId"
+      @keydown="handleTablistKeydown"
     >
       <button
         v-for="(label, index) in sceneLabels"
+        :id="`scene-tab-${index}`"
         :key="index"
         :data-testid="`scene-tab`"
+        :tabindex="index === currentSceneIndex ? '0' : '-1'"
         :class="[
           'px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors',
           index === currentSceneIndex

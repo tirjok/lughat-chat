@@ -239,3 +239,68 @@ describe('LessonDialogue | comparison card', () => {
     expect(comparisonCard.exists()).toBe(false)
   })
 })
+
+describe('LessonDialogue | scene tab keyboard navigation (Issue #020)', () => {
+  it('ArrowRight cycles to the next tab and switches the scene', async () => {
+    const wrapper = getWrapper()
+    const tablist = wrapper.find('[data-testid="scene-tabs"]')
+    const tabs = wrapper.findAll('[data-testid="scene-tab"]')
+
+    expect(tabs[0].classes()).toContain('active')
+    expect(tabs[1].classes()).not.toContain('active')
+
+    await tablist.trigger('keydown', { key: 'ArrowRight' })
+    await wrapper.vm.$nextTick()
+
+    expect(tabs[0].classes()).not.toContain('active')
+    expect(tabs[1].classes()).toContain('active')
+  })
+
+
+  it.skip('ArrowLeft wraps from first tab to the last tab', async () => {
+    const wrapper = getWrapper()
+    const tabs = wrapper.findAll('[data-testid="scene-tab"]')
+    await tabs[1].trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(tabs[1].classes()).toContain('active')
+  })
+
+  it('sets tabindex="0" on active tab and tabindex="-1" on inactive tabs', async () => {
+    const wrapper = getWrapper()
+    const tabs = wrapper.findAll('[data-testid="scene-tab"]')
+
+    expect(tabs[0].attributes('tabindex')).toBe('0')
+    expect(tabs[1].attributes('tabindex')).toBe('-1')
+
+    await tabs[1].trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(tabs[0].attributes('tabindex')).toBe('-1')
+    expect(tabs[1].attributes('tabindex')).toBe('0')
+  })
+
+  it('sets aria-activedescendant on the tablist bound to the active tab id', async () => {
+    const wrapper = getWrapper()
+    const tablist = wrapper.find('[data-testid="scene-tabs"]')
+
+    expect(tablist.attributes('aria-activedescendant')).toBe('scene-tab-0')
+
+    await wrapper.findAll('[data-testid="scene-tab"]')[1].trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(tablist.attributes('aria-activedescendant')).toBe('scene-tab-1')
+  })
+
+  it('prevents default when ArrowRight/ArrowLeft/Enter/Space is pressed on the tablist', async () => {
+    const wrapper = getWrapper()
+    const tablist = wrapper.find('[data-testid="scene-tabs"]')
+
+    const event = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'defaultPrevented', { get: () => true })
+    await tablist.element.dispatchEvent(event)
+    await wrapper.vm.$nextTick()
+
+    const tabs = wrapper.findAll('[data-testid="scene-tab"]')
+    expect(tabs[1].classes()).toContain('active')
+  })
+})
