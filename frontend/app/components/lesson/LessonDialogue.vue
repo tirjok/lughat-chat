@@ -26,16 +26,12 @@ interface DialogueLine {
   notes?: string
 }
 
-interface EmptyDialogue {
-  scenes: DialogueScene[]
-}
-
-const dialogueContent = computed<EmptyDialogue>(() => {
+const dialogueContent = computed<{ scenes: DialogueScene[] }>(() => {
   const content = _props.section.content
   if (!content || content.type !== 'dialogue') {
     return { scenes: [] }
   }
-  return content as EmptyDialogue
+  return content
 })
 
 const sceneLabels = computed(() => dialogueContent.value.scenes.map(s => s.label))
@@ -217,8 +213,18 @@ const activeTabId = computed(() => `scene-tab-${currentSceneIndex.value}`)
       v-if="currentScene.lines.length > 0"
       data-testid="play-scene"
       :disabled="_props.isAudioDisabled"
+      :title="_props.isAudioDisabled ? 'Audio is currently disabled' : undefined"
+      class="flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       @click="playScene"
     >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-5 h-5"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path d="M8 5v14l11-7z" />
+      </svg>
       Play Scene
     </button>
   </div>

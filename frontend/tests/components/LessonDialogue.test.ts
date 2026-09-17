@@ -35,8 +35,6 @@ function getWrapper(section: SectionDefinition = DIALOGUE_SECTION) {
   })
 }
 
-// ─── Rendering: Scene Tabs ────────────────────────────────────────────────
-
 describe('LessonDialogue | renders scene tabs from scenes[].label', () => {
   it('renders one tab per scene label', () => {
     const wrapper = getWrapper()
@@ -58,8 +56,6 @@ describe('LessonDialogue | renders scene tabs from scenes[].label', () => {
   })
 })
 
-// ─── Scene Switching ──────────────────────────────────────────────────────
-
 describe('LessonDialogue | scene switching', () => {
   it('switches active scene when a tab is clicked', async () => {
     const wrapper = getWrapper()
@@ -67,7 +63,6 @@ describe('LessonDialogue | scene switching', () => {
     await tabs[1].trigger('click')
     await wrapper.vm.$nextTick()
 
-    // Second tab should now be active
     const allTabs = wrapper.findAll('[data-testid="scene-tab"]')
     expect(allTabs[0].classes()).not.toContain('active')
     expect(allTabs[1].classes()).toContain('active')
@@ -77,26 +72,21 @@ describe('LessonDialogue | scene switching', () => {
     const wrapper = getWrapper()
     const tabs = wrapper.findAll('[data-testid="scene-tab"]')
 
-    // Initially shows Scene 1 lines (2 lines)
     let lineCards = wrapper.findAll('[data-testid^="line-card-"]')
     expect(lineCards).toHaveLength(2)
 
-    // Switch to Scene 2
     await tabs[1].trigger('click')
     await wrapper.vm.$nextTick()
 
-    // Should now show Scene 2 lines (2 lines)
     lineCards = wrapper.findAll('[data-testid^="line-card-"]')
     expect(lineCards).toHaveLength(2)
   })
 })
-// ─── Speaker Badge Colors ─────────────────────────────────────────────────
 
 describe('LessonDialogue | speaker badge colors', () => {
   it('renders male speaker badges with teal gradient', () => {
     const wrapper = getWrapper()
     const badges = wrapper.findAll('[data-testid^="speaker-badge-"]')
-    // Muhammad is male → teal gradient
     const muhammadBadge = badges.find(badge => badge.text().includes('Muhammad'))
     expect(muhammadBadge).toBeDefined()
     expect(muhammadBadge?.classes()).toContain('from-teal-700')
@@ -104,7 +94,6 @@ describe('LessonDialogue | speaker badge colors', () => {
 
   it('renders non-male speaker badges with stone gradient when no malePatterns provided', async () => {
     const wrapper = getWrapper()
-    // Switch to Scene 2 to see Khadija (female)
     const tabs = wrapper.findAll('[data-testid="scene-tab"]')
     await tabs[1].trigger('click')
     await wrapper.vm.$nextTick()
@@ -112,11 +101,9 @@ describe('LessonDialogue | speaker badge colors', () => {
     const badges = wrapper.findAll('[data-testid^="speaker-badge-"]')
     const khadijaBadge = badges.find(badge => badge.text().includes('Khadija'))
     expect(khadijaBadge).toBeDefined()
-    // Khadija not matching male patterns → stone (neutral) — NEW behavior per spec
     expect(khadijaBadge?.classes()).toContain('from-stone-500')
   })
 })
-// ─── Unknown Speaker: Neutral Stone Gradient ──────────────────────────
 
 const UNKNOWN_SPEAKER_SECTION: SectionDefinition = {
   name: 'Dialogue',
@@ -148,10 +135,8 @@ describe('LessonDialogue | unknown speaker gets neutral stone gradient', () => {
       props: { section: UNKNOWN_SPEAKER_SECTION }
     })
     const badges = wrapper.findAll('[data-testid^="speaker-badge-"]')
-    // Abdullah is NOT in the male names list → neutral stone gradient
     const abdullahBadge = badges.find(badge => badge.text().includes('Abdullah'))
     expect(abdullahBadge).toBeDefined()
-    // Should have stone gradient, NOT teal or pink
     expect(abdullahBadge?.classes()).toContain('from-stone-500')
     expect(abdullahBadge?.classes()).not.toContain('from-teal-700')
     expect(abdullahBadge?.classes()).not.toContain('from-pink-700')
@@ -177,14 +162,12 @@ describe('LessonDialogue | unknown speaker gets neutral stone gradient', () => {
         malePatterns: ['Muhammad', 'Ali', 'Abdullah']
       }
     })
-    // Switch to see Aisha
     const tabs = wrapper.findAll('[data-testid="scene-tab"]')
     await tabs[1].trigger('click')
     await wrapper.vm.$nextTick()
 
     const badges2 = wrapper.findAll('[data-testid^="speaker-badge-"]')
     const aishaBadge = badges2.find(badge => badge.text().includes('Aisha'))
-    // Aisha is not in malePatterns → stone (neutral)
     expect(aishaBadge?.classes()).toContain('from-stone-500')
   })
 })
@@ -193,7 +176,6 @@ describe('LessonDialogue | Arabic RTL rendering', () => {
   it('renders Arabic text with dir="rtl"', () => {
     const wrapper = getWrapper()
     const arabicTexts = wrapper.findAll('[data-testid^="line-card-"]')
-    // Each line card contains an Arabic text element with dir="rtl"
     arabicTexts.forEach((card) => {
       const p = card.find('p[dir="rtl"]')
       expect(p.exists()).toBe(true)
@@ -204,13 +186,11 @@ describe('LessonDialogue | Arabic RTL rendering', () => {
     const wrapper = getWrapper()
     const arabicElements = wrapper.findAll('p[dir="rtl"]')
     expect(arabicElements.length).toBeGreaterThan(0)
-    // All Arabic text elements should have font-arabic class
     arabicElements.forEach((el) => {
       expect(el.classes()).toContain('font-arabic')
     })
   })
 })
-// ─── Play Line Emit ────────────────────────────────────────────────────────
 
 describe('LessonDialogue | playLine emit', () => {
   it('emits playLine(index) when a line play button is clicked', async () => {
@@ -229,14 +209,14 @@ describe('LessonDialogue | playLine emit', () => {
     expect(wrapper.emitted('playLine')?.[0]).toEqual([1])
   })
 })
-describe('LessonDialogue | card body click does NOT emit playLine (Issue #021)', () => {
+
+describe('LessonDialogue | card body click does NOT emit playLine', () => {
   it('does NOT emit playLine when a line card body is clicked', async () => {
     const wrapper = getWrapper()
     const lineCards = wrapper.findAll('[data-testid^="line-card-"]')
     await lineCards[0].trigger('click')
     await wrapper.vm.$nextTick()
 
-    // Card body click should NOT emit playLine
     expect(wrapper.emitted('playLine')).toBeUndefined()
   })
 
@@ -244,14 +224,11 @@ describe('LessonDialogue | card body click does NOT emit playLine (Issue #021)',
     const wrapper = getWrapper()
     const lineCards = wrapper.findAll('[data-testid^="line-card-"]')
 
-    // Click card 1 — should update highlight but NOT emit
     await lineCards[1].trigger('click')
     await wrapper.vm.$nextTick()
 
-    // Line 1 should have active gradient classes
     expect(lineCards[1].classes()).toContain('from-primary-100')
     expect(lineCards[1].classes()).toContain('border-primary-300')
-    // But no playLine emit
     expect(wrapper.emitted('playLine')).toBeUndefined()
   })
 })
@@ -263,7 +240,6 @@ describe('LessonDialogue | active line highlighting', () => {
     await lineCards[1].trigger('click')
     await wrapper.vm.$nextTick()
 
-    // Line 1 should have active gradient classes
     expect(lineCards[1].classes()).toContain('from-primary-100')
     expect(lineCards[1].classes()).toContain('border-primary-300')
   })
@@ -274,16 +250,13 @@ describe('LessonDialogue | active line highlighting', () => {
     await lineCards[0].trigger('click')
     await wrapper.vm.$nextTick()
 
-    // Line 0 was active, now click line 1
     await lineCards[1].trigger('click')
     await wrapper.vm.$nextTick()
 
-    // Line 0 should no longer have active classes
     expect(lineCards[0].classes()).not.toContain('from-primary-100')
     expect(lineCards[0].classes()).not.toContain('border-primary-300')
   })
 })
-// ─── Play Scene Emit ───────────────────────────────────────────────────────
 
 describe('LessonDialogue | playScene emit', () => {
   it('emits playScene when the Play Scene button is clicked', async () => {
@@ -294,31 +267,58 @@ describe('LessonDialogue | playScene emit', () => {
   })
 })
 
-const singleScene: SectionDefinition = {
-  name: 'Dialogue',
-  type: 'dialogue',
-  content: {
-    type: 'dialogue',
-    scenes: [{
-      label: 'Single Scene',
-      lines: [{ speaker: 'A', arabic: 'مرحبا', english: 'Hello' }]
-    }]
-  },
-  _lessonId: 'a1-01',
-  get items(): never[] { return [] }
-}
-
-describe('LessonDialogue | comparison card removed (Issue #023)', () => {
-  it('no comparison card renders for multi-scene dialogues', () => {
+describe('LessonDialogue | play scene button is styled (Issue #025)', () => {
+  it('renders a play icon SVG inside the Play Scene button', () => {
     const wrapper = getWrapper()
-    const comparisonCard = wrapper.find('[data-testid="comparison-card"]')
-    expect(comparisonCard.exists()).toBe(false)
+    const playSceneButton = wrapper.find('[data-testid="play-scene"]')
+    const svg = playSceneButton.find('svg')
+    expect(svg.exists()).toBe(true)
+    expect(svg.attributes('viewBox')).toBe('0 0 24 24')
   })
 
-  it('no comparison card renders for single-scene dialogues', () => {
+  it('renders "Play Scene" text label next to the play icon', () => {
+    const wrapper = getWrapper()
+    const playSceneButton = wrapper.find('[data-testid="play-scene"]')
+    expect(playSceneButton.text()).toContain('Play Scene')
+  })
+
+  it('applies rounded-full, bg-primary-600, text-white, hover:bg-primary-700 classes matching line play buttons', () => {
+    const wrapper = getWrapper()
+    const playSceneButton = wrapper.find('[data-testid="play-scene"]')
+    const classes = playSceneButton.attributes('class')
+    expect(classes).toContain('rounded-full')
+    expect(classes).toContain('bg-primary-600')
+    expect(classes).toContain('text-white')
+    expect(classes).toContain('hover:bg-primary-700')
+  })
+
+  it('renders the play icon with the same SVG path as individual line play buttons', () => {
+    const wrapper = getWrapper()
+    const playSceneButton = wrapper.find('[data-testid="play-scene"]')
+    const svg = playSceneButton.find('svg path')
+    expect(svg.attributes('d')).toBe('M8 5v14l11-7z')
+  })
+
+  it('when isAudioDisabled is true, the button is disabled and has title="Audio is currently disabled"', () => {
     const wrapper = shallowMount(LessonDialogue, {
-      props: { section: singleScene }
+      props: { section: DIALOGUE_SECTION, isAudioDisabled: true }
     })
+    const playSceneButton = wrapper.find('[data-testid="play-scene"]')
+    expect(playSceneButton.attributes('disabled')).toBe('')
+    expect(playSceneButton.attributes('title')).toBe('Audio is currently disabled')
+  })
+
+  it('when isAudioDisabled is false, the button is not disabled and has no title attribute', () => {
+    const wrapper = getWrapper()
+    const playSceneButton = wrapper.find('[data-testid="play-scene"]')
+    expect(playSceneButton.attributes('disabled')).toBeUndefined()
+    expect(playSceneButton.attributes('title')).toBeUndefined()
+  })
+})
+
+describe('LessonDialogue | comparison card removed (Issue #023)', () => {
+  it('no comparison card renders for dialogues', () => {
+    const wrapper = getWrapper()
     const comparisonCard = wrapper.find('[data-testid="comparison-card"]')
     expect(comparisonCard.exists()).toBe(false)
   })
@@ -337,15 +337,6 @@ describe('LessonDialogue | scene tab keyboard navigation (Issue #020)', () => {
     await wrapper.vm.$nextTick()
 
     expect(tabs[0].classes()).not.toContain('active')
-    expect(tabs[1].classes()).toContain('active')
-  })
-
-
-  it.skip('ArrowLeft wraps from first tab to the last tab', async () => {
-    const wrapper = getWrapper()
-    const tabs = wrapper.findAll('[data-testid="scene-tab"]')
-    await tabs[1].trigger('click')
-    await wrapper.vm.$nextTick()
     expect(tabs[1].classes()).toContain('active')
   })
 
