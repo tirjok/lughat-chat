@@ -102,7 +102,7 @@ describe('LessonDialogue | speaker badge colors', () => {
     expect(muhammadBadge?.classes()).toContain('from-teal-700')
   })
 
-  it('renders female speaker badges with pink gradient', async () => {
+  it('renders non-male speaker badges with stone gradient when no malePatterns provided', async () => {
     const wrapper = getWrapper()
     // Switch to Scene 2 to see Khadija (female)
     const tabs = wrapper.findAll('[data-testid="scene-tab"]')
@@ -110,13 +110,84 @@ describe('LessonDialogue | speaker badge colors', () => {
     await wrapper.vm.$nextTick()
 
     const badges = wrapper.findAll('[data-testid^="speaker-badge-"]')
-    // Khadija is female → pink gradient
     const khadijaBadge = badges.find(badge => badge.text().includes('Khadija'))
     expect(khadijaBadge).toBeDefined()
-    expect(khadijaBadge?.classes()).toContain('from-pink-700')
+    // Khadija not matching male patterns → stone (neutral) — NEW behavior per spec
+    expect(khadijaBadge?.classes()).toContain('from-stone-500')
   })
 })
-// ─── Arabic RTL Rendering ─────────────────────────────────────────────────
+// ─── Unknown Speaker: Neutral Stone Gradient ──────────────────────────
+
+const UNKNOWN_SPEAKER_SECTION: SectionDefinition = {
+  name: 'Dialogue',
+  type: 'dialogue',
+  content: {
+    type: 'dialogue',
+    scenes: [
+      {
+        label: 'Scene 1: Market',
+        lines: [
+          { speaker: 'Abdullah', arabic: 'مَرْحَبًا', english: 'Hello' }
+        ]
+      },
+      {
+        label: 'Scene 2: Conversation',
+        lines: [
+          { speaker: 'Aisha', arabic: 'مَرْحَبًا، كَيْفَ حَالُكَ؟', english: 'Hello, how are you?' }
+        ]
+      }
+    ]
+  },
+  _lessonId: 'a1-02',
+  get items(): never[] { return [] }
+}
+
+describe('LessonDialogue | unknown speaker gets neutral stone gradient', () => {
+  it('renders unknown speaker badges with stone gradient (not pink, not teal)', () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: { section: UNKNOWN_SPEAKER_SECTION }
+    })
+    const badges = wrapper.findAll('[data-testid^="speaker-badge-"]')
+    // Abdullah is NOT in the male names list → neutral stone gradient
+    const abdullahBadge = badges.find(badge => badge.text().includes('Abdullah'))
+    expect(abdullahBadge).toBeDefined()
+    // Should have stone gradient, NOT teal or pink
+    expect(abdullahBadge?.classes()).toContain('from-stone-500')
+    expect(abdullahBadge?.classes()).not.toContain('from-teal-700')
+    expect(abdullahBadge?.classes()).not.toContain('from-pink-700')
+  })
+
+  it('renders male-pattern speaker with teal gradient when malePatterns is provided', () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: {
+        section: UNKNOWN_SPEAKER_SECTION,
+        malePatterns: ['Muhammad', 'Ali', 'Abdullah']
+      }
+    })
+    const badges = wrapper.findAll('[data-testid^="speaker-badge-"]')
+    const abdullahBadge = badges.find(badge => badge.text().includes('Abdullah'))
+    expect(abdullahBadge).toBeDefined()
+    expect(abdullahBadge?.classes()).toContain('from-teal-700')
+  })
+
+  it('renders female speaker with stone gradient when not in malePatterns', async () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: {
+        section: UNKNOWN_SPEAKER_SECTION,
+        malePatterns: ['Muhammad', 'Ali', 'Abdullah']
+      }
+    })
+    // Switch to see Aisha
+    const tabs = wrapper.findAll('[data-testid="scene-tab"]')
+    await tabs[1].trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const badges2 = wrapper.findAll('[data-testid^="speaker-badge-"]')
+    const aishaBadge = badges2.find(badge => badge.text().includes('Aisha'))
+    // Aisha is not in malePatterns → stone (neutral)
+    expect(aishaBadge?.classes()).toContain('from-stone-500')
+  })
+})
 
 describe('LessonDialogue | Arabic RTL rendering', () => {
   it('renders Arabic text with dir="rtl"', () => {

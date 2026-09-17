@@ -4,6 +4,7 @@ import type { SectionDefinition } from '~/data/curriculum'
 interface Props {
   section: SectionDefinition
   isAudioDisabled?: boolean
+  malePatterns?: string[]
 }
 
 const _props = defineProps<Props>()
@@ -40,7 +41,7 @@ const dialogueContent = computed<EmptyDialogue>(() => {
 const sceneLabels = computed(() => dialogueContent.value.scenes.map(s => s.label))
 
 const currentSceneIndex = ref(0)
-
+const tablistRef = ref<HTMLElement | null>(null)
 const currentScene = computed(() => dialogueContent.value.scenes[currentSceneIndex.value] ?? { label: '', lines: [] })
 
 const currentLineIndex = ref(0)
@@ -58,18 +59,31 @@ function playScene(): void {
   emit('playScene')
 }
 
-function isMaleSpeaker(speaker: string): boolean {
-  const maleNames = ['muhammad', 'ali', 'abraham', 'ibrahim', 'musa', 'moses', 'isa', 'jesus', 'umar', 'uthman', 'abu', 'ibn']
-  return maleNames.some(name => speaker.toLowerCase().includes(name))
+const maleNameSuffixes = [
+  'muhammad', 'ali', 'abraham', 'ibrahim', 'musa', 'moses', 'isa',
+  'jesus', 'umar', 'uthman', 'abu', 'ibn'
+]
+
+function matchesMalePatterns(speaker: string): boolean {
+  const lower = speaker.toLowerCase()
+  const patterns = _props.malePatterns
+  if (patterns) {
+    if (patterns.some(p => lower.includes(p.toLowerCase()))) return true
+  }
+  return maleNameSuffixes.some(name => lower.includes(name))
 }
 
 function getSpeakerGradient(speaker: string): string {
-  return isMaleSpeaker(speaker)
-    ? 'from-teal-700 to-teal-900'
-    : 'from-pink-700 to-pink-900'
+  const matchesMale = matchesMalePatterns(speaker)
+  if (matchesMale) return 'from-teal-700 to-teal-900'
+  // Unknown names (not matching any pattern) get stone (neutral)
+  return 'from-stone-500 to-stone-700'
 }
 
-const tablistRef = ref<HTMLElement | null>(null)
+function normalizeSpeaker(speaker: string): string {
+  if (speaker.trim() === '') return ''
+  return speaker.charAt(0).toUpperCase() + speaker.slice(1).toLowerCase()
+}
 
 function handleTablistKeydown(event: KeyboardEvent): void {
   const key = event.key
@@ -82,14 +96,13 @@ function handleTablistKeydown(event: KeyboardEvent): void {
   } else if (key === 'ArrowLeft') {
     event.preventDefault()
     selectScene((currentSceneIndex.value - 1 + multi) % multi)
-  } else if (key === 'Enter' || key === ' ' || key === 'Space') {
+  } else if (key === 'Enter' || key === ' ') {
     event.preventDefault()
     const target = (event.target as HTMLElement).id
     const match = target.match(/^scene-tab-(\d+)$/)
     if (match) selectScene(parseInt(match[1]!, 10))
   }
 }
-
 const activeTabId = computed(() => `scene-tab-${currentSceneIndex.value}`)
 </script>
 
@@ -140,7 +153,7 @@ const activeTabId = computed(() => `scene-tab-${currentSceneIndex.value}`)
           :data-testid="`speaker-badge-${lineIndex}`"
           :class="`inline-block px-2 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-br ${getSpeakerGradient(line.speaker)}`"
         >
-          {{ line.speaker }}
+          {{ normalizeSpeaker(line.speaker) }}
         </span>
       </div>
 
