@@ -222,43 +222,31 @@ describe('LessonDialogue | playScene emit', () => {
     expect(wrapper.emitted('playScene')).toHaveLength(1)
   })
 })
-// ─── Comparison Card ───────────────────────────────────────────────────────
 
-describe('LessonDialogue | comparison card', () => {
-  it('renders a comparison card when there are multiple scenes', () => {
+const singleScene: SectionDefinition = {
+  name: 'Dialogue',
+  type: 'dialogue',
+  content: {
+    type: 'dialogue',
+    scenes: [{
+      label: 'Single Scene',
+      lines: [{ speaker: 'A', arabic: 'مرحبا', english: 'Hello' }]
+    }]
+  },
+  _lessonId: 'a1-01',
+  get items(): never[] { return [] }
+}
+
+describe('LessonDialogue | comparison card removed (Issue #023)', () => {
+  it('no comparison card renders for multi-scene dialogues', () => {
     const wrapper = getWrapper()
     const comparisonCard = wrapper.find('[data-testid="comparison-card"]')
-    expect(comparisonCard.exists()).toBe(true)
+    expect(comparisonCard.exists()).toBe(false)
   })
 
-  it('renders key differences text in the comparison card', () => {
-    const wrapper = getWrapper()
-    const comparisonCard = wrapper.find('[data-testid="comparison-card"]')
-    expect(comparisonCard.text()).toContain('Gender suffixes')
-    expect(comparisonCard.text()).toContain('Verb conjugation')
-    expect(comparisonCard.text()).toContain('Welcome phrases')
-  })
-
-  it('does not render a comparison card when there is only one scene', () => {
-    const singleSceneSection: SectionDefinition = {
-      name: 'Dialogue',
-      type: 'dialogue',
-      content: {
-        type: 'dialogue',
-        scenes: [
-          {
-            label: 'Single Scene',
-            lines: [
-              { speaker: 'A', arabic: 'مرحبا', english: 'Hello' }
-            ]
-          }
-        ]
-      },
-      _lessonId: 'a1-01',
-      get items(): never[] { return [] }
-    }
+  it('no comparison card renders for single-scene dialogues', () => {
     const wrapper = shallowMount(LessonDialogue, {
-      props: { section: singleSceneSection }
+      props: { section: singleScene }
     })
     const comparisonCard = wrapper.find('[data-testid="comparison-card"]')
     expect(comparisonCard.exists()).toBe(false)

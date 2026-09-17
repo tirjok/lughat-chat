@@ -208,27 +208,5 @@ const activeTabId = computed(() => `scene-tab-${currentSceneIndex.value}`)
     >
       Play Scene
     </button>
-
-    <!-- Comparison Card -->
-    <div
-      v-if="dialogueContent.scenes.length > 1"
-      data-testid="comparison-card"
-      class="rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 p-4 md:p-5"
-    >
-      <h3 class="!text-base font-semibold text-stone-700 dark:text-stone-200 mb-3">
-        Key Differences Between Scenes
-      </h3>
-      <div class="space-y-2 text-sm text-stone-600 dark:text-stone-400">
-        <p>
-          <strong>Gender suffixes:</strong> Scene 1 uses male forms (أَخِي = my brother), Scene 2 uses female forms (أُخْتِي = my sister).
-        </p>
-        <p>
-          <strong>Verb conjugation:</strong> حَالُكَ (male address) vs حَالُكِ (female address).
-        </p>
-        <p>
-          <strong>Welcome phrases:</strong> مَرْحَبًا بِكَ فِي مَسْجِدِنَا (mosque) vs مَرْحَبًا بِكِ فِي بَيْتِنَا (house).
-        </p>
-      </div>
-    </div>
   </div>
 </template>
