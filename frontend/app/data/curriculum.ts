@@ -136,9 +136,13 @@ export interface VocabWord {
   singular?: string
   plural?: string
 }
+export interface DialogueScene {
+  label: string
+  lines: DialogueLine[]
+}
 
 export type SectionContent
-  = | { type: 'dialogue', scenes: { label: string, lines: DialogueLine[] }[] }
+  = | { type: 'dialogue', scenes: DialogueScene[] }
     | { type: 'vocabulary', categories: { label: string, words: VocabWord[] }[] }
     | { type: 'pronouns', pronouns: { arabic: string, english: string, example: string }[] }
     | { type: 'expressions', expressions: { arabic: string, english: string }[] }

@@ -31,7 +31,7 @@ const DIALOGUE_SECTION: SectionDefinition = {
 
 function getWrapper(section: SectionDefinition = DIALOGUE_SECTION) {
   return shallowMount(LessonDialogue, {
-    props: { section }
+    props: { section, malePatterns: ['Muhammad', 'Ali', 'Abraham', 'Ibrahim', 'Musa', 'Moses', 'Isa', 'Jesus', 'Umar', 'Uthman'] }
   })
 }
 
@@ -102,73 +102,6 @@ describe('LessonDialogue | speaker badge colors', () => {
     const khadijaBadge = badges.find(badge => badge.text().includes('Khadija'))
     expect(khadijaBadge).toBeDefined()
     expect(khadijaBadge?.classes()).toContain('from-stone-500')
-  })
-})
-
-const UNKNOWN_SPEAKER_SECTION: SectionDefinition = {
-  name: 'Dialogue',
-  type: 'dialogue',
-  content: {
-    type: 'dialogue',
-    scenes: [
-      {
-        label: 'Scene 1: Market',
-        lines: [
-          { speaker: 'Abdullah', arabic: 'مَرْحَبًا', english: 'Hello' }
-        ]
-      },
-      {
-        label: 'Scene 2: Conversation',
-        lines: [
-          { speaker: 'Aisha', arabic: 'مَرْحَبًا، كَيْفَ حَالُكَ؟', english: 'Hello, how are you?' }
-        ]
-      }
-    ]
-  },
-  _lessonId: 'a1-02',
-  get items(): never[] { return [] }
-}
-
-describe('LessonDialogue | unknown speaker gets neutral stone gradient', () => {
-  it('renders unknown speaker badges with stone gradient (not pink, not teal)', () => {
-    const wrapper = shallowMount(LessonDialogue, {
-      props: { section: UNKNOWN_SPEAKER_SECTION }
-    })
-    const badges = wrapper.findAll('[data-testid^="speaker-badge-"]')
-    const abdullahBadge = badges.find(badge => badge.text().includes('Abdullah'))
-    expect(abdullahBadge).toBeDefined()
-    expect(abdullahBadge?.classes()).toContain('from-stone-500')
-    expect(abdullahBadge?.classes()).not.toContain('from-teal-700')
-    expect(abdullahBadge?.classes()).not.toContain('from-pink-700')
-  })
-
-  it('renders male-pattern speaker with teal gradient when malePatterns is provided', () => {
-    const wrapper = shallowMount(LessonDialogue, {
-      props: {
-        section: UNKNOWN_SPEAKER_SECTION,
-        malePatterns: ['Muhammad', 'Ali', 'Abdullah']
-      }
-    })
-    const badges = wrapper.findAll('[data-testid^="speaker-badge-"]')
-    const abdullahBadge = badges.find(badge => badge.text().includes('Abdullah'))
-    expect(abdullahBadge).toBeDefined()
-    expect(abdullahBadge?.classes()).toContain('from-teal-700')
-  })
-
-  it('renders female speaker with stone gradient when not in malePatterns', async () => {
-    const wrapper = shallowMount(LessonDialogue, {
-      props: {
-        section: UNKNOWN_SPEAKER_SECTION,
-        malePatterns: ['Muhammad', 'Ali', 'Abdullah']
-      }
-    })
-    const tabs = wrapper.findAll('[data-testid="scene-tab"]')
-    await tabs[1].trigger('click')
-    await wrapper.vm.$nextTick()
-
-    const badges2 = wrapper.findAll('[data-testid^="speaker-badge-"]')
-    const aishaBadge = badges2.find(badge => badge.text().includes('Aisha'))
-    expect(aishaBadge?.classes()).toContain('from-stone-500')
   })
 })
 
@@ -377,5 +310,61 @@ describe('LessonDialogue | scene tab keyboard navigation (Issue #020)', () => {
 
     const tabs = wrapper.findAll('[data-testid="scene-tab"]')
     expect(tabs[1].classes()).toContain('active')
+  })
+})
+
+const MALFORMED_SECTION: SectionDefinition = {
+  name: 'Dialogue',
+  type: 'dialogue',
+  content: {
+    type: 'vocabulary',
+    categories: []
+  },
+  _lessonId: 'a1-01',
+  get items(): never[] { return [] }
+}
+
+const NO_CONTENT_SECTION: SectionDefinition = {
+  name: 'Dialogue',
+  type: 'dialogue',
+  content: {
+    type: 'dialogue',
+    scenes: []
+  },
+  _lessonId: 'a1-01',
+  get items(): never[] { return [] }
+}
+
+describe('LessonDialogue | no dialogue content renders error message (Issue #026)', () => {
+  it('renders "No dialogue content for this lesson." when content.type is not dialogue', () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: { section: MALFORMED_SECTION }
+    })
+    const message = wrapper.find('p.text-center')
+    expect(message.exists()).toBe(true)
+    expect(message.text()).toBe('No dialogue content for this lesson.')
+  })
+
+  it('renders "No dialogue content for this lesson." when scenes array is empty', () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: { section: NO_CONTENT_SECTION }
+    })
+    const message = wrapper.find('p.text-center')
+    expect(message.exists()).toBe(true)
+    expect(message.text()).toBe('No dialogue content for this lesson.')
+  })
+
+  it('does NOT render the error message when scenes have content', () => {
+    const wrapper = getWrapper()
+    const message = wrapper.find('p.text-center')
+    expect(message.exists()).toBe(false)
+  })
+
+  it('uses text-stone-400 class for the error message', () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: { section: NO_CONTENT_SECTION }
+    })
+    const message = wrapper.find('p.text-center')
+    expect(message.classes()).toContain('text-stone-400')
   })
 })

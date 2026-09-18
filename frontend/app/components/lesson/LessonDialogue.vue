@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SectionDefinition } from '~/data/curriculum'
+import type { DialogueScene, SectionDefinition } from '~/data/curriculum'
 
 interface Props {
   section: SectionDefinition
@@ -14,17 +14,6 @@ const emit = defineEmits<{
   playScene: []
 }>()
 
-interface DialogueScene {
-  label: string
-  lines: DialogueLine[]
-}
-
-interface DialogueLine {
-  speaker: string
-  arabic: string
-  english: string
-  notes?: string
-}
 
 const dialogueContent = computed<{ scenes: DialogueScene[] }>(() => {
   const content = _props.section.content
@@ -55,30 +44,11 @@ function playScene(): void {
   emit('playScene')
 }
 
-const maleNameSuffixes = [
-  'muhammad', 'ali', 'abraham', 'ibrahim', 'musa', 'moses', 'isa',
-  'jesus', 'umar', 'uthman', 'abu', 'ibn'
-]
-
-function matchesMalePatterns(speaker: string): boolean {
+function getSpeakerGradient(speaker: string): string {
   const lower = speaker.toLowerCase()
   const patterns = _props.malePatterns
-  if (patterns) {
-    if (patterns.some(p => lower.includes(p.toLowerCase()))) return true
-  }
-  return maleNameSuffixes.some(name => lower.includes(name))
-}
-
-function getSpeakerGradient(speaker: string): string {
-  const matchesMale = matchesMalePatterns(speaker)
-  if (matchesMale) return 'from-teal-700 to-teal-900'
-  // Unknown names (not matching any pattern) get stone (neutral)
+  if (patterns?.some(p => lower.includes(p.toLowerCase()))) return 'from-teal-700 to-teal-900'
   return 'from-stone-500 to-stone-700'
-}
-
-function normalizeSpeaker(speaker: string): string {
-  if (speaker.trim() === '') return ''
-  return speaker.charAt(0).toUpperCase() + speaker.slice(1).toLowerCase()
 }
 
 function handleTablistKeydown(event: KeyboardEvent): void {
@@ -134,6 +104,15 @@ const activeTabId = computed(() => `scene-tab-${currentSceneIndex.value}`)
       </button>
     </div>
 
+
+    <!-- No Dialogue Content Error State -->
+    <p
+      v-if="dialogueContent.scenes.length === 0"
+      class="text-center py-8 text-stone-400"
+    >
+      No dialogue content for this lesson.
+    </p>
+
     <!-- Line Cards -->
     <div
       v-for="(line, lineIndex) in currentScene.lines"
@@ -149,7 +128,7 @@ const activeTabId = computed(() => `scene-tab-${currentSceneIndex.value}`)
           :data-testid="`speaker-badge-${lineIndex}`"
           :class="`inline-block px-2 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-br ${getSpeakerGradient(line.speaker)}`"
         >
-          {{ normalizeSpeaker(line.speaker) }}
+          {{ line.speaker }}
         </span>
       </div>
 
