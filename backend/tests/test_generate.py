@@ -84,7 +84,6 @@ def _setup_mock_model():
     """
     import app as main_app
     from model_manager import ModelManager
-    from synthesis import Synthesis
     import sys
 
     _mock_wav = _make_mock_wav()
@@ -108,9 +107,11 @@ def _setup_mock_model():
     mm._model = _mock_tts_model()
     mm._status = "ready"
     main_app.tts_model_manager = mm
-    return lambda: (setattr(main_app, 'wave', _ORIGINAL_WAVE_MODULE),
-                    setattr(__import__('synthesis'), 'wave', _ORIGINAL_WAVE_MODULE),
-                    setattr(sys.modules['wave'], 'open', _ORIGINAL_WAVE_OPEN))
+    return lambda: (
+        setattr(main_app, "wave", _ORIGINAL_WAVE_MODULE),
+        setattr(__import__("synthesis"), "wave", _ORIGINAL_WAVE_MODULE),
+        setattr(sys.modules["wave"], "open", _ORIGINAL_WAVE_OPEN),
+    )
 
 
 def test_generate_speech_requires_text():
@@ -164,7 +165,6 @@ def test_generate_speech_rejects_missing_voice_file():
     """POST /api/generate returns 500 when voice has no corresponding WAV file."""
     import app as main_app
     from model_manager import ModelManager
-    from synthesis import Synthesis
 
     # Build a mock model WITHOUT mocking os.path.exists so the
     # handler's voice-file validation triggers for 'robot.wav'.
@@ -291,8 +291,6 @@ def test_generate_speech_accepts_default_parameters():
 
 def test_generate_speech_with_custom_voice_works():
     """POST /api/generate accepts a custom voice name and generates speech when the WAV file exists."""
-    from model_manager import ModelManager
-    from synthesis import Synthesis
 
     cleanup = _setup_mock_model()
 
@@ -315,8 +313,9 @@ def test_generate_speech_missing_voice_file_includes_filename():
 
     # Restore real os.path.exists and wave.open (previous tests may have patched them).
     import sys
+
     main_app.os.path.exists = os.path.exists
-    sys.modules['wave'].open = _ORIGINAL_WAVE_OPEN
+    sys.modules["wave"].open = _ORIGINAL_WAVE_OPEN
 
     # Build a mock model without mocking os.path.exists so the
     # handler's missing-voice-file path triggers properly.

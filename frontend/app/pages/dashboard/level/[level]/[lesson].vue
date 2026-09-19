@@ -103,30 +103,21 @@ watch(audioEl, (el) => {
   audioModule.audioRef.value = el
 })
 
-// -- Module-scope abort state for cleanup -----------------------------------
 const fetchController = shallowRef<AbortController | null>(null)
 const fetchTimeoutId = shallowRef<ReturnType<typeof setTimeout> | null>(null)
 const cleanedUp = shallowRef(false)
 
-// -- Cleanup: aborts in-flight fetch, pauses/disposes audio, hides bar,
-//    clears progress — all idempotent.
 function abortAndCleanup(): void {
   if (cleanedUp.value) return
   cleanedUp.value = true
-
-  // 1. Abort in-flight TTS fetch
   fetchController.value?.abort()
   clearTimeout(fetchTimeoutId.value ?? undefined)
   fetchController.value = null
   fetchTimeoutId.value = null
-
-  // 2. Stop playback
   audioModule.pause()
   audioModule.dispose()
   audioModule.isPlaying.value = false
-
   lessonProgress.clearLessonProgress(lessonId.value)
-  // 4. Reset the AbortController for the next _playText call.
   fetchController.value = null
   cleanedUp.value = false
 }
@@ -134,7 +125,6 @@ function abortAndCleanup(): void {
 async function _playText(text: string): Promise<void> {
   if (!text || !text.trim()) return
   await audioModule.dispose()
-  // Reuse module-scope controller so abortAndCleanup can abort it.
   fetchController.value = new AbortController()
   fetchTimeoutId.value = setTimeout(() => fetchController.value!.abort(), 30_000)
   try {
@@ -161,6 +151,15 @@ const repeatedSectionIndex = shallowRef(0)
 const currentText = shallowRef<string | null>(null)
 const currentIndex = shallowRef(0)
 const repeatMode = ref<RepeatMode>('off')
+
+const handleSectionPlay = (sectionType: string, findResult: SectionDefinition | undefined, index: number): void => {
+  if (!findResult) return
+  const items = findResult.items
+  if (items[index]?.arabic) {
+    _playText(items[index].arabic)
+  }
+}
+
 async function _handleAudioEnded(): Promise<void> {
   const total = totalLines.value
   if (total > 0) {
@@ -218,7 +217,6 @@ function handleRepeatChange(mode: RepeatMode): void {
   repeatMode.value = mode
 }
 
-// -- Dialogue play handlers ------------------------------------------------
 async function handleDialoguePlayLine(lineIndex: number): Promise<void> {
   const dialogue = currentLessonData.value?.sections.find(s => s.type === 'dialogue')
   if (!dialogue) return
@@ -244,39 +242,22 @@ async function handleDialoguePlayScene(): Promise<void> {
   }
 }
 
-// -- Vocabulary play handler -----------------------------------------------
 function handleVocabularyPlayWord(index: number): void {
   const vocab = currentLessonData.value?.sections.find(s => s.type === 'vocabulary')
-  if (!vocab) return
-  const section = vocab as SectionDefinition
-  const items = section.items
-  if (items[index]?.arabic) {
-    _playText(items[index].arabic)
-  }
+  handleSectionPlay('vocabulary', vocab, index)
 }
 
-// -- Pronouns play handler -------------------------------------------------
 function handlePronounsPlay(index: number): void {
   const pron = currentLessonData.value?.sections.find(s => s.type === 'pronouns')
-  if (!pron) return
-  const section = pron as SectionDefinition
-  const items = section.items
-  if (items[index]?.arabic) {
-    _playText(items[index].arabic)
-  }
+  handleSectionPlay('pronouns', pron, index)
 }
 
-// -- Expressions play handler ----------------------------------------------
 function handleExpressionsPlay(index: number): void {
   if (!expressionsSection.value) return
-  const section = expressionsSection.value as SectionDefinition
-  const items = section.items
-  if (items[index]?.arabic) {
-    _playText(items[index].arabic)
-  }
+  handleSectionPlay('expressions', expressionsSection.value, index)
 }
 
-onBeforeRouteLeave((_to: unknown, _from: unknown, next: (go?: unknown) => void) => {
+onBeforeRouteLeave((_to, _from, next) => {
   abortAndCleanup()
   if (isMissingLevel.value) {
     router.push('/dashboard')
@@ -355,8 +336,6 @@ onUnmounted(() => {
           :arabic-title="currentLessonData?.arabicTitle"
           :estimated-time="estimatedTime"
           :scenes="scenes"
-          :audio-type="'AI-Generated Audio'"
-          :is-ready="healthPoll.modelLoaded.value"
         />
       </div>
     </div>

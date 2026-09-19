@@ -7,7 +7,7 @@ import { vi, beforeEach } from 'vitest'
 // changing test behavior.
 const originalWarn = console.warn
 console.warn = (msg: string) => {
-  if (msg.includes('Failed to resolve component')) return
+  if (msg.includes('Could not resolve anonymous component')) return
   originalWarn(msg)
 }
 
@@ -16,6 +16,10 @@ console.warn = (msg: string) => {
 global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob')
 global.URL.revokeObjectURL = vi.fn()
 global.fetch = vi.fn()
+
+// scrollIntoView mock — jsdom does not implement Element.prototype.scrollIntoView
+// https://github.com/jsdom/jsdom/issues/1695
+globalThis.Element.prototype.scrollIntoView = vi.fn() as unknown as typeof Element.prototype.scrollIntoView
 
 // IntersectionObserver mock for useScrollReveal
 if (typeof (globalThis as unknown as Record<string, unknown>).IntersectionObserver !== 'function') {

@@ -104,7 +104,9 @@ class AudioStore:
         """List available voices from the speaker_wavs directory."""
         return discover_voices(self._speaker_wav_dir)
 
-    def list_history(self, cleanup_older_than_hours: Optional[int] = None) -> list[dict]:
+    def list_history(
+        self, cleanup_older_than_hours: Optional[int] = None
+    ) -> list[dict]:
         """List previously generated audio files with metadata.
 
         Reads sidecar JSON files for text metadata. Optionally runs
@@ -155,7 +157,6 @@ class AudioStore:
         Returns:
             Number of files removed.
         """
-        import os as _os
 
         removed = 0
         cutoff = time.time() - (older_than_hours * 3600)

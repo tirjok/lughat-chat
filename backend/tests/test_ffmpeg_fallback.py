@@ -8,16 +8,14 @@ The endpoint should fail with an HTTP error instead, letting the client decide
 how to handle the failure.
 """
 
-from unittest.mock import patch
-
 from app import app
 
 # Capture the real wave.open BEFORE importing app (which may patch it).
 # Python modules are singletons — after app imports wave, any 'import wave'
 # everywhere gets the SAME module object. If we patch app.wave.open and then
 # a mock does 'import wave; wave.open(...)', it calls our own mock -> recursion.
-_ORIGINAL_WAVE_OPEN = __import__('wave').open
-_ORIGINAL_WAVE_MODULE = __import__('wave')
+_ORIGINAL_WAVE_OPEN = __import__("wave").open
+_ORIGINAL_WAVE_MODULE = __import__("wave")
 
 
 # ---------------------------------------------------------------------------
@@ -88,9 +86,15 @@ def _setup_mock_model(mock_subprocess_run=None):
     # Build mock TTS that creates a valid WAV
     class MockTTS:
         def tts_to_file(
-            self, text=None, language=None, file_path=None, speaker_wav=None, temperature=None
+            self,
+            text=None,
+            language=None,
+            file_path=None,
+            speaker_wav=None,
+            temperature=None,
         ):
             import wave
+
             with wave.open(file_path, "w") as wav_file:
                 wav_file.setnchannels(1)
                 wav_file.setsampwidth(2)
@@ -128,9 +132,17 @@ def _setup_mock_model(mock_subprocess_run=None):
     p = None
     if mock_subprocess_run is not None:
         from unittest import mock
+
         p = mock.patch("subprocess.run", side_effect=mock_subprocess_run)
         p.start()
-    return lambda: (p.stop() if p else None, setattr(main_app, 'wave', _ORIGINAL_WAVE_MODULE), setattr(__import__('synthesis'), 'wave', _ORIGINAL_WAVE_MODULE), setattr(__import__('sys').modules['wave'], 'open', _ORIGINAL_WAVE_OPEN))
+    return lambda: (
+        p.stop() if p else None,
+        setattr(main_app, "wave", _ORIGINAL_WAVE_MODULE),
+        setattr(__import__("synthesis"), "wave", _ORIGINAL_WAVE_MODULE),
+        setattr(__import__("sys").modules["wave"], "open", _ORIGINAL_WAVE_OPEN),
+    )
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -206,6 +218,7 @@ def test_generate_speech_ffmpeg_failure_cleans_up_wav_file():
         # Check AUDIO_DIR for orphaned WAV files
         import app as main_app
         import os
+
         wav_files = [f for f in os.listdir(main_app.AUDIO_DIR) if f.endswith(".wav")]
         assert len(wav_files) == 0, (
             f"Orphaned WAV files found after FFmpeg failure: {wav_files}"

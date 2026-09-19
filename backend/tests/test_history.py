@@ -9,6 +9,7 @@ def _setup_audio_store(audio_dir):
     """Set up the AudioStore deep module for testing."""
     import app as main_app
     from audio_store import AudioStore
+
     main_app.audio_store_module = AudioStore(
         audio_dir=audio_dir,
         speaker_wav_dir=main_app.SPEAKER_WAV_DIR,
@@ -113,7 +114,6 @@ def test_history_cleanup_with_cleanup_true_triggers_cleanup(tmp_path):
 def test_history_with_sidecar_returns_text(tmp_path):
     """GET /api/history reads text from sidecar JSON metadata."""
     import json as _json
-    import os as _os
     from pathlib import Path
 
     fake_dir = Path(tmp_path) / "fake_audio"
@@ -125,12 +125,16 @@ def test_history_with_sidecar_returns_text(tmp_path):
     audio_file = fake_dir / audio_filename
     audio_file.touch()
     sidecar = fake_dir / f"{audio_filename}.json"
-    sidecar.write_text(_json.dumps({
-        "text": "مرحبا",
-        "language": "ar",
-        "voice": "female",
-        "created_at": "1234567890",
-    }))
+    sidecar.write_text(
+        _json.dumps(
+            {
+                "text": "مرحبا",
+                "language": "ar",
+                "voice": "female",
+                "created_at": "1234567890",
+            }
+        )
+    )
 
     client = TestClient(app)
     response = client.get("/api/history")

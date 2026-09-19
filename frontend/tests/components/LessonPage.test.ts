@@ -30,14 +30,6 @@ describe('dashboard/level/[level]/[lesson].vue | Issue-002: LessonHero wiring', 
     // Act & Assert — the template must wire scenes
     expect(content).to.contain(':scenes')
   })
-
-  it('passes audioType to LessonHero', () => {
-    // Arrange
-    const content = readFileSync(lessonPagePath, 'utf-8')
-
-    // Act & Assert — the template must wire audioType
-    expect(content).to.contain(':audio-type')
-  })
 })
 
 describe('dashboard/level/[level]/[lesson].vue | Issue-010: playback controls wiring', () => {
@@ -93,4 +85,3 @@ describe('dashboard/level/[level]/[lesson].vue | Issue-010: playback controls wi
     expect(content).to.contain('@next-track')
   })
 })
-

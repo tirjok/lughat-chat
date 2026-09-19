@@ -1,4 +1,3 @@
-import os
 import wave as _real_wave_module
 
 from app import app
@@ -99,15 +98,19 @@ def _setup_mock_model():
 
     # Also patch synthesis_module so it uses our mock model
     from synthesis import Synthesis
+
     main_app.synthesis_module = Synthesis(
         tts_model=mm._model,
         audio_dir=main_app.AUDIO_DIR,
         speaker_wav_dir=main_app.SPEAKER_WAV_DIR,
     )
 
-    return lambda: (setattr(main_app, 'wave', _ORIGINAL_WAVE_MODULE),
-                    setattr(__import__('synthesis'), 'wave', _ORIGINAL_WAVE_MODULE),
-                    setattr(sys.modules['wave'], 'open', _ORIGINAL_WAVE_OPEN))
+    return lambda: (
+        setattr(main_app, "wave", _ORIGINAL_WAVE_MODULE),
+        setattr(__import__("synthesis"), "wave", _ORIGINAL_WAVE_MODULE),
+        setattr(sys.modules["wave"], "open", _ORIGINAL_WAVE_OPEN),
+    )
+
 
 def test_generate_speech_returns_mp3_blob():
     """POST /api/generate returns MP3 audio blob, not JSON."""

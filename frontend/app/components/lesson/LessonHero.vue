@@ -5,7 +5,6 @@ interface Props {
   arabicTitle?: string
   estimatedTime?: string
   scenes?: string
-  audioType?: string
   isReady?: boolean
 }
 
@@ -13,7 +12,6 @@ const _props = withDefaults(defineProps<Props>(), {
   arabicTitle: '',
   estimatedTime: '',
   scenes: '',
-  audioType: '',
   isReady: false
 })
 </script>
@@ -54,7 +52,7 @@ const _props = withDefaults(defineProps<Props>(), {
         </div>
         <!-- Metadata row -->
         <div
-          v-if="estimatedTime || scenes || audioType"
+          v-if="estimatedTime || scenes"
           class="flex flex-wrap items-center gap-3 md:gap-4 text-primary-100 text-sm"
         >
           <span
@@ -71,7 +69,7 @@ const _props = withDefaults(defineProps<Props>(), {
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 0 0118 0z"
               />
             </svg>
             {{ estimatedTime }}
@@ -90,29 +88,10 @@ const _props = withDefaults(defineProps<Props>(), {
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"
               />
             </svg>
             {{ scenes }}
-          </span>
-          <span
-            v-if="audioType"
-            class="flex items-center gap-1.5"
-          >
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-              />
-            </svg>
-            {{ audioType }}
           </span>
         </div>
       </div>

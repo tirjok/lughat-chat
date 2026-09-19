@@ -8,8 +8,6 @@ and cleans them up in the finally block if the response is never delivered.
 
 import os
 
-from synthesis import Synthesis
-
 
 def test_generate_speech_tracks_mp3_and_json_in_cleanup_list():
     """Verify that the Synthesis.generate() method uses intermediate_files
