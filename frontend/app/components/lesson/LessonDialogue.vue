@@ -155,7 +155,7 @@ function handleTablistKeydown(event: KeyboardEvent): void {
           <!-- Arabic Text (RTL) -->
           <p
             dir="rtl"
-            class="font-arabic text-lg md:text-xl text-stone-800 dark:text-stone-100 mb-2"
+            class="font-arabic text-xl md:text-2xl text-stone-800 dark:text-stone-100 mb-2"
           >
             {{ line.arabic }}
           </p>
