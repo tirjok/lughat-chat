@@ -5,6 +5,7 @@ interface Props {
   section: SectionDefinition
   isAudioDisabled?: boolean
   malePatterns?: string[]
+  playingLineIndex?: number | null
 }
 
 const _props = defineProps<Props>()
@@ -39,6 +40,16 @@ function selectLine(_index: number): void {
   const cards = container.querySelectorAll('[data-testid^="line-card-"]')
   const el = cards[currentLineIndex.value] as HTMLElement | null
   el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+function getLineCardClass(lineIndex: number): string[] {
+  const base = ['rounded-xl', 'border', 'p-4', 'md:p-5', 'transition-all', 'cursor-pointer']
+  if (_props.isAudioDisabled) return [...base, 'opacity-40', 'cursor-not-allowed']
+  const isPlaying = lineIndex === (_props.playingLineIndex ?? -1)
+  if (lineIndex === currentLineIndex.value || isPlaying) {
+    return [...base, 'bg-gradient-to-l', 'from-primary-100', 'to-primary-50', 'border-primary-300', 'dark:from-primary-900/40', 'dark:to-primary-800/30', 'dark:border-primary-600', ...(isPlaying ? ['playing'] : [])]
+  }
+  if (isPlaying) return [...base, 'playing']
+  return [...base, 'bg-white', 'border-stone-200', 'dark:bg-stone-900', 'dark:border-stone-700']
 }
 
 function playLine(index: number): void {
@@ -80,7 +91,6 @@ function handleTablistKeydown(event: KeyboardEvent): void {
 
 <template>
   <div class="space-y-4">
-    <!-- Scene Tabs -->
     <div
       v-if="sceneLabels.length > 1"
       class="flex gap-2 overflow-x-auto pb-2"
@@ -109,7 +119,6 @@ function handleTablistKeydown(event: KeyboardEvent): void {
       </button>
     </div>
 
-    <!-- No Dialogue Content Error State -->
     <p
       v-if="dialogueContent.scenes.length === 0"
       class="text-center py-8 text-stone-400"
@@ -117,7 +126,6 @@ function handleTablistKeydown(event: KeyboardEvent): void {
       No dialogue content for this lesson.
     </p>
 
-    <!-- Line Cards -->
     <div
       ref="lineCardsContainer"
       class="space-y-3"
@@ -126,7 +134,6 @@ function handleTablistKeydown(event: KeyboardEvent): void {
         v-for="(line, lineIndex) in (dialogueContent.scenes[currentSceneIndex]?.lines ?? [])"
         :key="lineIndex"
       >
-        <!-- Speaker Badge -->
         <div
           v-if="line.speaker"
           class="flex items-center gap-2"
@@ -139,20 +146,11 @@ function handleTablistKeydown(event: KeyboardEvent): void {
           </span>
         </div>
 
-        <!-- Line Card -->
         <div
           :data-testid="`line-card-${lineIndex}`"
-          :class="[
-            'rounded-xl border p-4 md:p-5 transition-all cursor-pointer',
-            _props.isAudioDisabled
-              ? 'opacity-40 cursor-not-allowed'
-              : [lineIndex === currentLineIndex
-                ? 'bg-gradient-to-l from-primary-100 to-primary-50 border-primary-300 dark:from-primary-900/40 dark:to-primary-800/30 dark:border-primary-600'
-                : 'bg-white border-stone-200 dark:bg-stone-900 dark:border-stone-700']
-          ]"
+          :class="getLineCardClass(lineIndex)"
           @click="currentLineIndex = lineIndex"
         >
-          <!-- Arabic Text (RTL) -->
           <p
             dir="rtl"
             class="font-arabic text-xl md:text-2xl text-stone-800 dark:text-stone-100 mb-2"
@@ -160,12 +158,10 @@ function handleTablistKeydown(event: KeyboardEvent): void {
             {{ line.arabic }}
           </p>
 
-          <!-- English Translation -->
           <p class="text-sm text-stone-500 dark:text-stone-400 mb-2">
             {{ line.english }}
           </p>
 
-          <!-- Teacher Note -->
           <p
             v-if="line.notes"
             class="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg px-3 py-1.5 inline-block"
@@ -173,7 +169,6 @@ function handleTablistKeydown(event: KeyboardEvent): void {
             {{ line.notes }}
           </p>
 
-          <!-- Play Button -->
           <button
             :data-testid="`play-line-${lineIndex}`"
             :disabled="_props.isAudioDisabled"
@@ -195,7 +190,6 @@ function handleTablistKeydown(event: KeyboardEvent): void {
       </div>
     </div>
 
-    <!-- Play Scene Button -->
     <button
       v-if="(dialogueContent.scenes[currentSceneIndex]?.lines ?? []).length > 0"
       data-testid="play-scene"

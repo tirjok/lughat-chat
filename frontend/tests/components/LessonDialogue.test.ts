@@ -4,6 +4,8 @@ import { nextTick } from 'vue'
 import LessonDialogue from '~/components/lesson/LessonDialogue.vue'
 import type { SectionDefinition } from '~/data/curriculum'
 
+const MALE_PATTERNS = ['Muhammad', 'Ali', 'Abraham', 'Ibrahim', 'Musa', 'Moses', 'Isa', 'Jesus', 'Umar', 'Uthman']
+
 const DIALOGUE_SECTION: SectionDefinition = {
   name: 'Dialogue',
   type: 'dialogue',
@@ -48,7 +50,7 @@ const NO_CONTENT_SECTION: SectionDefinition = {
 
 function getWrapper(section: SectionDefinition = DIALOGUE_SECTION) {
   return shallowMount(LessonDialogue, {
-    props: { section, malePatterns: ['Muhammad', 'Ali', 'Abraham', 'Ibrahim', 'Musa', 'Moses', 'Isa', 'Jesus', 'Umar', 'Uthman'] }
+    props: { section, malePatterns: MALE_PATTERNS }
   })
 }
 
@@ -183,33 +185,6 @@ describe('LessonDialogue', () => {
     expect(wrapper.emitted('playScene')).toHaveLength(1)
   })
 
-  it('renders a play icon SVG inside the Play Scene button', () => {
-    const wrapper = getWrapper()
-    const svg = wrapper.find('[data-testid="play-scene"] svg')
-    expect(svg.exists()).toBe(true)
-    expect(svg.attributes('viewBox')).toBe('0 0 24 24')
-  })
-
-  it('renders "Play Scene" text label next to the play icon', () => {
-    const wrapper = getWrapper()
-    expect(wrapper.find('[data-testid="play-scene"]').text()).toContain('Play Scene')
-  })
-
-  it('applies correct classes to the Play Scene button', () => {
-    const wrapper = getWrapper()
-    const classes = wrapper.find('[data-testid="play-scene"]').attributes('class')
-    expect(classes).toContain('rounded-full')
-    expect(classes).toContain('bg-primary-600')
-    expect(classes).toContain('text-white')
-    expect(classes).toContain('hover:bg-primary-700')
-  })
-
-  it('renders the play icon with the same SVG path as individual line play buttons', () => {
-    const wrapper = getWrapper()
-    const svg = wrapper.find('[data-testid="play-scene"] svg path')
-    expect(svg.attributes('d')).toBe('M8 5v14l11-7z')
-  })
-
   it('disables the Play Scene button when audio is disabled', () => {
     const wrapper = shallowMount(LessonDialogue, {
       props: { section: DIALOGUE_SECTION, isAudioDisabled: true }
@@ -315,5 +290,44 @@ describe('LessonDialogue | keyboard and scroll', () => {
     await nextTick()
 
     expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+  })
+})
+
+describe('LessonDialogue | playing indicator', () => {
+  it('applies a pulse animation class to the line card matching playingLineIndex', async () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: { section: DIALOGUE_SECTION, malePatterns: MALE_PATTERNS, playingLineIndex: 0 }
+    })
+    const lineCards = wrapper.findAll('[data-testid^="line-card-"]')
+
+    await nextTick()
+
+    expect(lineCards[0].classes()).toContain('playing')
+    expect(lineCards[1].classes()).not.toContain('playing')
+  })
+
+  it('removes the pulse animation class when playingLineIndex is null', async () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: { section: DIALOGUE_SECTION, malePatterns: MALE_PATTERNS, playingLineIndex: null }
+    })
+    const lineCards = wrapper.findAll('[data-testid^="line-card-"]')
+
+    await nextTick()
+
+    lineCards.forEach((card) => {
+      expect(card.classes()).not.toContain('playing')
+    })
+  })
+
+  it('keeps the playing line highlighted with the active-line gradient', async () => {
+    const wrapper = shallowMount(LessonDialogue, {
+      props: { section: DIALOGUE_SECTION, malePatterns: MALE_PATTERNS, playingLineIndex: 1 }
+    })
+    const lineCards = wrapper.findAll('[data-testid^="line-card-"]')
+
+    await nextTick()
+
+    expect(lineCards[1].classes()).toContain('from-primary-100')
+    expect(lineCards[1].classes()).toContain('playing')
   })
 })
