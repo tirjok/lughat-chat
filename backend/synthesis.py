@@ -17,8 +17,9 @@ from __future__ import annotations
 import os
 import subprocess
 import uuid
+from fastapi.responses import FileResponse
 from fastapi import HTTPException
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 # Minimum reference audio duration for XTTS-v2 voice cloning (seconds)
 XTTS_MIN_REFERENCE_DURATION = 0.33
@@ -123,7 +124,6 @@ class Synthesis:
         # Voice resolution: speaker takes precedence, then voice, then "KSA Zariyah - Female"
         resolved_voice = speaker if speaker else (voice or "KSA Zariyah - Female")
 
-
         timestamp = uuid.uuid4().hex[:8]
         lang_code = language
         filename = f"{lang_code}_{resolved_voice}_{timestamp}.mp3"
@@ -139,9 +139,7 @@ class Synthesis:
             print(f"Generating speech: {text[:50]}...")
 
             # Resolve speaker WAV path
-            speaker_wav = os.path.join(
-                self._speaker_wav_dir, f"{resolved_voice}.wav"
-            )
+            speaker_wav = os.path.join(self._speaker_wav_dir, f"{resolved_voice}.wav")
 
             if not os.path.exists(speaker_wav):
                 raise HTTPException(
@@ -177,9 +175,7 @@ class Synthesis:
             )
 
             if not os.path.exists(wav_path):
-                raise HTTPException(
-                    status_code=500, detail="Failed to generate audio"
-                )
+                raise HTTPException(status_code=500, detail="Failed to generate audio")
 
             intermediate_files.append(wav_path)
 

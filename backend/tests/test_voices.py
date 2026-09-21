@@ -111,6 +111,7 @@ def test_api_voices_uses_discover_voices():
 
         # Create a real AudioStore with the temp dir
         import app as main_app
+
         store = AudioStore(
             audio_dir=main_app.AUDIO_DIR,
             speaker_wav_dir=tmpdir,
@@ -135,6 +136,7 @@ def test_list_voices_includes_both_genders():
 
     # Set up audio_store_module so the endpoint is not None
     import app as main_app
+
     main_app.audio_store_module = AudioStore(
         audio_dir=main_app.AUDIO_DIR,
         speaker_wav_dir=main_app.SPEAKER_WAV_DIR,

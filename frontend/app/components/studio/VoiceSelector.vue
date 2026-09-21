@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Voice } from '../../composables/studio/useVoices'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { onClickOutside } from '@vueuse/core'
+import { ref, computed, watch } from 'vue'
+import { onClickOutside, useWindowSize } from '@vueuse/core'
 import { showToast } from '../../composables/common/useToast'
 
 interface Props {
@@ -70,16 +70,14 @@ const menuStyle = ref<Record<string, string>>({})
 function updateMenuPosition() {
   if (!triggerRef.value || !isOpen.value) return
   const rect = triggerRef.value.getBoundingClientRect()
-  const viewportHeight = window.innerHeight
   const menuHeight = 280 // matches max-h-[280px] in template
-  const spaceBelow = viewportHeight - rect.bottom
+  const spaceBelow = viewportHeight.value - rect.bottom
   const spaceAbove = rect.top
-
   // If there's not enough space below the trigger, flip the menu upward.
   if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
     // Open upward: position the menu's bottom edge above the trigger.
     menuStyle.value = {
-      bottom: `${window.innerHeight - rect.top + 8}px`,
+      bottom: `${viewportHeight.value - rect.top + 8}px`,
       left: `${rect.left}px`,
       width: `${rect.width}px`
     }
@@ -93,15 +91,13 @@ function updateMenuPosition() {
   }
 }
 
-onMounted(() => {
-  window.addEventListener('scroll', updateMenuPosition, true)
-  window.addEventListener('resize', updateMenuPosition)
-})
+const { height: viewportHeight } = useWindowSize()
 
-onUnmounted(() => {
-  stop()
-  window.removeEventListener('scroll', updateMenuPosition, true)
-  window.removeEventListener('resize', updateMenuPosition)
+// Update menu position when viewport changes
+watch(viewportHeight, () => {
+  if (isOpen.value) {
+    updateMenuPosition()
+  }
 })
 </script>
 

@@ -1,4 +1,3 @@
-
 import json
 import os
 import time
@@ -57,7 +56,6 @@ def store_cache(
     mp3_path: str, cache_key: str, text: str, language: str, voice: str
 ) -> None:
 
-    """
     cache_mp3_path = os.path.join(_get_audio_dir(), f"{cache_key}.mp3")
     try:
         with open(mp3_path, "rb") as src, open(cache_mp3_path, "wb") as dst:

@@ -9,13 +9,16 @@ import { type App as VueApp, createApp, ref } from 'vue'
 let __testApp: VueApp | null = null
 
 beforeEach(() => {
+  if (__testApp) {
+    __testApp.unmount()
+    __testApp = null
+  }
   try {
-    __testApp?.unmount()
-  } catch { /* jsdom may not support unmount */ }
-  __testApp = null
-  __testApp = createApp({}).mount(
-    Object.assign(document.createElement('div'), { id: '__test-lifecycle-suppressor' })
-  )
+    __testApp = createApp({ render: () => null })
+    __testApp.mount(document.createElement('div'))
+  } catch {
+    // Ignore errors — Nuxt full tests provide their own lifecycle
+  }
 })
 
 // ─── Browser API Mocks ──────────────────────────────────────────────
@@ -27,6 +30,10 @@ beforeEach(() => {
 global.URL.createObjectURL = vi.fn(() => 'http://mock.url/blob') as unknown as typeof global.URL.createObjectURL
 
 global.URL.revokeObjectURL = vi.fn()
+
+// scrollIntoView mock — jsdom does not implement Element.prototype.scrollIntoView
+// https://github.com/jsdom/jsdom/issues/1695
+globalThis.Element.prototype.scrollIntoView = vi.fn() as unknown as typeof Element.prototype.scrollIntoView
 
 // matchMedia mock for useScrollReveal (prefers-reduced-motion check)
 global.window.matchMedia = vi.fn((query: string) => ({ matches: false, media: query, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof global.window.matchMedia

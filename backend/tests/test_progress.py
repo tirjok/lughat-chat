@@ -33,8 +33,7 @@ def test_put_progress_stores_then_get_returns_it():
     client = TestClient(app)
 
     response = client.put(
-        "/api/progress/a1-01",
-        json={"lesson_id": "a1-01", "progress": 75.0}
+        "/api/progress/a1-01", json={"lesson_id": "a1-01", "progress": 75.0}
     )
 
     assert response.status_code == 200
@@ -56,8 +55,7 @@ def test_put_progress_with_value_above_100_returns_422():
     client = TestClient(app)
 
     response = client.put(
-        "/api/progress/a1-01",
-        json={"lesson_id": "a1-01", "progress": 101.0}
+        "/api/progress/a1-01", json={"lesson_id": "a1-01", "progress": 101.0}
     )
 
     assert response.status_code == 422
@@ -70,8 +68,7 @@ def test_put_progress_with_negative_value_returns_422():
     client = TestClient(app)
 
     response = client.put(
-        "/api/progress/a1-01",
-        json={"lesson_id": "a1-01", "progress": -1.0}
+        "/api/progress/a1-01", json={"lesson_id": "a1-01", "progress": -1.0}
     )
 
     assert response.status_code == 422
@@ -84,8 +81,7 @@ def test_put_progress_with_empty_lesson_id_returns_422():
     client = TestClient(app)
 
     response = client.put(
-        "/api/progress/a1-01",
-        json={"lesson_id": "", "progress": 50.0}
+        "/api/progress/a1-01", json={"lesson_id": "", "progress": 50.0}
     )
 
     assert response.status_code == 422

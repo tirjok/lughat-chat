@@ -29,6 +29,7 @@ These are liabilities: they will be modified without understanding their full sh
 | **RF-14** | **Voice Preview (Dead Code)** | **Missing** | `frontend/app/components/VoiceSelector.vue:62-64` (`previewVoice()`) | Calls `showToast()` with "Playing 1-second preview of {name}..." but does NOT actually play audio. This is dead code or an incomplete feature. No spec covers: the intended behavior. |
 | **RF-15** | **Focus Halo Effect** | **Missing** | `frontend/app/components/FocusHaloCanvas.vue` | Radial gradient glow behind active RTL textarea. No spec covers: when does it activate/deactivate? What about multiple textareas? SSR compatibility? What triggers the blur handler (textarea empty vs non-empty)? |
 | Lesson Details Page Session | WORKFLOW-lesson-details-page.md | Draft (updated 2026-08-19) | Navigation to /dashboard/level/{level}/{lesson} | Frontend (page orchestrator) | 2026-08-19 |
+| **RF-16** | **Lesson Dialogue UI/UX Improvements** | **Draft (new: 2026-09-12)** | `frontend/app/components/lesson/LessonDialogue.vue` (206 lines), `frontend/tests/components/LessonDialogue.test.ts` (241 lines) | Frontend (component + tests). Spec covers: keyboard tab navigation (Issue 1), card body vs. play button interaction split (Issue 2), hardcoded comparison card removal (ADR-009, Issue 3), speaker badge handling (Issues 4, 7, 10, 15), play scene button styling (Issue 5), playing indicator (Issue 8), error/loading state (Issue 9), Arabic font size (Issue 17). 17 test cases. |
 | **RF-17** | **Mobile Divider Dragging** | **Missing** | `frontend/app/composables/useDragResize.ts` | Touch/mouse drag on the canvas/control-deck divider resizes panels. No spec covers: touch event handling, boundary constraints (0.25–0.85), `user-select` suppression during drag, `prefers-reduced-motion` interaction, window resize during drag. |
 | **RF-18** | **Generation History + Cleanup** | **Missing** | `backend/app.py:507-625` (`/api/history`, `/api/cleanup`) | Two endpoints, one reads history (with optional inline cleanup), the other explicitly cleans old files. No spec covers: what is the difference between inline cleanup (history) and explicit cleanup? What happens if the JSON sidecar is missing? What is the 24h TTL boundary? |
 | **RF-19** | **Container Startup/Health** | **Missing** | `docker-compose.yml` (health check, depends_on) | Docker health check polls `/health` every 15s with 60 retries and 60s start_period. Frontend container waits for `backend: service_healthy`. No spec covers: what happens if the backend never becomes healthy? What is the frontend timeout? |
@@ -77,7 +78,7 @@ These are liabilities: they will be modified without understanding their full sh
 | 28 | **Session Cleanup (24h TTL)** | — | **Missing** | Time passes, API calls | Backend (file system) | 2026-08-08 |
 | 29 | **Multi-Page SPA Routing** | `WORKFLOW-multi-page-spa-routing.md` | **Draft** | User clicks nav link / types URL / browser back-forward | Frontend (Nuxt Router + GlobalNavbar) | 2026-08-08 |
 | 31 | **Lesson Data Model Alignment** | `WORKFLOW-lesson-data-model-alignment.md` | **Draft** | Developer restructures curriculum.ts | Frontend (data layer) | 2026-08-16 |
-
+| 32 | **Lesson Dialogue UI/UX Improvements** | `WORKFLOW-lesson-dialogue-ui-improvements.md` | **Draft** | User navigates to a lesson with a dialogue section | Frontend (LessonDialogue component) | 2026-09-12 |
 ---
 
 ## View 2: By Component (Code → Workflows)
@@ -138,7 +139,8 @@ These are liabilities: they will be modified without understanding their full sh
 | `MobileSplitScreen.vue` | `frontend/app/components/MobileSplitScreen.vue` (294 lines) | Mobile Divider Dragging, Responsive Layout Toggle |
 | `curriculum.ts` | `frontend/app/data/curriculum.ts` (786 lines) | Lesson Data Model Alignment |
 | Lesson Hero (`LessonHero.vue`) | `frontend/app/components/LessonHero.vue` | Lesson Details Page Session (Draft) |
-### Infrastructure
+| LessonHero (`LessonHero.vue`) | `frontend/app/components/lesson/LessonHero.vue` | Lesson Details Page Session (Draft) |
+| LessonDialogue (`LessonDialogue.vue`) | `frontend/app/components/lesson/LessonDialogue.vue` (206 lines) | **Lesson Dialogue UI/UX Improvements** (Draft, 2026-09-12). Component participates in: Scene tab keyboard navigation (Issue 1), Card body vs. play button interaction split (Issue 2), Hardcoded comparison card (ADR-009, Issue 3), Speaker gradient logic (Issue 7), Play scene button (Issue 5), Playing indicator (Issue 8), Error/loading state (Issue 9), Arabic text rendering (Issue 10, 17). |
 
 | Component | File(s) | Workflows it participates in |
 |---|---|---|
@@ -176,7 +178,7 @@ These are liabilities: they will be modified without understanding their full sh
 | Sees focus glow behind textarea | Focus Halo Effect | Textarea focus/blur |
 | Navigates during synthesis | In-Flight Synthesis Cleanup | `onBeforeRouteLeave` |
 | Navigates between pages | Frontend SPA Routing → Cross-Page Composable Lifecycle | `<NuxtLink>`, URL, back/forward |
-| Opens a lesson and studies it (sections, audio, competencies) | Lesson Details Page Session → Text Synthesis (TTS handoff) → Audio Playback Lifecycle | `/dashboard/level/{level}/{lesson}` |
+|  | **Studies a lesson's dialogue section (tabs, line cards, speaker badges, audio playback, playing indicator)** | **Lesson Dialogue UI/UX Improvements** (Draft, 2026-09-12) → Text Synthesis (TTS handoff) → Audio Playback Lifecycle | `/dashboard/level/{level}/{lesson}` (dialogue section) |
 
 ### Operator Journeys
 
@@ -265,7 +267,11 @@ These are liabilities: they will be modified without understanding their full sh
 | Audio: error | TTS failure (422 / 500 / 503 / network / timeout) | → Retry \| Closed \| Leave | Lesson Details Page Session |
 | Progress: in-memory | Line ended / competency check | → Reset (lesson change or leave) | Lesson Details Page Session |
 | Page leaving | Navigation away | (terminal) | Lesson Details Page Session (ABORT_CLEANUP) |
-
+|  | **Dialogue: scene tab active** | `currentSceneIndex` updates via click/keyboard | → Next scene (tab switch) | Lesson Dialogue UI/UX Improvements (STEP 3) |
+|  | **Dialogue: line selected** | Card body click (select only, no play) | → Line played (play button) | Lesson Dialogue UI/UX Improvements (STEP 5) |
+|  | **Dialogue: line playing** | `@playing` event from parent (audio playing) | → Idle (audio ended) | Lesson Dialogue UI/UX Improvements (STEP 8) |
+|  | **Dialogue: line error** | TTS failure (422/500/503) | → Idle (retry via tap) | Lesson Dialogue UI/UX Improvements (STEP 9) |
+|  | **Dialogue: no content** | Missing or wrong-type section content | → (terminal — "No dialogue content" message) | Lesson Dialogue UI/UX Improvements (STEP 9) |
 ---
 
 ## Test Coverage Map
@@ -295,7 +301,8 @@ These are liabilities: they will be modified without understanding their full sh
 | Toast Notification System | Partial | `useToast.test.ts`, `ToastNotification.test.ts`, `ToastShortcut.test.ts` | Core toast tested, but auto-dismiss timer behavior not tested |
 | Panel Focus Management | No | — | **No tests** — composable exists, behavior untested |
 | Focus Halo Effect | No | — | **No tests** — component exists, behavior untested |
-| Voice Preview (Dead Code) | No | — | **No tests** — dead code (toast only, no audio played) |
+| Lesson Details Page Session | No | - | New spec (2026-08-19); page is a 197-line skeleton, no tests yet (36 test cases planned in spec) |
+| **Lesson Dialogue UI/UX Improvements** | Partial | `LessonDialogue.test.ts` (241 lines) | Existing tests cover: scene tabs (basic click), scene switching, speaker badges, Arabic RTL, play line/scene emits, active line highlighting. Missing: keyboard tab navigation (Issue 1), card body vs. play button split (Issue 2), comparison card tests (must be removed per ADR-009). 17 new test cases defined in spec (TC-01 through TC-17). |
 | Mobile Divider Dragging | No | — | **No tests** — composable exists, behavior untested |
 | Session Cleanup (24h TTL) | Partial | `test_history.py` (cleanup param) | Only inline cleanup tested, explicit `/api/cleanup` endpoint tested but 24h boundary not tested |
 | Global Navbar Navigation | Partial | `GlobalNavbar.test.ts` | Navigation rendering tested, but route matching edge cases not tested |
@@ -383,7 +390,10 @@ These workflows exist in the codebase but are no longer actively used or have be
 18. **`content/` and `frontend_source/` backend directories** — Empty directories exist at `backend/content/` and `backend/frontend_source/`. Are these placeholders for future features?
 19. **Lesson progress persistence** — Should lesson progress persist, or stay in-memory per session? (2026-08-19)
 20. **"Lesson complete" state** — Is "lesson complete" ever a required state (badge / auto-advance)? (2026-08-19)
-
+21. **Speaker gradient heuristic for LessonDialogue** — The `malePatterns` prop (from the new `WORKFLOW-lesson-dialogue-ui-improvements.md`) is a compromise: it lets curriculum data pass male speaker name patterns without extending `DialogueLine`. What is the fallback when the prop is not provided? (Answer from spec: check first character capitalization — names starting with "M" default to male, others default to female, with a neutral stone gradient as absolute fallback.)
+22. **Comparison content loss from A1-01** — Per ADR-009, the hardcoded comparison card is deleted. The three comparison points (gender suffixes, verb conjugation, welcome phrases) become lost from the product unless migrated to curriculum data. Should this be tracked as a content task? (ADR-009 says yes: "Track this as a content task in the curriculum authoring backlog.")
+23. **`@playing` event from parent** — The page orchestrator does not currently emit a `@playing` event to `LessonDialogue`. The spec requires this event to drive the playing indicator (pulse animation + auto-scroll). Is the parent's `useAudioModule` integration ready to support this? (Not yet — requires parent workflow update.)
+24. **Card body click currently triggers playLine** — The existing test fires `playLine` on card body click. After the workflow, card body click will NOT emit `playLine`. The test must be updated to check body-click does NOT trigger the emit (one test) and play-button click DOES trigger the emit (one test). (Verification: `frontend/tests/components/LessonDialogue.test.ts` line ~X checks body-click behavior.)
 ---
 
 ## Spec vs Reality Audit Log
@@ -398,3 +408,5 @@ These workflows exist in the codebase but are no longer actively used or have be
 | 2026-08-08 | `useHealthPoll` singleton behavior across pages not documented. | Flagged as Assumption A10 and Open Question #9. |
 | 2026-08-08 | `app.vue` uses `globalThis.useNuxtApp()` instead of `useRoute()` — workaround for test environments. | Documented in BLUEPRINT.md §9.21. |
 | 2026-08-19 | Lesson Details Page Session spec updated: added 4 findings (F8–F11) from code audit — `SectionDefinition.name?` vs skeleton `s.title` bug, `SectionType` includes `'activity'`, `SectionItem.audioUrl?/options?` unused, `ActivityDefinition.maxAttempts` from data model; 13 assumptions, 36 test cases, 11 findings total |
+
+| 2026-09-12 | New workflow `WORKFLOW-lesson-dialogue-ui-improvements.md` created: 10 steps, 1 ABORT_CLEANUP, 17 test cases, 10 assumptions, 6 findings (RC-1 through RC-6). Spec maps all 9 UI-IMPROVEMENTS issues (Dialogue section) and ADR-009 constraint (hardcoded comparison card removal). Existing comparison-card tests in `LessonDialogue.test.ts` must be removed (2 test cases). 6 new tests added for keyboard tab navigation (3), interaction split (2), and state management (1). |

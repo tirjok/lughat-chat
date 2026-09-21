@@ -2,6 +2,8 @@
 
 from fastapi.testclient import TestClient
 from app import app
+
+
 def _setup_mock_model(status: str = "loading", model=None):
     """Set up mock model in the deep module instances."""
     import app as main_app
@@ -13,7 +15,7 @@ def _setup_mock_model(status: str = "loading", model=None):
     mm._status = status
     main_app.tts_model_manager = mm
 
-    return lambda: setattr(main_app, 'tts_model_manager', None)
+    return lambda: setattr(main_app, "tts_model_manager", None)
     cleanup = _setup_mock_model(status="loading", model=None)
 
     client = TestClient(app)
@@ -66,7 +68,9 @@ def test_health_reload_triggers_reload_when_error():
     mm._status = "error"
 
     import app as main_app
-    cleanup = lambda: setattr(main_app, 'tts_model_manager', None)
+
+    def cleanup():
+        setattr(main_app, "tts_model_manager", None)
 
     client = TestClient(app)
     response = client.get("/health?reload=1")
@@ -76,6 +80,7 @@ def test_health_reload_triggers_reload_when_error():
     assert data["model_loaded"] is False
     assert data["status"] == "error"
     cleanup()
+
 
 def test_health_reload_ignored_when_not_error():
     """GET /health?reload=1 is ignored when status is 'loading' (not 'error')."""
@@ -100,7 +105,9 @@ def test_health_reload_during_loading_does_not_spawn_concurrent_thread():
     # Load without a real TTS class — status stays "loading"
 
     import app as main_app
-    cleanup = lambda: setattr(main_app, 'tts_model_manager', None)
+
+    def cleanup():
+        setattr(main_app, "tts_model_manager", None)
 
     # The reload method checks status and returns early if not "error"
     status = mm.reload()
@@ -112,6 +119,7 @@ def test_health_reload_during_loading_does_not_spawn_concurrent_thread():
 def test_health_endpoint_is_none():
     """Health endpoint returns error when tts_model_manager is None."""
     import app as main_app
+
     main_app.tts_model_manager = None
 
     client = TestClient(app)

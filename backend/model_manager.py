@@ -7,7 +7,6 @@ Internalizes: model loading, status polling, torch patching, background threads.
 from __future__ import annotations
 
 import threading
-from typing import Optional
 
 # Patch torch on import so any downstream TTS import works
 _torch_loaded = False
@@ -23,9 +22,7 @@ def _ensure_torch() -> None:
 
     if not hasattr(_pytorch_utils, "isin_mps_friendly"):
 
-        def _isin_mps_friendly(
-            elements, test_elements, **kwargs
-        ) -> torch.Tensor:
+        def _isin_mps_friendly(elements, test_elements, **kwargs) -> torch.Tensor:
             return torch.isin(elements, test_elements)
 
         _pytorch_utils.isin_mps_friendly = _isin_mps_friendly

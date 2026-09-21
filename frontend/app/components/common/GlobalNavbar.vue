@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
-import { useBackendHealth } from '../../composables/studio/useBackendHealth'
-import { useLessonProgress } from '../../composables/lesson/useLessonProgress'
+import { useMediaQuery } from '@vueuse/core'
 
 interface Props {
   currentPath: string
@@ -48,15 +47,10 @@ function isActive(item: NavItem): boolean {
   return props.currentPath === item.to
 }
 
-const isMobile = ref(false)
+const BREAKPOINT_MOBILE = 768
+const isMobile = useMediaQuery(`(max-width: ${BREAKPOINT_MOBILE - 1}px)`)
 const menuOpen = ref(false)
 const menuRef = useTemplateRef<HTMLDivElement | null>('menuRef')
-
-function checkMobile(): void {
-  if (typeof window !== 'undefined') {
-    isMobile.value = window.innerWidth < 768
-  }
-}
 
 function toggleMenu(): void {
   menuOpen.value = !menuOpen.value
@@ -66,10 +60,6 @@ function closeMenu(): void {
   menuOpen.value = false
 }
 
-if (typeof window !== 'undefined') {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-}
 
 const { status, modelLoaded } = useBackendHealth()
 </script>

@@ -9,16 +9,17 @@ from __future__ import annotations
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from typing import Optional
 from pydantic import BaseModel, Field
-from model_manager import ModelManager, _ensure_torch
-AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
-import wave
 from audio_store import AudioStore
 from synthesis import Synthesis
+from model_manager import ModelManager, _ensure_torch
+
+AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
+
+
 SPEAKER_WAV_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "speaker_wavs"
 )
@@ -56,7 +57,7 @@ async def lifespan(app: FastAPI):
     )
 
     # Start model loading in background
-    load_thread = tts_model_manager.load_in_background()
+    _load_thread = tts_model_manager.load_in_background()
     # Note: we don't wait for the thread — lifespan yields immediately
     # and model status is checked per-request.
 
@@ -102,9 +103,8 @@ try:
     os.makedirs(SPEAKER_WAV_DIR, exist_ok=True)
 except OSError:
     pass  # Read-only filesystem
-app.mount(
-    "/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker_wavs"
-)
+app.mount("/speaker_wavs", StaticFiles(directory=SPEAKER_WAV_DIR), name="speaker_wavs")
+
 
 class HealthResponse(BaseModel):
     status: str  # loading | ready | error
@@ -112,6 +112,7 @@ class HealthResponse(BaseModel):
 
 
 # ── Health endpoint (adapts ModelManager) ────────────────────────────
+
 
 @app.get("/health", response_model=HealthResponse)
 async def health(reload: Optional[str] = None):
@@ -129,7 +130,9 @@ async def health(reload: Optional[str] = None):
 
     return tts_model_manager.get_status()
 
+
 # ── Voices endpoint (adapts AudioStore) ───────────────────────────────
+
 
 @app.get("/api/voices")
 async def list_voices():
@@ -152,10 +155,11 @@ class SynthesisRequest(BaseModel):
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
     seed: Optional[int] = Field(default=None, ge=0)  # Deterministic seed (optional)
     pitch: float = Field(default=0.0, ge=-4.0, le=4.0)
+
+
 @app.post("/api/generate")
 async def generate_speech(request: SynthesisRequest):
-    """Generate speech from text and return MP3 audio blob.
-    """
+    """Generate speech from text and return MP3 audio blob."""
     from synthesis import Synthesis
     from fastapi import HTTPException
 
@@ -182,6 +186,7 @@ async def generate_speech(request: SynthesisRequest):
 
 # ── History endpoint (adapts AudioStore) ──────────────────────────────
 
+
 @app.get("/api/history")
 async def get_history(cleanup: Optional[str] = None):
     """Get list of previously generated audio files.
@@ -200,6 +205,7 @@ async def get_history(cleanup: Optional[str] = None):
 
 
 # ── Cleanup endpoint (adapts AudioStore) ──────────────────────────────
+
 
 @app.post("/api/cleanup")
 async def post_cleanup(older_than_hours: Optional[int] = 24):
