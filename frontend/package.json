@@ -21,6 +21,8 @@
     "@fontsource/plus-jakarta-sans": "catalog:",
     "@iconify-json/lucide": "catalog:",
     "@iconify-json/simple-icons": "catalog:",
+    "@motionone/dom": "catalog:",
+    "@motionone/vue": "catalog:",
     "@unocss/nuxt": "catalog:",
     "@vueuse/core": "catalog:",
     "@vueuse/nuxt": "catalog:",

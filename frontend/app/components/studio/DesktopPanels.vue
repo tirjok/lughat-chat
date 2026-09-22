@@ -1,7 +1,9 @@
 <script setup lang="ts">
 // DesktopPanels: Desktop side-by-side layout.
-import { computed, useTemplateRef, watch, onMounted, onUnmounted } from 'vue'
+import { computed, useTemplateRef, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useScrollReveal } from '../../composables/common/useScrollReveal'
+import { usePanelToggle } from '~/composables/studio/usePanelToggle'
+import { animate } from '@motionone/vue'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
 import SpeedSlider from './SpeedSlider.vue'
@@ -24,26 +26,33 @@ interface Props {
   isValid: boolean
   speakerVoices: Voice[]
   selectedVoiceName: string
+  activePanel?: 'control-deck' | 'canvas'
 }
 
 interface Emits {
   (e: 'update:textInput' | 'update:selectedSpeaker', value: string): void
   (e: 'update:speedValue' | 'seek', ratio: number): void
-  (e: 'synthesize' | 'clearText' | 'closePlayer' | 'toggle' | 'download'): void
+  (e: 'synthesize' | 'clearText' | 'closePlayer' | 'toggle' | 'download' | 'panelToggle'): void
   (e: 'setAudioRef', ref: HTMLAudioElement | null): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  activePanel: 'control-deck'
+})
+
 const emit = defineEmits<Emits>()
 
-const _controlDeckDesktopRef = useTemplateRef<HTMLDivElement | null>('control-deck-ref')
+const { activePanel: _toggleActivePanel, isMobile, togglePanel } = usePanelToggle()
+
+const controlDeckRef = useTemplateRef<HTMLDivElement | null>('control-deck-ref')
 const canvasHeaderRef = useTemplateRef<HTMLDivElement | null>('canvas-header-ref')
 
 // Scroll-reveal: observe desktop control deck sections for fade-up
 const { observe, disconnect } = useScrollReveal(canvasHeaderRef as import('vue').Ref<HTMLElement | null>)
 
 onMounted(() => observe())
-onUnmounted(() => disconnect())
+onBeforeUnmount(() => disconnect())
+
 const audioTemplateRef = useTemplateRef<HTMLAudioElement | null>('audio-el')
 
 watch(audioTemplateRef, (el) => {
@@ -62,6 +71,37 @@ const isNearLimit = computed(() => {
   return ratio >= 0.8 && charCount.value <= 3000
 })
 const isOverLimit = computed(() => charCount.value > 3000)
+
+// Animate control deck width on panel toggle
+let currentAnimation: ReturnType<typeof animate> | null = null
+watch(() => props.activePanel, (newPanel) => {
+  const el = controlDeckRef.value
+  if (!el || !isMobile.value) return
+
+  currentAnimation?.cancel()
+
+  const currentWidth = el.getBoundingClientRect().width
+  const targetWidth = newPanel === 'control-deck' ? 0.35 : 0
+  const finalWidth = Math.max(10, targetWidth * window.innerWidth)
+
+  currentAnimation = animate(el,
+    { width: `${currentWidth}px` },
+    {
+      width: `${finalWidth}px`,
+      type: 'spring',
+      stiffness: 200,
+      damping: 18,
+      restDelta: 1,
+      duration: 0.4,
+      reduceMotion: 'instant'
+    }
+  )
+})
+
+function handlePanelToggle() {
+  togglePanel()
+  emit('panelToggle')
+}
 </script>
 
 <template>
@@ -69,14 +109,25 @@ const isOverLimit = computed(() => charCount.value > 3000)
     class="hidden md:flex flex-row h-full w-full"
     style="background-color: #fafaf9;"
   >
-    <!-- LEFT PANEL: The Control Deck (35% md, 30% lg, 25% xl) — Fade-up -->
+    <!-- LEFT PANEL: The Control Deck (35% md, 30% lg, 25% xl) — Spring animated -->
     <aside
-      ref="control-deck-ref"
+      ref="controlDeckRef"
       role="region"
       aria-labelledby="control-deck-heading"
       data-panel="control-deck"
-      class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-white dark:bg-stone-800 border-t md:border-t-0 md:border-r border-stone-200 dark:border-stone-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-sm dark:shadow-[0_-8px_32px_rgba(0,0,0,0.25)] md:shadow-sm dark:md:shadow-[0_-16px_48px_rgba(0,0,0,0.35)] shrink-0 order-2 md:order-1 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] fade-up delay-100"
+      class="w-full md:w-[35%] lg:w-[30%] xl:w-[25%] bg-white dark:bg-stone-800 border-t md:border-t-0 md:border-r border-stone-200 dark:border-stone-700 flex flex-col h-[45dvh] md:h-full z-20 shadow-sm dark:shadow-[0_-8px_32px_rgba(0,0,0,0.25)] md:shadow-sm dark:md:shadow-[0_-16px_48px_rgba(0,0,0,0.35)] shrink-0 order-2 md:order-1"
     >
+      <!-- Toggle button (mobile-visible area on desktop for panel toggle) -->
+      <button
+        v-if="!isMobile"
+        class="hidden md:flex absolute top-1/2 -right-3 w-6 h-10 rounded-l-lg bg-stone-200 dark:bg-stone-600 items-center justify-center cursor-col-resize group"
+        style="transform: translateY(-50%);"
+        aria-label="Toggle panel"
+        @click="handlePanelToggle"
+      >
+        <span class="ph ph-arrows-left-right text-stone-500 dark:text-stone-300 text-xs" />
+      </button>
+
       <!-- Controls Container — unified, compact -->
       <div class="flex-1 p-3 overflow-y-auto flex flex-col">
         <div class="flex flex-col gap-4 fade-up delay-200">
@@ -105,11 +156,11 @@ const isOverLimit = computed(() => charCount.value > 3000)
 
     <!-- RIGHT PANEL: The Canvas (65% md, 70% lg, 75% xl) — Fade-up -->
     <main
-      ref="canvas-header-ref"
+      ref="canvasHeaderRef"
       role="region"
       aria-labelledby="canvas-heading"
       data-panel="canvas"
-      class="flex-1 w-full bg-stone-100 dark:bg-stone-900 relative flex flex-col overflow-hidden order-1 md:order-2 fade-up delay-100"
+      class="flex-1 w-full bg-stone-100 dark:bg-stone-900 relative flex flex-col overflow-hidden order-1 md:order-2"
     >
       <!-- Focus Halo (radial gradient glow behind textarea) -->
       <FocusHaloCanvas :focused="!!textInput" />
@@ -144,7 +195,7 @@ const isOverLimit = computed(() => charCount.value > 3000)
             </span>
             <span class="rounded-full ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
               <button
-                class="rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
+                class="rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white cursor-pointer shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
                 @click="emit('clearText')"
               >
                 <span
@@ -176,69 +227,45 @@ const isOverLimit = computed(() => charCount.value > 3000)
           <!-- Clear text button: Double-Bezel -->
           <span class="rounded-full ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
             <button
-              class="rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
+              class="rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-gray-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] active:scale-95"
               @click="emit('clearText')"
             >
               <span
                 aria-hidden="true"
-                class="ph ph-trash text-lg"
+                class="ph ph-trash"
               />
             </button>
           </span>
         </div>
       </div>
 
-      <!-- Text Input Area (mobile: px-4 pb-4, no max-width; desktop: px-4 md:px-8 pb-4 md:pb-32 max-w-5xl) -->
-      <div class="flex-1 relative w-full max-w-5xl mx-auto px-4 md:px-8 pb-4 md:pb-32 flex flex-col">
+      <!-- Text Input Area (desktop: full width minus sidebar) -->
+      <div class="flex-1 relative w-full px-4 md:px-6 lg:px-8 flex flex-col min-h-0">
         <textarea
           :value="textInput"
           dir="rtl"
-          class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg md:text-xl lg:text-2xl leading-relaxed text-stone-800 dark:text-gray-100 placeholder-stone-500 dark:placeholder-gray-600 scroll-smooth z-10"
+          class="w-full h-full bg-transparent border-none outline-none resize-none font-arabic text-lg leading-loose text-stone-800 dark:text-gray-100 placeholder-stone-500 dark:placeholder-gray-600 scroll-smooth"
           style="caret-color: #14b8a6;"
           placeholder="اكتب النص هنا... مثال: السلام عليكم ورحمة الله وبركاته"
           @input="emit('update:textInput', ($event.target as HTMLTextAreaElement).value)"
         />
       </div>
 
-      <!-- Floating Shortcut Hint: Double-Bezel -->
-      <div class="absolute bottom-6 right-8 text-stone-600 dark:text-gray-600 text-sm font-medium flex items-center gap-2 hidden md:flex">
-        <!-- Outer Shell -->
-        <div class="rounded-[0.875rem] ring-1 ring-stone-300 dark:ring-white/[0.06] p-1 bg-stone-200/80 dark:bg-stone-800/80 backdrop-blur bg-stone-100 dark:bg-white/[0.02]">
-          <!-- Inner Core -->
-          <div class="rounded-[calc(0.875rem-0.25rem)] px-4 py-2 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
-            Press
-            <!-- Outer Shell per kbd -->
-            <span class="rounded-md ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
-              <kbd class="rounded-md bg-stone-200 dark:bg-stone-900 px-2 py-1 font-mono text-stone-600 dark:text-gray-400 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">Ctrl</kbd>
-            </span>
-            +
-            <!-- Outer Shell per kbd -->
-            <span class="rounded-md ring-1 ring-stone-300 dark:ring-white/[0.06] p-0.5 bg-stone-100 dark:bg-white/[0.02]">
-              <kbd class="rounded-md bg-stone-200 dark:bg-stone-900 px-2 py-1 font-mono text-stone-600 dark:text-gray-400 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">Enter</kbd>
-            </span>
-            to generate
-          </div>
-        </div>
-      </div>
-
-      <!-- Sticky Audio Bar (slides up from bottom) -->
+      <!-- Sticky Audio Player (when active) -->
       <StickyAudioBar
-        :active="playerVisible && !!audioUrl"
+        v-if="props.playerVisible"
+        :active="props.playerVisible"
+        :is-playing="props.isPlaying"
+        :is-paused="props.isPaused"
+        :current-time="props.currentTime"
+        :duration="props.duration"
+        :speed-value="props.speedValue"
         :text-content="textInput"
-        :is-playing="isPlaying"
-        :is-paused="isPaused"
-        :current-time="currentTime"
-        :duration="duration"
-        :speed-value="speedValue"
         @close="emit('closePlayer')"
         @toggle="emit('toggle')"
-        @seek="(ratio) => emit('seek', ratio)"
-      />
-
-      <!-- Hidden audio element -->
-      <audio
-        ref="audio-el"
-        class="hidden"
+        @seek="emit('seek', $event)"
+        @speed-change="emit('update:speedValue', $event)"
+        @download="emit('download')"
       />
     </main>
   </div>

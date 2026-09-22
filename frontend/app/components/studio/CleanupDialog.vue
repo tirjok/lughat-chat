@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useTemplateRef } from 'vue'
+import { useTemplateRef, watch } from 'vue'
+import { animate } from '@motionone/vue'
 
 interface Props {
   visible: boolean
@@ -12,6 +13,7 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const dialogEl = useTemplateRef<HTMLDivElement | null>('dialogEl')
+let currentAnimation: ReturnType<typeof animate> | null = null
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key !== 'Tab') return
@@ -35,6 +37,46 @@ function handleKeydown(e: KeyboardEvent) {
     }
   }
 }
+
+// Spring entrance on visibility change
+watch(() => props.visible, (visible) => {
+  const el = dialogEl.value
+  if (!el) return
+
+  currentAnimation?.cancel()
+
+  if (visible) {
+    // Spring in from scale 0.95, opacity 0
+    currentAnimation = animate(el,
+      { scale: 0.95, opacity: 0 },
+      {
+        scale: 1,
+        opacity: 1,
+        type: 'spring',
+        stiffness: 300,
+        damping: 22,
+        restDelta: 0.01,
+        duration: 0.25,
+        reduceMotion: 'instant'
+      }
+    )
+  } else {
+    // Spring out to scale 0.95, opacity 0 (exit is a dismiss)
+    currentAnimation = animate(el,
+      { scale: 1, opacity: 1 },
+      {
+        scale: 0.95,
+        opacity: 0,
+        type: 'spring',
+        stiffness: 300,
+        damping: 22,
+        restDelta: 0.01,
+        duration: 0.2,
+        reduceMotion: 'instant'
+      }
+    )
+  }
+})
 </script>
 
 <template>

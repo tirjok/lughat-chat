@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, useTemplateRef } from 'vue'
 import { onKeyStroke } from '@vueuse/core'
+import { animate } from '@motionone/vue'
 
 interface Props {
   active?: boolean
@@ -34,6 +35,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+const barRef = useTemplateRef<HTMLDivElement | null>('barRef')
+let currentAnimation: ReturnType<typeof animate> | null = null
+
 type Speed = 0.75 | 1.0 | 1.25
 const speeds: Speed[] = [0.75, 1.0, 1.25]
 
@@ -41,8 +45,6 @@ const currentSpeedIndex = computed<0 | 1 | 2>(() => {
   const idx = speeds.indexOf(props.speedValue as Speed)
   return (idx >= 0 ? idx : 1) as 0 | 1 | 2
 })
-
-const currentSpeed = computed<Speed>(() => speeds[currentSpeedIndex.value] as Speed)
 
 const speedNext = () => {
   const nextIdx = (currentSpeedIndex.value + 1) % speeds.length
@@ -122,6 +124,47 @@ watch(() => props.shortcutsEnabled, (enabled) => {
   }
 }, { immediate: true })
 
+// MotionOne animation for bar visibility
+watch(() => props.active, (active) => {
+  const el = barRef.value
+  if (!el) return
+
+  // Cancel any in-flight animation
+  currentAnimation?.cancel()
+
+  if (active) {
+    // Show: spring from below to visible position
+    currentAnimation = animate(el,
+      { y: '100%', opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        type: 'spring',
+        stiffness: 200,
+        damping: 22,
+        restDelta: 0.1,
+        duration: 0.4,
+        reduceMotion: 'instant'
+      }
+    )
+  } else {
+    // Hide: spring down with fade
+    currentAnimation = animate(el,
+      { y: 0, opacity: 1 },
+      {
+        y: '100%',
+        opacity: 0,
+        type: 'spring',
+        stiffness: 200,
+        damping: 22,
+        restDelta: 0.1,
+        duration: 0.3,
+        reduceMotion: 'instant'
+      }
+    )
+  }
+}, { immediate: true })
+
 // Expose keyboard handler for testing
 function handleKeydown(e: KeyboardEvent): void {
   // Delegate keyboard events to the registered handlers.
@@ -178,201 +221,159 @@ defineExpose({
 
 <template>
   <!--
-    StickyAudioBar: Fixed bottom bar that slides up when active.
+    StickyAudioBar: Fixed bottom bar that springs into view when active.
     Three-section layout: left controls | center (waveform/time) | right controls.
   -->
   <div
+    ref="barRef"
     data-testid="sticky-bar"
     role="region"
     aria-label="Audio playback controls"
-    class="fixed bottom-0 left-0 right-0 z-50 flex items-center gap-2 px-3 py-2 border-t transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border-stone-200 dark:border-stone-700"
+    class="fixed bottom-0 left-0 right-0 z-50 flex items-center gap-2 px-3 py-2 border-t bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border-stone-200 dark:border-stone-700"
     :class="active ? 'translate-y-0' : 'translate-y-full'"
   >
     <!-- Left Controls: prev / play-pause -->
     <div
+      class="flex items-center gap-2"
       data-testid="controls-left"
-      class="flex items-center gap-2 shrink-0"
     >
-      <!-- Previous track -->
+      <!-- Prev button -->
       <button
+        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-500 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white hover:bg-stone-200/80 dark:hover:bg-stone-700/70 cursor-pointer"
         data-testid="prev-button"
         data-icon="prev"
         aria-label="Previous track"
-        class="w-10 h-10 rounded-full flex items-center justify-center text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
         @click="emit('prevTrack')"
       >
-        <span
-          class="ph-fill ph-skip-back text-xl"
-          aria-hidden="true"
-        />
+        <span class="ph-fill ph-skip-left text-lg" />
       </button>
 
-      <!-- Play / Pause (primary-600, 44px) -->
+      <!-- Play/Pause button -->
       <button
+        class="w-11 h-11 rounded-full flex items-center justify-center bg-primary-500 hover:bg-primary-600 text-white cursor-pointer shadow-[0_4px_12px_rgba(20,184,166,0.3)]"
         data-testid="play-pause-button"
-        data-icon="play"
-        :aria-label="isPlaying ? 'Pause' : 'Play'"
-        class="bg-primary-600 rounded-full w-11 h-11 flex items-center justify-center text-white shadow-[0_0_16px_rgba(221,36,118,0.3)] hover:scale-[1.04] active:scale-[0.96] transition-all duration-300"
+        aria-label="Play/Pause"
         @click="emit('toggle')"
       >
         <span
-          v-if="isPlaying"
-          data-icon="pause"
-          class="ph-fill ph-pause text-xl"
-          aria-hidden="true"
+          class="ph-fill ph-play text-xl"
+          :class="{ hidden: isPlaying && !isPaused }"
         />
         <span
-          v-else
-          data-icon="play"
-          class="ph-fill ph-play text-xl"
-          aria-hidden="true"
+          class="ph-fill ph-pause text-xl"
+          :class="{ hidden: !isPlaying || isPaused }"
         />
       </button>
-
-      <!-- Next track -->
+      <!-- Next button -->
       <button
+        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-500 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white hover:bg-stone-200/80 dark:hover:bg-stone-700/70 cursor-pointer"
         data-testid="next-button"
         data-icon="next"
         aria-label="Next track"
-        class="w-10 h-10 rounded-full flex items-center justify-center text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
         @click="emit('nextTrack')"
       >
-        <span
-          class="ph-fill ph-skip-forward text-xl"
-          aria-hidden="true"
-        />
+        <span class="ph-fill ph-skip-right text-lg" />
+      </button>
+
+      <!-- Download button -->
+      <button
+        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-500 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white hover:bg-stone-200/80 dark:hover:bg-stone-700/70 cursor-pointer"
+        data-testid="download-button"
+        aria-label="Download audio"
+        @click="emit('download')"
+      >
+        <span class="ph-fill ph-download-simple text-lg" />
       </button>
     </div>
 
     <!-- Center: Arabic text + wave animation + progress bar + time -->
     <div
+      class="flex-1 flex flex-col items-center gap-1 min-w-0 px-2"
       data-testid="controls-center"
-      class="flex-1 flex items-center gap-3 min-w-0"
     >
-      <!-- Arabic text (RTL) -->
-      <div
+      <!-- Arabic text (truncated) -->
+      <p
+        class="text-sm text-stone-700 dark:text-gray-300 font-arabic truncate max-w-[240px] text-center"
         data-testid="arabic-text"
-        class="rtl text-sm font-semibold text-stone-800 dark:text-stone-200 truncate"
+        dir="rtl"
       >
         {{ displayText }}
-      </div>
+      </p>
 
-      <!-- Wave animation (visible when playing) -->
-      <div
-        data-testid="wave-animation"
-        class="flex items-center gap-0.5 shrink-0"
-        :class="{ playing: isPlaying }"
-        aria-hidden="true"
-      >
-        <span
-          v-for="i in 5"
-          :key="i"
-          class="w-0.5 rounded-full bg-primary-500 dark:bg-primary-400"
-        />
-      </div>
-
-      <!-- Progress bar -->
-      <div
-        role="slider"
-        aria-label="Seek"
-        :aria-valuenow="Math.round(progressPercent)"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        :class="isPlaying ? 'playing' : ''"
-        data-testid="progress-bar"
-        class="flex-1 h-8 bg-stone-300 dark:bg-stone-600 rounded-full cursor-pointer relative group flex items-center"
-        @click="emit('seek', progressPercent / 100)"
-      >
+      <!-- Waveform + time -->
+      <div class="flex items-center gap-3 w-full">
+        <!-- Waveform bars -->
         <div
-          data-testid="progress-fill"
-          class="h-1.5 primary-600 rounded-full"
-          :style="{ width: `${progressPercent}%` }"
-        />
-      </div>
+          class="flex items-end gap-0.5 h-5"
+          data-testid="wave-animation"
+          :class="{ playing: isPlaying && !isPaused }"
+        >
+          <span class="w-1 rounded-full bg-primary-500" />
+          <span class="w-1 rounded-full bg-primary-500" />
+          <span class="w-1 rounded-full bg-primary-500" />
+          <span class="w-1 rounded-full bg-primary-500" />
+          <span class="w-1 rounded-full bg-primary-500" />
+        </div>
 
-      <!-- Time display -->
+        <!-- Progress bar -->
+        <div
+          class="flex-1 h-1 rounded-full bg-stone-300 dark:bg-stone-600 overflow-hidden"
+          data-testid="progress-bar"
+        >
+          <div
+            class="h-full bg-primary-500 rounded-full cursor-pointer"
+            data-testid="progress-fill"
+            :style="{ width: `${progressPercent}%` }"
+            @click="(e) => { const rect = (e.target as HTMLElement).getBoundingClientRect(); const ratio = (e.clientX - rect.left) / rect.width; emit('seek', ratio) }"
+          />
+        </div>
+      </div>
+      <!-- Time -->
       <span
+        class="text-xs font-mono text-stone-500 dark:text-gray-400 shrink-0"
         data-testid="current-time"
-        class="text-xs font-mono text-stone-500 dark:text-stone-400 shrink-0 w-10 text-right"
       >
-        {{ formattedCurrentTime }}
-      </span>
-      <span class="text-xs font-mono text-stone-400 dark:text-stone-500 shrink-0 w-10 text-right">
-        /
-      </span>
-      <span
-        data-testid="duration-time"
-        class="text-xs font-mono text-stone-400 dark:text-stone-500 shrink-0 w-10 text-right"
-      >
-        {{ formattedDurationTime }}
+        {{ formattedCurrentTime }} /
+        <span data-testid="duration-time">{{ formattedDurationTime }}</span>
       </span>
     </div>
 
     <!-- Right Controls: speed / repeat / close -->
     <div
+      class="flex items-center gap-2"
       data-testid="controls-right"
-      class="flex items-center gap-2 shrink-0"
     >
-      <!-- Speed toggle -->
+      <!-- Speed selector -->
       <button
+        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-500 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white hover:bg-stone-200/80 dark:hover:bg-stone-700/70 cursor-pointer"
         data-testid="speed-toggle"
-        aria-label="Toggle speed"
-        class="text-xs font-mono text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors px-2 py-1 rounded"
+        aria-label="Playback speed"
         @click="speedNext"
       >
-        {{ currentSpeed.toFixed(1) }}x
+        <span class="ph ph-gear text-lg" />
       </button>
 
-      <!-- Repeat -->
+      <!-- Repeat mode -->
       <button
+        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-500 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white hover:bg-stone-200/80 dark:hover:bg-stone-700/70 cursor-pointer"
         data-testid="repeat-button"
         aria-label="Repeat mode"
-        class="relative flex items-center justify-center w-9 h-9 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
-        :class="{ active: repeatMode !== 'off' }"
         @click="repeatNext"
       >
         <span
           class="ph-fill ph-repeat text-lg"
-          aria-hidden="true"
-        />
-        <span
-          v-if="repeatMode === 'one'"
-          class="absolute -top-0.5 -right-0.5 text-[8px] font-bold text-primary-600 bg-stone-100 dark:bg-stone-800 rounded-full w-3.5 h-3.5 flex items-center justify-center"
-        >
-          1
-        </span>
-        <span
-          v-else-if="repeatMode === 'all'"
-          class="absolute -top-0.5 -right-0.5 text-[8px] text-primary-600 bg-stone-100 dark:bg-stone-800 rounded-full w-3.5 h-3.5 flex items-center justify-center"
-        >
-          ∞
-        </span>
-      </button>
-
-      <!-- Download -->
-      <button
-        data-testid="download-button"
-        aria-label="Download"
-        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
-        @click="emit('download')"
-      >
-        <span
-          class="ph-fill ph-download text-lg"
-          aria-hidden="true"
+          :class="{ active: repeatMode !== 'off' }"
         />
       </button>
 
-      <!-- Close -->
+      <!-- Close button -->
       <button
+        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-500 dark:text-gray-400 hover:text-stone-800 dark:hover:text-white hover:bg-stone-200/80 dark:hover:bg-stone-700/70 cursor-pointer"
         data-testid="close-button"
-        aria-label="Close"
-        class="w-9 h-9 rounded-full flex items-center justify-center text-stone-600 dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+        aria-label="Close player"
         @click="emit('close')"
       >
-        <span
-          class="ph-fill ph-x text-lg"
-          aria-hidden="true"
-        />
+        <span class="ph-fill ph-x text-lg" />
       </button>
     </div>
   </div>

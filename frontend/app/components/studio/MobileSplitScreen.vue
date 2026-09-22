@@ -38,7 +38,9 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const { canvasRatio, onDragStart, onDragMove, onDragEnd } = useDragResize({
-  initialRatio: 0.55
+  initialRatio: 0.55,
+  flickThreshold: 30,
+  decelerationRate: 0.998
 })
 
 const charCount = computed(() => props.textInput.length)
@@ -127,15 +129,13 @@ watch(audioTemplateRef, (el) => {
 
     <!-- Mobile drag divider (compact, minimal visual presence) -->
     <div
+      data-drag-handle
       class="relative z-30 flex items-center justify-center"
       style="height: 16px;"
-      @touchstart="onDragStart"
-      @touchmove="onDragMove"
-      @touchend="onDragEnd"
-      @mousedown="onDragStart"
-      @mousemove="onDragMove"
-      @mouseup="onDragEnd"
-      @mouseleave="onDragEnd"
+      @pointerdown="onDragStart"
+      @pointermove="onDragMove"
+      @pointerup="onDragEnd"
+      @pointercancel="onDragEnd"
     >
       <div class="w-full h-px bg-stone-300 dark:bg-white/[0.06]" />
     </div>

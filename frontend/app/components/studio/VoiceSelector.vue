@@ -2,6 +2,7 @@
 import type { Voice } from '../../composables/studio/useVoices'
 import { ref, computed, watch } from 'vue'
 import { onClickOutside, useWindowSize } from '@vueuse/core'
+import { animate } from '@motionone/vue'
 import { showToast } from '../../composables/common/useToast'
 
 interface Props {
@@ -21,6 +22,7 @@ const isOpen = ref(false)
 const dropdownRef = ref<HTMLDivElement | null>(null)
 const triggerRef = ref<HTMLButtonElement | null>(null)
 const menuRef = ref<HTMLDivElement | null>(null)
+let animationFrameId: number | null = null
 
 const selectedVoice = computed(() => {
   const voice = props.voices.find(v => v.id === props.modelValue)
@@ -38,13 +40,66 @@ function getVoiceColorClass(): string {
   return 'text-primary-500'
 }
 
+function animateDropdown(open: boolean) {
+  const el = menuRef.value
+  if (!el) return
+
+  // Cancel any in-flight animation
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
+
+  if (open) {
+    // Open: spring from scale(0.98) opacity-90 to scale(1) opacity-100
+    // Read current computed style to avoid jump on interruption
+    const current = window.getComputedStyle(el)
+    const currentScale = current.transform.includes('matrix')
+      ? parseFloat(current.transform.match(/scale\(([\d.]+)/)?.[1] ?? '1')
+      : 1
+    const currentOpacity = parseFloat(current.opacity) ?? 1
+
+    animate(el,
+      { scale: currentScale, opacity: currentOpacity },
+      {
+        scale: 1,
+        opacity: 1,
+        type: 'spring',
+        stiffness: 300,
+        damping: 20,
+        restDelta: 0.01,
+        duration: 0.35,
+        reduceMotion: 'instant'
+      }
+    )
+  } else {
+    // Close: spring down with scale shrink + fade
+    animate(el,
+      { scale: 1, opacity: 1 },
+      {
+        scale: 0.97,
+        opacity: 0,
+        type: 'spring',
+        stiffness: 300,
+        damping: 20,
+        restDelta: 0.01,
+        duration: 0.25,
+        reduceMotion: 'instant'
+      }
+    )
+  }
+}
+
 function toggleDropdown() {
   isOpen.value = !isOpen.value
   if (isOpen.value) {
-    // Position the menu when the dropdown opens.
-    // Calling updateMenuPosition here ensures the menu is positioned
-    // below (or above, if near viewport bottom) the trigger.
     updateMenuPosition()
+    // Trigger spring animation on next tick after DOM appears
+    requestAnimationFrame(() => {
+      animateDropdown(true)
+    })
+  } else {
+    animateDropdown(false)
   }
 }
 
@@ -99,6 +154,17 @@ watch(viewportHeight, () => {
     updateMenuPosition()
   }
 })
+
+// Watch isOpen and trigger animation
+watch(isOpen, (open) => {
+  if (open) {
+    requestAnimationFrame(() => {
+      animateDropdown(true)
+    })
+  } else {
+    animateDropdown(false)
+  }
+})
 </script>
 
 <template>
@@ -117,7 +183,7 @@ watch(viewportHeight, () => {
     <!-- Dropdown Trigger -->
     <button
       ref="triggerRef"
-      class="w-full bg-white dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-white/[0.06] hover:ring-primary-500/30 rounded-[0.875rem] p-3 flex items-center justify-between focus:outline-none relative overflow-hidden group transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      class="w-full bg-white dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-white/[0.06] hover:ring-primary-500/30 rounded-[0.875rem] p-3 flex items-center justify-between focus:outline-none relative overflow-hidden group"
       @click="toggleDropdown"
     >
       <div
@@ -153,7 +219,7 @@ watch(viewportHeight, () => {
 
       <!-- Trailing chevron -->
       <span
-        class="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-stone-100 dark:group-hover:bg-white/5 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105 shrink-0"
+        class="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-stone-100 dark:group-hover:bg-white/5 group-hover:scale-105 shrink-0"
       >
         <span
           class="ph ph-caret-down text-stone-500 dark:text-gray-400"
@@ -162,19 +228,20 @@ watch(viewportHeight, () => {
       </span>
     </button>
 
-    <!-- Dropdown Menu (Teleported to body, animated) -->
+    <!-- Dropdown Menu (Teleported to body, MotionOne animated) -->
     <Teleport to="body">
       <div
         v-if="isOpen"
         ref="menuRef"
-        class="fixed z-50 bg-white dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-white/[0.06] rounded-[1.125rem] shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top opacity-100 scale-100 pointer-events-auto"
+        class="fixed z-50 bg-white dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-white/[0.06] rounded-[1.125rem] shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden pointer-events-auto origin-top"
+        style="transform-origin: center top;"
         :style="menuStyle"
       >
         <div class="max-h-[280px] overflow-y-auto p-2 flex flex-col gap-1">
           <button
             v-for="(voice, index) in voices"
             :key="voice.id"
-            class="voice-option w-full text-left rounded-[0.875rem] ring-1 ring-stone-200 dark:ring-white/[0.06] p-3 flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group fade-up"
+            class="voice-option w-full text-left rounded-[0.875rem] ring-1 ring-stone-200 dark:ring-white/[0.06] p-3 flex items-center justify-between group fade-up"
             :data-voice="voice.id"
             :data-name="voice.name"
             :data-tag="voice.tag"
@@ -189,7 +256,7 @@ watch(viewportHeight, () => {
           >
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-full bg-stone-200 dark:bg-stone-900 ring-1 ring-stone-300 dark:ring-white/[0.06] flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                class="w-10 h-10 rounded-full bg-stone-200 dark:bg-stone-900 ring-1 ring-stone-300 dark:ring-white/[0.06] flex items-center justify-center"
                 :class="[
                   voice.id === modelValue
                     ? 'ring-primary-500'
@@ -215,7 +282,7 @@ watch(viewportHeight, () => {
 
             <!-- Preview play button (visible on hover) -->
             <span
-              class="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-900 ring-1 ring-stone-300 dark:ring-white/[0.06] flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-110 text-stone-500 dark:text-gray-500 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] hover:text-primary-500 hover:ring-primary-500"
+              class="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-900 ring-1 ring-stone-300 dark:ring-white/[0.06] flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 hover:text-primary-500 hover:ring-primary-500 text-stone-500 dark:text-gray-500 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)] hover:scale-110"
               title="Preview Voice"
               @click.stop="previewVoice(voice)"
             >

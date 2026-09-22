@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// Index: Thin composition surface for the main TTS page.
 import { computed, nextTick, onUnmounted, shallowRef } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { usePanelToggle } from '../composables/studio/usePanelToggle'
@@ -13,7 +12,7 @@ import MobileSplitScreen from '../components/studio/MobileSplitScreen.vue'
 import DesktopPanels from '../components/studio/DesktopPanels.vue'
 import { useCleanupNavigation } from '../composables/studio/useCleanupNavigation'
 
-const { activePanel } = usePanelToggle()
+const { activePanel, togglePanel } = usePanelToggle()
 
 const audioModule = useAudioModule({
   onPlaybackEnd: () => {
@@ -35,7 +34,6 @@ const { synthesize } = useTtsApi()
 const { status: modelStatus } = useBackendHealth()
 const { voices: speakerVoices } = useVoices()
 
-// ── Form state ──────────────────────────────────────────────────
 const textInput = shallowRef('')
 const selectedSpeaker = shallowRef('')
 const speedValue = shallowRef(1.0)
@@ -67,28 +65,20 @@ const panelAnnouncement = computed(() => {
     : 'Switched to text editor panel'
 })
 
-// ── In-flight synthesis cleanup guard (R-7) ──
 const cleanup = useCleanupNavigation(audioModule)
-// ─── Cleanup navigation logic (extracted for testability) ───────────────
 
 onBeforeRouteLeave(async () => {
-  // AC-1: guard fires when navigating away from /
-  // AC-2: show dialog when isGenerating=true or isStreaming
   const hasInFlightSynthesis = isGenerating.value
 
   if (!hasInFlightSynthesis) {
-    // No in-flight synthesis — allow navigation without dialog
     return true
   }
 
-  // AC-2: Show dialog when isGenerating=true or isStreaming
   cleanup.showDialog()
 
-  // Block navigation until user responds
   return false
 })
 
-// ── Business logic ──────────────────────────────────────────────
 async function handleSynthesize() {
   if (!isValid.value) {
     showToast(validationState.value.error ?? 'Invalid text')
@@ -145,11 +135,11 @@ function handleClosePlayer() {
   playerVisible.value = false
   audioModule.pause()
 }
-
-// Safety net: dispose on unmount
+function handlePanelToggle() {
+  togglePanel()
+}
 onUnmounted(() => audioModule.dispose())
 
-// ── Derived data for child components ───────────────────────────
 const mobileScreenProps = computed(() => ({
   textInput: textInput.value,
   selectedSpeaker: selectedSpeaker.value,
@@ -214,6 +204,7 @@ const desktopPanelProps = computed(() => ({
     <DesktopPanels
       v-if="desktopPanelProps"
       v-bind="desktopPanelProps"
+      :active-panel="activePanel"
       @update:text-input="textInput = $event"
       @update:selected-speaker="selectedSpeaker = $event"
       @update:speed-value="speedValue = $event"
@@ -223,6 +214,7 @@ const desktopPanelProps = computed(() => ({
       @toggle="audioModule.toggle()"
       @seek="audioModule.seek"
       @set-audio-ref="audioRef = $event"
+      @panel-toggle="handlePanelToggle"
     />
 
     <!-- ── In-flight synthesis cleanup dialog ── -->

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
+import { animate } from '@motionone/vue'
 
 interface Props {
   currentPath: string
@@ -51,15 +52,54 @@ const BREAKPOINT_MOBILE = 768
 const isMobile = useMediaQuery(`(max-width: ${BREAKPOINT_MOBILE - 1}px)`)
 const menuOpen = ref(false)
 const menuRef = useTemplateRef<HTMLDivElement | null>('menuRef')
+let currentAnimation: ReturnType<typeof animate> | null = null
 
 function toggleMenu(): void {
   menuOpen.value = !menuOpen.value
+  animateMenu(menuOpen.value)
 }
 
 function closeMenu(): void {
   menuOpen.value = false
+  animateMenu(false)
 }
 
+function animateMenu(open: boolean) {
+  const el = menuRef.value
+  if (!el) return
+
+  currentAnimation?.cancel()
+
+  if (open) {
+    currentAnimation = animate(el,
+      { y: -20, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        type: 'spring',
+        stiffness: 300,
+        damping: 22,
+        restDelta: 0.01,
+        duration: 0.3,
+        reduceMotion: 'instant'
+      }
+    )
+  } else {
+    currentAnimation = animate(el,
+      { y: 0, opacity: 1 },
+      {
+        y: -20,
+        opacity: 0,
+        type: 'spring',
+        stiffness: 300,
+        damping: 22,
+        restDelta: 0.01,
+        duration: 0.25,
+        reduceMotion: 'instant'
+      }
+    )
+  }
+}
 
 const { status, modelLoaded } = useBackendHealth()
 </script>
@@ -93,7 +133,7 @@ const { status, modelLoaded } = useBackendHealth()
           :key="item.to"
           :to="item.to"
           :exact="item.to === '/'"
-          class="px-3 py-1.5 rounded text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          class="px-3 py-1.5 rounded text-sm font-medium"
           :class="isActive(item)
             ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
             : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800'"
@@ -140,7 +180,7 @@ const { status, modelLoaded } = useBackendHealth()
       <!-- Desktop action buttons + avatar -->
       <div class="flex items-center gap-3">
         <button
-          class="px-3 py-1.5 rounded text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          class="px-3 py-1.5 rounded text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
           aria-label="Ask Instructor"
         >
           <span
@@ -150,7 +190,7 @@ const { status, modelLoaded } = useBackendHealth()
           <span class="hidden lg:inline ml-1">Ask Instructor</span>
         </button>
         <button
-          class="px-3 py-1.5 rounded text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          class="px-3 py-1.5 rounded text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
           aria-label="Settings"
         >
           <span
@@ -194,7 +234,7 @@ const { status, modelLoaded } = useBackendHealth()
 
           <!-- Hamburger / Close toggle -->
           <button
-            class="w-9 h-9 flex items-center justify-center rounded-full text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            class="w-9 h-9 flex items-center justify-center rounded-full text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
             :class="menuOpen ? 'text-primary-600 dark:text-primary-400' : ''"
             aria-label="Navigation menu"
             :aria-expanded="menuOpen"
@@ -215,7 +255,7 @@ const { status, modelLoaded } = useBackendHealth()
           </button>
         </div>
 
-        <!-- Expanded menu: staggered reveal -->
+        <!-- Expanded menu: spring animation -->
         <div
           v-if="menuOpen"
           ref="menuRef"
@@ -228,7 +268,7 @@ const { status, modelLoaded } = useBackendHealth()
               :key="item.to"
               :to="item.to"
               :exact="item.to === '/'"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium"
               :class="isActive(item)
                 ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
                 : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800'"
@@ -246,7 +286,7 @@ const { status, modelLoaded } = useBackendHealth()
           <!-- Mobile action buttons -->
           <div class="flex items-center gap-2 mt-2 pt-2 border-t border-stone-100 dark:border-stone-800">
             <button
-              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
               aria-label="Ask Instructor"
               @click="closeMenu"
             >
@@ -257,7 +297,7 @@ const { status, modelLoaded } = useBackendHealth()
               Ask Instructor
             </button>
             <button
-              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
               aria-label="Settings"
               @click="closeMenu"
             >
@@ -306,7 +346,7 @@ const { status, modelLoaded } = useBackendHealth()
       aria-hidden="true"
     >
       <div
-        class="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500"
+        class="h-full bg-gradient-to-r from-primary-500 to-primary-600"
         :style="{ width: progressWidth }"
       />
     </div>

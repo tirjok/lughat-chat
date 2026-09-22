@@ -1,5 +1,15 @@
 import { vi, beforeEach } from 'vitest'
 
+// Mock MotionOne — used by ToastNotification, StickyAudioBar, CleanupDialog, GlobalNavbar, VoiceSelector
+vi.mock('@motionone/vue', () => ({
+  animate: (..._args: unknown[]) => ({ cancel: vi.fn() })
+}))
+// Mock usePanelToggle — used by DesktopPanels
+vi.mock('~/composables/studio/usePanelToggle', () => ({
+  usePanelToggle: () => ({ activePanel: ref('desktop'), isMobile: ref(false), togglePanel: vi.fn() })
+}))
+
+// Suppress Vue warnings about unresolved components in component tests.
 // Suppress Vue warnings about unresolved components in component tests.
 // index.vue renders child components (ToastNotification, FocusHaloCanvas,
 // VoiceSelector, etc.) that aren't registered in mount options. These are

@@ -1229,7 +1229,6 @@ export const curriculum: CurriculumLevel[] = [
   }
 ]
 
-// ─── Lookup helpers ─────────────────────────────────────────────────────
 
 /** Get a level by its code (e.g., 'A1'). */
 export function getLevelByCode(code: string): CurriculumLevel | undefined {

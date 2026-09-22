@@ -27,7 +27,7 @@ const vocabularyContent = computed<EmptyVocabulary>(() => {
   if (!content || content.type !== 'vocabulary') {
     return { categories: [] }
   }
-  return content as unknown as EmptyVocabulary
+  return content as EmptyVocabulary
 })
 
 const categoryOffsets = computed(() => {

@@ -22,7 +22,7 @@ export default defineVitestConfig({
     alias: {
       'vue-router': fileURLToPath(new URL('tests/mocks/nuxt-router.ts', import.meta.url)),
       'nuxt/dist/app/composables/router': fileURLToPath(new URL('tests/mocks/nuxt-router.ts', import.meta.url)),
-      'nuxt/dist/app/nuxt': fileURLToPath(new URL('tests/mocks/nuxt-app.ts', import.meta.url))
+      '@motionone/vue': fileURLToPath(new URL('tests/stubs/motionone-vue.ts', import.meta.url))
     }
   }
 })

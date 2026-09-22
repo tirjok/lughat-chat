@@ -3,7 +3,12 @@ import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import Index from '~/pages/index.vue'
 import { createMockUseAudioModule, createMockUseTtsApi, createMockUseHealthPoll, createMockUseInputValidation } from '~~/tests/mocks'
+// Mock MotionOne — used by ToastNotification, StickyAudioBar, CleanupDialog
+vi.mock('@motionone/vue', () => ({
+  animate: vi.fn()
+}))
 
+// Mock composables so Index.vue can access them without Nuxt auto-imports.
 // Mock composables so Index.vue can access them without Nuxt auto-imports.
 vi.mock('~/composables/common/useAudioModule', () => ({
   useAudioModule: vi.fn(() => createMockUseAudioModule())
@@ -32,7 +37,7 @@ vi.mock('~/composables/studio/useInputValidation', () => ({
 }))
 
 vi.mock('~/composables/studio/usePanelToggle', () => ({
-  usePanelToggle: () => ({ activePanel: ref('desktop') })
+  usePanelToggle: () => ({ activePanel: ref('desktop'), isMobile: ref(false), togglePanel: vi.fn() })
 }))
 
 vi.mock('~/composables/common/useScrollReveal', () => ({
