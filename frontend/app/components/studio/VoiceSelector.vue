@@ -2,7 +2,7 @@
 import type { Voice } from '../../composables/studio/useVoices'
 import { ref, computed, watch } from 'vue'
 import { onClickOutside, useWindowSize } from '@vueuse/core'
-import { animate } from '@motionone/vue'
+import { animate, spring } from '@motionone/dom'
 import { showToast } from '../../composables/common/useToast'
 
 interface Props {
@@ -59,34 +59,11 @@ function animateDropdown(open: boolean) {
       : 1
     const currentOpacity = parseFloat(current.opacity) ?? 1
 
-    animate(el,
-      { scale: currentScale, opacity: currentOpacity },
-      {
-        scale: 1,
-        opacity: 1,
-        type: 'spring',
-        stiffness: 300,
-        damping: 20,
-        restDelta: 0.01,
-        duration: 0.35,
-        reduceMotion: 'instant'
-      }
-    )
+
+    animate(el, { scale: [currentScale, 1], opacity: [currentOpacity, 1] }, { duration: 0.35, easing: spring({ stiffness: 300, damping: 20 }) })
   } else {
     // Close: spring down with scale shrink + fade
-    animate(el,
-      { scale: 1, opacity: 1 },
-      {
-        scale: 0.97,
-        opacity: 0,
-        type: 'spring',
-        stiffness: 300,
-        damping: 20,
-        restDelta: 0.01,
-        duration: 0.25,
-        reduceMotion: 'instant'
-      }
-    )
+    animate(el, { scale: [1, 0.97], opacity: [1, 0] }, { duration: 0.25, easing: spring({ stiffness: 300, damping: 20 }) })
   }
 }
 

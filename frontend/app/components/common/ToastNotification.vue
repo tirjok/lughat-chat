@@ -2,7 +2,7 @@
 import { useToast } from '../../composables/common/useToast'
 import type { ToastType } from '../../composables/common/useToast'
 import { onUnmounted, watch } from 'vue'
-import { animate } from '@motionone/vue'
+import { animate, spring } from '@motionone/dom'
 
 const toasts = useToast()
 
@@ -45,19 +45,7 @@ watch(toasts, (current) => {
       requestAnimationFrame(() => {
         const item = document.querySelector(`.toast-item[data-toast-id="${toastId}"]`) as HTMLElement | null
         if (item) {
-          const anim = animate(item,
-            { x: '100%', opacity: 0 },
-            {
-              x: 0,
-              opacity: 1,
-              type: 'spring',
-              stiffness: 300,
-              damping: 22,
-              restDelta: 0.01,
-              duration: 0.35,
-              reduceMotion: 'instant'
-            }
-          )
+          const anim = animate(item, { x: ['100%', 0], opacity: [0, 1] }, { duration: 0.35, easing: spring({ stiffness: 300, damping: 22 }) })
           activeAnimations.push(anim)
         }
       })
@@ -72,19 +60,7 @@ watch(toasts, (current) => {
       requestAnimationFrame(() => {
         const items = document.querySelectorAll<HTMLDivElement>(`.toast-item[data-toast-id="${prevId}"]`)
         for (const item of items) {
-          const anim = animate(item,
-            { x: 0, opacity: 1 },
-            {
-              x: '100%',
-              opacity: 0,
-              type: 'spring',
-              stiffness: 300,
-              damping: 22,
-              restDelta: 0.01,
-              duration: 0.25,
-              reduceMotion: 'instant'
-            }
-          )
+          const anim = animate(item, { x: [0, '100%'], opacity: [1, 0] }, { duration: 0.25, easing: spring({ stiffness: 300, damping: 22 }) })
           activeAnimations.push(anim)
         }
       })

@@ -3,7 +3,7 @@
 import { computed, useTemplateRef, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useScrollReveal } from '../../composables/common/useScrollReveal'
 import { usePanelToggle } from '~/composables/studio/usePanelToggle'
-import { animate } from '@motionone/vue'
+import { animate, spring } from '@motionone/dom'
 import FocusHaloCanvas from './FocusHaloCanvas.vue'
 import VoiceSelector from './VoiceSelector.vue'
 import SpeedSlider from './SpeedSlider.vue'
@@ -84,18 +84,7 @@ watch(() => props.activePanel, (newPanel) => {
   const targetWidth = newPanel === 'control-deck' ? 0.35 : 0
   const finalWidth = Math.max(10, targetWidth * window.innerWidth)
 
-  currentAnimation = animate(el,
-    { width: `${currentWidth}px` },
-    {
-      width: `${finalWidth}px`,
-      type: 'spring',
-      stiffness: 200,
-      damping: 18,
-      restDelta: 1,
-      duration: 0.4,
-      reduceMotion: 'instant'
-    }
-  )
+  currentAnimation = animate(el, { width: [`${currentWidth}px`, `${finalWidth}px`] }, { duration: 0.4, easing: spring({ stiffness: 200, damping: 18 }) })
 })
 
 function handlePanelToggle() {

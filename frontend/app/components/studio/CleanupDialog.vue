@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTemplateRef, watch } from 'vue'
-import { animate } from '@motionone/vue'
+import { animate, spring } from '@motionone/dom'
 
 interface Props {
   visible: boolean
@@ -47,34 +47,10 @@ watch(() => props.visible, (visible) => {
 
   if (visible) {
     // Spring in from scale 0.95, opacity 0
-    currentAnimation = animate(el,
-      { scale: 0.95, opacity: 0 },
-      {
-        scale: 1,
-        opacity: 1,
-        type: 'spring',
-        stiffness: 300,
-        damping: 22,
-        restDelta: 0.01,
-        duration: 0.25,
-        reduceMotion: 'instant'
-      }
-    )
+    currentAnimation = animate(el, { scale: [0.95, 1], opacity: [0, 1] }, { duration: 0.25, easing: spring({ stiffness: 300, damping: 22 }) })
   } else {
     // Spring out to scale 0.95, opacity 0 (exit is a dismiss)
-    currentAnimation = animate(el,
-      { scale: 1, opacity: 1 },
-      {
-        scale: 0.95,
-        opacity: 0,
-        type: 'spring',
-        stiffness: 300,
-        damping: 22,
-        restDelta: 0.01,
-        duration: 0.2,
-        reduceMotion: 'instant'
-      }
-    )
+    currentAnimation = animate(el, { scale: [1, 0.95], opacity: [1, 0] }, { duration: 0.2, easing: spring({ stiffness: 300, damping: 22 }) })
   }
 })
 </script>

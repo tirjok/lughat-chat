@@ -1,5 +1,5 @@
 import { onMounted, onUnmounted, shallowRef } from 'vue'
-import { animate } from '@motionone/vue'
+import { animate, spring } from '@motionone/dom'
 
 interface UseDragResizeOptions {
   initialRatio?: number
@@ -116,17 +116,7 @@ export function useDragResize(options: UseDragResizeOptions = {}) {
         isAnimating = true
         canvasRatio.value = projected
         const targetHeight = projected * window.innerHeight
-        animate(canvasEl,
-          { height: `${targetHeight}px` },
-          {
-            type: 'spring',
-            stiffness: 200,
-            damping: 18,
-            restDelta: 0.1,
-            duration: 0.5,
-            reduceMotion: 'instant'
-          }
-        ).then(() => {
+        animate(canvasEl, { height: [`${canvasEl.style.height || canvasEl.offsetHeight + 'px'}`, `${targetHeight}px`] }, { duration: 0.5, easing: spring({ stiffness: 200, damping: 18 }) }).finished.then(() => {
           isAnimating = false
         })
       } else {

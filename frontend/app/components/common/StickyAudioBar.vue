@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch, useTemplateRef } from 'vue'
 import { onKeyStroke } from '@vueuse/core'
-import { animate } from '@motionone/vue'
+import { animate, spring } from '@motionone/dom'
 
 interface Props {
   active?: boolean
@@ -134,34 +134,10 @@ watch(() => props.active, (active) => {
 
   if (active) {
     // Show: spring from below to visible position
-    currentAnimation = animate(el,
-      { y: '100%', opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        type: 'spring',
-        stiffness: 200,
-        damping: 22,
-        restDelta: 0.1,
-        duration: 0.4,
-        reduceMotion: 'instant'
-      }
-    )
+    currentAnimation = animate(el, { y: ['100%', 0], opacity: [0, 1] }, { duration: 0.4, easing: spring({ stiffness: 200, damping: 22 }) })
   } else {
     // Hide: spring down with fade
-    currentAnimation = animate(el,
-      { y: 0, opacity: 1 },
-      {
-        y: '100%',
-        opacity: 0,
-        type: 'spring',
-        stiffness: 200,
-        damping: 22,
-        restDelta: 0.1,
-        duration: 0.3,
-        reduceMotion: 'instant'
-      }
-    )
+    currentAnimation = animate(el, { y: [0, '100%'], opacity: [1, 0] }, { duration: 0.3, easing: spring({ stiffness: 200, damping: 22 }) })
   }
 }, { immediate: true })
 

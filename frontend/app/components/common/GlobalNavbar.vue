@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
-import { animate } from '@motionone/vue'
+import { animate, spring } from '@motionone/dom'
 
 interface Props {
   currentPath: string
@@ -71,33 +71,9 @@ function animateMenu(open: boolean) {
   currentAnimation?.cancel()
 
   if (open) {
-    currentAnimation = animate(el,
-      { y: -20, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        type: 'spring',
-        stiffness: 300,
-        damping: 22,
-        restDelta: 0.01,
-        duration: 0.3,
-        reduceMotion: 'instant'
-      }
-    )
+    currentAnimation = animate(el, { y: [-20, 0], opacity: [0, 1] }, { duration: 0.3, easing: spring({ stiffness: 300, damping: 22 }) })
   } else {
-    currentAnimation = animate(el,
-      { y: 0, opacity: 1 },
-      {
-        y: -20,
-        opacity: 0,
-        type: 'spring',
-        stiffness: 300,
-        damping: 22,
-        restDelta: 0.01,
-        duration: 0.25,
-        reduceMotion: 'instant'
-      }
-    )
+    currentAnimation = animate(el, { y: [0, -20], opacity: [1, 0] }, { duration: 0.25, easing: spring({ stiffness: 300, damping: 22 }) })
   }
 }
 
