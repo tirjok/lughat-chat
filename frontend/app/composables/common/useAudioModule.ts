@@ -13,7 +13,6 @@ export function useAudioModule(options: AudioModuleOptions = {}) {
   const isLoading = shallowRef(false)
   const audioUrl = shallowRef<string | null>(null)
 
-  // ── Internal refs ────────────────────────────────
   const blobRef = ref<Blob | null>(null)
   let currentObjectUrl: string | null = null
   let downloadUrlRef: string | null = null

@@ -15,7 +15,7 @@ vi.mock('vue-router', () => ({
 // These use vi.mock() to intercept the module imports — required now that
 // manual globalThis stubs are removed from setup.component.ts.
 vi.mock('~/composables/studio/usePanelToggle', () => ({
-  usePanelToggle: () => ({ activePanel: ref('desktop') })
+  usePanelToggle: () => ({ activePanel: ref('desktop'), isMobile: ref(false), togglePanel: vi.fn() })
 }))
 
 vi.mock('~/composables/common/useAudioModule', () => ({

@@ -18,6 +18,7 @@ import os
 import subprocess
 import uuid
 from fastapi.responses import FileResponse
+import wave
 from fastapi import HTTPException
 from typing import Optional
 
@@ -36,7 +37,6 @@ def _validate_speaker_wav(wav_path: str) -> None:
     Raises:
         HTTPException: If file is too short (< 0.33s) or unreadable.
     """
-    import wave
 
     try:
         with wave.open(wav_path) as wf:

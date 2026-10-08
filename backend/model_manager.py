@@ -116,6 +116,44 @@ class ModelManager:
                     self._model = self._TTS("tts_models/multilingual/xtts_v2")
                     self._status = "ready"
                     print("XTTS-v2 model loaded successfully!")
+                    def fix_token_ids(obj, path="model"):
+                        # Check config on this object
+                        try:
+                            config = getattr(obj, 'config', None)
+                            if config is not None:
+                                bid = getattr(config, 'bos_token_id', None)
+                                eid = getattr(config, 'eos_token_id', None)
+                                if bid is not None and (bid > 607 or bid > 255):
+                                    print(f"Fixing token IDs on {path}: bos={bid} -> None")
+                                    config.bos_token_id = None
+                                    config.eos_token_id = None
+                        except Exception:
+                            pass
+                        # Recurse into PyTorch _modules (this is how PyTorch stores sub-models)
+                        try:
+                            modules = getattr(obj, '_modules', None)
+                            if modules is not None:
+                                for name, sub in modules.items():
+                                    fix_token_ids(sub, f"{path}._modules.{name}")
+                        except Exception:
+                            pass
+                        # Also recurse into _parameters and _buffers to find configs stored there
+                        try:
+                            for attr_name in ['_parameters', '_buffers', '_non_persistent_buffers_set']:
+                                try:
+                                    container = getattr(obj, attr_name, None)
+                                    if container is not None:
+                                        for k, v in container.items():
+                                            if hasattr(v, 'config'):
+                                                fix_token_ids(v, f"{path}.{attr_name}.{k}")
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+                    
+                    fix_token_ids(self._model)
+                    self._status = "ready"
+                    print("XTTS-v2 model loaded successfully!")
                 except Exception as e:
                     self._status = "error"
                     print(f"Error loading TTS model: {e}")

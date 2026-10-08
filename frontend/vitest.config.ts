@@ -1,6 +1,11 @@
 import { defineVitestConfig } from '@nuxt/test-utils/config'
 
 export default defineVitestConfig({
+  resolve: {
+    alias: {
+      '@motionone/vue': import.meta.dirname + '/tests/stubs/motionone-vue.ts'
+    }
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],

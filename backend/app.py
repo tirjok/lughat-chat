@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from typing import Optional
+import wave
 from pydantic import BaseModel, Field
 from audio_store import AudioStore
 from synthesis import Synthesis

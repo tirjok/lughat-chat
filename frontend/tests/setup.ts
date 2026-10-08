@@ -1,6 +1,13 @@
 import { vi, beforeEach } from 'vitest'
 import { type App as VueApp, createApp, ref } from 'vue'
 
+// ─── MotionOne stub — used by ToastNotification, StickyAudioBar, CleanupDialog, GlobalNavbar, VoiceSelector, DesktopPanels, useDragResize ──
+vi.mock('@motionone/vue', () => ({
+  animate: (_target: unknown, _keyframes: Record<string, unknown>, _options?: Record<string, unknown> | number) => ({
+    cancel: vi.fn()
+  })
+}))
+
 // ─── Vue Lifecycle Warning Suppression ──────────────────────────────
 // Unit tests call composables that use onMounted/onUnmounted without
 // a real component instance. Create a hidden app to absorb these
