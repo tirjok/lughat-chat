@@ -18,6 +18,17 @@ const resolvedLesson = computed(() => {
   if (lessonId.value) return getLessonById(lessonId.value)
   return undefined
 })
+
+useHead(() => ({
+  title: `Lesson "${resolvedLesson.value?.id || lessonId.value}" Not Found — LughatChat`,
+  meta: [
+    { name: 'description', content: `The requested lesson was not found in Level ${levelCode.value || 'unknown'}. Return to your dashboard to browse available lessons.` },
+    { property: 'og:title', content: `Lesson Not Found — LughatChat` },
+    { property: 'og:description', content: `The requested lesson was not found. Return to your dashboard to browse available lessons.` },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary' }
+  ]
+}))
 </script>
 
 <template>

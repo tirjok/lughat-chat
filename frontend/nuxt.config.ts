@@ -28,11 +28,17 @@ export default defineNuxtConfig({
   // All fonts are self-hosted (100% offline). Phosphor Icons loaded via CDN.
   app: {
     head: {
+      title: 'LughatChat — AI Arabic Speech Synthesis',
       meta: [
         {
           name: 'viewport',
           content: 'width=device-width, initial-scale=1, viewport-fit=cover'
-        }
+        },
+        { name: 'description', content: 'Text-to-speech for Arabic learning. Generate natural Arabic speech with customizable voices, speed, and pronunciation.' },
+        { property: 'og:title', content: 'LughatChat — AI Arabic Speech Synthesis' },
+        { property: 'og:description', content: 'Text-to-speech for Arabic learning. Generate natural Arabic speech with customizable voices, speed, and pronunciation.' },
+        { property: 'og:type', content: 'website' },
+        { name: 'twitter:card', content: 'summary' }
       ],
       script: [
         {
