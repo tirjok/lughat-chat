@@ -257,5 +257,6 @@ function handlePanelToggle() {
         @download="emit('download')"
       />
     </main>
+    <audio ref="audio-el" class="hidden" />
   </div>
 </template>
