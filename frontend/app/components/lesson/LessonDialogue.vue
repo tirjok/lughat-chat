@@ -34,13 +34,14 @@ function selectScene(index: number): void {
   currentLineIndex.value = 0
 }
 
-function selectLine(_index: number): void {
+function selectLine(index: number): void {
   const container = lineCardsContainer.value
   if (!container) return
   const cards = container.querySelectorAll('[data-testid^="line-card-"]')
-  const el = cards[currentLineIndex.value] as HTMLElement | null
+  const el = cards[index] as HTMLElement | null
   el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
+
 function getLineCardClass(lineIndex: number): string[] {
   const base = ['rounded-xl', 'border', 'p-4', 'md:p-5', 'transition-all', 'cursor-pointer']
   if (_props.isAudioDisabled) return [...base, 'opacity-40', 'cursor-not-allowed']
@@ -53,6 +54,7 @@ function getLineCardClass(lineIndex: number): string[] {
 }
 
 function playLine(index: number, speaker: string): void {
+  currentLineIndex.value = index
   selectLine(index)
   emit('playLine', currentSceneIndex.value, index, speaker)
 }
