@@ -122,7 +122,14 @@ function abortAndCleanup(): void {
   cleanedUp.value = false
 }
 
-async function _playText(text: string): Promise<void> {
+
+function resolveSpeaker(speakerName: string): string {
+  if (!speakerName) return ''
+  const lower = speakerName.toLowerCase()
+  if (lower === 'khadija' || lower === 'aisha') return 'KSA Zariyah - Female'
+  return 'KSA Hamed - Male'
+}
+async function _playText(text: string, speaker?: string): Promise<void> {
   if (!text || !text.trim()) return
   await audioModule.dispose()
   fetchController.value = new AbortController()
@@ -130,7 +137,7 @@ async function _playText(text: string): Promise<void> {
   try {
     const blob = await ttsApi.synthesize({
       text: text.trim(),
-      speaker: '',
+      speaker: resolveSpeaker(speaker ?? ''),
       signal: fetchController.value!.signal
     })
     clearTimeout(fetchTimeoutId.value ?? undefined)
@@ -217,18 +224,16 @@ function handleRepeatChange(mode: RepeatMode): void {
   repeatMode.value = mode
 }
 
-async function handleDialoguePlayLine(lineIndex: number): Promise<void> {
+async function handleDialoguePlayLine(sceneIndex: number, lineIndex: number, speaker?: string): Promise<void> {
   const dialogue = currentLessonData.value?.sections.find(s => s.type === 'dialogue')
   if (!dialogue) return
   const content = dialogue.content as { type: 'dialogue', scenes: { label: string, lines: { arabic: string }[] }[] }
-  for (const scene of content.scenes) {
-    if (lineIndex < scene.lines.length) {
-      const arabic = scene.lines?.[lineIndex]?.arabic
-      if (arabic) await _playText(arabic)
-      return
-    }
-    lineIndex -= scene.lines.length
-  }
+  if (sceneIndex < 0 || sceneIndex >= content.scenes.length) return
+  const scene = content.scenes[sceneIndex]!
+  if (lineIndex < 0 || lineIndex >= scene.lines.length) return
+  const line = scene.lines[lineIndex]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (line?.arabic) await _playText(line.arabic, (line as any).speaker ?? speaker)
 }
 
 async function handleDialoguePlayScene(): Promise<void> {
@@ -237,7 +242,8 @@ async function handleDialoguePlayScene(): Promise<void> {
   const content = dialogue.content as { type: 'dialogue', scenes: { label: string, lines: { arabic: string }[] }[] }
   for (const scene of content.scenes) {
     for (const line of scene.lines) {
-      if (line.arabic) await _playText(line.arabic)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (line.arabic) await _playText(line.arabic, (line as any).speaker)
     }
   }
 }
@@ -373,7 +379,6 @@ onUnmounted(() => {
         >
           <LessonDialogue
             :section="currentLessonData.sections.find(s => s.type === 'dialogue')!"
-            :is-audio-disabled="isAudioDisabled"
             @play-line="handleDialoguePlayLine"
             @play-scene="handleDialoguePlayScene"
           />

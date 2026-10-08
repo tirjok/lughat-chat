@@ -11,7 +11,7 @@ interface Props {
 const _props = defineProps<Props>()
 
 const emit = defineEmits<{
-  playLine: [index: number]
+  playLine: [sceneIndex: number, lineIndex: number, speaker: string]
   playScene: []
 }>()
 
@@ -52,9 +52,9 @@ function getLineCardClass(lineIndex: number): string[] {
   return [...base, 'bg-white', 'border-stone-200', 'dark:bg-stone-900', 'dark:border-stone-700']
 }
 
-function playLine(index: number): void {
+function playLine(index: number, speaker: string): void {
   selectLine(index)
-  emit('playLine', index)
+  emit('playLine', currentSceneIndex.value, index, speaker)
 }
 
 function playScene(): void {
@@ -175,7 +175,7 @@ function handleTablistKeydown(event: KeyboardEvent): void {
             class="ml-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors"
             :class="{ 'pointer-events-none': _props.isAudioDisabled }"
             aria-label="Play audio"
-            @click.stop="playLine(lineIndex)"
+            @click.stop="playLine(lineIndex, line.speaker)"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

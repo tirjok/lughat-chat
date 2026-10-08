@@ -135,14 +135,20 @@ describe('LessonDialogue', () => {
     const playButtons = wrapper.findAll('[data-testid^="play-line-"]')
     await playButtons[0].trigger('click')
     expect(wrapper.emitted('playLine')).toHaveLength(1)
-    expect(wrapper.emitted('playLine')?.[0]).toEqual([0])
+    const [sceneIdx, lineIdx, speaker] = wrapper.emitted('playLine')?.[0] ?? []
+    expect(sceneIdx).toBe(0)
+    expect(lineIdx).toBe(0)
+    expect(speaker).toBe('Muhammad')
   })
 
   it('emits playLine with the correct index for each line', async () => {
     const wrapper = getWrapper()
     const playButtons = wrapper.findAll('[data-testid^="play-line-"]')
     await playButtons[1].trigger('click')
-    expect(wrapper.emitted('playLine')?.[0]).toEqual([1])
+    const [sceneIdx, lineIdx, speaker] = wrapper.emitted('playLine')?.[0] ?? []
+    expect(sceneIdx).toBe(0)
+    expect(lineIdx).toBe(1)
+    expect(speaker).toBe('Ali')
   })
 
   it('selects the line card on body click without emitting playLine', async () => {
