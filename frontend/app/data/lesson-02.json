@@ -1,0 +1,73 @@
+{
+  "id": 2,
+  "level": "A1",
+  "title": "The Numbers — الأرقام",
+  "arabicTitle": "الأرقام",
+  "description": "",
+  "sections": [
+    {
+      "type": "dialogue",
+      "title": "Dialogue",
+      "content": {
+        "scenes": [
+          {
+            "label": "Scene 1",
+            "lines": [
+              {
+                "speaker": "A",
+                "arabic": "أ",
+                "english": "A",
+                "notes": "n"
+              },
+              {
+                "speaker": "B",
+                "arabic": "ب",
+                "english": "B",
+                "notes": "n"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "vocabulary",
+      "title": "Vocabulary",
+      "content": {
+        "categories": [
+          {
+            "label": "Numbers",
+            "words": [
+              {
+                "arabic": "١",
+                "english": "one",
+                "singular": "١"
+              },
+              {
+                "arabic": "٢",
+                "english": "two",
+                "singular": "٢"
+              },
+              {
+                "arabic": "٣",
+                "english": "three",
+                "singular": "٣"
+              },
+              {
+                "arabic": "٤",
+                "english": "four",
+                "singular": "٤"
+              },
+              {
+                "arabic": "٥",
+                "english": "five",
+                "singular": "٥"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "activities": []
+}

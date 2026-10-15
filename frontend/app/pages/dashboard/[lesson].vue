@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getLessonById } from '~/data/curriculum'
+import { loadLesson } from '~/data/curriculum'
 
 const route = useRoute()
 
@@ -15,7 +15,7 @@ const lessonId = computed(() => {
 const levelCode = computed(() => (route.params?.level as string) || '')
 
 const resolvedLesson = computed(() => {
-  if (lessonId.value) return getLessonById(lessonId.value)
+  if (lessonId.value) return loadLesson(lessonId.value)
   return undefined
 })
 

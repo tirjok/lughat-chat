@@ -2,7 +2,7 @@
 import { ref, watch, onUnmounted, computed, shallowRef } from 'vue'
 import { useAudioModule } from '~/composables/common/useAudioModule'
 import { useTtsApi } from '~/composables/common/useTtsApi'
-import { getLessonById, type SectionDefinition } from '~/data/curriculum'
+import { loadLesson, type SectionDefinition } from '~/data/curriculum'
 import { useLessonProgress } from '~/composables/lesson/useLessonProgress'
 import { useBackendHealth } from '~/composables/studio/useBackendHealth'
 import LessonDialogue from '~/components/lesson/LessonDialogue.vue'
@@ -48,7 +48,7 @@ const sectionTabs = computed(() => {
 })
 const activeSection = shallowRef<string | undefined>('Dialogue')
 const currentLessonData = computed(() => {
-  const lesson = getLessonById(lessonParam.value)
+  const lesson = loadLesson(lessonParam.value)
   return lesson
 })
 

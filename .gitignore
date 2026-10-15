@@ -39,3 +39,4 @@ backend/*.pyc
 backend/.pytest_cache/
 
 .pi
+resources/

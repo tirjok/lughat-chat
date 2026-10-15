@@ -3,9 +3,9 @@ defineOptions({ name: 'Dashboard' })
 // eslint-disable-next-line import/first
 import { computed } from 'vue'
 // eslint-disable-next-line import/first
-import { curriculum, getTotalLessonCount } from '~/data/curriculum'
+import { loadLevels, getTotalLessonCount } from '~/data/curriculum'
 
-const levels = curriculum
+const levels = loadLevels()
 
 const totalLessons = computed(() => getTotalLessonCount())
 const completedLessons = computed(() => 0)

@@ -1,0 +1,35 @@
+{
+  "id": 1,
+  "level": "A2",
+  "title": "At the Market — في السوق",
+  "arabicTitle": "في السوق",
+  "description": "",
+  "sections": [
+    {
+      "type": "dialogue",
+      "title": "Dialogue",
+      "content": {
+        "scenes": [
+          {
+            "label": "Scene 1",
+            "lines": [
+              {
+                "speaker": "A",
+                "arabic": "أ",
+                "english": "A",
+                "notes": "n"
+              },
+              {
+                "speaker": "B",
+                "arabic": "ب",
+                "english": "B",
+                "notes": "n"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "activities": []
+}
